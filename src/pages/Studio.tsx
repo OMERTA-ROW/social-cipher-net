@@ -4,13 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Send, Zap } from "lucide-react";
+import { Radio, Send, Zap, Loader2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import { usePlatformChat } from "@/hooks/usePlatformChat";
 
 const Studio = () => {
   const [isLive, setIsLive] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
-  const [messages, setMessages] = useState<Record<string, Array<{ user: string; text: string }>>>({
+  const [messages, setMessages] = useState<Record<string, Array<{ role: "user" | "assistant"; content: string }>>>({
     twitter: [],
     instagram: [],
     tiktok: [],
@@ -22,6 +23,13 @@ const Studio = () => {
     tiktok: "",
     youtube: ""
   });
+  const [loadingPlatforms, setLoadingPlatforms] = useState<Record<string, boolean>>({
+    twitter: false,
+    instagram: false,
+    tiktok: false,
+    youtube: false
+  });
+  const { streamChat } = usePlatformChat();
 
   const platforms = [
     { id: "twitter", name: "Twitter", color: "bg-blue-500" },
@@ -38,15 +46,47 @@ const Studio = () => {
     );
   };
 
-  const sendMessage = (platform: string) => {
-    if (!inputMessages[platform].trim()) return;
+  const sendMessage = async (platform: string) => {
+    if (!inputMessages[platform].trim() || loadingPlatforms[platform]) return;
+    
+    const userMessage = { role: "user" as const, content: inputMessages[platform] };
+    const updatedMessages = [...messages[platform], userMessage];
     
     setMessages(prev => ({
       ...prev,
-      [platform]: [...prev[platform], { user: "You", text: inputMessages[platform] }]
+      [platform]: updatedMessages
     }));
     
     setInputMessages(prev => ({ ...prev, [platform]: "" }));
+    setLoadingPlatforms(prev => ({ ...prev, [platform]: true }));
+
+    let assistantContent = "";
+    const upsertAssistant = (nextChunk: string) => {
+      assistantContent += nextChunk;
+      setMessages(prev => {
+        const currentMessages = prev[platform];
+        const last = currentMessages[currentMessages.length - 1];
+        if (last?.role === "assistant") {
+          return {
+            ...prev,
+            [platform]: currentMessages.map((m, i) => 
+              i === currentMessages.length - 1 ? { ...m, content: assistantContent } : m
+            )
+          };
+        }
+        return {
+          ...prev,
+          [platform]: [...currentMessages, { role: "assistant" as const, content: assistantContent }]
+        };
+      });
+    };
+
+    await streamChat(
+      platform,
+      updatedMessages,
+      (chunk) => upsertAssistant(chunk),
+      () => setLoadingPlatforms(prev => ({ ...prev, [platform]: false }))
+    );
   };
 
   return (
@@ -129,15 +169,30 @@ const Studio = () => {
                   <TabsContent key={platformId} value={platformId} className="space-y-4">
                     <div className="h-[400px] bg-muted/10 rounded-lg p-4 overflow-y-auto border border-primary/10">
                       {messages[platformId].length === 0 ? (
-                        <p className="text-muted-foreground text-sm">No messages yet</p>
+                        <p className="text-muted-foreground text-sm">No messages yet. Start chatting with your platform AI bot!</p>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {messages[platformId].map((msg, idx) => (
-                            <div key={idx} className="bg-card/50 p-2 rounded">
-                              <span className="text-primary font-semibold">{msg.user}: </span>
-                              <span className="text-foreground">{msg.text}</span>
+                            <div 
+                              key={idx} 
+                              className={`p-3 rounded-lg ${
+                                msg.role === "user" 
+                                  ? "bg-primary/20 ml-8" 
+                                  : "bg-card/70 mr-8"
+                              }`}
+                            >
+                              <div className="text-xs text-muted-foreground mb-1">
+                                {msg.role === "user" ? "You" : `${platforms.find(p => p.id === platformId)?.name} Bot`}
+                              </div>
+                              <div className="text-foreground whitespace-pre-wrap">{msg.content}</div>
                             </div>
                           ))}
+                          {loadingPlatforms[platformId] && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span className="text-sm">AI is typing...</span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -150,8 +205,16 @@ const Studio = () => {
                         onKeyPress={(e) => e.key === "Enter" && sendMessage(platformId)}
                         className="flex-1"
                       />
-                      <Button onClick={() => sendMessage(platformId)} size="icon">
-                        <Send className="w-4 h-4" />
+                      <Button 
+                        onClick={() => sendMessage(platformId)} 
+                        size="icon"
+                        disabled={loadingPlatforms[platformId]}
+                      >
+                        {loadingPlatforms[platformId] ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </TabsContent>
