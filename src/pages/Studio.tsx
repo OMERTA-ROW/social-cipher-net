@@ -1,0 +1,168 @@
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Radio, Send, Zap } from "lucide-react";
+import Navigation from "@/components/Navigation";
+
+const Studio = () => {
+  const [isLive, setIsLive] = useState(false);
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Record<string, Array<{ user: string; text: string }>>>({
+    twitter: [],
+    instagram: [],
+    tiktok: [],
+    youtube: []
+  });
+  const [inputMessages, setInputMessages] = useState<Record<string, string>>({
+    twitter: "",
+    instagram: "",
+    tiktok: "",
+    youtube: ""
+  });
+
+  const platforms = [
+    { id: "twitter", name: "Twitter", color: "bg-blue-500" },
+    { id: "instagram", name: "Instagram", color: "bg-pink-500" },
+    { id: "tiktok", name: "TikTok", color: "bg-cyan-500" },
+    { id: "youtube", name: "YouTube", color: "bg-red-500" }
+  ];
+
+  const togglePlatform = (platformId: string) => {
+    setConnectedPlatforms(prev =>
+      prev.includes(platformId)
+        ? prev.filter(id => id !== platformId)
+        : [...prev, platformId]
+    );
+  };
+
+  const sendMessage = (platform: string) => {
+    if (!inputMessages[platform].trim()) return;
+    
+    setMessages(prev => ({
+      ...prev,
+      [platform]: [...prev[platform], { user: "You", text: inputMessages[platform] }]
+    }));
+    
+    setInputMessages(prev => ({ ...prev, [platform]: "" }));
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation onCreatePost={() => {}} />
+      
+      <main className="container mx-auto px-4 pt-20 pb-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-primary text-glow mb-2">Live Studio</h1>
+            <p className="text-muted-foreground">Stream to multiple platforms simultaneously</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {isLive && (
+              <Badge variant="destructive" className="animate-pulse">
+                <Radio className="w-4 h-4 mr-1" />
+                LIVE
+              </Badge>
+            )}
+            <Button
+              onClick={() => setIsLive(!isLive)}
+              variant={isLive ? "destructive" : "default"}
+              className={isLive ? "" : "glow-primary"}
+            >
+              {isLive ? "End Stream" : "Go Live"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Live Preview */}
+          <Card className="lg:col-span-2 p-6 bg-card/50 backdrop-blur border-primary/20">
+            <div className="aspect-video bg-muted/20 rounded-lg flex items-center justify-center mb-4 border border-primary/10">
+              <div className="text-center">
+                <Zap className="w-16 h-16 text-primary mx-auto mb-2" />
+                <p className="text-muted-foreground">Camera Preview</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground">Connected Platforms</h3>
+              <div className="flex flex-wrap gap-2">
+                {platforms.map(platform => (
+                  <Button
+                    key={platform.id}
+                    variant={connectedPlatforms.includes(platform.id) ? "default" : "outline"}
+                    onClick={() => togglePlatform(platform.id)}
+                    className={connectedPlatforms.includes(platform.id) ? platform.color : ""}
+                  >
+                    {platform.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          {/* Chat Panel */}
+          <Card className="p-6 bg-card/50 backdrop-blur border-primary/20">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Live Chat</h3>
+            
+            {connectedPlatforms.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                Connect platforms to see chats
+              </div>
+            ) : (
+              <Tabs defaultValue={connectedPlatforms[0]} className="w-full">
+                <TabsList className="w-full">
+                  {connectedPlatforms.map(platformId => {
+                    const platform = platforms.find(p => p.id === platformId);
+                    return (
+                      <TabsTrigger key={platformId} value={platformId} className="flex-1">
+                        {platform?.name}
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+                
+                {connectedPlatforms.map(platformId => (
+                  <TabsContent key={platformId} value={platformId} className="space-y-4">
+                    <div className="h-[400px] bg-muted/10 rounded-lg p-4 overflow-y-auto border border-primary/10">
+                      {messages[platformId].length === 0 ? (
+                        <p className="text-muted-foreground text-sm">No messages yet</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {messages[platformId].map((msg, idx) => (
+                            <div key={idx} className="bg-card/50 p-2 rounded">
+                              <span className="text-primary font-semibold">{msg.user}: </span>
+                              <span className="text-foreground">{msg.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Type a message..."
+                        value={inputMessages[platformId]}
+                        onChange={(e) => setInputMessages(prev => ({ ...prev, [platformId]: e.target.value }))}
+                        onKeyPress={(e) => e.key === "Enter" && sendMessage(platformId)}
+                        className="flex-1"
+                      />
+                      <Button onClick={() => sendMessage(platformId)} size="icon">
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            )}
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Studio;
