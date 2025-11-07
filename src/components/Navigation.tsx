@@ -1,9 +1,9 @@
-import { Home, PlusSquare, User, Link2, Radio } from "lucide-react";
+import { Home, PlusSquare, User, Link2, Radio, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 interface NavigationProps {
-  onCreatePost: () => void;
+  onCreatePost?: () => void;
 }
 
 const Navigation = ({ onCreatePost }: NavigationProps) => {
@@ -31,13 +31,23 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
               <Radio className="w-5 h-5" />
             </Button>
             <Button 
-              variant="default" 
+              variant="ghost" 
               size="icon" 
-              onClick={onCreatePost}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary"
+              onClick={() => navigate("/affiliate")}
+              className="text-foreground hover:text-primary"
             >
-              <PlusSquare className="w-5 h-5" />
+              <ShoppingBag className="w-5 h-5" />
             </Button>
+            {onCreatePost && (
+              <Button 
+                variant="default" 
+                size="icon" 
+                onClick={onCreatePost}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary"
+              >
+                <PlusSquare className="w-5 h-5" />
+              </Button>
+            )}
             <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
               <User className="w-5 h-5" />
             </Button>
