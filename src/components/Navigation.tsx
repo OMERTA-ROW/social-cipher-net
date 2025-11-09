@@ -1,4 +1,4 @@
-import { Home, PlusSquare, User, Link2, Radio, ShoppingBag } from "lucide-react";
+import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -37,6 +37,14 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
               className="text-foreground hover:text-primary"
             >
               <ShoppingBag className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate("/monetization")}
+              className="text-foreground hover:text-primary"
+            >
+              <DollarSign className="w-5 h-5" />
             </Button>
             {onCreatePost && (
               <Button 

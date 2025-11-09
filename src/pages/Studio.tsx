@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Radio, Send, Zap, Loader2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
+import { TipDialog } from "@/components/TipDialog";
 
 const Studio = () => {
   const [isLive, setIsLive] = useState(false);
@@ -102,10 +103,13 @@ const Studio = () => {
           
           <div className="flex items-center gap-4">
             {isLive && (
-              <Badge variant="destructive" className="animate-pulse">
-                <Radio className="w-4 h-4 mr-1" />
-                LIVE
-              </Badge>
+              <>
+                <Badge variant="destructive" className="animate-pulse">
+                  <Radio className="w-4 h-4 mr-1" />
+                  LIVE
+                </Badge>
+                <TipDialog creatorName="Your Stream" />
+              </>
             )}
             <Button
               onClick={() => setIsLive(!isLive)}
