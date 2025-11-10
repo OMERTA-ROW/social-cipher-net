@@ -330,17 +330,25 @@ const CyberStreamer = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="stream" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="stream">
-              <Monitor className="w-4 h-4 mr-2" />
+          <TabsList className="grid w-full grid-cols-5 gap-1">
+            <TabsTrigger value="stream" className="text-xs">
+              <Monitor className="w-4 h-4 mr-1" />
               Stream
             </TabsTrigger>
-            <TabsTrigger value="ads">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Cyber Streamers ADS
+            <TabsTrigger value="gaming" className="text-xs">
+              <Video className="w-4 h-4 mr-1" />
+              Gaming
             </TabsTrigger>
-            <TabsTrigger value="analytics">
-              <Activity className="w-4 h-4 mr-2" />
+            <TabsTrigger value="content" className="text-xs">
+              <Youtube className="w-4 h-4 mr-1" />
+              Content
+            </TabsTrigger>
+            <TabsTrigger value="ads" className="text-xs">
+              <TrendingUp className="w-4 h-4 mr-1" />
+              ADS
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs">
+              <Activity className="w-4 h-4 mr-1" />
               Analytics
             </TabsTrigger>
           </TabsList>
@@ -519,6 +527,200 @@ const CyberStreamer = () => {
             </Card>
           </div>
         </div>
+          </TabsContent>
+
+          <TabsContent value="gaming" className="space-y-6">
+            {/* Gaming Setup */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="glow-primary">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Video className="w-5 h-5" />
+                    Game Capture
+                  </CardTitle>
+                  <CardDescription>Configure your game capture settings</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Capture Source</label>
+                    <select className="w-full px-4 py-2 bg-secondary border border-border rounded-lg">
+                      <option>Display Capture</option>
+                      <option>Window Capture</option>
+                      <option>Game Capture</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Resolution</label>
+                    <select className="w-full px-4 py-2 bg-secondary border border-border rounded-lg">
+                      <option>1920x1080 (1080p)</option>
+                      <option>2560x1440 (1440p)</option>
+                      <option>3840x2160 (4K)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Frame Rate</label>
+                    <select className="w-full px-4 py-2 bg-secondary border border-border rounded-lg">
+                      <option>30 FPS</option>
+                      <option>60 FPS</option>
+                      <option>120 FPS</option>
+                    </select>
+                  </div>
+                  <Button className="w-full">Test Capture</Button>
+                </CardContent>
+              </Card>
+
+              <Card className="glow-accent">
+                <CardHeader>
+                  <CardTitle>Stream Overlays</CardTitle>
+                  <CardDescription>Customize your gaming overlays</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <span className="text-sm">Webcam Overlay</span>
+                      <Button size="sm" variant="outline">Configure</Button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <span className="text-sm">Alerts & Notifications</span>
+                      <Button size="sm" variant="outline">Configure</Button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <span className="text-sm">Donation Goals</span>
+                      <Button size="sm" variant="outline">Configure</Button>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <span className="text-sm">Chat Box</span>
+                      <Button size="sm" variant="outline">Configure</Button>
+                    </div>
+                  </div>
+                  <Button className="w-full" variant="default">
+                    Preview Overlays
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Tournament Features */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tournament & Events</CardTitle>
+                <CardDescription>Host and manage gaming tournaments</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg text-center">
+                    <h3 className="font-medium mb-2">Active Tournaments</h3>
+                    <p className="text-3xl font-bold text-primary">0</p>
+                  </div>
+                  <div className="p-4 border rounded-lg text-center">
+                    <h3 className="font-medium mb-2">Participants</h3>
+                    <p className="text-3xl font-bold text-accent">0</p>
+                  </div>
+                  <div className="p-4 border rounded-lg text-center">
+                    <h3 className="font-medium mb-2">Prize Pool</h3>
+                    <p className="text-3xl font-bold text-green-500">$0</p>
+                  </div>
+                </div>
+                <Button className="w-full mt-4">
+                  Create Tournament
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="content" className="space-y-6">
+            {/* Content Library */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Youtube className="w-5 h-5" />
+                  Content Library
+                </CardTitle>
+                <CardDescription>Manage your original content and VODs</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="p-4 border rounded-lg text-center">
+                    <h3 className="font-medium mb-2">Total Videos</h3>
+                    <p className="text-3xl font-bold">0</p>
+                  </div>
+                  <div className="p-4 border rounded-lg text-center">
+                    <h3 className="font-medium mb-2">Total Views</h3>
+                    <p className="text-3xl font-bold">0</p>
+                  </div>
+                  <div className="p-4 border rounded-lg text-center">
+                    <h3 className="font-medium mb-2">Watch Time</h3>
+                    <p className="text-3xl font-bold">0h</p>
+                  </div>
+                </div>
+                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                  <Video className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No content yet</p>
+                  <p className="text-sm mt-2">Upload videos or stream recordings will appear here</p>
+                  <Button className="mt-4">
+                    Upload Content
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Content Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Multi-Platform Distribution</CardTitle>
+                <CardDescription>Distribute your content across platforms</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {platforms.map((platform) => {
+                    const Icon = platform.icon;
+                    return (
+                      <div key={platform.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-6 h-6" />
+                          <div>
+                            <p className="font-medium">{platform.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {platform.connected ? 'Auto-upload enabled' : 'Not connected'}
+                            </p>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline">
+                          {platform.connected ? 'Settings' : 'Enable'}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Monetization Options */}
+            <Card className="glow-primary">
+              <CardHeader>
+                <CardTitle>Monetization</CardTitle>
+                <CardDescription>Earn from your content</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <h3 className="font-medium mb-2">Subscriptions</h3>
+                    <p className="text-2xl font-bold text-primary mb-2">$0/mo</p>
+                    <Button size="sm" className="w-full">Setup</Button>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <h3 className="font-medium mb-2">Donations</h3>
+                    <p className="text-2xl font-bold text-accent mb-2">$0</p>
+                    <Button size="sm" className="w-full">Setup</Button>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <h3 className="font-medium mb-2">Sponsorships</h3>
+                    <p className="text-2xl font-bold text-green-500 mb-2">$0</p>
+                    <Button size="sm" className="w-full">Setup</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="ads" className="space-y-6">
