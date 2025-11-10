@@ -49,6 +49,51 @@ export type Database = {
           },
         ]
       }
+      identity_verification: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          document_url: string
+          id: string
+          metadata: Json | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          submitted_at: string | null
+          updated_at: string | null
+          user_id: string
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          document_url: string
+          id?: string
+          metadata?: Json | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id: string
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          document_url?: string
+          id?: string
+          metadata?: Json | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verification_status?: string
+        }
+        Relationships: []
+      }
       live_streams: {
         Row: {
           category: string | null
