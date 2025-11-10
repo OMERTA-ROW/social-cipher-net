@@ -2,6 +2,7 @@ import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
 import CreatePostDialog from "@/components/CreatePostDialog";
+import CyberSpaceBackground from "@/components/CyberSpaceBackground";
 import { toast } from "sonner";
 
 interface Post {
@@ -57,6 +58,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <CyberSpaceBackground />
       <Navigation onCreatePost={() => setIsCreateDialogOpen(true)} />
       
       <main className="container mx-auto px-4 pt-24 pb-8">

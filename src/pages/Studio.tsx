@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Radio, Send, Zap, Loader2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import CyberSpaceBackground from "@/components/CyberSpaceBackground";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
 import { TipDialog } from "@/components/TipDialog";
 
@@ -92,6 +93,7 @@ const Studio = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <CyberSpaceBackground />
       <Navigation onCreatePost={() => {}} />
       
       <main className="container mx-auto px-4 pt-20 pb-8">
