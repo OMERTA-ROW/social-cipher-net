@@ -57,7 +57,7 @@ const Auth = () => {
       return;
     }
 
-    // Validate age (must be at least 13 years old for most platforms)
+    // Validate age (must be at least 13 years old)
     const birthDate = new Date(birthdate);
     const today = new Date();
     const age = today.getFullYear() - birthDate.getFullYear();
@@ -241,7 +241,7 @@ const Auth = () => {
                     max={new Date().toISOString().split('T')[0]}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Required for age verification and content filtering
+                    You must be at least 13 years old. Users under 18 will have restricted access to adult content.
                   </p>
                 </div>
                 <div className="space-y-2">

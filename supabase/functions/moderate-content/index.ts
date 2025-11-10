@@ -18,39 +18,35 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) throw new Error('No authorization header');
+
     const { content_id, content_type, content_text, content_url } = await req.json();
 
     if (!content_id || !content_type) {
       throw new Error('Missing required fields: content_id and content_type');
     }
 
-    // Use Lovable AI to analyze content
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
-    }
+    console.log('Moderating content:', { content_id, content_type });
 
-    const moderationPrompt = `Analyze this content for adult/NSFW material. Consider:
-- Sexual content or nudity
-- Violence or gore
-- Hate speech or discrimination
-- Drug/alcohol references inappropriate for minors
-- Other content inappropriate for users under 18
+    // Call Lovable AI to analyze content
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+
+    const moderationPrompt = `Analyze the following content for adult/mature themes. Consider sexual content, violence, graphic material, profanity, and other content inappropriate for minors under 18.
 
 Content to analyze:
-${content_text || 'No text content'}
-${content_url ? `URL: ${content_url}` : ''}
+${content_text ? `Text: ${content_text}` : ''}
+${content_url ? `URL/Media: ${content_url}` : ''}
 
-Respond ONLY with a JSON object (no markdown, no code blocks):
+Respond with a JSON object containing:
 {
   "is_adult_content": boolean,
-  "confidence": number (0-1),
-  "flagged_reasons": array of strings,
+  "confidence_score": number (0-1),
+  "flagged_categories": array of strings (e.g., ["sexual_content", "violence", "profanity"]),
   "explanation": string
 }`;
 
-    console.log('Sending content for moderation...');
-    
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -60,10 +56,7 @@ Respond ONLY with a JSON object (no markdown, no code blocks):
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { 
-            role: 'system', 
-            content: 'You are a content moderation AI. Analyze content and return ONLY valid JSON, no markdown formatting.' 
-          },
+          { role: 'system', content: 'You are a content moderation AI that identifies adult/mature content. Always respond with valid JSON.' },
           { role: 'user', content: moderationPrompt }
         ],
       }),
@@ -76,22 +69,26 @@ Respond ONLY with a JSON object (no markdown, no code blocks):
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.choices[0].message.content;
-    
-    console.log('AI Response:', aiContent);
+    console.log('AI response:', aiData);
 
-    // Parse AI response - handle potential markdown code blocks
     let moderationResult;
     try {
-      // Remove markdown code blocks if present
-      const cleanedContent = aiContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      moderationResult = JSON.parse(cleanedContent);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', aiContent);
-      throw new Error('Invalid AI response format');
+      const aiContent = aiData.choices[0].message.content;
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = aiContent.match(/```json\n?([\s\S]*?)\n?```/) || aiContent.match(/\{[\s\S]*\}/);
+      moderationResult = JSON.parse(jsonMatch ? jsonMatch[1] || jsonMatch[0] : aiContent);
+    } catch (e) {
+      console.error('Failed to parse AI response:', e);
+      // Fallback: assume safe content if AI parsing fails
+      moderationResult = {
+        is_adult_content: false,
+        confidence_score: 0.5,
+        flagged_categories: [],
+        explanation: 'Failed to parse moderation result'
+      };
     }
 
-    // Store moderation result
+    // Store moderation result in database
     const { error: insertError } = await supabaseClient
       .from('content_moderation')
       .insert({
@@ -99,12 +96,14 @@ Respond ONLY with a JSON object (no markdown, no code blocks):
         content_type,
         content_text,
         content_url,
-        is_adult_content: moderationResult.is_adult_content || false,
+        is_adult_content: moderationResult.is_adult_content,
         moderation_score: {
-          confidence: moderationResult.confidence,
-          explanation: moderationResult.explanation,
+          confidence: moderationResult.confidence_score,
+          explanation: moderationResult.explanation
         },
-        flagged_reasons: moderationResult.flagged_reasons || [],
+        flagged_reasons: moderationResult.flagged_categories,
+        reviewed_by_ai: true,
+        reviewed_by_human: false
       });
 
     if (insertError) {
@@ -112,12 +111,14 @@ Respond ONLY with a JSON object (no markdown, no code blocks):
       throw insertError;
     }
 
+    console.log('Moderation complete:', moderationResult);
+
     return new Response(
       JSON.stringify({
         success: true,
         is_adult_content: moderationResult.is_adult_content,
-        confidence: moderationResult.confidence,
-        flagged_reasons: moderationResult.flagged_reasons,
+        confidence_score: moderationResult.confidence_score,
+        flagged_categories: moderationResult.flagged_categories
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

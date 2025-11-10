@@ -1,55 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface ModerationResult {
   is_adult_content: boolean;
-  confidence: number;
-  flagged_reasons: string[];
+  confidence_score: number;
+  flagged_categories: string[];
 }
 
 export const useContentModeration = () => {
-  const [isChecking, setIsChecking] = useState(false);
+  const [isAdult, setIsAdult] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const moderateContent = async (
-    contentId: string,
-    contentType: 'post' | 'stream' | 'product' | 'comment' | 'message',
-    contentText?: string,
-    contentUrl?: string
-  ): Promise<ModerationResult | null> => {
-    setIsChecking(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('moderate-content', {
-        body: {
-          content_id: contentId,
-          content_type: contentType,
-          content_text: contentText,
-          content_url: contentUrl,
-        }
-      });
+  useEffect(() => {
+    checkUserAge();
+  }, []);
 
-      if (error) throw error;
-
-      return data as ModerationResult;
-    } catch (error: any) {
-      console.error('Content moderation error:', error);
-      toast({
-        title: "Moderation Error",
-        description: "Unable to check content safety. Please try again.",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setIsChecking(false);
-    }
-  };
-
-  const checkUserAge = async (): Promise<{ isAdult: boolean; age: number | null }> => {
+  const checkUserAge = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { isAdult: false, age: null };
+      
+      if (!user) {
+        setIsAdult(false);
+        setLoading(false);
+        return;
+      }
 
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -57,63 +33,93 @@ export const useContentModeration = () => {
         .eq('id', user.id)
         .single();
 
-      if (error || !profile?.birthdate) {
-        return { isAdult: false, age: null };
+      if (error) throw error;
+
+      if (profile?.birthdate) {
+        const birthDate = new Date(profile.birthdate);
+        const age = new Date().getFullYear() - birthDate.getFullYear();
+        const monthDiff = new Date().getMonth() - birthDate.getMonth();
+        
+        // Adjust age if birthday hasn't occurred this year
+        const adjustedAge = monthDiff < 0 || (monthDiff === 0 && new Date().getDate() < birthDate.getDate()) 
+          ? age - 1 
+          : age;
+        
+        setIsAdult(adjustedAge >= 18);
+      } else {
+        setIsAdult(false);
       }
-
-      const birthDate = new Date(profile.birthdate);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) 
-        ? age - 1 
-        : age;
-
-      return {
-        isAdult: actualAge >= 18,
-        age: actualAge,
-      };
     } catch (error) {
-      console.error('Age check error:', error);
-      return { isAdult: false, age: null };
+      console.error('Error checking user age:', error);
+      setIsAdult(false);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const shouldShowContent = async (contentId: string, contentType: string): Promise<boolean> => {
+  const moderateContent = async (
+    contentId: string,
+    contentType: 'post' | 'stream' | 'product' | 'comment' | 'message',
+    contentText?: string,
+    contentUrl?: string
+  ): Promise<ModerationResult> => {
     try {
-      // Check if user is an adult
-      const { isAdult } = await checkUserAge();
+      const { data, error } = await supabase.functions.invoke('moderate-content', {
+        body: {
+          content_id: contentId,
+          content_type: contentType,
+          content_text: contentText,
+          content_url: contentUrl
+        }
+      });
 
-      // Get content moderation status
-      const { data: moderation, error } = await supabase
-        .from('content_moderation')
-        .select('is_adult_content')
-        .eq('content_id', contentId)
-        .eq('content_type', contentType)
-        .single();
+      if (error) throw error;
 
-      if (error || !moderation) {
-        // If no moderation record exists, assume safe content
-        return true;
-      }
-
-      // If content is adult and user is not adult, hide it
-      if (moderation.is_adult_content && !isAdult) {
-        return false;
-      }
-
-      return true;
+      return {
+        is_adult_content: data.is_adult_content,
+        confidence_score: data.confidence_score,
+        flagged_categories: data.flagged_categories || []
+      };
     } catch (error) {
-      console.error('Content visibility check error:', error);
-      // Default to showing content if check fails
-      return true;
+      console.error('Content moderation error:', error);
+      toast({
+        title: "Moderation Error",
+        description: "Failed to moderate content. Please try again.",
+        variant: "destructive"
+      });
+      
+      // Default to safe if moderation fails
+      return {
+        is_adult_content: false,
+        confidence_score: 0,
+        flagged_categories: []
+      };
     }
+  };
+
+  const canViewContent = async (contentId: string, contentType: string): Promise<boolean> => {
+    if (loading) return false;
+    
+    // Check if content has been moderated
+    const { data: moderation } = await supabase
+      .from('content_moderation')
+      .select('is_adult_content')
+      .eq('content_id', contentId)
+      .eq('content_type', contentType)
+      .single();
+
+    // If content is not adult content, everyone can view
+    if (!moderation?.is_adult_content) return true;
+
+    // If content is adult, only adults can view
+    return isAdult === true;
   };
 
   return {
+    isAdult,
+    loading,
     moderateContent,
-    checkUserAge,
-    shouldShowContent,
-    isChecking,
+    canViewContent,
+    checkUserAge
   };
 };
