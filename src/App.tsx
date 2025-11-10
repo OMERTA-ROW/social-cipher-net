@@ -14,6 +14,7 @@ import CyberGamers from "./pages/CyberGamers";
 import CyberStreamer from "./pages/CyberStreamer";
 import NotFound from "./pages/NotFound";
 import Security from "./pages/Security";
+import CommunityGuidelines from "./pages/CommunityGuidelines";
 import AIBotAssistant from "./components/AIBotAssistant";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/cyber-gamers" element={<CyberGamers />} />
           <Route path="/cyber-streamer" element={<CyberStreamer />} />
           <Route path="/security" element={<Security />} />
+          <Route path="/community-guidelines" element={<CommunityGuidelines />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
