@@ -49,6 +49,51 @@ export type Database = {
           },
         ]
       }
+      content_moderation: {
+        Row: {
+          content_id: string
+          content_text: string | null
+          content_type: string
+          content_url: string | null
+          created_at: string | null
+          flagged_reasons: string[] | null
+          id: string
+          is_adult_content: boolean
+          moderation_score: Json | null
+          reviewed_at: string | null
+          reviewed_by_ai: boolean | null
+          reviewed_by_human: boolean | null
+        }
+        Insert: {
+          content_id: string
+          content_text?: string | null
+          content_type: string
+          content_url?: string | null
+          created_at?: string | null
+          flagged_reasons?: string[] | null
+          id?: string
+          is_adult_content?: boolean
+          moderation_score?: Json | null
+          reviewed_at?: string | null
+          reviewed_by_ai?: boolean | null
+          reviewed_by_human?: boolean | null
+        }
+        Update: {
+          content_id?: string
+          content_text?: string | null
+          content_type?: string
+          content_url?: string | null
+          created_at?: string | null
+          flagged_reasons?: string[] | null
+          id?: string
+          is_adult_content?: boolean
+          moderation_score?: Json | null
+          reviewed_at?: string | null
+          reviewed_by_ai?: boolean | null
+          reviewed_by_human?: boolean | null
+        }
+        Relationships: []
+      }
       identity_verification: {
         Row: {
           created_at: string | null
@@ -321,6 +366,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          birthdate: string | null
           created_at: string | null
           display_name: string | null
           id: string
@@ -332,6 +378,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          birthdate?: string | null
           created_at?: string | null
           display_name?: string | null
           id: string
@@ -343,6 +390,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          birthdate?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string
@@ -550,6 +598,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_user_adult: { Args: { user_uuid: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "seller" | "affiliate" | "user"

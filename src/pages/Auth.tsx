@@ -16,6 +16,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [documentType, setDocumentType] = useState<string>("");
   const [idDocument, setIdDocument] = useState<File | null>(null);
+  const [birthdate, setBirthdate] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -47,6 +48,31 @@ const Auth = () => {
       return;
     }
 
+    if (!birthdate) {
+      toast({
+        title: "Error",
+        description: "Please enter your date of birth.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate age (must be at least 13 years old for most platforms)
+    const birthDate = new Date(birthdate);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
+
+    if (actualAge < 13) {
+      toast({
+        title: "Error",
+        description: "You must be at least 13 years old to create an account.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -56,11 +82,22 @@ const Auth = () => {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            birthdate: birthdate,
+          }
         },
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error("User creation failed");
+
+      // Update profile with birthdate
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ birthdate })
+        .eq('id', authData.user.id);
+
+      if (profileError) console.error('Profile update error:', profileError);
 
       // Upload ID document
       const fileExt = idDocument.name.split('.').pop();
@@ -95,6 +132,7 @@ const Auth = () => {
       setPassword("");
       setDocumentType("");
       setIdDocument(null);
+      setBirthdate("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -191,6 +229,20 @@ const Auth = () => {
                     required
                     minLength={6}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="birthdate">Date of Birth</Label>
+                  <Input
+                    id="birthdate"
+                    type="date"
+                    value={birthdate}
+                    onChange={(e) => setBirthdate(e.target.value)}
+                    required
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Required for age verification and content filtering
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="document-type">Document Type</Label>
