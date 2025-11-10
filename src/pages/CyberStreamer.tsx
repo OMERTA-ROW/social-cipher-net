@@ -328,8 +328,26 @@ const CyberStreamer = () => {
           </div>
         </div>
 
-        {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Tabs */}
+        <Tabs defaultValue="stream" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="stream">
+              <Monitor className="w-4 h-4 mr-2" />
+              Stream
+            </TabsTrigger>
+            <TabsTrigger value="ads">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Cyber Streamers ADS
+            </TabsTrigger>
+            <TabsTrigger value="analytics">
+              <Activity className="w-4 h-4 mr-2" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="stream" className="space-y-0">
+            {/* Main Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Stream Monitor */}
           <div className="lg:col-span-2 space-y-6">
             {/* Stream Preview */}
@@ -501,6 +519,224 @@ const CyberStreamer = () => {
             </Card>
           </div>
         </div>
+          </TabsContent>
+
+          <TabsContent value="ads" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Ad Revenue Overview */}
+              <Card className="glow-primary">
+                <CardHeader>
+                  <CardTitle className="text-lg">Total Ad Revenue</CardTitle>
+                  <CardDescription>This month</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-primary">$0.00</div>
+                  <p className="text-sm text-muted-foreground mt-2">+0% from last month</p>
+                </CardContent>
+              </Card>
+
+              <Card className="glow-accent">
+                <CardHeader>
+                  <CardTitle className="text-lg">Ad Impressions</CardTitle>
+                  <CardDescription>Total views</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-accent">0</div>
+                  <p className="text-sm text-muted-foreground mt-2">Across all streams</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Click Rate</CardTitle>
+                  <CardDescription>Average CTR</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">0%</div>
+                  <p className="text-sm text-muted-foreground mt-2">Industry avg: 2.5%</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Ad Campaign Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Active Ad Campaigns
+                </CardTitle>
+                <CardDescription>Manage your monetization campaigns</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Pre-Roll Ads</p>
+                      <p className="text-sm text-muted-foreground">Shows before stream starts</p>
+                    </div>
+                    <Button variant="outline" size="sm">Configure</Button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Mid-Roll Ads</p>
+                      <p className="text-sm text-muted-foreground">Shows during stream breaks</p>
+                    </div>
+                    <Button variant="outline" size="sm">Configure</Button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-medium">Banner Ads</p>
+                      <p className="text-sm text-muted-foreground">Overlay during stream</p>
+                    </div>
+                    <Button variant="outline" size="sm">Configure</Button>
+                  </div>
+                </div>
+                <Button className="w-full mt-4">
+                  Create New Campaign
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Ad Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Ad Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-muted-foreground">
+                  <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No ad data available yet</p>
+                  <p className="text-sm mt-2">Start streaming with ads enabled to see metrics</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            {/* Growth Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Eye className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground">Total Views</span>
+                  </div>
+                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-xs text-green-500 mt-1">+0% this week</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-accent" />
+                    <span className="text-sm text-muted-foreground">Followers</span>
+                  </div>
+                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-xs text-green-500 mt-1">+0 new</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm text-muted-foreground">Avg Duration</span>
+                  </div>
+                  <p className="text-2xl font-bold">0m</p>
+                  <p className="text-xs text-muted-foreground mt-1">Per stream</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm text-muted-foreground">Engagement</span>
+                  </div>
+                  <p className="text-2xl font-bold">0%</p>
+                  <p className="text-xs text-muted-foreground mt-1">Chat activity</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Platform Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Platform Performance
+                </CardTitle>
+                <CardDescription>Compare your performance across platforms</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {platforms.map((platform) => {
+                    const Icon = platform.icon;
+                    return (
+                      <div key={platform.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-5 h-5" />
+                            <span className="font-medium">{platform.name}</span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">0 viewers</span>
+                        </div>
+                        <Progress value={0} className="h-2" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Viewer Demographics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Viewer Demographics</CardTitle>
+                  <CardDescription>Know your audience</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No demographic data yet</p>
+                    <p className="text-sm mt-2">Data will appear after your first streams</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Peak Hours</CardTitle>
+                  <CardDescription>When your audience is most active</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No peak hour data yet</p>
+                    <p className="text-sm mt-2">Stream regularly to see patterns</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Stream History */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Stream History</CardTitle>
+                <CardDescription>Your past broadcasts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12 text-muted-foreground">
+                  <Radio className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No stream history yet</p>
+                  <p className="text-sm mt-2">Your completed streams will appear here</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
