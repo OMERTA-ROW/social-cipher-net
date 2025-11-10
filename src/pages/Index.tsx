@@ -3,7 +3,6 @@ import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
-import AIBotAssistant from "@/components/AIBotAssistant";
 import { toast } from "sonner";
 
 interface Post {
@@ -82,8 +81,6 @@ const Index = () => {
         onOpenChange={setIsCreateDialogOpen}
         onPost={handleCreatePost}
       />
-      
-      <AIBotAssistant />
     </div>
   );
 };

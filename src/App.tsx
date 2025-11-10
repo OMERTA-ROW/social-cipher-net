@@ -12,6 +12,7 @@ import SellerDashboard from "./pages/SellerDashboard";
 import Monetization from "./pages/Monetization";
 import CyberGamers from "./pages/CyberGamers";
 import NotFound from "./pages/NotFound";
+import AIBotAssistant from "./components/AIBotAssistant";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <AIBotAssistant />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

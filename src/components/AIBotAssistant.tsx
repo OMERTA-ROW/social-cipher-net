@@ -183,9 +183,39 @@ const AIBotAssistant = () => {
       return;
     }
 
-    if (inputMessage.toLowerCase() === "go live") {
-      navigate("/studio");
-      toast.success("Connecting to Live Studio...");
+    // Navigation commands
+    const commandMap: Record<string, { path: string; message: string; requiresPremium?: boolean }> = {
+      "go live": { path: "/studio", message: "Connecting to Live Studio..." },
+      "studio": { path: "/studio", message: "Opening Studio..." },
+      "cyber gamers": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
+      "gamers": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
+      "gaming": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
+      "monetization": { path: "/monetization", message: "Opening Monetization Dashboard..." },
+      "earnings": { path: "/monetization", message: "Opening Monetization Dashboard..." },
+      "money": { path: "/monetization", message: "Opening Monetization Dashboard..." },
+      "affiliate": { path: "/affiliate", message: "Opening Affiliate Program..." },
+      "refer": { path: "/affiliate", message: "Opening Affiliate Program..." },
+      "seller dashboard": { path: "/seller-dashboard", message: "Opening Seller Dashboard..." },
+      "seller": { path: "/seller-dashboard", message: "Opening Seller Dashboard..." },
+      "sell": { path: "/seller-register", message: "Opening Seller Registration..." },
+      "register seller": { path: "/seller-register", message: "Opening Seller Registration..." },
+      "home": { path: "/", message: "Going to Home..." },
+      "feed": { path: "/", message: "Going to Feed..." }
+    };
+
+    const command = Object.keys(commandMap).find(cmd => 
+      inputMessage.toLowerCase().includes(cmd)
+    );
+
+    if (command) {
+      const { path, message, requiresPremium } = commandMap[command];
+      if (requiresPremium && !isPremium) {
+        toast.error(`${command} requires Premium subscription`);
+        setShowUpgrade(true);
+        return;
+      }
+      navigate(path);
+      toast.success(message);
       setInputMessage("");
       return;
     }
@@ -444,9 +474,13 @@ const AIBotAssistant = () => {
                   <>
                     <p className="text-sm mt-2">Try these commands:</p>
                     <div className="text-xs space-y-1 mt-3">
-                      {isPremium && <Badge variant="outline" className="mr-2">hyperspace</Badge>}
-                      <Badge variant="outline" className="mr-2">go live</Badge>
-                      <Badge variant="outline">create thread: [text]</Badge>
+                      {isPremium && <Badge variant="outline" className="mr-2 mb-1">hyperspace</Badge>}
+                      <Badge variant="outline" className="mr-2 mb-1">go live</Badge>
+                      <Badge variant="outline" className="mr-2 mb-1">cyber gamers</Badge>
+                      <Badge variant="outline" className="mr-2 mb-1">monetization</Badge>
+                      <Badge variant="outline" className="mr-2 mb-1">affiliate</Badge>
+                      <Badge variant="outline" className="mr-2 mb-1">seller dashboard</Badge>
+                      <Badge variant="outline" className="mr-2 mb-1">create thread: [text]</Badge>
                     </div>
                   </>
                 )}
