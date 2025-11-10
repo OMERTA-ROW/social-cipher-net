@@ -33,19 +33,19 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const moderationPrompt = `Analyze the following content ONLY for adult nudity and explicit sexual content. Do NOT flag violence, profanity, or other mature themes.
+    const moderationPrompt = `Analyze the following content for:
 
-ONLY flag as adult content if it contains:
-- Explicit nudity (genitals, breasts, buttocks in sexual context)
-- Sexual acts or explicit sexual content
-- Pornographic material
+CRITICAL VIOLATIONS (MUST BE BLOCKED - content will be rejected):
+1. Child sexual abuse material (CSAM) or any sexual content involving minors
+2. Murder, killings, or extreme graphic violence showing death
 
-DO NOT flag:
-- Violence, gore, or graphic violence
-- Profanity, swear words, or offensive language
-- Drug references or mature themes
-- Suggestive content that isn't explicitly sexual
-- Artistic nudity without sexual context
+AGE-RESTRICTED CONTENT (18+ only):
+3. Adult nudity and explicit sexual content (adults only)
+
+Analysis rules:
+- Flag as "blocked" if it contains CSAM or murder/extreme violence
+- Flag as "adult_content" if it contains adult nudity/sexual content
+- DO NOT flag general violence, profanity, or other mature themes
 
 Content to analyze:
 ${content_text ? `Text: ${content_text}` : ''}
@@ -53,9 +53,11 @@ ${content_url ? `URL/Media: ${content_url}` : ''}
 
 Respond with a JSON object containing:
 {
-  "is_adult_content": boolean (true ONLY for explicit nudity/sexual content),
+  "should_block": boolean (true for CSAM or murder content - COMPLETELY BLOCKED),
+  "block_reason": string (explain why if blocked),
+  "is_adult_content": boolean (true ONLY for adult nudity/sexual content - age restricted),
   "confidence_score": number (0-1),
-  "flagged_categories": array (only use ["nudity"] or ["sexual_content"] if flagged, empty array otherwise),
+  "flagged_categories": array (use ["csam"], ["murder"], ["nudity"], ["sexual_content"] as appropriate),
   "explanation": string
 }`;
 
@@ -68,7 +70,7 @@ Respond with a JSON object containing:
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: 'You are a content moderation AI that identifies ONLY adult nudity and explicit sexual content. You do NOT flag violence, profanity, or other mature themes. Always respond with valid JSON.' },
+          { role: 'system', content: 'You are a content moderation AI. You MUST block child sexual abuse material (CSAM) and murder/extreme violence content completely. You age-restrict adult nudity. You do NOT flag general violence, profanity, or other mature themes. Always respond with valid JSON.' },
           { role: 'user', content: moderationPrompt }
         ],
       }),
@@ -93,11 +95,52 @@ Respond with a JSON object containing:
       console.error('Failed to parse AI response:', e);
       // Fallback: assume safe content if AI parsing fails
       moderationResult = {
+        should_block: false,
+        block_reason: '',
         is_adult_content: false,
         confidence_score: 0.5,
         flagged_categories: [],
         explanation: 'Failed to parse moderation result'
       };
+    }
+
+    // If content should be blocked (CSAM or murder), reject it completely
+    if (moderationResult.should_block) {
+      console.error('CRITICAL: Blocked content detected:', {
+        content_id,
+        reason: moderationResult.block_reason,
+        categories: moderationResult.flagged_categories
+      });
+
+      // Log critical violation for admin review
+      await supabaseClient
+        .from('content_moderation')
+        .insert({
+          content_id,
+          content_type,
+          content_text,
+          content_url,
+          is_adult_content: false,
+          moderation_score: {
+            confidence: moderationResult.confidence_score,
+            explanation: moderationResult.explanation,
+            blocked: true,
+            block_reason: moderationResult.block_reason
+          },
+          flagged_reasons: moderationResult.flagged_categories,
+          reviewed_by_ai: true,
+          reviewed_by_human: false
+        });
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          blocked: true,
+          reason: 'This content violates our policies and cannot be posted.',
+          violation_type: moderationResult.flagged_categories
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
     }
 
     // Store moderation result in database
@@ -128,6 +171,7 @@ Respond with a JSON object containing:
     return new Response(
       JSON.stringify({
         success: true,
+        blocked: false,
         is_adult_content: moderationResult.is_adult_content,
         confidence_score: moderationResult.confidence_score,
         flagged_categories: moderationResult.flagged_categories

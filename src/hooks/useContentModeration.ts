@@ -3,6 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface ModerationResult {
+  success: boolean;
+  blocked: boolean;
+  reason?: string;
+  violation_type?: string[];
   is_adult_content: boolean;
   confidence_score: number;
   flagged_categories: string[];
@@ -75,9 +79,22 @@ export const useContentModeration = () => {
 
       if (error) throw error;
 
+      // Check if content was blocked
+      if (data.blocked) {
+        toast({
+          title: "Content Blocked",
+          description: data.reason || "This content violates our policies and cannot be posted.",
+          variant: "destructive"
+        });
+      }
+
       return {
-        is_adult_content: data.is_adult_content,
-        confidence_score: data.confidence_score,
+        success: data.success,
+        blocked: data.blocked || false,
+        reason: data.reason,
+        violation_type: data.violation_type,
+        is_adult_content: data.is_adult_content || false,
+        confidence_score: data.confidence_score || 0,
         flagged_categories: data.flagged_categories || []
       };
     } catch (error) {
@@ -90,6 +107,8 @@ export const useContentModeration = () => {
       
       // Default to safe if moderation fails
       return {
+        success: false,
+        blocked: false,
         is_adult_content: false,
         confidence_score: 0,
         flagged_categories: []
