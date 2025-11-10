@@ -10,6 +10,7 @@ import Affiliate from "./pages/Affiliate";
 import SellerRegister from "./pages/SellerRegister";
 import SellerDashboard from "./pages/SellerDashboard";
 import Monetization from "./pages/Monetization";
+import CyberGamers from "./pages/CyberGamers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/seller-register" element={<SellerRegister />} />
           <Route path="/seller-dashboard" element={<SellerDashboard />} />
           <Route path="/monetization" element={<Monetization />} />
+          <Route path="/cyber-gamers" element={<CyberGamers />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
