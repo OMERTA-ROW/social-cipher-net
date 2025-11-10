@@ -190,6 +190,9 @@ const AIBotAssistant = () => {
       "cyber gamers": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
       "gamers": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
       "gaming": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
+      "cyber streamer": { path: "/cyber-streamer", message: "Opening Cyber Streamer..." },
+      "streamer": { path: "/cyber-streamer", message: "Opening Cyber Streamer..." },
+      "streaming": { path: "/cyber-streamer", message: "Opening Cyber Streamer..." },
       "monetization": { path: "/monetization", message: "Opening Monetization Dashboard..." },
       "earnings": { path: "/monetization", message: "Opening Monetization Dashboard..." },
       "money": { path: "/monetization", message: "Opening Monetization Dashboard..." },
@@ -478,6 +481,7 @@ const AIBotAssistant = () => {
                     <div className="text-xs space-y-1 mt-3">
                       {isPremium && <Badge variant="outline" className="mr-2 mb-1">hyperspace</Badge>}
                       <Badge variant="outline" className="mr-2 mb-1">go live</Badge>
+                      <Badge variant="outline" className="mr-2 mb-1">cyber streamer</Badge>
                       <Badge variant="outline" className="mr-2 mb-1">cyber gamers</Badge>
                       <Badge variant="outline" className="mr-2 mb-1">monetization</Badge>
                       <Badge variant="outline" className="mr-2 mb-1">affiliate</Badge>
