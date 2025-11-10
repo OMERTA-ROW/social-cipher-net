@@ -49,6 +49,108 @@ export type Database = {
           },
         ]
       }
+      live_streams: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          ended_at: string | null
+          id: string
+          is_live: boolean | null
+          metadata: Json | null
+          platforms: string[] | null
+          started_at: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          viewer_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          is_live?: boolean | null
+          metadata?: Json | null
+          platforms?: string[] | null
+          started_at?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          viewer_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          is_live?: boolean | null
+          metadata?: Json | null
+          platforms?: string[] | null
+          started_at?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          viewer_count?: number | null
+        }
+        Relationships: []
+      }
+      platform_connections: {
+        Row: {
+          access_token: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          platform: string
+          platform_user_id: string | null
+          platform_username: string | null
+          refresh_token: string | null
+          rtmp_url: string | null
+          stream_key: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          platform: string
+          platform_user_id?: string | null
+          platform_username?: string | null
+          refresh_token?: string | null
+          rtmp_url?: string | null
+          stream_key?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          platform?: string
+          platform_user_id?: string | null
+          platform_username?: string | null
+          refresh_token?: string | null
+          rtmp_url?: string | null
+          stream_key?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       privacy_settings: {
         Row: {
           allow_messages: boolean | null
@@ -325,6 +427,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      stream_chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          platform: string
+          platform_message_id: string | null
+          stream_id: string | null
+          user_avatar: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          platform: string
+          platform_message_id?: string | null
+          stream_id?: string | null
+          user_avatar?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          platform?: string
+          platform_message_id?: string | null
+          stream_id?: string | null
+          user_avatar?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_chat_messages_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
