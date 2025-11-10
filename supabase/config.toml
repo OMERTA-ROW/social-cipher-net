@@ -9,6 +9,15 @@ verify_jwt = false
 [functions.speech-to-text]
 verify_jwt = false
 
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.check-subscription]
+verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = false
+
 [functions.create-tip]
 verify_jwt = false
 

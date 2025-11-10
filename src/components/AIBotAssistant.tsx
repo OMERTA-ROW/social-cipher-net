@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare } from "lucide-react";
+import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare, Crown, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import VoiceWaveform from "./VoiceWaveform";
 import HyperspacePortal from "./HyperspacePortal";
+import ZozoUpgradeDialog from "./ZozoUpgradeDialog";
 import { useNavigate } from "react-router-dom";
+import { useZozoSubscription, ZOZO_TIERS } from "@/hooks/useZozoSubscription";
 
 interface Message {
   role: "user" | "assistant";
@@ -19,7 +21,9 @@ interface Message {
 
 const AIBotAssistant = () => {
   const navigate = useNavigate();
+  const { tier, loading: subLoading, startCheckout, openCustomerPortal } = useZozoSubscription();
   const [isOpen, setIsOpen] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +35,9 @@ const AIBotAssistant = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const isActive = tier !== "free";
+  const isPremium = tier === "premium";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,6 +74,12 @@ const AIBotAssistant = () => {
   };
 
   const streamAIResponse = async (userMessage: string, action = "chat") => {
+    if (!isActive) {
+      toast.error("Zozo is inactive. Subscribe to activate AI features!");
+      setShowUpgrade(true);
+      return;
+    }
+
     const updatedMessages = [...messages, { role: "user" as const, content: userMessage }];
     setMessages(updatedMessages);
     setInputMessage("");
@@ -146,28 +159,39 @@ const AIBotAssistant = () => {
   const handleSend = () => {
     if (!inputMessage.trim() || isLoading) return;
     
+    if (!isActive) {
+      toast.error("Zozo is inactive. Subscribe to start chatting!");
+      setShowUpgrade(true);
+      return;
+    }
+
     // Check for special commands
     if (inputMessage.toLowerCase().includes("create thread")) {
       createThread(inputMessage.replace(/create thread:?/i, "").trim());
       setInputMessage("");
       return;
     }
-    
+
     if (inputMessage.toLowerCase() === "hyperspace") {
+      if (!isPremium) {
+        toast.error("Hyperspace requires Premium subscription");
+        setShowUpgrade(true);
+        return;
+      }
       setHyperspaceOpen(true);
       setInputMessage("");
       return;
     }
-    
+
     if (inputMessage.toLowerCase() === "go live") {
       navigate("/studio");
       toast.success("Connecting to Live Studio...");
       setInputMessage("");
       return;
     }
-    
+
     streamAIResponse(inputMessage);
-    
+
     // Trigger auto-reply if enabled
     if (autoReplyEnabled) {
       setTimeout(() => handleAutoReply(inputMessage), 2000);
@@ -175,6 +199,12 @@ const AIBotAssistant = () => {
   };
 
   const startRecording = async () => {
+    if (!isActive) {
+      toast.error("Voice features require a subscription");
+      setShowUpgrade(true);
+      return;
+    }
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -314,58 +344,112 @@ const AIBotAssistant = () => {
           
           {/* Settings Panel */}
           <div className="px-4 py-3 border-b border-primary/10 bg-muted/10 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Radio className="w-4 h-4 text-primary" />
-                <Label htmlFor="auto-live" className="text-sm">Auto-Live Link</Label>
+            {!isActive ? (
+              <div className="text-center py-4 space-y-3">
+                <Lock className="w-8 h-8 mx-auto text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Zozo is in free mode - visible but inactive
+                </p>
+                <Button onClick={() => setShowUpgrade(true)} className="w-full glow-primary">
+                  <Crown className="w-4 h-4 mr-2" />
+                  Activate Zozo
+                </Button>
               </div>
-              <Switch
-                id="auto-live"
-                checked={autoLiveLink}
-                onCheckedChange={setAutoLiveLink}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-accent" />
-                <Label htmlFor="auto-reply" className="text-sm">Auto-Reply</Label>
-              </div>
-              <Switch
-                id="auto-reply"
-                checked={autoReplyEnabled}
-                onCheckedChange={setAutoReplyEnabled}
-              />
-            </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setHyperspaceOpen(true)}
-              className="w-full glow-primary"
-            >
-              <Zap className="w-4 h-4 mr-2" />
-              Open Hyperspace
-            </Button>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Radio className="w-4 h-4 text-primary" />
+                    <Label htmlFor="auto-live" className="text-sm">
+                      Auto-Live Link
+                    </Label>
+                  </div>
+                  <Switch
+                    id="auto-live"
+                    checked={autoLiveLink}
+                    onCheckedChange={setAutoLiveLink}
+                    disabled={!isPremium}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-accent" />
+                    <Label htmlFor="auto-reply" className="text-sm">
+                      Auto-Reply
+                    </Label>
+                  </div>
+                  <Switch
+                    id="auto-reply"
+                    checked={autoReplyEnabled}
+                    onCheckedChange={setAutoReplyEnabled}
+                  />
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!isPremium) {
+                      toast.error("Hyperspace requires Premium");
+                      setShowUpgrade(true);
+                      return;
+                    }
+                    setHyperspaceOpen(true);
+                  }}
+                  className="w-full glow-primary"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Open Hyperspace {!isPremium && <Lock className="w-3 h-3 ml-2" />}
+                </Button>
+
+                <Button variant="ghost" size="sm" onClick={openCustomerPortal} className="w-full text-xs">
+                  Manage Subscription
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {!isActive && (
+              <div className="bg-muted/30 border border-primary/20 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <Lock className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground mb-1">Zozo is in Free Mode</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Zozo is visible but won't respond. Subscribe to activate AI features!
+                    </p>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => setShowUpgrade(true)} className="glow-primary">
+                        View Plans
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {messages.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 <div className="relative inline-block mb-4">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center animate-pulse">
+                  <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center ${isActive ? 'animate-pulse' : 'opacity-50 grayscale'}`}>
                     <Bot className="w-12 h-12 text-primary-foreground" />
                   </div>
-                  <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                  {isActive && <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />}
                 </div>
                 <p className="font-bold text-lg mb-1">Hi! I'm Zozo</p>
-                <p className="text-sm">Your CyberLink AI assistant with animated voice</p>
-                <p className="text-sm mt-2">Try these commands:</p>
-                <div className="text-xs space-y-1 mt-3">
-                  <Badge variant="outline" className="mr-2">hyperspace</Badge>
-                  <Badge variant="outline" className="mr-2">go live</Badge>
-                  <Badge variant="outline">create thread: [text]</Badge>
-                </div>
+                <p className="text-sm">{isActive ? 'Your CyberLink AI assistant with animated voice' : 'I\'m visible but inactive in free mode'}</p>
+                {isActive && (
+                  <>
+                    <p className="text-sm mt-2">Try these commands:</p>
+                    <div className="text-xs space-y-1 mt-3">
+                      {isPremium && <Badge variant="outline" className="mr-2">hyperspace</Badge>}
+                      <Badge variant="outline" className="mr-2">go live</Badge>
+                      <Badge variant="outline">create thread: [text]</Badge>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               messages.map((msg, idx) => (
@@ -447,6 +531,14 @@ const AIBotAssistant = () => {
       )}
       
       <HyperspacePortal isOpen={hyperspaceOpen} onClose={() => setHyperspaceOpen(false)} />
+      <ZozoUpgradeDialog
+        open={showUpgrade}
+        onOpenChange={setShowUpgrade}
+        onSelectTier={(tier) => {
+          startCheckout(tier);
+          setShowUpgrade(false);
+        }}
+      />
     </>
   );
 };
