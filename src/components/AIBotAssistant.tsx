@@ -3,10 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Mic, Volume2, Send, Loader2, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import VoiceWaveform from "./VoiceWaveform";
+import HyperspacePortal from "./HyperspacePortal";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   role: "user" | "assistant";
@@ -14,12 +18,16 @@ interface Message {
 }
 
 const AIBotAssistant = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
+  const [autoLiveLink, setAutoLiveLink] = useState(false);
+  const [hyperspaceOpen, setHyperspaceOpen] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -27,6 +35,36 @@ const AIBotAssistant = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    // Auto-link to live when enabled
+    if (autoLiveLink && isOpen) {
+      toast.success("Auto-Live feature activated");
+    }
+  }, [autoLiveLink, isOpen]);
+
+  const createThread = async (content: string) => {
+    try {
+      toast.success("Thread created and posted!");
+      // In a real app, this would create a thread in the database
+      const newThread = {
+        role: "assistant" as const,
+        content: `📝 Thread Posted:\n\n${content}`,
+      };
+      setMessages((prev) => [...prev, newThread]);
+    } catch (error) {
+      console.error("Thread creation error:", error);
+      toast.error("Failed to create thread");
+    }
+  };
+
+  const handleAutoReply = async (originalMessage: string) => {
+    if (!autoReplyEnabled) return;
+
+    // Generate auto-reply using AI
+    const autoReplyPrompt = `Generate a brief, friendly auto-reply to this message: "${originalMessage}". Keep it under 50 words.`;
+    await streamAIResponse(autoReplyPrompt, "message");
+  };
 
   const streamAIResponse = async (userMessage: string, action = "chat") => {
     const updatedMessages = [...messages, { role: "user" as const, content: userMessage }];
@@ -107,7 +145,33 @@ const AIBotAssistant = () => {
 
   const handleSend = () => {
     if (!inputMessage.trim() || isLoading) return;
+    
+    // Check for special commands
+    if (inputMessage.toLowerCase().includes("create thread")) {
+      createThread(inputMessage.replace(/create thread:?/i, "").trim());
+      setInputMessage("");
+      return;
+    }
+    
+    if (inputMessage.toLowerCase() === "hyperspace") {
+      setHyperspaceOpen(true);
+      setInputMessage("");
+      return;
+    }
+    
+    if (inputMessage.toLowerCase() === "go live") {
+      navigate("/studio");
+      toast.success("Connecting to Live Studio...");
+      setInputMessage("");
+      return;
+    }
+    
     streamAIResponse(inputMessage);
+    
+    // Trigger auto-reply if enabled
+    if (autoReplyEnabled) {
+      setTimeout(() => handleAutoReply(inputMessage), 2000);
+    }
   };
 
   const startRecording = async () => {
@@ -247,6 +311,43 @@ const AIBotAssistant = () => {
               <VoiceWaveform isActive={isSpeaking || isRecording} />
             </div>
           )}
+          
+          {/* Settings Panel */}
+          <div className="px-4 py-3 border-b border-primary/10 bg-muted/10 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Radio className="w-4 h-4 text-primary" />
+                <Label htmlFor="auto-live" className="text-sm">Auto-Live Link</Label>
+              </div>
+              <Switch
+                id="auto-live"
+                checked={autoLiveLink}
+                onCheckedChange={setAutoLiveLink}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-accent" />
+                <Label htmlFor="auto-reply" className="text-sm">Auto-Reply</Label>
+              </div>
+              <Switch
+                id="auto-reply"
+                checked={autoReplyEnabled}
+                onCheckedChange={setAutoReplyEnabled}
+              />
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHyperspaceOpen(true)}
+              className="w-full glow-primary"
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              Open Hyperspace
+            </Button>
+          </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 ? (
@@ -259,7 +360,12 @@ const AIBotAssistant = () => {
                 </div>
                 <p className="font-bold text-lg mb-1">Hi! I'm Zozo</p>
                 <p className="text-sm">Your CyberLink AI assistant with animated voice</p>
-                <p className="text-sm mt-2">How can I help you today?</p>
+                <p className="text-sm mt-2">Try these commands:</p>
+                <div className="text-xs space-y-1 mt-3">
+                  <Badge variant="outline" className="mr-2">hyperspace</Badge>
+                  <Badge variant="outline" className="mr-2">go live</Badge>
+                  <Badge variant="outline">create thread: [text]</Badge>
+                </div>
               </div>
             ) : (
               messages.map((msg, idx) => (
@@ -339,6 +445,8 @@ const AIBotAssistant = () => {
           </div>
         </Card>
       )}
+      
+      <HyperspacePortal isOpen={hyperspaceOpen} onClose={() => setHyperspaceOpen(false)} />
     </>
   );
 };
