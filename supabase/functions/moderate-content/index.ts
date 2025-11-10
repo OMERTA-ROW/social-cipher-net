@@ -33,7 +33,19 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
-    const moderationPrompt = `Analyze the following content for adult/mature themes. Consider sexual content, violence, graphic material, profanity, and other content inappropriate for minors under 18.
+    const moderationPrompt = `Analyze the following content ONLY for adult nudity and explicit sexual content. Do NOT flag violence, profanity, or other mature themes.
+
+ONLY flag as adult content if it contains:
+- Explicit nudity (genitals, breasts, buttocks in sexual context)
+- Sexual acts or explicit sexual content
+- Pornographic material
+
+DO NOT flag:
+- Violence, gore, or graphic violence
+- Profanity, swear words, or offensive language
+- Drug references or mature themes
+- Suggestive content that isn't explicitly sexual
+- Artistic nudity without sexual context
 
 Content to analyze:
 ${content_text ? `Text: ${content_text}` : ''}
@@ -41,9 +53,9 @@ ${content_url ? `URL/Media: ${content_url}` : ''}
 
 Respond with a JSON object containing:
 {
-  "is_adult_content": boolean,
+  "is_adult_content": boolean (true ONLY for explicit nudity/sexual content),
   "confidence_score": number (0-1),
-  "flagged_categories": array of strings (e.g., ["sexual_content", "violence", "profanity"]),
+  "flagged_categories": array (only use ["nudity"] or ["sexual_content"] if flagged, empty array otherwise),
   "explanation": string
 }`;
 
@@ -56,7 +68,7 @@ Respond with a JSON object containing:
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: 'You are a content moderation AI that identifies adult/mature content. Always respond with valid JSON.' },
+          { role: 'system', content: 'You are a content moderation AI that identifies ONLY adult nudity and explicit sexual content. You do NOT flag violence, profanity, or other mature themes. Always respond with valid JSON.' },
           { role: 'user', content: moderationPrompt }
         ],
       }),

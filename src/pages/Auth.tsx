@@ -241,7 +241,7 @@ const Auth = () => {
                     max={new Date().toISOString().split('T')[0]}
                   />
                   <p className="text-xs text-muted-foreground">
-                    You must be at least 13 years old. Users under 18 will have restricted access to adult content.
+                    You must be at least 13 years old. Users under 18 cannot view adult nudity/sexual content.
                   </p>
                 </div>
                 <div className="space-y-2">
