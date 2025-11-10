@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Bot, Mic, Volume2, Send, Loader2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import VoiceWaveform from "./VoiceWaveform";
 
 interface Message {
   role: "user" | "assistant";
@@ -199,33 +200,65 @@ const AIBotAssistant = () => {
 
   return (
     <>
-      {/* Floating Bot Button */}
+      {/* Floating Bot Button - Zozo */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full shadow-lg glow-primary"
+        className={`fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full shadow-lg transition-all ${
+          isSpeaking ? "animate-pulse glow-accent scale-110" : "glow-primary"
+        }`}
         size="icon"
       >
-        <Bot className="w-8 h-8" />
+        <Bot className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""}`} />
       </Button>
 
       {/* Chat Window */}
       {isOpen && (
         <Card className="fixed bottom-28 right-8 z-50 w-96 h-[600px] bg-card/95 backdrop-blur border-primary/20 shadow-2xl flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-primary/20">
-            <div className="flex items-center gap-2">
-              <Bot className="w-6 h-6 text-primary" />
-              <h3 className="font-bold text-foreground">CyberLink AI Assistant</h3>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center ${
+                  isSpeaking ? "animate-pulse" : ""
+                }`}>
+                  <Bot className={`w-6 h-6 text-primary-foreground ${isSpeaking ? "animate-bounce" : ""}`} />
+                </div>
+                {isSpeaking && (
+                  <>
+                    <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+                    <div className="absolute inset-0 rounded-full bg-accent/20 animate-ping" style={{ animationDelay: "0.2s" }} />
+                  </>
+                )}
+              </div>
+              <div>
+                <h3 className="font-bold text-foreground">Zozo</h3>
+                <p className="text-xs text-muted-foreground">
+                  {isSpeaking ? "Speaking..." : isRecording ? "Listening..." : "AI Assistant"}
+                </p>
+              </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
               <X className="w-4 h-4" />
             </Button>
           </div>
+          
+          {/* Voice Waveform Indicator */}
+          {(isSpeaking || isRecording) && (
+            <div className="px-4 py-2 border-b border-primary/10 bg-muted/20">
+              <VoiceWaveform isActive={isSpeaking || isRecording} />
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
-                <Bot className="w-12 h-12 mx-auto mb-4 text-primary" />
-                <p>Hi! I'm your CyberLink AI assistant.</p>
+                <div className="relative inline-block mb-4">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center animate-pulse">
+                    <Bot className="w-12 h-12 text-primary-foreground" />
+                  </div>
+                  <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+                </div>
+                <p className="font-bold text-lg mb-1">Hi! I'm Zozo</p>
+                <p className="text-sm">Your CyberLink AI assistant with animated voice</p>
                 <p className="text-sm mt-2">How can I help you today?</p>
               </div>
             ) : (
@@ -234,33 +267,47 @@ const AIBotAssistant = () => {
                   key={idx}
                   className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  <div
-                    className={`max-w-[80%] p-3 rounded-lg ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  <div className="flex items-start gap-2">
                     {msg.role === "assistant" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => speakText(msg.content)}
-                        disabled={isSpeaking}
-                        className="mt-2"
-                      >
-                        <Volume2 className="w-4 h-4" />
-                      </Button>
+                      <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 ${
+                        isSpeaking ? "animate-pulse" : ""
+                      }`}>
+                        <Bot className="w-4 h-4 text-primary-foreground" />
+                      </div>
                     )}
+                    <div
+                      className={`max-w-[80%] p-3 rounded-lg ${
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      {msg.role === "assistant" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => speakText(msg.content)}
+                          disabled={isSpeaking}
+                          className="mt-2"
+                        >
+                          <Volume2 className={`w-4 h-4 ${isSpeaking ? "animate-pulse" : ""}`} />
+                          <span className="ml-1 text-xs">{isSpeaking ? "Speaking..." : "Listen"}</span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))
             )}
             {isLoading && (
-              <div className="flex gap-2 justify-start">
+              <div className="flex gap-2 justify-start items-start">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 animate-pulse">
+                  <Bot className="w-4 h-4 text-primary-foreground" />
+                </div>
                 <div className="bg-muted p-3 rounded-lg">
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <p className="text-xs text-muted-foreground mt-1">Zozo is thinking...</p>
                 </div>
               </div>
             )}
