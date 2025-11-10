@@ -12,6 +12,7 @@ import SellerDashboard from "./pages/SellerDashboard";
 import Monetization from "./pages/Monetization";
 import CyberGamers from "./pages/CyberGamers";
 import NotFound from "./pages/NotFound";
+import Security from "./pages/Security";
 import AIBotAssistant from "./components/AIBotAssistant";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/seller-dashboard" element={<SellerDashboard />} />
           <Route path="/monetization" element={<Monetization />} />
           <Route path="/cyber-gamers" element={<CyberGamers />} />
+          <Route path="/security" element={<Security />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

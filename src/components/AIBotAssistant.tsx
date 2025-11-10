@@ -199,6 +199,8 @@ const AIBotAssistant = () => {
       "seller": { path: "/seller-dashboard", message: "Opening Seller Dashboard..." },
       "sell": { path: "/seller-register", message: "Opening Seller Registration..." },
       "register seller": { path: "/seller-register", message: "Opening Seller Registration..." },
+      "security": { path: "/security", message: "Opening Security Center..." },
+      "privacy": { path: "/security", message: "Opening Security Center..." },
       "home": { path: "/", message: "Going to Home..." },
       "feed": { path: "/", message: "Going to Feed..." }
     };

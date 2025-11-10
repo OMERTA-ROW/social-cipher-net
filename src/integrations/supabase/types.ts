@@ -49,6 +49,39 @@ export type Database = {
           },
         ]
       }
+      privacy_settings: {
+        Row: {
+          allow_messages: boolean | null
+          allow_tags: boolean | null
+          created_at: string | null
+          id: string
+          show_activity: boolean | null
+          show_email: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          allow_messages?: boolean | null
+          allow_tags?: boolean | null
+          created_at?: string | null
+          id?: string
+          show_activity?: boolean | null
+          show_email?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          allow_messages?: boolean | null
+          allow_tags?: boolean | null
+          created_at?: string | null
+          id?: string
+          show_activity?: boolean | null
+          show_email?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       product_reviews: {
         Row: {
           created_at: string | null
@@ -137,6 +170,42 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          is_private: boolean | null
+          two_factor_enabled: boolean | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+          is_private?: boolean | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          is_private?: boolean | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           affiliate_commission: number | null
@@ -193,6 +262,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_audit_log: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       seller_profiles: {
         Row: {

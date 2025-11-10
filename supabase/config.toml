@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.youtube-chat]
 verify_jwt = false
+
+[functions.security-audit]
+verify_jwt = true
