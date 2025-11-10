@@ -1,1 +1,28 @@
 project_id = "vovgmknghvohenvhsduw"
+
+[functions.ai-bot]
+verify_jwt = false
+
+[functions.text-to-speech]
+verify_jwt = false
+
+[functions.speech-to-text]
+verify_jwt = false
+
+[functions.create-tip]
+verify_jwt = false
+
+[functions.create-subscription]
+verify_jwt = false
+
+[functions.instagram-chat]
+verify_jwt = false
+
+[functions.tiktok-chat]
+verify_jwt = false
+
+[functions.twitter-chat]
+verify_jwt = false
+
+[functions.youtube-chat]
+verify_jwt = false
