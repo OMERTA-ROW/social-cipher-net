@@ -28,7 +28,9 @@ import {
   Facebook,
   Video,
   Monitor,
-  Twitch
+  Twitch,
+  ShoppingCart,
+  Instagram
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -68,11 +70,25 @@ const CyberStreamer = () => {
     duration: 0,
     peakViewers: 0
   });
-  const [platforms, setPlatforms] = useState<Platform[]>([
+  const [streamingPlatforms, setStreamingPlatforms] = useState<Platform[]>([
     { id: 'youtube', name: 'YouTube', icon: Youtube, connected: false },
     { id: 'twitch', name: 'Twitch', icon: Twitch, connected: false },
     { id: 'facebook', name: 'Facebook', icon: Facebook, connected: false },
   ]);
+  
+  const [socialPlatforms, setSocialPlatforms] = useState<Platform[]>([
+    { id: 'google', name: 'Google', icon: Monitor, connected: false },
+    { id: 'instagram', name: 'Instagram', icon: Video, connected: false },
+    { id: 'twitter', name: 'X (Twitter)', icon: MessageSquare, connected: false },
+    { id: 'tiktok', name: 'TikTok', icon: Video, connected: false },
+  ]);
+  
+  const [commercePlatforms, setCommercePlatforms] = useState<Platform[]>([
+    { id: 'shopify', name: 'Shopify', icon: ShoppingCart, connected: false },
+    { id: 'unitedmasters', name: 'United Masters', icon: Users, connected: false },
+  ]);
+  
+  const allPlatforms = [...streamingPlatforms, ...socialPlatforms, ...commercePlatforms];
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -116,12 +132,17 @@ const CyberStreamer = () => {
       if (error) throw error;
 
       if (data) {
-        setPlatforms(prev => prev.map(p => ({
-          ...p,
-          connected: data.some(conn => conn.platform === p.id),
-          streamKey: data.find(conn => conn.platform === p.id)?.stream_key,
-          rtmpUrl: data.find(conn => conn.platform === p.id)?.rtmp_url
-        })));
+        const updatePlatforms = (platforms: Platform[]) => 
+          platforms.map(p => ({
+            ...p,
+            connected: data.some(conn => conn.platform === p.id),
+            streamKey: data.find(conn => conn.platform === p.id)?.stream_key,
+            rtmpUrl: data.find(conn => conn.platform === p.id)?.rtmp_url
+          }));
+
+        setStreamingPlatforms(prev => updatePlatforms(prev));
+        setSocialPlatforms(prev => updatePlatforms(prev));
+        setCommercePlatforms(prev => updatePlatforms(prev));
       }
     } catch (error) {
       console.error('Error loading platforms:', error);
@@ -160,7 +181,7 @@ const CyberStreamer = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const connectedPlatforms = platforms.filter(p => p.connected).map(p => p.id);
+      const connectedPlatforms = streamingPlatforms.filter(p => p.connected).map(p => p.id);
       
       if (connectedPlatforms.length === 0) {
         toast.error("Please connect at least one platform first");
@@ -330,10 +351,14 @@ const CyberStreamer = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="stream" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 gap-1">
+          <TabsList className="grid w-full grid-cols-6 gap-1">
             <TabsTrigger value="stream" className="text-xs">
               <Monitor className="w-4 h-4 mr-1" />
               Stream
+            </TabsTrigger>
+            <TabsTrigger value="accounts" className="text-xs">
+              <LinkIcon className="w-4 h-4 mr-1" />
+              Accounts
             </TabsTrigger>
             <TabsTrigger value="gaming" className="text-xs">
               <Video className="w-4 h-4 mr-1" />
@@ -372,7 +397,7 @@ const CyberStreamer = () => {
                     <div className="text-center">
                       <Video className="w-16 h-16 mx-auto mb-4 text-primary animate-pulse" />
                       <p className="text-xl font-bold">Your Stream is Live!</p>
-                      <p className="text-sm text-muted-foreground mt-2">Broadcasting to {platforms.filter(p => p.connected).length} platform(s)</p>
+                      <p className="text-sm text-muted-foreground mt-2">Broadcasting to {streamingPlatforms.filter(p => p.connected).length} platform(s)</p>
                     </div>
                   ) : (
                     <div className="text-center text-muted-foreground">
@@ -393,17 +418,17 @@ const CyberStreamer = () => {
               </CardContent>
             </Card>
 
-            {/* Platform Connections */}
+            {/* Streaming Platform Connections */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <LinkIcon className="w-5 h-5" />
-                  Platform Connections
+                  <Radio className="w-5 h-5" />
+                  Streaming Platforms
                 </CardTitle>
                 <CardDescription>Connect to stream on multiple platforms</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {platforms.map((platform) => {
+                {streamingPlatforms.map((platform) => {
                   const Icon = platform.icon;
                   return (
                     <div key={platform.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -527,6 +552,169 @@ const CyberStreamer = () => {
             </Card>
           </div>
         </div>
+          </TabsContent>
+
+          <TabsContent value="accounts" className="space-y-6">
+            {/* Account Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card className="glow-primary">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-2">Social Accounts</p>
+                    <p className="text-3xl font-bold">{socialPlatforms.filter(p => p.connected).length}/{socialPlatforms.length}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="glow-accent">
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-2">E-Commerce</p>
+                    <p className="text-3xl font-bold">{commercePlatforms.filter(p => p.connected).length}/{commercePlatforms.length}</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-2">Total Connected</p>
+                    <p className="text-3xl font-bold">{allPlatforms.filter(p => p.connected).length}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Social Media Accounts */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Social Media Accounts
+                </CardTitle>
+                <CardDescription>Connect your social media for cross-posting and analytics</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {socialPlatforms.map((platform) => {
+                  const Icon = platform.icon;
+                  return (
+                    <div key={platform.id} className="flex items-center justify-between p-4 border rounded-lg hover:border-primary/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-6 h-6" />
+                        <div>
+                          <p className="font-medium">{platform.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {platform.connected ? 'Auto-post enabled' : 'Not connected'}
+                          </p>
+                        </div>
+                      </div>
+                      {platform.connected ? (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="border-green-500 text-green-500">
+                            <Check className="w-3 h-3 mr-1" />
+                            Connected
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => disconnectPlatform(platform.id)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          size="sm"
+                          onClick={() => connectPlatform(platform.id)}
+                        >
+                          Connect
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* E-Commerce & Monetization */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  E-Commerce & Monetization
+                </CardTitle>
+                <CardDescription>Connect stores and distribution platforms</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {commercePlatforms.map((platform) => {
+                  const Icon = platform.icon;
+                  return (
+                    <div key={platform.id} className="flex items-center justify-between p-4 border rounded-lg hover:border-accent/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-6 h-6" />
+                        <div>
+                          <p className="font-medium">{platform.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {platform.connected 
+                              ? platform.id === 'shopify' 
+                                ? 'Store connected' 
+                                : 'Distribution enabled'
+                              : 'Not connected'}
+                          </p>
+                        </div>
+                      </div>
+                      {platform.connected ? (
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="border-green-500 text-green-500">
+                            <Check className="w-3 h-3 mr-1" />
+                            Connected
+                          </Badge>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => disconnectPlatform(platform.id)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button 
+                          size="sm"
+                          onClick={() => connectPlatform(platform.id)}
+                        >
+                          Connect
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {/* Account Management Info */}
+            <Card className="border-primary/20">
+              <CardHeader>
+                <CardTitle>Why Connect Multiple Accounts?</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5" />
+                    <p><strong>Cross-Post Content:</strong> Share streams and videos across all platforms automatically</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5" />
+                    <p><strong>Unified Analytics:</strong> See performance metrics from all platforms in one dashboard</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5" />
+                    <p><strong>Monetization:</strong> Connect stores and distribution to earn from your content</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-500 mt-0.5" />
+                    <p><strong>Grow Faster:</strong> Reach audiences on every platform from one control center</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="gaming" className="space-y-6">
@@ -672,7 +860,7 @@ const CyberStreamer = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {platforms.map((platform) => {
+                  {allPlatforms.map((platform) => {
                     const Icon = platform.icon;
                     return (
                       <div key={platform.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -873,7 +1061,7 @@ const CyberStreamer = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {platforms.map((platform) => {
+                  {streamingPlatforms.map((platform) => {
                     const Icon = platform.icon;
                     return (
                       <div key={platform.id} className="space-y-2">
