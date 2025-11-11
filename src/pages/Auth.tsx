@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload } from "lucide-react";
+import SolarMatrixBackground from "@/components/SolarMatrixBackground";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -165,22 +166,32 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome to CyberLink</CardTitle>
-          <CardDescription>Sign in to your account or create a new one</CardDescription>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <SolarMatrixBackground />
+      
+      <Card className="w-full max-w-md relative z-10 bg-card/95 backdrop-blur-xl border-primary/20 shadow-2xl shadow-primary/10 animate-fade-in">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+            Welcome to CyberLink
+          </CardTitle>
+          <CardDescription className="text-base">
+            Enter the digital universe
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="signin" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger value="signup" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                Sign Up
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="signin">
+            <TabsContent value="signin" className="animate-fade-in">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-foreground">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -188,28 +199,34 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="bg-background/50 border-primary/30 focus:border-primary transition-all"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-foreground">Password</Label>
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="bg-background/50 border-primary/30 focus:border-primary transition-all"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button 
+                  type="submit" 
+                  className="w-full glow-primary hover:scale-105 transition-transform" 
+                  disabled={loading}
+                >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Sign In
+                  Enter CyberLink
                 </Button>
               </form>
             </TabsContent>
-            <TabsContent value="signup">
+            <TabsContent value="signup" className="animate-fade-in">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email" className="text-foreground">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -217,10 +234,11 @@ const Auth = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="bg-background/50 border-primary/30 focus:border-primary transition-all"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password" className="text-foreground">Password</Label>
                   <Input
                     id="signup-password"
                     type="password"
@@ -228,10 +246,11 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
+                    className="bg-background/50 border-primary/30 focus:border-primary transition-all"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="birthdate">Date of Birth</Label>
+                  <Label htmlFor="birthdate" className="text-foreground">Date of Birth</Label>
                   <Input
                     id="birthdate"
                     type="date"
@@ -239,15 +258,16 @@ const Auth = () => {
                     onChange={(e) => setBirthdate(e.target.value)}
                     required
                     max={new Date().toISOString().split('T')[0]}
+                    className="bg-background/50 border-primary/30 focus:border-primary transition-all"
                   />
                   <p className="text-xs text-muted-foreground">
                     You must be at least 13 years old. Users under 18 cannot view adult nudity/sexual content.
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="document-type">Document Type</Label>
+                  <Label htmlFor="document-type" className="text-foreground">Document Type</Label>
                   <Select value={documentType} onValueChange={setDocumentType} required>
-                    <SelectTrigger id="document-type">
+                    <SelectTrigger id="document-type" className="bg-background/50 border-primary/30">
                       <SelectValue placeholder="Select ID type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -259,7 +279,7 @@ const Auth = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="id-document">Upload ID Document</Label>
+                  <Label htmlFor="id-document" className="text-foreground">Upload ID Document</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="id-document"
@@ -267,17 +287,21 @@ const Auth = () => {
                       accept="image/jpeg,image/jpg,image/png,application/pdf"
                       onChange={(e) => setIdDocument(e.target.files?.[0] || null)}
                       required
-                      className="cursor-pointer"
+                      className="cursor-pointer bg-background/50 border-primary/30"
                     />
-                    <Upload className="h-5 w-5 text-muted-foreground" />
+                    <Upload className="h-5 w-5 text-primary" />
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Accepted formats: JPG, PNG, PDF (Max 10MB)
                   </p>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button 
+                  type="submit" 
+                  className="w-full glow-primary hover:scale-105 transition-transform" 
+                  disabled={loading}
+                >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Sign Up
+                  Join CyberLink
                 </Button>
               </form>
             </TabsContent>
