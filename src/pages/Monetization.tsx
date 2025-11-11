@@ -54,16 +54,19 @@ const Monetization = () => {
 
   const checkSubscriptionTier = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("check-subscription");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase.functions.invoke("check-subscription", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
       
       if (error) throw error;
 
-      if (data?.subscribed && data?.product_id) {
-        if (data.product_id === "prod_TOtJnFseC54ChY") {
-          setCurrentTier("CyberBasis");
-        } else if (data.product_id === "prod_TOtRdMUKNeKkFc") {
-          setCurrentTier("CyberPro");
-        }
+      if (data?.tier) {
+        setCurrentTier(data.tier);
       }
     } catch (error: any) {
       console.error("Error checking tier:", error);
