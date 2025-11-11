@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gamepad2, Users, Radio, Trophy, Zap } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
+import FloatingWindow from "@/components/FloatingWindow";
+import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { useNavigate } from "react-router-dom";
 
 interface GangMember {
@@ -19,6 +21,7 @@ interface GangMember {
 
 const CyberGamers = () => {
   const navigate = useNavigate();
+  const { windows, openWindow, closeWindow } = useFloatingWindows();
   const [gangMembers] = useState<GangMember[]>([
     { id: 1, name: "CyberNinja", rank: "Leader", level: 99, isLive: true },
     { id: 2, name: "PixelWarrior", rank: "Elite", level: 87, isLive: false },
@@ -34,11 +37,65 @@ const CyberGamers = () => {
       
       <main className="container mx-auto px-4 pt-20 pb-8">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Gamepad2 className="w-10 h-10 text-primary text-glow" />
-            <h1 className="text-4xl font-bold text-primary text-glow">Cyber Gamers</h1>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Gamepad2 className="w-10 h-10 text-primary text-glow" />
+                <h1 className="text-4xl font-bold text-primary text-glow">Cyber Gamers</h1>
+              </div>
+              <p className="text-muted-foreground">Join the ultimate gaming community and stream live</p>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => openWindow("Gang Members", (
+                  <div className="grid grid-cols-2 gap-4">
+                    {gangMembers.map((member) => (
+                      <Card key={member.id} className="p-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Avatar className="w-10 h-10">
+                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`} />
+                            <AvatarFallback>{member.name.slice(0, 2)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h4 className="font-semibold">{member.name}</h4>
+                            <Badge variant="outline" className="text-xs">{member.rank}</Badge>
+                          </div>
+                        </div>
+                        {member.isLive && <Badge variant="destructive" className="text-xs">LIVE</Badge>}
+                      </Card>
+                    ))}
+                  </div>
+                ))}
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Members
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => openWindow("Tournaments", (
+                  <div className="space-y-3">
+                    {[
+                      { name: "Cyber Strike Championship", date: "Dec 15, 2025", prize: "$5,000" },
+                      { name: "Neon Racers Grand Prix", date: "Dec 20, 2025", prize: "$3,000" },
+                      { name: "Gang Wars Tournament", date: "Dec 25, 2025", prize: "$10,000" },
+                    ].map((tournament, idx) => (
+                      <Card key={idx} className="p-3">
+                        <h4 className="font-semibold">{tournament.name}</h4>
+                        <p className="text-sm text-muted-foreground">{tournament.date}</p>
+                        <Badge className="mt-2">{tournament.prize}</Badge>
+                      </Card>
+                    ))}
+                  </div>
+                ))}
+              >
+                <Trophy className="w-4 h-4 mr-2" />
+                Tournaments
+              </Button>
+            </div>
           </div>
-          <p className="text-muted-foreground">Join the ultimate gaming community and stream live</p>
         </div>
 
         <Tabs defaultValue="gang" className="w-full">
@@ -167,6 +224,22 @@ const CyberGamers = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Floating Windows */}
+      {windows.map((window) => (
+        <FloatingWindow
+          key={window.id}
+          id={window.id}
+          title={window.title}
+          onClose={() => closeWindow(window.id)}
+          initialX={window.x}
+          initialY={window.y}
+          width={700}
+          height={500}
+        >
+          {window.content}
+        </FloatingWindow>
+      ))}
     </div>
   );
 };

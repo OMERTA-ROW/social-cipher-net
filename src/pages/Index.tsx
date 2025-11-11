@@ -10,6 +10,10 @@ import { QualificationProgress } from "@/components/QualificationProgress";
 import { WalletCard } from "@/components/WalletCard";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
+import FloatingWindow from "@/components/FloatingWindow";
+import { useFloatingWindows } from "@/hooks/useFloatingWindows";
+import { Button } from "@/components/ui/button";
+import { Wallet, TrendingUp, Award, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -34,6 +38,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
+  const { windows, openWindow, closeWindow } = useFloatingWindows();
 
   useEffect(() => {
     fetchPosts();
@@ -157,23 +162,50 @@ const Index = () => {
       
       <main className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-2xl mx-auto">
-          <PlatformEarningsCard />
+          {currentUserId && (
+            <div className="mb-6 p-4 border rounded-lg bg-muted/30">
+              <h3 className="text-sm font-semibold mb-3">Quick Access Windows</h3>
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => openWindow("Platform Earnings", <PlatformEarningsCard />)}
+                >
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Earnings
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => openWindow("My Wallet", <WalletCard />)}
+                >
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Wallet
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => openWindow("Crypto Balance", <CryptoBalanceCard />)}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Crypto
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => openWindow("Qualification Progress", <QualificationProgress />)}
+                >
+                  <Award className="w-4 h-4 mr-2" />
+                  Progress
+                </Button>
+              </div>
+            </div>
+          )}
           
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-foreground mb-2">Feed</h2>
             <p className="text-muted-foreground">Stay connected with the cyber community</p>
           </div>
-
-          {currentUserId && (
-            <div className="space-y-6 mb-6">
-              <QualificationProgress />
-              <div className="grid md:grid-cols-2 gap-6">
-                <WalletCard />
-              </div>
-              <CryptoBalanceCard />
-              <CryptoWalletConnect />
-            </div>
-          )}
           
           <div className="space-y-4">
             {isLoading ? (
@@ -213,6 +245,22 @@ const Index = () => {
         onOpenChange={setIsCreateDialogOpen}
         onPost={handleCreatePost}
       />
+
+      {/* Floating Windows */}
+      {windows.map((window) => (
+        <FloatingWindow
+          key={window.id}
+          id={window.id}
+          title={window.title}
+          onClose={() => closeWindow(window.id)}
+          initialX={window.x}
+          initialY={window.y}
+          width={600}
+          height={500}
+        >
+          {window.content}
+        </FloatingWindow>
+      ))}
     </div>
   );
 };

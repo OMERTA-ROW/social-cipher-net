@@ -4,15 +4,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Send, Zap, Loader2 } from "lucide-react";
+import { Radio, Send, Zap, Loader2, Video, MessageSquare } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
+import FloatingWindow from "@/components/FloatingWindow";
+import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
 import { TipDialog } from "@/components/TipDialog";
 
 const Studio = () => {
   const [isLive, setIsLive] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
+  const { windows, openWindow, closeWindow } = useFloatingWindows();
   const [messages, setMessages] = useState<Record<string, Array<{ role: "user" | "assistant"; content: string }>>>({
     twitter: [],
     instagram: [],
@@ -104,6 +107,52 @@ const Studio = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openWindow("Stream Preview", (
+                <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <Video className="w-16 h-16 mx-auto mb-4 text-primary" />
+                    <p className="text-xl font-bold">Stream Preview</p>
+                  </div>
+                </div>
+              ))}
+            >
+              <Video className="w-4 h-4 mr-2" />
+              Preview
+            </Button>
+            {connectedPlatforms.map(platformId => {
+              const platform = platforms.find(p => p.id === platformId);
+              return (
+                <Button
+                  key={platformId}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openWindow(`${platform?.name} Chat`, (
+                    <div className="space-y-4">
+                      <div className="h-[400px] bg-muted/10 rounded-lg p-4 overflow-y-auto">
+                        {messages[platformId].map((msg, idx) => (
+                          <div key={idx} className={`p-3 rounded-lg mb-2 ${msg.role === "user" ? "bg-primary/20" : "bg-card/70"}`}>
+                            <div className="text-xs text-muted-foreground mb-1">
+                              {msg.role === "user" ? "You" : `${platform?.name} Bot`}
+                            </div>
+                            <div>{msg.content}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <Input placeholder="Type message..." />
+                        <Button size="icon"><Send className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                  ))}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  {platform?.name}
+                </Button>
+              );
+            })}
             {isLive && (
               <>
                 <Badge variant="destructive" className="animate-pulse">
@@ -230,6 +279,22 @@ const Studio = () => {
           </Card>
         </div>
       </main>
+
+      {/* Floating Windows */}
+      {windows.map((window) => (
+        <FloatingWindow
+          key={window.id}
+          id={window.id}
+          title={window.title}
+          onClose={() => closeWindow(window.id)}
+          initialX={window.x}
+          initialY={window.y}
+          width={600}
+          height={500}
+        >
+          {window.content}
+        </FloatingWindow>
+      ))}
     </div>
   );
 };

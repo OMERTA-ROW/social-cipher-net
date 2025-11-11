@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import FloatingWindow from "@/components/FloatingWindow";
+import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +63,7 @@ interface ChatMessage {
 
 const CyberStreamer = () => {
   const navigate = useNavigate();
+  const { windows, openWindow, closeWindow } = useFloatingWindows();
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
   const [currentStreamId, setCurrentStreamId] = useState<string | null>(null);
@@ -323,29 +326,75 @@ const CyberStreamer = () => {
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12 max-w-7xl">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-glow mb-2">Streaming Command Center</h1>
-            <p className="text-muted-foreground">Monitor, stream, and chat - all in one place</p>
-          </div>
-          <div className="flex gap-3">
-            {isLive ? (
-              <>
-                <Badge variant="default" className="bg-red-500 animate-pulse px-4 py-2">
-                  <Activity className="w-3 h-3 mr-2" />
-                  LIVE NOW
-                </Badge>
-                <Button onClick={stopStream} variant="destructive" size="lg">
-                  <StopCircle className="w-4 h-4 mr-2" />
-                  End Stream
-                </Button>
-              </>
-            ) : (
-              <Button onClick={startStream} size="lg" className="glow-primary">
-                <Play className="w-4 h-4 mr-2" />
-                Go Live
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-glow mb-2">Streaming Command Center</h1>
+              <p className="text-muted-foreground">Monitor, stream, and chat - all in one place</p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openWindow("Stream Monitor", (
+                  <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
+                    <div className="text-center">
+                      <Video className="w-16 h-16 mx-auto mb-4 text-primary animate-pulse" />
+                      <p className="text-xl font-bold">Stream Preview</p>
+                    </div>
+                  </div>
+                ))}
+              >
+                <Monitor className="w-4 h-4 mr-2" />
+                Monitor
               </Button>
-            )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openWindow("Stream Stats", (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Eye className="w-4 h-4 text-primary" />
+                          <span className="text-sm text-muted-foreground">Viewers</span>
+                        </div>
+                        <p className="text-2xl font-bold">{streamStats.viewers}</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MessageSquare className="w-4 h-4 text-accent" />
+                          <span className="text-sm text-muted-foreground">Messages</span>
+                        </div>
+                        <p className="text-2xl font-bold">{chatMessages.length}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              >
+                <Activity className="w-4 h-4 mr-2" />
+                Stats
+              </Button>
+              {isLive ? (
+                <>
+                  <Badge variant="default" className="bg-red-500 animate-pulse px-4 py-2">
+                    <Activity className="w-3 h-3 mr-2" />
+                    LIVE NOW
+                  </Badge>
+                  <Button onClick={stopStream} variant="destructive" size="lg">
+                    <StopCircle className="w-4 h-4 mr-2" />
+                    End Stream
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={startStream} size="lg" className="glow-primary">
+                  <Play className="w-4 h-4 mr-2" />
+                  Go Live
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1128,6 +1177,22 @@ const CyberStreamer = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Floating Windows */}
+      {windows.map((window) => (
+        <FloatingWindow
+          key={window.id}
+          id={window.id}
+          title={window.title}
+          onClose={() => closeWindow(window.id)}
+          initialX={window.x}
+          initialY={window.y}
+          width={700}
+          height={600}
+        >
+          {window.content}
+        </FloatingWindow>
+      ))}
     </div>
   );
 };
