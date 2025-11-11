@@ -94,6 +94,48 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_earnings: {
+        Row: {
+          amount: number
+          created_at: string | null
+          creator_id: string
+          earning_type: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          creator_id: string
+          earning_type: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          creator_id?: string
+          earning_type?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_earnings_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_earnings_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       identity_verification: {
         Row: {
           created_at: string | null
@@ -240,6 +282,182 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      post_clicks: {
+        Row: {
+          clicker_id: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          post_id: string
+        }
+        Insert: {
+          clicker_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          post_id: string
+        }
+        Update: {
+          clicker_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_clicks_clicker_id_fkey"
+            columns: ["clicker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_clicks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          payer_id: string
+          payment_type: string
+          post_id: string
+          status: string | null
+          stripe_payment_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          payer_id: string
+          payment_type: string
+          post_id: string
+          status?: string | null
+          stripe_payment_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          payer_id?: string
+          payment_type?: string
+          post_id?: string
+          status?: string | null
+          stripe_payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_payments_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_payments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_views: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          post_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          post_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          post_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_views_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_views_viewer_id_fkey"
+            columns: ["viewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          click_count: number | null
+          content: string
+          created_at: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          monetization_type: string | null
+          price: number | null
+          updated_at: string | null
+          user_id: string
+          view_count: number | null
+        }
+        Insert: {
+          click_count?: number | null
+          content: string
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          monetization_type?: string | null
+          price?: number | null
+          updated_at?: string | null
+          user_id: string
+          view_count?: number | null
+        }
+        Update: {
+          click_count?: number | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          monetization_type?: string | null
+          price?: number | null
+          updated_at?: string | null
+          user_id?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       privacy_settings: {
         Row: {

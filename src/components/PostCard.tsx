@@ -1,10 +1,11 @@
-import { Heart, MessageCircle, Share2, BadgeCheck } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 
 interface PostCardProps {
+  postId: string;
   author: string;
   avatar?: string;
   content: string;
@@ -12,13 +13,35 @@ interface PostCardProps {
   likes: number;
   comments: number;
   isVerified?: boolean;
+  monetizationType?: string;
+  price?: number;
+  isPaid?: boolean;
+  onPaymentRequired?: () => void;
 }
 
-const PostCard = ({ author, avatar, content, timestamp, likes, comments, isVerified }: PostCardProps) => {
+const PostCard = ({ 
+  postId,
+  author, 
+  avatar, 
+  content, 
+  timestamp, 
+  likes, 
+  comments, 
+  isVerified,
+  monetizationType = "free",
+  price = 0,
+  isPaid = false,
+  onPaymentRequired
+}: PostCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
+  const isLocked = (monetizationType === "pay_per_view" || monetizationType === "pay_per_click") && !isPaid;
 
   const handleLike = () => {
+    if (isLocked) {
+      onPaymentRequired?.();
+      return;
+    }
     setIsLiked(!isLiked);
     setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
   };
@@ -41,8 +64,34 @@ const PostCard = ({ author, avatar, content, timestamp, likes, comments, isVerif
             )}
             <span className="text-sm text-muted-foreground">· {timestamp}</span>
           </div>
+
+          {monetizationType !== "free" && (
+            <div className="mb-3 flex items-center gap-2 text-sm">
+              <span className="bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
+                {monetizationType === "pay_per_view" ? "💰 Pay Per View" : "🔗 Pay Per Click"}
+              </span>
+              <span className="font-semibold">${price}</span>
+            </div>
+          )}
           
-          <p className="text-foreground mb-4 leading-relaxed">{content}</p>
+          {isLocked ? (
+            <div className="relative mb-4">
+              <div className="blur-sm">
+                <p className="text-foreground leading-relaxed">{content.substring(0, 50)}...</p>
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                <button
+                  onClick={onPaymentRequired}
+                  className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span>Unlock for ${price}</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-foreground mb-4 leading-relaxed">{content}</p>
+          )}
           
           <div className="flex items-center gap-6">
             <Button
@@ -55,7 +104,12 @@ const PostCard = ({ author, avatar, content, timestamp, likes, comments, isVerif
               <span>{likeCount}</span>
             </Button>
             
-            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-primary">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="gap-2 text-muted-foreground hover:text-primary"
+              onClick={() => isLocked && onPaymentRequired?.()}
+            >
               <MessageCircle className="w-5 h-5" />
               <span>{comments}</span>
             </Button>

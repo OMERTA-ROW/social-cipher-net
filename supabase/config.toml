@@ -41,3 +41,18 @@ verify_jwt = true
 
 [functions.moderate-content]
 verify_jwt = false
+
+[functions.create-verification-payment]
+verify_jwt = false
+
+[functions.track-post-view]
+verify_jwt = false
+
+[functions.track-post-click]
+verify_jwt = false
+
+[functions.create-post-payment]
+verify_jwt = false
+
+[functions.complete-post-payment]
+verify_jwt = false

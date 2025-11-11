@@ -14,7 +14,13 @@ import { User } from "@supabase/supabase-js";
 const Monetization = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [earnings, setEarnings] = useState({ tips: 0, subscriptions: 0, total: 0 });
+  const [earnings, setEarnings] = useState({ 
+    tips: 0, 
+    subscriptions: 0, 
+    total: 0,
+    payPerView: 0,
+    payPerClick: 0
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -45,16 +51,43 @@ const Monetization = () => {
   }, [user]);
 
   const fetchEarnings = async () => {
+    if (!user) return;
+    
     setLoading(true);
-    // Simulate earnings data - in production, fetch from Stripe
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase
+        .from("creator_earnings")
+        .select("amount, earning_type")
+        .eq("creator_id", user.id);
+
+      if (error) throw error;
+
+      const payPerView = data
+        ?.filter(e => e.earning_type === "pay_per_view")
+        .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+      
+      const payPerClick = data
+        ?.filter(e => e.earning_type === "pay_per_click")
+        .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+
+      const total = payPerView + payPerClick;
+
       setEarnings({
-        tips: 145.50,
-        subscriptions: 399.00,
-        total: 544.50,
+        total,
+        tips: 0,
+        subscriptions: 0,
+        payPerView,
+        payPerClick,
       });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load earnings",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleCreateSubscription = async () => {
@@ -98,23 +131,23 @@ const Monetization = () => {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Tips Received</CardTitle>
+                  <CardTitle className="text-sm font-medium">Pay Per View</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${earnings.tips.toFixed(2)}</div>
-                  <p className="text-xs text-muted-foreground">From supporters</p>
+                  <div className="text-2xl font-bold">${earnings.payPerView.toFixed(2)}</div>
+                  <p className="text-xs text-muted-foreground">Content unlocks</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Subscriptions</CardTitle>
+                  <CardTitle className="text-sm font-medium">Pay Per Click</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${earnings.subscriptions.toFixed(2)}</div>
-                  <p className="text-xs text-muted-foreground">Monthly recurring</p>
+                  <div className="text-2xl font-bold">${earnings.payPerClick.toFixed(2)}</div>
+                  <p className="text-xs text-muted-foreground">Click revenue</p>
                 </CardContent>
               </Card>
             </div>
