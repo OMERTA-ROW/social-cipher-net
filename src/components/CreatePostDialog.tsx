@@ -111,11 +111,18 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
         
         // Update reply count for parent
         if (parentPostId && i > 0) {
-          await supabase.rpc('increment', { 
-            row_id: parentPostId,
-            table_name: 'posts',
-            column_name: 'reply_count'
-          });
+          const { data: parentPost } = await supabase
+            .from('posts')
+            .select('reply_count')
+            .eq('id', parentPostId)
+            .single();
+          
+          if (parentPost) {
+            await supabase
+              .from('posts')
+              .update({ reply_count: (parentPost.reply_count || 0) + 1 })
+              .eq('id', parentPostId);
+          }
         }
       }
 

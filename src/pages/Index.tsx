@@ -24,12 +24,18 @@ interface Post {
   created_at: string;
   monetization_type: string;
   price: number;
+  reply_count: number;
   profiles: {
     display_name: string | null;
     username: string | null;
     is_verified: boolean;
   };
+  post_media: Array<{
+    media_url: string;
+    media_type: 'image' | 'video';
+  }>;
   has_paid?: boolean;
+  has_story?: boolean;
 }
 
 const Index = () => {
@@ -66,8 +72,10 @@ const Index = () => {
         .from("posts")
         .select(`
           *,
-          profiles!posts_user_id_fkey(display_name, username, is_verified)
+          profiles!posts_user_id_fkey(display_name, username, is_verified),
+          post_media(media_url, media_type)
         `)
+        .is('parent_post_id', null)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -76,7 +84,23 @@ const Index = () => {
         const postsWithPaymentStatus = await Promise.all(
           (data || []).map(async (post) => {
             if (post.monetization_type === "free" || post.user_id === user.id) {
-              return { ...post, has_paid: true };
+              // Check if user has active stories
+              const { data: stories } = await supabase
+                .from('stories')
+                .select('id')
+                .eq('user_id', post.user_id)
+                .gt('expires_at', new Date().toISOString())
+                .limit(1);
+              
+              return { 
+                ...post,
+                post_media: (post.post_media || []).map((m: any) => ({
+                  media_url: m.media_url,
+                  media_type: m.media_type as 'image' | 'video'
+                })),
+                has_paid: true,
+                has_story: (stories?.length || 0) > 0
+              };
             }
 
             const { data: payment } = await supabase
@@ -85,13 +109,36 @@ const Index = () => {
               .eq("post_id", post.id)
               .eq("payer_id", user.id)
               .maybeSingle();
+            
+            const { data: stories } = await supabase
+              .from('stories')
+              .select('id')
+              .eq('user_id', post.user_id)
+              .gt('expires_at', new Date().toISOString())
+              .limit(1);
 
-            return { ...post, has_paid: !!payment };
+            return { 
+              ...post,
+              post_media: (post.post_media || []).map((m: any) => ({
+                media_url: m.media_url,
+                media_type: m.media_type as 'image' | 'video'
+              })),
+              has_paid: !!payment,
+              has_story: (stories?.length || 0) > 0
+            };
           })
         );
         setPosts(postsWithPaymentStatus);
       } else {
-        setPosts((data || []).map(post => ({ ...post, has_paid: post.monetization_type === "free" })));
+        setPosts((data || []).map(post => ({ 
+          ...post,
+          post_media: (post.post_media || []).map((m: any) => ({
+            media_url: m.media_url,
+            media_type: m.media_type as 'image' | 'video'
+          })),
+          has_paid: post.monetization_type === "free",
+          has_story: false
+        })));
       }
     } catch (error: any) {
       console.error("Error fetching posts:", error);
@@ -232,6 +279,9 @@ const Index = () => {
                   monetizationType={post.monetization_type}
                   price={post.price}
                   isPaid={post.has_paid}
+                  hasStory={post.has_story}
+                  media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
+                  replyCount={post.reply_count}
                   onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
                 />
               ))
