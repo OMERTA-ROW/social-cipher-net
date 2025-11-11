@@ -79,6 +79,8 @@ serve(async (req) => {
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
 
       let hasActiveSubscription = false;
+      let checkoutUrl = null;
+      
       if (customers.data.length > 0) {
         const customerId = customers.data[0].id;
         const subscriptions = await stripe.subscriptions.list({
@@ -89,9 +91,47 @@ serve(async (req) => {
         hasActiveSubscription = subscriptions.data.length > 0;
       }
 
+      // If they qualify but don't have active subscription, create checkout automatically
+      if (!hasActiveSubscription) {
+        logStep("Creating automatic checkout for qualified user");
+        
+        let customerId;
+        if (customers.data.length > 0) {
+          customerId = customers.data[0].id;
+        } else {
+          const customer = await stripe.customers.create({
+            email: user.email,
+            metadata: { user_id: user.id }
+          });
+          customerId = customer.id;
+          logStep("Created new Stripe customer", { customerId });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+          customer: customerId,
+          line_items: [
+            {
+              price: "price_1SRivYHTVeX8KHmEwCiUejhe", // CyberBasis price ID
+              quantity: 1,
+            },
+          ],
+          mode: "subscription",
+          success_url: `${req.headers.get("origin")}/?subscription_activated=true`,
+          cancel_url: `${req.headers.get("origin")}/?subscription_cancelled=true`,
+          metadata: {
+            tier: "CyberBasis",
+            auto_qualified: "true"
+          }
+        });
+
+        checkoutUrl = session.url;
+        logStep("Checkout session created", { sessionId: session.id, url: checkoutUrl });
+      }
+
       logStep("Subscription check", { 
         hasStripeCustomer: customers.data.length > 0,
-        hasActiveSubscription 
+        hasActiveSubscription,
+        checkoutCreated: !!checkoutUrl
       });
 
       return new Response(
@@ -101,9 +141,10 @@ serve(async (req) => {
           followerCount,
           totalViews,
           hasActiveSubscription,
+          checkoutUrl,
           message: hasActiveSubscription 
-            ? "You already have an active subscription" 
-            : "Congratulations! You qualify for CyberBasis tier ($50/year)"
+            ? "You already have an active CyberBasis subscription" 
+            : "Congratulations! You've unlocked CyberBasis tier ($50/year) - Complete payment to activate"
         }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },

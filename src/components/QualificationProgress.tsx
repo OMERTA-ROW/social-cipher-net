@@ -133,6 +133,11 @@ export const QualificationProgress = () => {
           <p className={`text-sm ${data.qualifies ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
             {data.message}
           </p>
+          {data.qualifies && !data.hasActiveSubscription && (
+            <p className="text-xs text-muted-foreground mt-2">
+              💳 Payment checkout will open automatically to activate your CyberBasis subscription
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

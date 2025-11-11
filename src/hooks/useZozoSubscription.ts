@@ -84,16 +84,24 @@ export const useZozoSubscription = () => {
         setStatus({ subscribed: false, tier: "free", product_id: null, subscription_end: null });
       } else {
         // If free tier, check if they qualify for auto-upgrade
-        if (subData?.tier === "CyberFree") {
+        if (!subData?.subscribed || subData?.tier === "CyberFree") {
           const { data: qualData } = await supabase.functions.invoke("check-qualifications", {
             headers: {
               Authorization: `Bearer ${session.access_token}`,
             },
           });
 
-          if (qualData?.qualifies && !qualData?.hasActiveSubscription) {
-            // User qualifies but hasn't subscribed yet
-            toast.success(qualData.message || "You qualify for CyberBasis upgrade!");
+          if (qualData?.qualifies && !qualData?.hasActiveSubscription && qualData?.checkoutUrl) {
+            // User qualifies - automatically open checkout
+            toast.success(qualData.message || "You've unlocked CyberBasis! Redirecting to payment...", {
+              duration: 3000
+            });
+            
+            setTimeout(() => {
+              window.open(qualData.checkoutUrl, "_blank");
+            }, 1500);
+          } else if (qualData?.qualifies && qualData?.hasActiveSubscription) {
+            toast.success("CyberBasis subscription is active!");
           }
         }
         setStatus(subData);
