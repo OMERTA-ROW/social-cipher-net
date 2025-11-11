@@ -648,10 +648,10 @@ const SpaceScene = () => {
       
       {/* Mercury - Gray, heavily cratered surface */}
       <Planet 
-        position={[5, 0, 0]} 
+        position={[8, 0, 0]} 
         size={0.38} 
         color="#9D9D9D" 
-        speed={0.4} 
+        speed={0.02} 
         roughness={0.98} 
         metalness={0.02}
         emissiveIntensity={0.02}
@@ -659,10 +659,10 @@ const SpaceScene = () => {
       
       {/* Venus - Thick sulfuric acid clouds, hot greenhouse atmosphere */}
       <Planet 
-        position={[8, 0, 0]} 
+        position={[14, 0, 0]} 
         size={0.95} 
         color="#FFC649" 
-        speed={0.3} 
+        speed={0.015} 
         hasAtmosphere 
         atmosphereColor="#FFDB80"
         hasClouds
@@ -674,10 +674,10 @@ const SpaceScene = () => {
       
       {/* Earth - Blue marble with white clouds, 71% ocean coverage */}
       <Planet 
-        position={[12, 0, 0]} 
+        position={[22, 0, 0]} 
         size={1} 
         color="#1A5FB4" 
-        speed={0.2} 
+        speed={0.012} 
         hasAtmosphere 
         atmosphereColor="#4A90D9"
         hasClouds
@@ -689,10 +689,10 @@ const SpaceScene = () => {
       
       {/* Mars - Rusty red iron oxide surface with polar ice caps */}
       <Planet 
-        position={[16, 0, 0]} 
+        position={[30, 0, 0]} 
         size={0.53} 
         color="#C1440E" 
-        speed={0.15} 
+        speed={0.01} 
         hasAtmosphere 
         atmosphereColor="#E89C7E"
         roughness={0.92} 
@@ -702,10 +702,10 @@ const SpaceScene = () => {
       
       {/* Jupiter - Gas giant with swirling cloud bands and Great Red Spot */}
       <Planet 
-        position={[25, 0, 0]} 
+        position={[45, 0, 0]} 
         size={2.5} 
         color="#D8AC6B" 
-        speed={0.08} 
+        speed={0.006} 
         hasAtmosphere 
         atmosphereColor="#E8C99A"
         hasClouds
@@ -717,10 +717,10 @@ const SpaceScene = () => {
       
       {/* Saturn - Pale gold with magnificent ring system */}
       <Planet 
-        position={[35, 0, 0]} 
+        position={[60, 0, 0]} 
         size={2.2} 
         color="#F4E4C1" 
-        speed={0.06} 
+        speed={0.005} 
         hasRings 
         hasAtmosphere 
         atmosphereColor="#FFF8DC"
@@ -733,10 +733,10 @@ const SpaceScene = () => {
       
       {/* Uranus - Pale cyan ice giant tilted on its side */}
       <Planet 
-        position={[45, 0, 0]} 
+        position={[75, 0, 0]} 
         size={1.5} 
         color="#4FD0E7" 
-        speed={0.04} 
+        speed={0.004} 
         hasAtmosphere 
         atmosphereColor="#7FE3F0"
         hasClouds
@@ -748,10 +748,10 @@ const SpaceScene = () => {
       
       {/* Neptune - Deep blue with dynamic storms and winds */}
       <Planet 
-        position={[55, 0, 0]} 
+        position={[90, 0, 0]} 
         size={1.45} 
         color="#2E5090" 
-        speed={0.03} 
+        speed={0.003} 
         hasAtmosphere 
         atmosphereColor="#4169E1"
         hasClouds
