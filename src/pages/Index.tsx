@@ -7,6 +7,8 @@ import CreatePostDialog from "@/components/CreatePostDialog";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
 import { QualificationProgress } from "@/components/QualificationProgress";
 import { WalletCard } from "@/components/WalletCard";
+import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
+import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -164,7 +166,11 @@ const Index = () => {
           {currentUserId && (
             <div className="space-y-6 mb-6">
               <QualificationProgress />
-              <WalletCard />
+              <div className="grid md:grid-cols-2 gap-6">
+                <WalletCard />
+                <CryptoBalanceCard />
+              </div>
+              <CryptoWalletConnect />
             </div>
           )}
           

@@ -136,6 +136,81 @@ export type Database = {
           },
         ]
       }
+      crypto_transactions: {
+        Row: {
+          chain: string
+          confirmations: number | null
+          created_at: string | null
+          crypto_amount: number
+          crypto_currency: string
+          id: string
+          metadata: Json | null
+          status: string
+          transaction_hash: string
+          transaction_type: string
+          usd_value: number
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          chain: string
+          confirmations?: number | null
+          created_at?: string | null
+          crypto_amount: number
+          crypto_currency: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          transaction_hash: string
+          transaction_type: string
+          usd_value: number
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          chain?: string
+          confirmations?: number | null
+          created_at?: string | null
+          crypto_amount?: number
+          crypto_currency?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          transaction_hash?: string
+          transaction_type?: string
+          usd_value?: number
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      crypto_wallets: {
+        Row: {
+          chain: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          chain: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          chain?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       external_affiliate_clicks: {
         Row: {
           clicker_id: string | null
@@ -959,6 +1034,7 @@ export type Database = {
         Row: {
           balance: number
           created_at: string | null
+          crypto_balance: Json | null
           id: string
           updated_at: string | null
           user_id: string
@@ -966,6 +1042,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string | null
+          crypto_balance?: Json | null
           id?: string
           updated_at?: string | null
           user_id: string
@@ -973,6 +1050,7 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string | null
+          crypto_balance?: Json | null
           id?: string
           updated_at?: string | null
           user_id?: string
@@ -1046,6 +1124,9 @@ export type Database = {
         Row: {
           amount: number
           created_at: string | null
+          crypto_address: string | null
+          crypto_chain: string | null
+          crypto_currency: string | null
           id: string
           payment_details: Json | null
           payment_method: string
@@ -1057,6 +1138,9 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string | null
+          crypto_address?: string | null
+          crypto_chain?: string | null
+          crypto_currency?: string | null
           id?: string
           payment_details?: Json | null
           payment_method?: string
@@ -1068,6 +1152,9 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string | null
+          crypto_address?: string | null
+          crypto_chain?: string | null
+          crypto_currency?: string | null
           id?: string
           payment_details?: Json | null
           payment_method?: string

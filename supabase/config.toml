@@ -63,6 +63,12 @@ verify_jwt = true
 [functions.pay-subscription-from-wallet]
 verify_jwt = true
 
+[functions.get-crypto-prices]
+verify_jwt = false
+
+[functions.verify-crypto-payment]
+verify_jwt = true
+
 [functions.create-post-payment]
 verify_jwt = false
 
