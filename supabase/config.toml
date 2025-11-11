@@ -3,6 +3,12 @@ project_id = "vovgmknghvohenvhsduw"
 [functions.ai-bot]
 verify_jwt = false
 
+[functions.moderate-product]
+verify_jwt = false
+
+[functions.process-sale]
+verify_jwt = false
+
 [functions.text-to-speech]
 verify_jwt = false
 

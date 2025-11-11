@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Package, DollarSign } from "lucide-react";
+import { useProductModeration } from "@/hooks/useProductModeration";
+import { Loader2, Plus, Package, DollarSign, ShieldAlert } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
 const SellerDashboard = () => {
@@ -29,6 +30,7 @@ const SellerDashboard = () => {
   });
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { moderateProduct, loading: moderating } = useProductModeration();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -91,7 +93,8 @@ const SellerDashboard = () => {
     e.preventDefault();
     if (!sellerProfile) return;
 
-    const { error } = await supabase.from("products").insert({
+    // Insert product first
+    const { data: newProduct, error } = await supabase.from("products").insert({
       seller_id: sellerProfile.id,
       title: productForm.title,
       description: productForm.description,
@@ -100,7 +103,7 @@ const SellerDashboard = () => {
       category: productForm.category || null,
       stock_quantity: parseInt(productForm.stock_quantity) || 0,
       shipping_cost: parseFloat(productForm.shipping_cost) || 0,
-    });
+    }).select().single();
 
     if (error) {
       toast({
@@ -108,23 +111,48 @@ const SellerDashboard = () => {
         description: error.message,
         variant: "destructive",
       });
+      return;
+    }
+
+    // Automatically moderate product with AI
+    toast({
+      title: "Moderating Product",
+      description: "AI is checking your product for policy compliance...",
+    });
+
+    const moderationResult = await moderateProduct(
+      newProduct.id,
+      productForm.title,
+      productForm.description,
+      productForm.category,
+      productForm.image_url
+    );
+
+    if (moderationResult.blocked) {
+      // Product was blocked, inform user
+      toast({
+        title: "Product Blocked",
+        description: moderationResult.reason || "Product violates platform policies",
+        variant: "destructive",
+      });
     } else {
       toast({
         title: "Success",
-        description: "Product added successfully!",
+        description: "Product added and verified by AI moderation!",
       });
-      setIsDialogOpen(false);
-      setProductForm({
-        title: "",
-        description: "",
-        price: "",
-        image_url: "",
-        category: "",
-        stock_quantity: "",
-        shipping_cost: "",
-      });
-      fetchSellerProfile();
     }
+
+    setIsDialogOpen(false);
+    setProductForm({
+      title: "",
+      description: "",
+      price: "",
+      image_url: "",
+      category: "",
+      stock_quantity: "",
+      shipping_cost: "",
+    });
+    fetchSellerProfile();
   };
 
   if (loading) {
@@ -232,7 +260,16 @@ const SellerDashboard = () => {
                     placeholder="https://..."
                   />
                 </div>
-                <Button type="submit" className="w-full">Add Product</Button>
+                <Button type="submit" className="w-full" disabled={moderating}>
+                  {moderating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Moderating...
+                    </>
+                  ) : (
+                    "Add Product"
+                  )}
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -281,12 +318,18 @@ const SellerDashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {products.map((product) => (
-                  <Card key={product.id}>
+                  <Card key={product.id} className={product.is_blocked ? "border-destructive" : ""}>
+                    {product.is_blocked && (
+                      <div className="bg-destructive/10 px-3 py-2 flex items-center gap-2">
+                        <ShieldAlert className="h-4 w-4 text-destructive" />
+                        <span className="text-xs text-destructive font-medium">Blocked by AI</span>
+                      </div>
+                    )}
                     {product.image_url && (
                       <img
                         src={product.image_url}
                         alt={product.title}
-                        className="w-full h-32 object-cover rounded-t-lg"
+                        className="w-full h-32 object-cover"
                       />
                     )}
                     <CardHeader>
@@ -298,6 +341,11 @@ const SellerDashboard = () => {
                         {product.description}
                       </p>
                       <p className="text-xs mt-2">Stock: {product.stock_quantity}</p>
+                      {product.is_blocked && (
+                        <p className="text-xs mt-2 text-destructive">
+                          {product.blocked_reason}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

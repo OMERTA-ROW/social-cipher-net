@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
 import PostCard from "@/components/PostCard";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
@@ -152,6 +153,8 @@ const Index = () => {
       
       <main className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-2xl mx-auto">
+          <PlatformEarningsCard />
+          
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-foreground mb-2">Feed</h2>
             <p className="text-muted-foreground">Stay connected with the cyber community</p>

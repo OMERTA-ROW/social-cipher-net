@@ -378,6 +378,38 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_earnings: {
+        Row: {
+          amount: number
+          commission_rate: number
+          created_at: string | null
+          id: string
+          sale_id: string | null
+        }
+        Insert: {
+          amount: number
+          commission_rate?: number
+          created_at?: string | null
+          id?: string
+          sale_id?: string | null
+        }
+        Update: {
+          amount?: number
+          commission_rate?: number
+          created_at?: string | null
+          id?: string
+          sale_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_earnings_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_clicks: {
         Row: {
           clicker_id: string | null
@@ -624,11 +656,14 @@ export type Database = {
       }
       products: {
         Row: {
+          blocked_reason: string | null
           category: string | null
           created_at: string | null
           description: string | null
           id: string
           image_url: string | null
+          is_blocked: boolean | null
+          moderation_score: Json | null
           price: number
           seller_id: string
           shipping_cost: number | null
@@ -638,11 +673,14 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          blocked_reason?: string | null
           category?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
+          is_blocked?: boolean | null
+          moderation_score?: Json | null
           price: number
           seller_id: string
           shipping_cost?: number | null
@@ -652,11 +690,14 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          blocked_reason?: string | null
           category?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           image_url?: string | null
+          is_blocked?: boolean | null
+          moderation_score?: Json | null
           price?: number
           seller_id?: string
           shipping_cost?: number | null
@@ -731,6 +772,8 @@ export type Database = {
           buyer_email: string
           created_at: string | null
           id: string
+          platform_commission: number | null
+          platform_commission_rate: number | null
           product_id: string
           seller_commission: number | null
           seller_id: string
@@ -744,6 +787,8 @@ export type Database = {
           buyer_email: string
           created_at?: string | null
           id?: string
+          platform_commission?: number | null
+          platform_commission_rate?: number | null
           product_id: string
           seller_commission?: number | null
           seller_id: string
@@ -757,6 +802,8 @@ export type Database = {
           buyer_email?: string
           created_at?: string | null
           id?: string
+          platform_commission?: number | null
+          platform_commission_rate?: number | null
           product_id?: string
           seller_commission?: number | null
           seller_id?: string
