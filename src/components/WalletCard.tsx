@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Wallet, ArrowDownToLine, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { SocialPlatformConnections } from "./SocialPlatformConnections";
+import { CyberlinkSocialTransfer } from "./CyberlinkSocialTransfer";
 
 export const WalletCard = () => {
   const [balance, setBalance] = useState<number>(0);
@@ -103,78 +105,87 @@ export const WalletCard = () => {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-primary/10 via-card/50 to-secondary/10 backdrop-blur-sm border-primary/20 shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
-          <Wallet className="w-6 h-6 text-primary" />
-          Digital Wallet
-        </CardTitle>
-        <CardDescription>
-          Your earnings and balance for subscriptions & withdrawals
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="p-6 rounded-lg bg-primary/10 border border-primary/20">
-          <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
-          <p className="text-4xl font-bold text-primary">
-            ${balance.toFixed(2)}
-          </p>
-        </div>
+    <div className="space-y-4">
+      <Card className="bg-gradient-to-br from-primary/10 via-card/50 to-secondary/10 backdrop-blur-sm border-primary/20 shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Wallet className="w-6 h-6 text-primary" />
+            Digital Wallet
+          </CardTitle>
+          <CardDescription>
+            Your earnings and balance for subscriptions & withdrawals
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-6 rounded-lg bg-primary/10 border border-primary/20">
+            <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
+            <p className="text-4xl font-bold text-primary">
+              ${balance.toFixed(2)}
+            </p>
+          </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full" disabled={balance < 10}>
-                <ArrowDownToLine className="w-4 h-4 mr-2" />
-                Withdraw
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Withdraw Funds</DialogTitle>
-                <DialogDescription>
-                  Request a withdrawal to your bank account. Minimum amount: $10
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Amount</label>
-                  <Input
-                    type="number"
-                    placeholder="Enter amount"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    min="10"
-                    max={balance}
-                    step="0.01"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Available: ${balance.toFixed(2)}
-                  </p>
-                </div>
-                <Button
-                  onClick={handleWithdraw}
-                  disabled={isWithdrawing}
-                  className="w-full"
-                >
-                  {isWithdrawing ? "Processing..." : "Submit Withdrawal Request"}
+          <div className="grid grid-cols-2 gap-3">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full" disabled={balance < 10}>
+                  <ArrowDownToLine className="w-4 h-4 mr-2" />
+                  Withdraw
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Withdraw Funds</DialogTitle>
+                  <DialogDescription>
+                    Request a withdrawal to your bank account. Minimum amount: $10
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Amount</label>
+                    <Input
+                      type="number"
+                      placeholder="Enter amount"
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      min="10"
+                      max={balance}
+                      step="0.01"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Available: ${balance.toFixed(2)}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleWithdraw}
+                    disabled={isWithdrawing}
+                    className="w-full"
+                  >
+                    {isWithdrawing ? "Processing..." : "Submit Withdrawal Request"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
 
-          <Button variant="default" className="w-full" asChild>
-            <a href="/subscription">
-              <CreditCard className="w-4 h-4 mr-2" />
-              Use for Subscription
-            </a>
-          </Button>
-        </div>
+            <Button variant="default" className="w-full" asChild>
+              <a href="/subscription">
+                <CreditCard className="w-4 h-4 mr-2" />
+                Use for Subscription
+              </a>
+            </Button>
+          </div>
 
-        <p className="text-xs text-muted-foreground text-center">
-          Earnings are automatically added to your wallet. Use balance to pay subscriptions or withdraw to bank account.
-        </p>
-      </CardContent>
-    </Card>
+          <p className="text-xs text-muted-foreground text-center">
+            Earnings are automatically added to your wallet. Use balance to pay subscriptions or withdraw to bank account.
+          </p>
+        </CardContent>
+      </Card>
+
+      <SocialPlatformConnections />
+      
+      <CyberlinkSocialTransfer 
+        walletBalance={balance} 
+        onTransferComplete={fetchWallet}
+      />
+    </div>
   );
 };

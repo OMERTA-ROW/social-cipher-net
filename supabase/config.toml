@@ -80,3 +80,18 @@ verify_jwt = false
 
 [functions.convert-crypto-to-usd]
 verify_jwt = true
+
+[functions.connect-social-platform]
+verify_jwt = true
+
+[functions.withdraw-platform-earnings]
+verify_jwt = true
+
+[functions.transfer-to-cyberlink-social]
+verify_jwt = true
+
+[functions.track-external-affiliate-click]
+verify_jwt = false
+
+[functions.check-qualifications]
+verify_jwt = false
