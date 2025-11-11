@@ -1,4 +1,4 @@
-import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign, Gamepad2, Shield, Tv, FileText, BadgeCheck } from "lucide-react";
+import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign, Gamepad2, Shield, Tv, FileText, BadgeCheck, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -45,6 +45,15 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
               className="text-foreground hover:text-primary"
             >
               <DollarSign className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate("/subscription")}
+              className="text-foreground hover:text-primary"
+              title="Subscription Tiers"
+            >
+              <CreditCard className="w-5 h-5" />
             </Button>
             <Button 
               variant="ghost" 

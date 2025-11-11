@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.complete-post-payment]
 verify_jwt = false
+
+[functions.create-tier-checkout]
+verify_jwt = false

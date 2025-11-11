@@ -14,6 +14,7 @@ import { User } from "@supabase/supabase-js";
 const Monetization = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentTier, setCurrentTier] = useState("CyberFree");
   const [earnings, setEarnings] = useState({ 
     tips: 0, 
     subscriptions: 0, 
@@ -47,8 +48,27 @@ const Monetization = () => {
   useEffect(() => {
     if (user) {
       fetchEarnings();
+      checkSubscriptionTier();
     }
   }, [user]);
+
+  const checkSubscriptionTier = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      
+      if (error) throw error;
+
+      if (data?.subscribed && data?.product_id) {
+        if (data.product_id === "prod_TOtJnFseC54ChY") {
+          setCurrentTier("CyberBasis");
+        } else if (data.product_id === "prod_TOtRdMUKNeKkFc") {
+          setCurrentTier("CyberPro");
+        }
+      }
+    } catch (error: any) {
+      console.error("Error checking tier:", error);
+    }
+  };
 
   const fetchEarnings = async () => {
     if (!user) return;
@@ -108,6 +128,17 @@ const Monetization = () => {
             <p className="text-muted-foreground">
               Manage your earnings and payment settings
             </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="text-sm py-1 px-3">
+              {currentTier}
+            </Badge>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/subscription")}
+            >
+              Upgrade Tier
+            </Button>
           </div>
         </div>
 
