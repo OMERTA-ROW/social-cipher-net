@@ -5,9 +5,10 @@ import Navigation from "@/components/Navigation";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
 import { ExternalAffiliateLinksManager } from "@/components/ExternalAffiliateLinksManager";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Loader2 } from "lucide-react";
+import { Shield } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AffiliateLinks() {
   const navigate = useNavigate();
@@ -56,8 +57,26 @@ export default function AffiliateLinks() {
         <CyberSpaceBackground />
         <Navigation />
         <div className="container mx-auto px-4 py-8 relative z-10">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <Loader2 className="h-8 w-8 animate-spin" />
+          <div className="max-w-6xl mx-auto space-y-8">
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-5 w-96" />
+            </div>
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-8 w-48 mx-auto mb-4" />
+                <Skeleton className="h-6 w-96 mx-auto" />
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-3">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <Skeleton className="h-12 w-full" />
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

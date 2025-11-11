@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
 import PostCard from "@/components/PostCard";
+import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
 import { QualificationProgress } from "@/components/QualificationProgress";
@@ -176,7 +177,11 @@ const Index = () => {
           
           <div className="space-y-4">
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading posts...</div>
+              <>
+                <PostCardSkeleton />
+                <PostCardSkeleton />
+                <PostCardSkeleton />
+              </>
             ) : posts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 No posts yet. Be the first to create one!
