@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import MediaUpload from "@/components/MediaUpload";
+import { Switch } from "@/components/ui/switch";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -20,9 +22,14 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
   const [monetizationType, setMonetizationType] = useState("free");
   const [price, setPrice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<Array<{ file: File; preview: string; type: 'image' | 'video' }>>([]);
+  const [isThread, setIsThread] = useState(false);
+  const [threadPosts, setThreadPosts] = useState<string[]>([content]);
 
   const handlePost = async () => {
-    if (!content.trim()) {
+    const postsToCreate = isThread ? threadPosts.filter(p => p.trim()) : [content];
+    
+    if (postsToCreate.length === 0 || !postsToCreate[0].trim()) {
       toast.error("Please write something!");
       return;
     }
@@ -40,19 +47,85 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
         return;
       }
 
-      const { error } = await supabase.from("posts").insert({
-        user_id: user.id,
-        content,
-        monetization_type: monetizationType,
-        price: monetizationType === "free" ? 0 : parseFloat(price),
-      });
+      // Upload media files if any
+      let mediaUrls: Array<{ url: string; type: 'image' | 'video' }> = [];
+      if (mediaFiles.length > 0) {
+        const uploadPromises = mediaFiles.map(async (media) => {
+          const fileName = `${user.id}/${Date.now()}-${media.file.name}`;
+          const { data, error } = await supabase.storage
+            .from('post-media')
+            .upload(fileName, media.file);
+          
+          if (error) throw error;
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('post-media')
+            .getPublicUrl(data.path);
+          
+          return { url: publicUrl, type: media.type };
+        });
+        
+        mediaUrls = await Promise.all(uploadPromises);
+      }
 
-      if (error) throw error;
+      // Create posts (thread or single)
+      let parentPostId: string | null = null;
+      
+      for (let i = 0; i < postsToCreate.length; i++) {
+        const postContent = postsToCreate[i];
+        
+        const { data: post, error: postError } = await supabase
+          .from("posts")
+          .insert({
+            user_id: user.id,
+            content: postContent,
+            monetization_type: monetizationType,
+            price: monetizationType === "free" ? 0 : parseFloat(price),
+            parent_post_id: parentPostId,
+          })
+          .select()
+          .single();
 
-      toast.success("Post created!");
+        if (postError) throw postError;
+        
+        // Add media to first post only
+        if (i === 0 && mediaUrls.length > 0) {
+          const mediaInserts = mediaUrls.map((media, idx) => ({
+            post_id: post.id,
+            media_url: media.url,
+            media_type: media.type,
+            display_order: idx,
+          }));
+          
+          const { error: mediaError } = await supabase
+            .from("post_media")
+            .insert(mediaInserts);
+          
+          if (mediaError) throw mediaError;
+        }
+        
+        // Set parent for thread
+        if (i === 0 && isThread) {
+          parentPostId = post.id;
+        }
+        
+        // Update reply count for parent
+        if (parentPostId && i > 0) {
+          await supabase.rpc('increment', { 
+            row_id: parentPostId,
+            table_name: 'posts',
+            column_name: 'reply_count'
+          });
+        }
+      }
+
+      toast.success(isThread ? "Thread created!" : "Post created!");
       setContent("");
       setMonetizationType("free");
       setPrice("");
+      setMediaFiles([]);
+      setThreadPosts([""]);
+      setIsThread(false);
       onOpenChange(false);
       onPost(content);
     } catch (error: any) {
@@ -77,12 +150,54 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
           </Avatar>
           
           <div className="flex-1 space-y-4">
-            <Textarea
-              placeholder="What's on your mind?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-[120px] bg-secondary border-border text-foreground placeholder:text-muted-foreground resize-none"
-            />
+            <div className="flex items-center gap-2 mb-2">
+              <Switch
+                checked={isThread}
+                onCheckedChange={(checked) => {
+                  setIsThread(checked);
+                  if (checked && threadPosts.length === 0) {
+                    setThreadPosts([content, ""]);
+                  }
+                }}
+              />
+              <Label className="text-sm text-muted-foreground">Create thread</Label>
+            </div>
+
+            {isThread ? (
+              <div className="space-y-2">
+                {threadPosts.map((post, idx) => (
+                  <Textarea
+                    key={idx}
+                    placeholder={idx === 0 ? "Start your thread..." : `Add to thread (${idx + 1})`}
+                    value={post}
+                    onChange={(e) => {
+                      const newPosts = [...threadPosts];
+                      newPosts[idx] = e.target.value;
+                      setThreadPosts(newPosts);
+                      if (idx === 0) setContent(e.target.value);
+                    }}
+                    className="min-h-[80px] bg-secondary border-border text-foreground placeholder:text-muted-foreground resize-none"
+                  />
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setThreadPosts([...threadPosts, ""])}
+                >
+                  Add another post
+                </Button>
+              </div>
+            ) : (
+              <Textarea
+                placeholder="What's on your mind?"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="min-h-[120px] bg-secondary border-border text-foreground placeholder:text-muted-foreground resize-none"
+              />
+            )}
+            
+            <MediaUpload onFilesChange={setMediaFiles} maxFiles={10} />
 
             <div className="space-y-2">
               <Label htmlFor="monetization" className="text-foreground">Monetization</Label>

@@ -1,7 +1,7 @@
-import { Heart, MessageCircle, Share2, BadgeCheck, Lock } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, Lock, Image as ImageIcon, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import StoryRing from "@/components/StoryRing";
 import { useState } from "react";
 
 interface PostCardProps {
@@ -16,7 +16,11 @@ interface PostCardProps {
   monetizationType?: string;
   price?: number;
   isPaid?: boolean;
+  hasStory?: boolean;
+  media?: Array<{ url: string; type: 'image' | 'video' }>;
+  replyCount?: number;
   onPaymentRequired?: () => void;
+  onReply?: () => void;
 }
 
 const PostCard = ({ 
@@ -31,7 +35,11 @@ const PostCard = ({
   monetizationType = "free",
   price = 0,
   isPaid = false,
-  onPaymentRequired
+  hasStory = false,
+  media = [],
+  replyCount = 0,
+  onPaymentRequired,
+  onReply
 }: PostCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
@@ -49,12 +57,12 @@ const PostCard = ({
   return (
     <Card className="bg-card border-border hover:border-primary/50 transition-all duration-300 p-6">
       <div className="flex items-start gap-4">
-        <Avatar className="w-12 h-12 border-2 border-primary/30">
-          <AvatarImage src={avatar} alt={author} />
-          <AvatarFallback className="bg-secondary text-foreground">
-            {author.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <StoryRing 
+          avatar={avatar}
+          author={author}
+          hasStory={hasStory}
+          size="md"
+        />
         
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
@@ -90,7 +98,36 @@ const PostCard = ({
               </div>
             </div>
           ) : (
-            <p className="text-foreground mb-4 leading-relaxed">{content}</p>
+            <>
+              <p className="text-foreground mb-4 leading-relaxed">{content}</p>
+              
+              {/* Media Gallery */}
+              {media.length > 0 && (
+                <div className={`grid gap-2 mb-4 ${
+                  media.length === 1 ? 'grid-cols-1' : 
+                  media.length === 2 ? 'grid-cols-2' : 
+                  'grid-cols-2 md:grid-cols-3'
+                }`}>
+                  {media.map((item, idx) => (
+                    <div key={idx} className="relative rounded-lg overflow-hidden bg-secondary aspect-square">
+                      {item.type === 'image' ? (
+                        <img 
+                          src={item.url} 
+                          alt={`Post media ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <video 
+                          src={item.url}
+                          controls
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
           
           <div className="flex items-center gap-6">
@@ -108,10 +145,16 @@ const PostCard = ({
               variant="ghost" 
               size="sm" 
               className="gap-2 text-muted-foreground hover:text-primary"
-              onClick={() => isLocked && onPaymentRequired?.()}
+              onClick={() => {
+                if (isLocked) {
+                  onPaymentRequired?.();
+                } else {
+                  onReply?.();
+                }
+              }}
             >
               <MessageCircle className="w-5 h-5" />
-              <span>{comments}</span>
+              <span>{replyCount || comments}</span>
             </Button>
             
             <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-primary">
