@@ -88,34 +88,49 @@ const MatrixRain = () => {
   );
 };
 
-// Planet Component with optional rings
+// Planet Component with optional rings and atmosphere
 const Planet = ({ 
   position, 
   size, 
   color, 
   speed, 
-  hasRings = false 
+  hasRings = false,
+  hasAtmosphere = false,
+  atmosphereColor,
+  roughness = 0.9,
+  metalness = 0.1
 }: { 
   position: [number, number, number]; 
   size: number; 
   color: string; 
   speed: number;
   hasRings?: boolean;
+  hasAtmosphere?: boolean;
+  atmosphereColor?: string;
+  roughness?: number;
+  metalness?: number;
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const ringsRef = useRef<THREE.Mesh>(null);
+  const atmosphereRef = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
     if (meshRef.current) {
       const time = clock.getElapsedTime() * speed;
       meshRef.current.position.x = position[0] * Math.cos(time);
       meshRef.current.position.z = position[2] * Math.sin(time);
-      meshRef.current.rotation.y += 0.001;
+      meshRef.current.rotation.y += 0.002;
       
       if (ringsRef.current) {
         ringsRef.current.position.x = meshRef.current.position.x;
         ringsRef.current.position.z = meshRef.current.position.z;
         ringsRef.current.rotation.x = Math.PI / 2;
+      }
+      
+      if (atmosphereRef.current) {
+        atmosphereRef.current.position.x = meshRef.current.position.x;
+        atmosphereRef.current.position.z = meshRef.current.position.z;
+        atmosphereRef.current.rotation.y += 0.001;
       }
     }
   });
@@ -123,25 +138,41 @@ const Planet = ({
   return (
     <group>
       <mesh ref={meshRef} position={position}>
-        <sphereGeometry args={[size, 32, 32]} />
+        <sphereGeometry args={[size, 64, 64]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={0.2}
-          roughness={0.7}
-          metalness={0.3}
+          emissiveIntensity={0.1}
+          roughness={roughness}
+          metalness={metalness}
         />
       </mesh>
+      
+      {hasAtmosphere && atmosphereColor && (
+        <mesh ref={atmosphereRef} position={position}>
+          <sphereGeometry args={[size * 1.08, 64, 64]} />
+          <meshStandardMaterial
+            color={atmosphereColor}
+            emissive={atmosphereColor}
+            emissiveIntensity={0.3}
+            transparent
+            opacity={0.15}
+            side={THREE.BackSide}
+          />
+        </mesh>
+      )}
+      
       {hasRings && (
         <mesh ref={ringsRef} position={position}>
-          <ringGeometry args={[size * 1.5, size * 2.2, 64]} />
+          <ringGeometry args={[size * 1.5, size * 2.5, 128]} />
           <meshStandardMaterial
-            color="#FAD5A5"
-            emissive="#FAD5A5"
-            emissiveIntensity={0.1}
+            color="#C9A86A"
+            emissive="#8B7355"
+            emissiveIntensity={0.05}
             transparent
-            opacity={0.7}
+            opacity={0.8}
             side={THREE.DoubleSide}
+            roughness={0.8}
           />
         </mesh>
       )}
@@ -509,15 +540,30 @@ const SpaceScene = () => {
       {/* Sun */}
       <Sun />
 
-      {/* Planets of the Solar System */}
-      <Planet position={[5, 0, 0]} size={0.4} color="#8C7853" speed={0.4} /> {/* Mercury */}
-      <Planet position={[8, 0, 0]} size={0.9} color="#FFC649" speed={0.3} /> {/* Venus */}
-      <Planet position={[12, 0, 0]} size={1} color="#4A90E2" speed={0.2} /> {/* Earth */}
-      <Planet position={[16, 0, 0]} size={0.5} color="#E27B58" speed={0.15} /> {/* Mars */}
-      <Planet position={[25, 0, 0]} size={2.5} color="#C88B3A" speed={0.08} /> {/* Jupiter */}
-      <Planet position={[35, 0, 0]} size={2.2} color="#FAD5A5" speed={0.06} hasRings={true} /> {/* Saturn */}
-      <Planet position={[45, 0, 0]} size={1.5} color="#4FD0E7" speed={0.04} /> {/* Uranus */}
-      <Planet position={[55, 0, 0]} size={1.4} color="#4166F5" speed={0.03} /> {/* Neptune */}
+      {/* Planets of the Solar System - Realistic */}
+      {/* Mercury - Rocky, cratered surface */}
+      <Planet position={[5, 0, 0]} size={0.4} color="#8B7D6B" speed={0.4} roughness={0.95} metalness={0.05} />
+      
+      {/* Venus - Thick atmosphere, yellowish clouds */}
+      <Planet position={[8, 0, 0]} size={0.9} color="#E8CDA2" speed={0.3} hasAtmosphere atmosphereColor="#FFF4D6" roughness={0.6} metalness={0.1} />
+      
+      {/* Earth - Blue oceans, green continents, white clouds */}
+      <Planet position={[12, 0, 0]} size={1} color="#1E88E5" speed={0.2} hasAtmosphere atmosphereColor="#87CEEB" roughness={0.5} metalness={0.3} />
+      
+      {/* Mars - Red planet with polar ice caps */}
+      <Planet position={[16, 0, 0]} size={0.5} color="#CD5C5C" speed={0.15} hasAtmosphere atmosphereColor="#FFB6C1" roughness={0.9} metalness={0.05} />
+      
+      {/* Jupiter - Gas giant with bands and Great Red Spot */}
+      <Planet position={[25, 0, 0]} size={2.5} color="#C88B3A" speed={0.08} hasAtmosphere atmosphereColor="#E8C99A" roughness={0.3} metalness={0.05} />
+      
+      {/* Saturn - Pale gold with prominent rings */}
+      <Planet position={[35, 0, 0]} size={2.2} color="#FAD5A5" speed={0.06} hasRings hasAtmosphere atmosphereColor="#FFF8DC" roughness={0.4} metalness={0.05} />
+      
+      {/* Uranus - Blue-green ice giant */}
+      <Planet position={[45, 0, 0]} size={1.5} color="#4FD0E7" speed={0.04} hasAtmosphere atmosphereColor="#B0E0E6" roughness={0.5} metalness={0.2} />
+      
+      {/* Neptune - Deep blue ice giant */}
+      <Planet position={[55, 0, 0]} size={1.4} color="#4169E1" speed={0.03} hasAtmosphere atmosphereColor="#87CEEB" roughness={0.5} metalness={0.2} />
 
       {/* Asteroid Belt */}
       <AsteroidBelt />
