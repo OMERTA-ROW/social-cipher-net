@@ -12,7 +12,9 @@ import {
   Facebook,
   Download,
   Link as LinkIcon,
-  Unlink
+  Unlink,
+  Linkedin,
+  Music
 } from "lucide-react";
 
 interface PlatformConnection {
@@ -30,6 +32,8 @@ const PLATFORM_ICONS: { [key: string]: any } = {
   twitch: TwitchIcon,
   reddit: LinkIcon,
   facebook: Facebook,
+  tiktok: Music,
+  linkedin: Linkedin,
 };
 
 const PLATFORM_NAMES: { [key: string]: string } = {
@@ -39,6 +43,8 @@ const PLATFORM_NAMES: { [key: string]: string } = {
   twitch: "Twitch",
   reddit: "Reddit",
   facebook: "Facebook",
+  tiktok: "TikTok",
+  linkedin: "LinkedIn",
 };
 
 export const SocialPlatformConnections = () => {
@@ -161,7 +167,7 @@ export const SocialPlatformConnections = () => {
     }
   };
 
-  const availablePlatforms = ["instagram", "twitter", "youtube", "twitch", "reddit", "facebook"];
+  const availablePlatforms = ["instagram", "twitter", "youtube", "twitch", "reddit", "facebook", "tiktok", "linkedin"];
   const connectedPlatforms = connections.filter(c => c.is_active).map(c => c.platform);
   const unconnectedPlatforms = availablePlatforms.filter(p => !connectedPlatforms.includes(p));
 

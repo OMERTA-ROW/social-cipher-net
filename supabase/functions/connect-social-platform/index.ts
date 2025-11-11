@@ -61,6 +61,16 @@ serve(async (req) => {
         auth_url: 'https://www.facebook.com/v18.0/dialog/oauth',
         scope: 'public_profile,email',
       },
+      tiktok: {
+        client_id: Deno.env.get('TIKTOK_CLIENT_KEY'),
+        auth_url: 'https://www.tiktok.com/v2/auth/authorize',
+        scope: 'user.info.basic,video.list',
+      },
+      linkedin: {
+        client_id: Deno.env.get('LINKEDIN_CLIENT_ID'),
+        auth_url: 'https://www.linkedin.com/oauth/v2/authorization',
+        scope: 'openid profile email',
+      },
     };
 
     const config = oauthConfigs[platform];
