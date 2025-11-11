@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import { 
   Globe, 
   Users, 
@@ -19,7 +20,10 @@ import {
   Zap,
   Star,
   Crown,
-  BarChart3
+  BarChart3,
+  Radio,
+  Send,
+  MessageSquare
 } from "lucide-react";
 import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
@@ -181,7 +185,7 @@ const CyberWorld = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="discover" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="discover">Discover</TabsTrigger>
             <TabsTrigger value="communities">Communities</TabsTrigger>
             <TabsTrigger value="events">Live Events</TabsTrigger>
@@ -189,6 +193,10 @@ const CyberWorld = () => {
             <TabsTrigger value="trading">
               <BarChart3 className="w-4 h-4 mr-2" />
               Trading
+            </TabsTrigger>
+            <TabsTrigger value="live">
+              <Radio className="w-4 h-4 mr-2" />
+              Live Studio
             </TabsTrigger>
           </TabsList>
 
@@ -419,6 +427,78 @@ const CyberWorld = () => {
                   >
                     <Award className="w-6 h-6" />
                     <span className="text-sm">NFTs</span>
+                  </Button>
+                </div>
+
+                {windows.length > 0 && (
+                  <div className="mt-4 flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                    <span className="text-sm text-muted-foreground">
+                      {windows.length} window{windows.length !== 1 ? 's' : ''} open
+                    </span>
+                    <Button size="sm" variant="destructive" onClick={closeAllWindows}>
+                      Close All Windows
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Live Studio Tab */}
+          <TabsContent value="live" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Radio className="w-5 h-5 text-primary" />
+                  CyberLink Live Studio Control
+                </CardTitle>
+                <CardDescription>Access live streaming controls and features</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                    onClick={() => openWindow("Stream Preview", (
+                      <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
+                        <div className="text-center">
+                          <Video className="w-16 h-16 mx-auto mb-4 text-primary" />
+                          <p className="text-xl font-bold">Stream Preview</p>
+                          <p className="text-sm text-muted-foreground mt-2">Camera feed will appear here</p>
+                        </div>
+                      </div>
+                    ))}
+                  >
+                    <Video className="w-6 h-6" />
+                    <span className="text-sm">Stream Preview</span>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                    onClick={() => openWindow("Platform Chat", (
+                      <div className="space-y-4">
+                        <div className="h-[400px] bg-muted/10 rounded-lg p-4 overflow-y-auto">
+                          <p className="text-sm text-muted-foreground">Connect platforms to see live chat</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Input placeholder="Type message..." />
+                          <Button size="icon"><Send className="w-4 h-4" /></Button>
+                        </div>
+                      </div>
+                    ))}
+                  >
+                    <MessageSquare className="w-6 h-6" />
+                    <span className="text-sm">Live Chat</span>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                    onClick={() => window.location.href = '/studio'}
+                  >
+                    <Radio className="w-6 h-6" />
+                    <span className="text-sm">Go Live</span>
                   </Button>
                 </div>
 

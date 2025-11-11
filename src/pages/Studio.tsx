@@ -4,13 +4,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Send, Zap, Loader2, Video, MessageSquare } from "lucide-react";
+import { Radio, Send, Zap, Loader2, Video, MessageSquare, BarChart3 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
 import { TipDialog } from "@/components/TipDialog";
+import CryptoMarketChart from "@/components/CryptoMarketChart";
+import StockMarketWidget from "@/components/StockMarketWidget";
+import NFTMarketWidget from "@/components/NFTMarketWidget";
+import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
 
 const Studio = () => {
   const [isLive, setIsLive] = useState(false);
@@ -106,7 +110,7 @@ const Studio = () => {
             <p className="text-muted-foreground">Stream to multiple platforms simultaneously</p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <Button
               size="sm"
               variant="outline"
@@ -121,6 +125,40 @@ const Studio = () => {
             >
               <Video className="w-4 h-4 mr-2" />
               Preview
+            </Button>
+            
+            {/* Trading Widgets */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openWindow("Trading Platforms", <TradingPlatformsWidget />)}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Platforms
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openWindow("Crypto Markets", <CryptoMarketChart />)}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Crypto
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openWindow("Stock Market", <StockMarketWidget />)}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Stocks
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openWindow("NFT Marketplace", <NFTMarketWidget />)}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              NFTs
             </Button>
             {connectedPlatforms.map(platformId => {
               const platform = platforms.find(p => p.id === platformId);
