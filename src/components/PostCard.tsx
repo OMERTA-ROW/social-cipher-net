@@ -17,6 +17,7 @@ interface PostCardProps {
   price?: number;
   isPaid?: boolean;
   hasStory?: boolean;
+  isLive?: boolean;
   media?: Array<{ url: string; type: 'image' | 'video' }>;
   replyCount?: number;
   onPaymentRequired?: () => void;
@@ -36,6 +37,7 @@ const PostCard = ({
   price = 0,
   isPaid = false,
   hasStory = false,
+  isLive = false,
   media = [],
   replyCount = 0,
   onPaymentRequired,
@@ -61,6 +63,7 @@ const PostCard = ({
           avatar={avatar}
           author={author}
           hasStory={hasStory}
+          isLive={isLive}
           size="md"
         />
         

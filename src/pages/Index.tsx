@@ -36,6 +36,7 @@ interface Post {
   }>;
   has_paid?: boolean;
   has_story?: boolean;
+  is_live?: boolean;
 }
 
 const Index = () => {
@@ -83,15 +84,23 @@ const Index = () => {
       if (user) {
         const postsWithPaymentStatus = await Promise.all(
           (data || []).map(async (post) => {
+            // Check if user has active stories
+            const { data: stories } = await supabase
+              .from('stories')
+              .select('id')
+              .eq('user_id', post.user_id)
+              .gt('expires_at', new Date().toISOString())
+              .limit(1);
+            
+            // Check if user is currently live
+            const { data: liveStream } = await supabase
+              .from('live_streams')
+              .select('id')
+              .eq('user_id', post.user_id)
+              .eq('is_live', true)
+              .limit(1);
+            
             if (post.monetization_type === "free" || post.user_id === user.id) {
-              // Check if user has active stories
-              const { data: stories } = await supabase
-                .from('stories')
-                .select('id')
-                .eq('user_id', post.user_id)
-                .gt('expires_at', new Date().toISOString())
-                .limit(1);
-              
               return { 
                 ...post,
                 post_media: (post.post_media || []).map((m: any) => ({
@@ -99,7 +108,8 @@ const Index = () => {
                   media_type: m.media_type as 'image' | 'video'
                 })),
                 has_paid: true,
-                has_story: (stories?.length || 0) > 0
+                has_story: (stories?.length || 0) > 0,
+                is_live: (liveStream?.length || 0) > 0
               };
             }
 
@@ -109,13 +119,6 @@ const Index = () => {
               .eq("post_id", post.id)
               .eq("payer_id", user.id)
               .maybeSingle();
-            
-            const { data: stories } = await supabase
-              .from('stories')
-              .select('id')
-              .eq('user_id', post.user_id)
-              .gt('expires_at', new Date().toISOString())
-              .limit(1);
 
             return { 
               ...post,
@@ -124,21 +127,36 @@ const Index = () => {
                 media_type: m.media_type as 'image' | 'video'
               })),
               has_paid: !!payment,
-              has_story: (stories?.length || 0) > 0
+              has_story: (stories?.length || 0) > 0,
+              is_live: (liveStream?.length || 0) > 0
             };
           })
         );
         setPosts(postsWithPaymentStatus);
       } else {
-        setPosts((data || []).map(post => ({ 
-          ...post,
-          post_media: (post.post_media || []).map((m: any) => ({
-            media_url: m.media_url,
-            media_type: m.media_type as 'image' | 'video'
-          })),
-          has_paid: post.monetization_type === "free",
-          has_story: false
-        })));
+        // For non-authenticated users, still check live status
+        const postsWithStatus = await Promise.all(
+          (data || []).map(async (post) => {
+            const { data: liveStream } = await supabase
+              .from('live_streams')
+              .select('id')
+              .eq('user_id', post.user_id)
+              .eq('is_live', true)
+              .limit(1);
+            
+            return {
+              ...post,
+              post_media: (post.post_media || []).map((m: any) => ({
+                media_url: m.media_url,
+                media_type: m.media_type as 'image' | 'video'
+              })),
+              has_paid: post.monetization_type === "free",
+              has_story: false,
+              is_live: (liveStream?.length || 0) > 0
+            };
+          })
+        );
+        setPosts(postsWithStatus);
       }
     } catch (error: any) {
       console.error("Error fetching posts:", error);
@@ -280,6 +298,7 @@ const Index = () => {
                   price={post.price}
                   isPaid={post.has_paid}
                   hasStory={post.has_story}
+                  isLive={post.is_live}
                   media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
                   replyCount={post.reply_count}
                   onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
