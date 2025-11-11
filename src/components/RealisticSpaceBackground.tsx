@@ -305,65 +305,101 @@ const OrionsBelt = () => {
   );
 };
 
-// Shooting Stars
-const ShootingStar = ({ delay }: { delay: number }) => {
+// Comets - Realistic space debris with NASA-accurate behavior
+const Comet = ({ delay }: { delay: number }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const trailRef = useRef<THREE.Line>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
-    if (meshRef.current && trailRef.current) {
-      const time = (clock.getElapsedTime() + delay) * 2;
-      const progress = (time % 10) / 10;
+    if (meshRef.current && trailRef.current && glowRef.current) {
+      // Much slower speed - comets take 30 seconds to cross (was 5 seconds)
+      const time = (clock.getElapsedTime() + delay) * 0.33;
+      const progress = (time % 30) / 30;
       
-      if (progress < 0.3) {
-        const startX = -100 + Math.sin(delay) * 50;
-        const startY = 50 + Math.cos(delay) * 30;
-        const startZ = -100;
+      if (progress < 0.9) {
+        // Varied comet paths based on delay for diversity
+        const startX = -120 + Math.sin(delay * 2) * 60;
+        const startY = 60 + Math.cos(delay * 3) * 40;
+        const startZ = -120;
         
-        meshRef.current.position.x = startX + progress * 200;
-        meshRef.current.position.y = startY - progress * 100;
-        meshRef.current.position.z = startZ + progress * 150;
+        // Slower, more gradual movement
+        meshRef.current.position.x = startX + progress * 240;
+        meshRef.current.position.y = startY - progress * 120;
+        meshRef.current.position.z = startZ + progress * 180;
         
         meshRef.current.visible = true;
         trailRef.current.visible = true;
+        glowRef.current.visible = true;
         
-        // Update trail
-        const trailLength = 20;
+        // Update comet glow position
+        glowRef.current.position.copy(meshRef.current.position);
+        
+        // Much longer, more dramatic comet tail (60 segments)
+        const trailLength = 60;
         const positions = new Float32Array(trailLength * 3);
         for (let i = 0; i < trailLength; i++) {
-          const trailProgress = progress - (i * 0.01);
-          positions[i * 3] = startX + trailProgress * 200;
-          positions[i * 3 + 1] = startY - trailProgress * 100;
-          positions[i * 3 + 2] = startZ + trailProgress * 150;
+          const trailProgress = progress - (i * 0.003); // Longer trail spacing
+          positions[i * 3] = startX + trailProgress * 240;
+          positions[i * 3 + 1] = startY - trailProgress * 120;
+          positions[i * 3 + 2] = startZ + trailProgress * 180;
         }
         trailRef.current.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        // Fade effect as comet travels
+        const opacity = 1 - (progress * 0.5);
+        if (trailRef.current.material instanceof THREE.LineBasicMaterial) {
+          trailRef.current.material.opacity = Math.max(0.3, opacity);
+        }
       } else {
         meshRef.current.visible = false;
         trailRef.current.visible = false;
+        glowRef.current.visible = false;
       }
     }
   });
 
   const trailGeometry = useMemo(() => {
-    const positions = new Float32Array(20 * 3);
+    const positions = new Float32Array(60 * 3);
     return new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(positions, 3));
   }, []);
 
   const trailMaterial = useMemo(() => {
-    return new THREE.LineBasicMaterial({ color: '#FFFFFF', transparent: true, opacity: 0.5 });
+    return new THREE.LineBasicMaterial({ 
+      color: '#E8F4FF', 
+      transparent: true, 
+      opacity: 0.6,
+      linewidth: 2
+    });
   }, []);
 
   return (
     <group>
+      {/* Comet nucleus - icy rock */}
       <mesh ref={meshRef}>
-        <sphereGeometry args={[0.3, 8, 8]} />
+        <sphereGeometry args={[0.4, 16, 16]} />
         <meshStandardMaterial
-          color="#FFFFFF"
-          emissive="#FFFFFF"
-          emissiveIntensity={3}
+          color="#D0E8FF"
+          emissive="#B8DCFF"
+          emissiveIntensity={2}
+          roughness={0.8}
         />
-        <pointLight intensity={1} distance={10} color="#FFFFFF" />
+        <pointLight intensity={1.5} distance={15} color="#D0E8FF" />
       </mesh>
+      
+      {/* Coma - glowing cloud around nucleus */}
+      <mesh ref={glowRef}>
+        <sphereGeometry args={[1.2, 16, 16]} />
+        <meshStandardMaterial
+          color="#C5E3FF"
+          emissive="#C5E3FF"
+          emissiveIntensity={1}
+          transparent
+          opacity={0.3}
+        />
+      </mesh>
+      
+      {/* Ion tail - blue-white trail */}
       <primitive
         ref={trailRef}
         object={new THREE.Line(trailGeometry, trailMaterial)}
@@ -711,9 +747,9 @@ const SpaceScene = () => {
       {/* Orion's Belt */}
       <OrionsBelt />
 
-      {/* Shooting Stars */}
-      {[0, 2, 4, 6, 8].map((delay) => (
-        <ShootingStar key={delay} delay={delay} />
+      {/* Comets - NASA-accurate with slow, realistic movement */}
+      {[0, 5, 10, 15, 20, 25].map((delay) => (
+        <Comet key={delay} delay={delay} />
       ))}
 
       {/* Camera controls */}
