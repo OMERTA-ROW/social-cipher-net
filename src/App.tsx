@@ -15,6 +15,8 @@ import CyberStreamer from "./pages/CyberStreamer";
 import NotFound from "./pages/NotFound";
 import Security from "./pages/Security";
 import CommunityGuidelines from "./pages/CommunityGuidelines";
+import Verification from "./pages/Verification";
+import VerificationSuccess from "./pages/VerificationSuccess";
 import AIBotAssistant from "./components/AIBotAssistant";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,8 @@ const App = () => (
           <Route path="/cyber-streamer" element={<CyberStreamer />} />
           <Route path="/security" element={<Security />} />
           <Route path="/community-guidelines" element={<CommunityGuidelines />} />
+          <Route path="/verification" element={<Verification />} />
+          <Route path="/verification-success" element={<VerificationSuccess />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

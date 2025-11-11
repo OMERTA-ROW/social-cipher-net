@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,9 +11,10 @@ interface PostCardProps {
   timestamp: string;
   likes: number;
   comments: number;
+  isVerified?: boolean;
 }
 
-const PostCard = ({ author, avatar, content, timestamp, likes, comments }: PostCardProps) => {
+const PostCard = ({ author, avatar, content, timestamp, likes, comments, isVerified }: PostCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
 
@@ -35,6 +36,9 @@ const PostCard = ({ author, avatar, content, timestamp, likes, comments }: PostC
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="font-semibold text-foreground">{author}</h3>
+            {isVerified && (
+              <BadgeCheck className="w-5 h-5 text-primary fill-current" />
+            )}
             <span className="text-sm text-muted-foreground">· {timestamp}</span>
           </div>
           

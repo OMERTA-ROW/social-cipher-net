@@ -1,4 +1,4 @@
-import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign, Gamepad2, Shield, Tv, FileText } from "lucide-react";
+import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign, Gamepad2, Shield, Tv, FileText, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -88,6 +88,15 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
               title="Community Guidelines"
             >
               <FileText className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate("/verification")}
+              className="text-foreground hover:text-primary"
+              title="Get Verified"
+            >
+              <BadgeCheck className="w-5 h-5" />
             </Button>
             <Button 
               variant="ghost" 

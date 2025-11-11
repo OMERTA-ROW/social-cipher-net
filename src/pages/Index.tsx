@@ -12,6 +12,7 @@ interface Post {
   timestamp: string;
   likes: number;
   comments: number;
+  isVerified?: boolean;
 }
 
 const Index = () => {
@@ -24,6 +25,7 @@ const Index = () => {
       timestamp: "2h ago",
       likes: 42,
       comments: 8,
+      isVerified: true,
     },
     {
       id: 2,
@@ -32,6 +34,7 @@ const Index = () => {
       timestamp: "4h ago",
       likes: 67,
       comments: 12,
+      isVerified: false,
     },
     {
       id: 3,
@@ -40,6 +43,7 @@ const Index = () => {
       timestamp: "6h ago",
       likes: 89,
       comments: 23,
+      isVerified: true,
     },
   ]);
 

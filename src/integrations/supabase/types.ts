@@ -371,9 +371,12 @@ export type Database = {
           display_name: string | null
           id: string
           is_private: boolean | null
+          is_verified: boolean | null
           two_factor_enabled: boolean | null
           updated_at: string | null
           username: string | null
+          verification_method: string | null
+          verified_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -383,9 +386,12 @@ export type Database = {
           display_name?: string | null
           id: string
           is_private?: boolean | null
+          is_verified?: boolean | null
           two_factor_enabled?: boolean | null
           updated_at?: string | null
           username?: string | null
+          verification_method?: string | null
+          verified_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -395,9 +401,12 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_private?: boolean | null
+          is_verified?: boolean | null
           two_factor_enabled?: boolean | null
           updated_at?: string | null
           username?: string | null
+          verification_method?: string | null
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -582,6 +591,36 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      verification_payments: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          status: string
+          stripe_payment_id: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string
+          stripe_payment_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          status?: string
+          stripe_payment_id?: string
           user_id?: string
         }
         Relationships: []
