@@ -1,45 +1,79 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 
-// Matrix Rain Overlay Component
+// Matrix Rain Overlay Component (standard React, not R3F)
 const MatrixRain = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dropsRef = useRef<number[]>([]);
 
-  useFrame(() => {
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
     const matrixChars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
     const fontSize = 14;
-    const columns = canvas.width / fontSize;
+    const columns = Math.floor(canvas.width / fontSize);
 
-    // Semi-transparent black for trail effect
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#0f0";
-    ctx.font = `${fontSize}px monospace`;
-
-    for (let i = 0; i < columns; i++) {
-      const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-      const x = i * fontSize;
-      const y = Math.random() * canvas.height;
-
-      ctx.fillText(text, x, y);
+    // Initialize drops
+    if (dropsRef.current.length === 0) {
+      for (let i = 0; i < columns; i++) {
+        dropsRef.current[i] = Math.random() * -100;
+      }
     }
-  });
+
+    let animationId: number;
+
+    const animate = () => {
+      // Semi-transparent black for trail effect
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#0f0";
+      ctx.font = `${fontSize}px monospace`;
+
+      for (let i = 0; i < dropsRef.current.length; i++) {
+        const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+        const x = i * fontSize;
+        const y = dropsRef.current[i] * fontSize;
+
+        ctx.fillText(text, x, y);
+
+        if (y > canvas.height && Math.random() > 0.975) {
+          dropsRef.current[i] = 0;
+        }
+        dropsRef.current[i]++;
+      }
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-20"
-      width={window.innerWidth}
-      height={window.innerHeight}
       style={{ opacity: 0.3 }}
     />
   );
