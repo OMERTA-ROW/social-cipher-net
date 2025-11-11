@@ -25,6 +25,8 @@ import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
 import NFTMarketWidget from "@/components/NFTMarketWidget";
 import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
+import FloatingWindow from "@/components/FloatingWindow";
+import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { User } from "@supabase/supabase-js";
 
 const CyberWorld = () => {
@@ -33,6 +35,7 @@ const CyberWorld = () => {
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const navigate = useNavigate();
+  const { windows, openWindow, closeWindow, closeAllWindows } = useFloatingWindows();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -376,47 +379,80 @@ const CyberWorld = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-primary" />
-                  Trading Platforms
+                  Trading Hub Control Center
                 </CardTitle>
-                <CardDescription>Connect to major trading platforms</CardDescription>
+                <CardDescription>Open multiple trading windows simultaneously</CardDescription>
               </CardHeader>
               <CardContent>
-                <TradingPlatformsWidget />
-              </CardContent>
-            </Card>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                    onClick={() => openWindow("Trading Platforms", <TradingPlatformsWidget />)}
+                  >
+                    <BarChart3 className="w-6 h-6" />
+                    <span className="text-sm">Platforms</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                    onClick={() => openWindow("Cryptocurrency Markets", <CryptoMarketChart />)}
+                  >
+                    <TrendingUp className="w-6 h-6" />
+                    <span className="text-sm">Crypto</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                    onClick={() => openWindow("Stock Market", <StockMarketWidget />)}
+                  >
+                    <BarChart3 className="w-6 h-6" />
+                    <span className="text-sm">Stocks</span>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-24 flex flex-col gap-2"
+                    onClick={() => openWindow("NFT Marketplace", <NFTMarketWidget />)}
+                  >
+                    <Award className="w-6 h-6" />
+                    <span className="text-sm">NFTs</span>
+                  </Button>
+                </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Cryptocurrency Markets</CardTitle>
-                <CardDescription>Real-time crypto prices and charts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CryptoMarketChart />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Stock Market</CardTitle>
-                <CardDescription>Major stock indices and trending stocks</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <StockMarketWidget />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>NFT Marketplace</CardTitle>
-                <CardDescription>Trending NFT collections</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <NFTMarketWidget />
+                {windows.length > 0 && (
+                  <div className="mt-4 flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                    <span className="text-sm text-muted-foreground">
+                      {windows.length} window{windows.length !== 1 ? 's' : ''} open
+                    </span>
+                    <Button size="sm" variant="destructive" onClick={closeAllWindows}>
+                      Close All Windows
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Floating Windows */}
+      {windows.map((window) => (
+        <FloatingWindow
+          key={window.id}
+          id={window.id}
+          title={window.title}
+          onClose={() => closeWindow(window.id)}
+          initialX={window.x}
+          initialY={window.y}
+          width={800}
+          height={600}
+        >
+          {window.content}
+        </FloatingWindow>
+      ))}
     </div>
   );
 };
