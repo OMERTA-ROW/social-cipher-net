@@ -308,11 +308,11 @@ const OrionsBelt = () => {
 // Comets - Realistic space debris with NASA-accurate behavior
 const Comet = ({ delay }: { delay: number }) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const trailRef = useRef<THREE.Line>(null);
+  const dustTrailRef = useRef<THREE.Points>(null);
   const glowRef = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
-    if (meshRef.current && trailRef.current && glowRef.current) {
+    if (meshRef.current && dustTrailRef.current && glowRef.current) {
       // Much slower speed - comets take 30 seconds to cross (was 5 seconds)
       const time = (clock.getElapsedTime() + delay) * 0.33;
       const progress = (time % 30) / 30;
@@ -329,47 +329,73 @@ const Comet = ({ delay }: { delay: number }) => {
         meshRef.current.position.z = startZ + progress * 180;
         
         meshRef.current.visible = true;
-        trailRef.current.visible = true;
+        dustTrailRef.current.visible = true;
         glowRef.current.visible = true;
         
         // Update comet glow position
         glowRef.current.position.copy(meshRef.current.position);
         
-        // Much longer, more dramatic comet tail (60 segments)
-        const trailLength = 60;
-        const positions = new Float32Array(trailLength * 3);
-        for (let i = 0; i < trailLength; i++) {
-          const trailProgress = progress - (i * 0.003); // Longer trail spacing
-          positions[i * 3] = startX + trailProgress * 240;
-          positions[i * 3 + 1] = startY - trailProgress * 120;
-          positions[i * 3 + 2] = startZ + trailProgress * 180;
-        }
-        trailRef.current.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        // Create dispersing dust trail particles
+        const particleCount = 200;
+        const positions = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
+        const alphas = new Float32Array(particleCount);
         
-        // Fade effect as comet travels
-        const opacity = 1 - (progress * 0.5);
-        if (trailRef.current.material instanceof THREE.LineBasicMaterial) {
-          trailRef.current.material.opacity = Math.max(0.3, opacity);
+        for (let i = 0; i < particleCount; i++) {
+          const trailProgress = progress - (i * 0.0045);
+          const dispersion = (i / particleCount) * 8; // Particles spread out over distance
+          const randomX = (Math.random() - 0.5) * dispersion;
+          const randomY = (Math.random() - 0.5) * dispersion;
+          const randomZ = (Math.random() - 0.5) * dispersion;
+          
+          positions[i * 3] = startX + trailProgress * 240 + randomX;
+          positions[i * 3 + 1] = startY - trailProgress * 120 + randomY;
+          positions[i * 3 + 2] = startZ + trailProgress * 180 + randomZ;
+          
+          // Particle size decreases along trail
+          sizes[i] = Math.max(0.1, 0.8 - (i / particleCount) * 0.7);
+          
+          // Fade effect along trail
+          alphas[i] = Math.max(0, 0.9 - (i / particleCount));
         }
+        
+        dustTrailRef.current.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        dustTrailRef.current.geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        dustTrailRef.current.geometry.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
+        dustTrailRef.current.geometry.attributes.position.needsUpdate = true;
+        dustTrailRef.current.geometry.attributes.size.needsUpdate = true;
+        dustTrailRef.current.geometry.attributes.alpha.needsUpdate = true;
       } else {
         meshRef.current.visible = false;
-        trailRef.current.visible = false;
+        dustTrailRef.current.visible = false;
         glowRef.current.visible = false;
       }
     }
   });
 
-  const trailGeometry = useMemo(() => {
-    const positions = new Float32Array(60 * 3);
-    return new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const dustTrailGeometry = useMemo(() => {
+    const geometry = new THREE.BufferGeometry();
+    const particleCount = 200;
+    const positions = new Float32Array(particleCount * 3);
+    const sizes = new Float32Array(particleCount);
+    const alphas = new Float32Array(particleCount);
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    geometry.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
+    
+    return geometry;
   }, []);
 
-  const trailMaterial = useMemo(() => {
-    return new THREE.LineBasicMaterial({ 
-      color: '#E8F4FF', 
-      transparent: true, 
-      opacity: 0.6,
-      linewidth: 2
+  const dustTrailMaterial = useMemo(() => {
+    return new THREE.PointsMaterial({
+      color: '#D0E8FF',
+      size: 0.5,
+      transparent: true,
+      opacity: 0.7,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
     });
   }, []);
 
@@ -399,11 +425,8 @@ const Comet = ({ delay }: { delay: number }) => {
         />
       </mesh>
       
-      {/* Ion tail - blue-white trail */}
-      <primitive
-        ref={trailRef}
-        object={new THREE.Line(trailGeometry, trailMaterial)}
-      />
+      {/* Dispersing dust trail particles */}
+      <points ref={dustTrailRef} geometry={dustTrailGeometry} material={dustTrailMaterial} />
     </group>
   );
 };
