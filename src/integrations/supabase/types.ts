@@ -955,6 +955,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_wallets: {
+        Row: {
+          balance: number
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       verification_payments: {
         Row: {
           amount: number
@@ -981,6 +1005,75 @@ export type Database = {
           id?: string
           status?: string
           stripe_payment_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          status: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawal_requests: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          payment_details: Json | null
+          payment_method: string
+          processed_at: string | null
+          rejection_reason: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          payment_details?: Json | null
+          payment_method?: string
+          processed_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          payment_details?: Json | null
+          payment_method?: string
+          processed_at?: string | null
+          rejection_reason?: string | null
+          status?: string
           user_id?: string
         }
         Relationships: []
