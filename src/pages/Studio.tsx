@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Radio, Send, Zap, Loader2, Video, MessageSquare, BarChart3 } from "lucide-react";
 import Navigation from "@/components/Navigation";
-import CyberSpaceBackground from "@/components/CyberSpaceBackground";
+import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
@@ -100,7 +100,7 @@ const Studio = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <CyberSpaceBackground />
+      <RealisticSpaceBackground />
       <Navigation onCreatePost={() => {}} />
       
       <main className="container mx-auto px-4 pt-20 pb-8">

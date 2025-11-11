@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gamepad2, Users, Radio, Trophy, Zap } from "lucide-react";
 import Navigation from "@/components/Navigation";
-import CyberSpaceBackground from "@/components/CyberSpaceBackground";
+import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { useNavigate } from "react-router-dom";
@@ -32,7 +32,7 @@ const CyberGamers = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <CyberSpaceBackground />
+      <RealisticSpaceBackground />
       <Navigation onCreatePost={() => {}} />
       
       <main className="container mx-auto px-4 pt-20 pb-8">

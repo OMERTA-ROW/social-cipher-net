@@ -5,7 +5,7 @@ import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
 import PostCard from "@/components/PostCard";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import CreatePostDialog from "@/components/CreatePostDialog";
-import CyberSpaceBackground from "@/components/CyberSpaceBackground";
+import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import { QualificationProgress } from "@/components/QualificationProgress";
 import { WalletCard } from "@/components/WalletCard";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
@@ -157,7 +157,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <CyberSpaceBackground />
+      <RealisticSpaceBackground />
       <Navigation onCreatePost={() => setIsCreateDialogOpen(true)} />
       
       <main className="container mx-auto px-4 pt-24 pb-8">
