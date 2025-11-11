@@ -18,8 +18,13 @@ import {
   Award,
   Zap,
   Star,
-  Crown
+  Crown,
+  BarChart3
 } from "lucide-react";
+import CryptoMarketChart from "@/components/CryptoMarketChart";
+import StockMarketWidget from "@/components/StockMarketWidget";
+import NFTMarketWidget from "@/components/NFTMarketWidget";
+import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
 import { User } from "@supabase/supabase-js";
 
 const CyberWorld = () => {
@@ -173,11 +178,15 @@ const CyberWorld = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="discover" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="discover">Discover</TabsTrigger>
             <TabsTrigger value="communities">Communities</TabsTrigger>
             <TabsTrigger value="events">Live Events</TabsTrigger>
             <TabsTrigger value="trending">Trending</TabsTrigger>
+            <TabsTrigger value="trading">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Trading
+            </TabsTrigger>
           </TabsList>
 
           {/* Discover Tab */}
@@ -357,6 +366,52 @@ const CyberWorld = () => {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Trading Tab */}
+          <TabsContent value="trading" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                  Trading Platforms
+                </CardTitle>
+                <CardDescription>Connect to major trading platforms</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TradingPlatformsWidget />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Cryptocurrency Markets</CardTitle>
+                <CardDescription>Real-time crypto prices and charts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CryptoMarketChart />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock Market</CardTitle>
+                <CardDescription>Major stock indices and trending stocks</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StockMarketWidget />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>NFT Marketplace</CardTitle>
+                <CardDescription>Trending NFT collections</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <NFTMarketWidget />
               </CardContent>
             </Card>
           </TabsContent>
