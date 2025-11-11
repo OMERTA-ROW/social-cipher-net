@@ -18,7 +18,7 @@ const MatrixRain = () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const matrixChars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
+    const matrixChars = "0123456789";
     const fontSize = 14;
     const columns = Math.floor(canvas.width / fontSize);
 
@@ -30,8 +30,17 @@ const MatrixRain = () => {
     }
 
     let animationId: number;
+    let lastTime = 0;
+    const frameDelay = 100; // Milliseconds between frames (slower = higher number)
 
-    const animate = () => {
+    const animate = (currentTime: number) => {
+      // Throttle animation speed
+      if (currentTime - lastTime < frameDelay) {
+        animationId = requestAnimationFrame(animate);
+        return;
+      }
+      lastTime = currentTime;
+
       // Semi-transparent black for trail effect
       ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -55,7 +64,7 @@ const MatrixRain = () => {
       animationId = requestAnimationFrame(animate);
     };
 
-    animate();
+    animate(0);
 
     const handleResize = () => {
       canvas.width = window.innerWidth;
