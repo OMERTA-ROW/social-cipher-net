@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.create-tier-checkout]
 verify_jwt = false
+
+[functions.convert-crypto-to-usd]
+verify_jwt = true

@@ -169,8 +169,8 @@ const Index = () => {
               <QualificationProgress />
               <div className="grid md:grid-cols-2 gap-6">
                 <WalletCard />
-                <CryptoBalanceCard />
               </div>
+              <CryptoBalanceCard />
               <CryptoWalletConnect />
             </div>
           )}
