@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,11 +66,38 @@ serve(async (req) => {
         .update({ click_count: post.click_count + 1 })
         .eq("id", postId);
 
+      // Check if creator has CyberBasis tier for 25% bonus
+      const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+        apiVersion: "2025-08-27.basil",
+      });
+      
+      const { data: creatorUser } = await supabaseClient.auth.admin.getUserById(post.user_id);
+      let earningAmount = post.price;
+      
+      if (creatorUser?.user?.email) {
+        const customers = await stripe.customers.list({ email: creatorUser.user.email, limit: 1 });
+        if (customers.data.length > 0) {
+          const subscriptions = await stripe.subscriptions.list({
+            customer: customers.data[0].id,
+            status: "active",
+            limit: 1,
+          });
+          
+          if (subscriptions.data.length > 0) {
+            const productId = subscriptions.data[0].items.data[0].price.product;
+            // Check if it's CyberBasis tier (product ID from check-subscription)
+            if (productId === "prod_RZD21c1yFmV61s") {
+              earningAmount = post.price * 1.25; // 25% bonus
+            }
+          }
+        }
+      }
+      
       // Add earnings for the creator
       await supabaseClient.from("creator_earnings").insert({
         creator_id: post.user_id,
         post_id: postId,
-        amount: post.price,
+        amount: earningAmount,
         earning_type: "pay_per_click",
       });
     }
