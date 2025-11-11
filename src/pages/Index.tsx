@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
+import { QualificationProgress } from "@/components/QualificationProgress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -155,6 +156,12 @@ const Index = () => {
             <h2 className="text-3xl font-bold text-foreground mb-2">Feed</h2>
             <p className="text-muted-foreground">Stay connected with the cyber community</p>
           </div>
+
+          {currentUserId && (
+            <div className="mb-6">
+              <QualificationProgress />
+            </div>
+          )}
           
           <div className="space-y-4">
             {isLoading ? (
