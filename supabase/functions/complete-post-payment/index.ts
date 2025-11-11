@@ -64,7 +64,7 @@ serve(async (req) => {
 
     // If pay_per_view, add earnings immediately
     if (relevantSession.metadata?.paymentType === "pay_per_view") {
-      // Check if creator has CyberBasis tier for 25% bonus
+      // Check if creator has CyberBasis (25% bonus) or CyberPro (75% bonus) tier
       const { data: creatorUser } = await supabaseClient.auth.admin.getUserById(post.user_id);
       let earningAmount = post.price;
       
@@ -79,9 +79,11 @@ serve(async (req) => {
           
           if (subscriptions.data.length > 0) {
             const productId = subscriptions.data[0].items.data[0].price.product;
-            // Check if it's CyberBasis tier (product ID from check-subscription)
-            if (productId === "prod_RZD21c1yFmV61s") {
-              earningAmount = post.price * 1.25; // 25% bonus
+            // Check tier and apply bonus
+            if (productId === "prod_RlNFTN4LJIdK5c") {
+              earningAmount = post.price * 1.25; // CyberBasis: 25% bonus
+            } else if (productId === "prod_RlNG0uIMPYZazH") {
+              earningAmount = post.price * 1.75; // CyberPro: 75% bonus
             }
           }
         }
