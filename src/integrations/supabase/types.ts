@@ -136,6 +136,80 @@ export type Database = {
           },
         ]
       }
+      external_affiliate_clicks: {
+        Row: {
+          clicker_id: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          link_id: string
+        }
+        Insert: {
+          clicker_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          link_id: string
+        }
+        Update: {
+          clicker_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          link_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_affiliate_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "external_affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      external_affiliate_links: {
+        Row: {
+          affiliate_url: string
+          click_count: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          link_name: string
+          link_type: string
+          merchant_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          affiliate_url: string
+          click_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_name: string
+          link_type?: string
+          merchant_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          affiliate_url?: string
+          click_count?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_name?: string
+          link_type?: string
+          merchant_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string | null

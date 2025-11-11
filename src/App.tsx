@@ -18,6 +18,7 @@ import CommunityGuidelines from "./pages/CommunityGuidelines";
 import Verification from "./pages/Verification";
 import VerificationSuccess from "./pages/VerificationSuccess";
 import Subscription from "./pages/Subscription";
+import AffiliateLinks from "./pages/AffiliateLinks";
 import AIBotAssistant from "./components/AIBotAssistant";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/verification" element={<Verification />} />
           <Route path="/verification-success" element={<VerificationSuccess />} />
           <Route path="/subscription" element={<Subscription />} />
+          <Route path="/affiliate-links" element={<AffiliateLinks />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
