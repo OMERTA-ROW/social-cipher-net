@@ -88,7 +88,7 @@ const MatrixRain = () => {
   );
 };
 
-// Planet Component with optional rings and atmosphere
+// Planet Component with realistic details
 const Planet = ({ 
   position, 
   size, 
@@ -97,8 +97,11 @@ const Planet = ({
   hasRings = false,
   hasAtmosphere = false,
   atmosphereColor,
+  hasClouds = false,
+  cloudColor,
   roughness = 0.9,
-  metalness = 0.1
+  metalness = 0.1,
+  emissiveIntensity = 0.05
 }: { 
   position: [number, number, number]; 
   size: number; 
@@ -107,74 +110,116 @@ const Planet = ({
   hasRings?: boolean;
   hasAtmosphere?: boolean;
   atmosphereColor?: string;
+  hasClouds?: boolean;
+  cloudColor?: string;
   roughness?: number;
   metalness?: number;
+  emissiveIntensity?: number;
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const ringsRef = useRef<THREE.Mesh>(null);
   const atmosphereRef = useRef<THREE.Mesh>(null);
+  const cloudsRef = useRef<THREE.Mesh>(null);
 
   useFrame(({ clock }) => {
     if (meshRef.current) {
       const time = clock.getElapsedTime() * speed;
       meshRef.current.position.x = position[0] * Math.cos(time);
       meshRef.current.position.z = position[2] * Math.sin(time);
-      meshRef.current.rotation.y += 0.002;
+      meshRef.current.rotation.y += 0.003;
       
       if (ringsRef.current) {
         ringsRef.current.position.x = meshRef.current.position.x;
         ringsRef.current.position.z = meshRef.current.position.z;
         ringsRef.current.rotation.x = Math.PI / 2;
+        ringsRef.current.rotation.y += 0.0005;
       }
       
       if (atmosphereRef.current) {
         atmosphereRef.current.position.x = meshRef.current.position.x;
         atmosphereRef.current.position.z = meshRef.current.position.z;
-        atmosphereRef.current.rotation.y += 0.001;
+        atmosphereRef.current.rotation.y += 0.0015;
+      }
+      
+      if (cloudsRef.current) {
+        cloudsRef.current.position.x = meshRef.current.position.x;
+        cloudsRef.current.position.z = meshRef.current.position.z;
+        cloudsRef.current.rotation.y += 0.004;
       }
     }
   });
 
   return (
     <group>
-      <mesh ref={meshRef} position={position}>
-        <sphereGeometry args={[size, 64, 64]} />
+      {/* Main planet surface */}
+      <mesh ref={meshRef} position={position} castShadow receiveShadow>
+        <sphereGeometry args={[size, 128, 128]} />
         <meshStandardMaterial
           color={color}
           emissive={color}
-          emissiveIntensity={0.1}
+          emissiveIntensity={emissiveIntensity}
           roughness={roughness}
           metalness={metalness}
         />
       </mesh>
       
+      {/* Cloud layer for Earth and gas giants */}
+      {hasClouds && cloudColor && (
+        <mesh ref={cloudsRef} position={position}>
+          <sphereGeometry args={[size * 1.02, 128, 128]} />
+          <meshStandardMaterial
+            color={cloudColor}
+            emissive={cloudColor}
+            emissiveIntensity={0.1}
+            transparent
+            opacity={0.4}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
+      
+      {/* Atmospheric glow */}
       {hasAtmosphere && atmosphereColor && (
         <mesh ref={atmosphereRef} position={position}>
-          <sphereGeometry args={[size * 1.08, 64, 64]} />
+          <sphereGeometry args={[size * 1.1, 64, 64]} />
           <meshStandardMaterial
             color={atmosphereColor}
             emissive={atmosphereColor}
-            emissiveIntensity={0.3}
+            emissiveIntensity={0.4}
             transparent
-            opacity={0.15}
+            opacity={0.2}
             side={THREE.BackSide}
           />
         </mesh>
       )}
       
+      {/* Saturn's rings */}
       {hasRings && (
-        <mesh ref={ringsRef} position={position}>
-          <ringGeometry args={[size * 1.5, size * 2.5, 128]} />
-          <meshStandardMaterial
-            color="#C9A86A"
-            emissive="#8B7355"
-            emissiveIntensity={0.05}
-            transparent
-            opacity={0.8}
-            side={THREE.DoubleSide}
-            roughness={0.8}
-          />
-        </mesh>
+        <>
+          <mesh ref={ringsRef} position={position} receiveShadow>
+            <ringGeometry args={[size * 1.6, size * 2.8, 256]} />
+            <meshStandardMaterial
+              color="#D4C5A9"
+              emissive="#B8A888"
+              emissiveIntensity={0.02}
+              transparent
+              opacity={0.85}
+              side={THREE.DoubleSide}
+              roughness={0.85}
+              metalness={0.05}
+            />
+          </mesh>
+          {/* Ring shadow bands */}
+          <mesh position={position}>
+            <ringGeometry args={[size * 2.0, size * 2.3, 256]} />
+            <meshStandardMaterial
+              color="#8B7355"
+              transparent
+              opacity={0.5}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        </>
       )}
     </group>
   );
@@ -540,30 +585,122 @@ const SpaceScene = () => {
       {/* Sun */}
       <Sun />
 
-      {/* Planets of the Solar System - Realistic */}
-      {/* Mercury - Rocky, cratered surface */}
-      <Planet position={[5, 0, 0]} size={0.4} color="#8B7D6B" speed={0.4} roughness={0.95} metalness={0.05} />
+      {/* Solar System Planets - NASA-accurate visualization */}
       
-      {/* Venus - Thick atmosphere, yellowish clouds */}
-      <Planet position={[8, 0, 0]} size={0.9} color="#E8CDA2" speed={0.3} hasAtmosphere atmosphereColor="#FFF4D6" roughness={0.6} metalness={0.1} />
+      {/* Mercury - Gray, heavily cratered surface */}
+      <Planet 
+        position={[5, 0, 0]} 
+        size={0.38} 
+        color="#9D9D9D" 
+        speed={0.4} 
+        roughness={0.98} 
+        metalness={0.02}
+        emissiveIntensity={0.02}
+      />
       
-      {/* Earth - Blue oceans, green continents, white clouds */}
-      <Planet position={[12, 0, 0]} size={1} color="#1E88E5" speed={0.2} hasAtmosphere atmosphereColor="#87CEEB" roughness={0.5} metalness={0.3} />
+      {/* Venus - Thick sulfuric acid clouds, hot greenhouse atmosphere */}
+      <Planet 
+        position={[8, 0, 0]} 
+        size={0.95} 
+        color="#FFC649" 
+        speed={0.3} 
+        hasAtmosphere 
+        atmosphereColor="#FFDB80"
+        hasClouds
+        cloudColor="#E8C89F"
+        roughness={0.4} 
+        metalness={0.1}
+        emissiveIntensity={0.08}
+      />
       
-      {/* Mars - Red planet with polar ice caps */}
-      <Planet position={[16, 0, 0]} size={0.5} color="#CD5C5C" speed={0.15} hasAtmosphere atmosphereColor="#FFB6C1" roughness={0.9} metalness={0.05} />
+      {/* Earth - Blue marble with white clouds, 71% ocean coverage */}
+      <Planet 
+        position={[12, 0, 0]} 
+        size={1} 
+        color="#1A5FB4" 
+        speed={0.2} 
+        hasAtmosphere 
+        atmosphereColor="#4A90D9"
+        hasClouds
+        cloudColor="#FFFFFF"
+        roughness={0.6} 
+        metalness={0.4}
+        emissiveIntensity={0.03}
+      />
       
-      {/* Jupiter - Gas giant with bands and Great Red Spot */}
-      <Planet position={[25, 0, 0]} size={2.5} color="#C88B3A" speed={0.08} hasAtmosphere atmosphereColor="#E8C99A" roughness={0.3} metalness={0.05} />
+      {/* Mars - Rusty red iron oxide surface with polar ice caps */}
+      <Planet 
+        position={[16, 0, 0]} 
+        size={0.53} 
+        color="#C1440E" 
+        speed={0.15} 
+        hasAtmosphere 
+        atmosphereColor="#E89C7E"
+        roughness={0.92} 
+        metalness={0.05}
+        emissiveIntensity={0.02}
+      />
       
-      {/* Saturn - Pale gold with prominent rings */}
-      <Planet position={[35, 0, 0]} size={2.2} color="#FAD5A5" speed={0.06} hasRings hasAtmosphere atmosphereColor="#FFF8DC" roughness={0.4} metalness={0.05} />
+      {/* Jupiter - Gas giant with swirling cloud bands and Great Red Spot */}
+      <Planet 
+        position={[25, 0, 0]} 
+        size={2.5} 
+        color="#D8AC6B" 
+        speed={0.08} 
+        hasAtmosphere 
+        atmosphereColor="#E8C99A"
+        hasClouds
+        cloudColor="#C88B3A"
+        roughness={0.2} 
+        metalness={0.05}
+        emissiveIntensity={0.06}
+      />
       
-      {/* Uranus - Blue-green ice giant */}
-      <Planet position={[45, 0, 0]} size={1.5} color="#4FD0E7" speed={0.04} hasAtmosphere atmosphereColor="#B0E0E6" roughness={0.5} metalness={0.2} />
+      {/* Saturn - Pale gold with magnificent ring system */}
+      <Planet 
+        position={[35, 0, 0]} 
+        size={2.2} 
+        color="#F4E4C1" 
+        speed={0.06} 
+        hasRings 
+        hasAtmosphere 
+        atmosphereColor="#FFF8DC"
+        hasClouds
+        cloudColor="#E8D5B7"
+        roughness={0.3} 
+        metalness={0.05}
+        emissiveIntensity={0.04}
+      />
       
-      {/* Neptune - Deep blue ice giant */}
-      <Planet position={[55, 0, 0]} size={1.4} color="#4169E1" speed={0.03} hasAtmosphere atmosphereColor="#87CEEB" roughness={0.5} metalness={0.2} />
+      {/* Uranus - Pale cyan ice giant tilted on its side */}
+      <Planet 
+        position={[45, 0, 0]} 
+        size={1.5} 
+        color="#4FD0E7" 
+        speed={0.04} 
+        hasAtmosphere 
+        atmosphereColor="#7FE3F0"
+        hasClouds
+        cloudColor="#6BC8D9"
+        roughness={0.4} 
+        metalness={0.25}
+        emissiveIntensity={0.05}
+      />
+      
+      {/* Neptune - Deep blue with dynamic storms and winds */}
+      <Planet 
+        position={[55, 0, 0]} 
+        size={1.45} 
+        color="#2E5090" 
+        speed={0.03} 
+        hasAtmosphere 
+        atmosphereColor="#4169E1"
+        hasClouds
+        cloudColor="#3A5BA0"
+        roughness={0.4} 
+        metalness={0.25}
+        emissiveIntensity={0.06}
+      />
 
       {/* Asteroid Belt */}
       <AsteroidBelt />
