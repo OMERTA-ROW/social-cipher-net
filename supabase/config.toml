@@ -57,6 +57,12 @@ verify_jwt = false
 [functions.track-post-click]
 verify_jwt = false
 
+[functions.request-withdrawal]
+verify_jwt = true
+
+[functions.pay-subscription-from-wallet]
+verify_jwt = true
+
 [functions.create-post-payment]
 verify_jwt = false
 

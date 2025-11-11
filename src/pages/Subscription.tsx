@@ -6,7 +6,8 @@ import CyberSpaceBackground from "@/components/CyberSpaceBackground";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Wallet, CreditCard } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const TIERS = {
@@ -55,11 +56,15 @@ const Subscription = () => {
   const [currentTier, setCurrentTier] = useState<string>("free");
   const [isLoading, setIsLoading] = useState(true);
   const [processingTier, setProcessingTier] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [selectedTier, setSelectedTier] = useState<"basis" | "pro" | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
     checkSubscription();
+    fetchWallet();
   }, []);
 
   const checkAuth = async () => {
@@ -91,8 +96,73 @@ const Subscription = () => {
     }
   };
 
+  const fetchWallet = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("user_wallets")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      setWalletBalance(data?.balance ? Number(data.balance) : 0);
+    } catch (error) {
+      console.error("Error fetching wallet:", error);
+    }
+  };
+
+  const handleSubscribeClick = (tier: "basis" | "pro") => {
+    setSelectedTier(tier);
+    setShowPaymentDialog(true);
+  };
+
+  const handlePayWithWallet = async () => {
+    if (!selectedTier) return;
+    
+    const tierPrice = TIERS[selectedTier].price;
+    if (walletBalance < tierPrice) {
+      toast.error(`Insufficient balance. You need $${tierPrice} but have $${walletBalance.toFixed(2)}`);
+      return;
+    }
+
+    setProcessingTier(selectedTier);
+    setShowPaymentDialog(false);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Please sign in");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("pay-subscription-from-wallet", {
+        body: { tier: selectedTier },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(data.message || "Subscription activated!");
+      checkSubscription();
+      fetchWallet();
+    } catch (error: any) {
+      console.error("Wallet payment error:", error);
+      toast.error(error.message || "Failed to process payment");
+    } finally {
+      setProcessingTier(null);
+      setSelectedTier(null);
+    }
+  };
+
   const handleSubscribe = async (tier: "basis" | "pro") => {
     setProcessingTier(tier);
+    setShowPaymentDialog(false);
+    
     try {
       const { data, error } = await supabase.functions.invoke("create-tier-checkout", {
         body: { priceId: TIERS[tier].priceId },
@@ -109,6 +179,7 @@ const Subscription = () => {
       toast.error(error.message || "Failed to start subscription");
     } finally {
       setProcessingTier(null);
+      setSelectedTier(null);
     }
   };
 
@@ -208,7 +279,7 @@ const Subscription = () => {
                           onClick={() =>
                             isCurrentTier
                               ? handleManageSubscription()
-                              : handleSubscribe(key as "basis" | "pro")
+                              : handleSubscribeClick(key as "basis" | "pro")
                           }
                           disabled={processingTier === key}
                           className="w-full"
@@ -237,9 +308,71 @@ const Subscription = () => {
             <p className="text-sm text-muted-foreground">
               All subscriptions are billed annually. Cancel anytime.
             </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Wallet Balance: <span className="text-primary font-semibold">${walletBalance.toFixed(2)}</span>
+            </p>
           </div>
         </div>
       </main>
+
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Choose Payment Method</DialogTitle>
+            <DialogDescription>
+              Select how you'd like to pay for your {selectedTier && TIERS[selectedTier].name} subscription ($
+              {selectedTier && TIERS[selectedTier].price}/year)
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <Card 
+              className={`cursor-pointer transition-all hover:border-primary ${
+                walletBalance >= (selectedTier ? TIERS[selectedTier].price : 0) 
+                  ? 'border-primary/50' 
+                  : 'opacity-50'
+              }`}
+              onClick={() => walletBalance >= (selectedTier ? TIERS[selectedTier].price : 0) && handlePayWithWallet()}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Wallet className="w-5 h-5" />
+                  Pay with Wallet Balance
+                </CardTitle>
+                <CardDescription>
+                  Available: ${walletBalance.toFixed(2)}
+                  {walletBalance < (selectedTier ? TIERS[selectedTier].price : 0) && (
+                    <span className="text-destructive block mt-1">
+                      Insufficient balance (need ${selectedTier && (TIERS[selectedTier].price - walletBalance).toFixed(2)} more)
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card 
+              className="cursor-pointer transition-all hover:border-primary"
+              onClick={() => selectedTier && handleSubscribe(selectedTier)}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CreditCard className="w-5 h-5" />
+                  Pay with Credit Card
+                </CardTitle>
+                <CardDescription>
+                  Secure payment via Stripe
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

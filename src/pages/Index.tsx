@@ -6,6 +6,7 @@ import PostCard from "@/components/PostCard";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import CyberSpaceBackground from "@/components/CyberSpaceBackground";
 import { QualificationProgress } from "@/components/QualificationProgress";
+import { WalletCard } from "@/components/WalletCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -161,8 +162,9 @@ const Index = () => {
           </div>
 
           {currentUserId && (
-            <div className="mb-6">
+            <div className="space-y-6 mb-6">
               <QualificationProgress />
+              <WalletCard />
             </div>
           )}
           

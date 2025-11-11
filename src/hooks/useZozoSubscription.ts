@@ -133,7 +133,7 @@ export const useZozoSubscription = () => {
     };
   }, []);
 
-  const startCheckout = async (tier: "basic" | "premium") => {
+  const startCheckout = async (tier: "basic" | "premium", useWallet: boolean = false) => {
     try {
       const {
         data: { session },
@@ -143,24 +143,38 @@ export const useZozoSubscription = () => {
         return;
       }
 
-      const priceId = ZOZO_TIERS[tier].priceId;
+      if (useWallet) {
+        const { data, error } = await supabase.functions.invoke("pay-subscription-from-wallet", {
+          body: { tier },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { priceId },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+        if (error) throw error;
 
-      if (error) throw error;
+        toast.success(data.message || "Subscription activated!");
+        checkSubscription();
+      } else {
+        const priceId = ZOZO_TIERS[tier].priceId;
 
-      if (data?.url) {
-        window.open(data.url, "_blank");
-        toast.success("Opening checkout...");
+        const { data, error } = await supabase.functions.invoke("create-checkout", {
+          body: { priceId },
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.open(data.url, "_blank");
+          toast.success("Opening checkout...");
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Checkout error:", error);
-      toast.error("Failed to start checkout");
+      toast.error(error.message || "Failed to start checkout");
     }
   };
 
