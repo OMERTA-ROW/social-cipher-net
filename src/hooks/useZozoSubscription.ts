@@ -13,16 +13,22 @@ interface SubscriptionStatus {
 
 export const ZOZO_TIERS = {
   free: {
-    name: "Free",
+    name: "CyberFree",
     price: "$0",
-    features: ["Zozo visible", "No AI assistance", "Just monitors activity"],
+    features: [
+      "Full platform access",
+      "No payment required",
+      "No restrictions",
+      "Upgrade at 1K followers + 10K views"
+    ],
   },
   basic: {
-    name: "Basic",
-    price: "$20/year",
+    name: "CyberBasis",
+    price: "$50/year",
     priceId: "price_1SRivYHTVeX8KHmEwCiUejhe",
-    productId: "prod_TOVxsdaBvuE9cZ",
+    productId: "prod_RlNFTN4LJIdK5c",
     features: [
+      "Auto-unlocked at milestones",
       "Active AI conversations",
       "Auto-reply to messages",
       "Thread posting",
@@ -31,12 +37,12 @@ export const ZOZO_TIERS = {
     ],
   },
   premium: {
-    name: "Premium",
-    price: "$40/year",
+    name: "CyberPro",
+    price: "$100/year",
     priceId: "price_1SRivmHTVeX8KHmEe7Usofwt",
-    productId: "prod_TOVxfPqyzEZAKk",
+    productId: "prod_RlNG0uIMPYZazH",
     features: [
-      "Everything in Basic",
+      "Everything in CyberBasis",
       "Unlimited AI conversations",
       "Hyperspace access",
       "Priority support",
@@ -66,17 +72,31 @@ export const useZozoSubscription = () => {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke("check-subscription", {
+      // Check subscription status
+      const { data: subData, error: subError } = await supabase.functions.invoke("check-subscription", {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
 
-      if (error) {
-        console.error("Subscription check error:", error);
+      if (subError) {
+        console.error("Subscription check error:", subError);
         setStatus({ subscribed: false, tier: "free", product_id: null, subscription_end: null });
       } else {
-        setStatus(data);
+        // If free tier, check if they qualify for auto-upgrade
+        if (subData?.tier === "CyberFree") {
+          const { data: qualData } = await supabase.functions.invoke("check-qualifications", {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          });
+
+          if (qualData?.qualifies && !qualData?.hasActiveSubscription) {
+            // User qualifies but hasn't subscribed yet
+            toast.success(qualData.message || "You qualify for CyberBasis upgrade!");
+          }
+        }
+        setStatus(subData);
       }
     } catch (error) {
       console.error("Subscription check failed:", error);
