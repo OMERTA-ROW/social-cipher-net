@@ -101,3 +101,12 @@ verify_jwt = false
 
 [functions.check-qualifications]
 verify_jwt = false
+
+[functions.check-draco-subscription]
+verify_jwt = false
+
+[functions.create-draco-checkout]
+verify_jwt = false
+
+[functions.draco-customer-portal]
+verify_jwt = false

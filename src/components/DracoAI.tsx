@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Target, Send, X, Loader2, Rocket } from "lucide-react";
+import { Target, Send, X, Loader2, Rocket, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import TradingSignalsPanel from "./TradingSignalsPanel";
 import { SpaceshipEntrance } from "./SpaceshipEntrance";
 import { HyperSpeedSequence } from "./HyperSpeedSequence";
+import { useDracoSubscription } from "@/hooks/useDracoSubscription";
+import { DracoSubscriptionDialog } from "./DracoSubscriptionDialog";
 
 interface Message {
   role: "user" | "assistant";
@@ -32,7 +34,9 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
   const [showSpaceship, setShowSpaceship] = useState(false);
   const [showHyperSpeed, setShowHyperSpeed] = useState(false);
   const [hyperSpeedDestination, setHyperSpeedDestination] = useState("/");
+  const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { status, loading: subscriptionLoading, startCheckout, openCustomerPortal } = useDracoSubscription();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -212,6 +216,15 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => setShowSubscriptionDialog(true)}
+              className="text-orange-400 hover:text-orange-300 hover:bg-orange-950/50"
+              title="Subscription Tiers"
+            >
+              <Crown className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => handleHyperSpeedJump("/")}
               className="text-accent hover:text-accent/80 hover:bg-accent/10"
               title="Hyper Speed to Hub"
@@ -284,6 +297,14 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
       </Card>
     </div>
       )}
+
+      <DracoSubscriptionDialog
+        isOpen={showSubscriptionDialog}
+        onClose={() => setShowSubscriptionDialog(false)}
+        currentTier={status.tier}
+        onSubscribe={startCheckout}
+        onManageSubscription={openCustomerPortal}
+      />
     </>
   );
 };
