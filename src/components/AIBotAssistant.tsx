@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare, Crown, Lock } from "lucide-react";
+import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare, Crown, Lock, Rocket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import VoiceWaveform from "./VoiceWaveform";
 import HyperspacePortal from "./HyperspacePortal";
 import ZozoUpgradeDialog from "./ZozoUpgradeDialog";
+import { ZozoSpaceshipEntrance } from "./ZozoSpaceshipEntrance";
+import { HyperSpeedSequence } from "./HyperSpeedSequence";
 import { useNavigate } from "react-router-dom";
 import { useZozoSubscription, ZOZO_TIERS } from "@/hooks/useZozoSubscription";
 
@@ -32,6 +34,9 @@ const AIBotAssistant = () => {
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(false);
   const [autoLiveLink, setAutoLiveLink] = useState(false);
   const [hyperspaceOpen, setHyperspaceOpen] = useState(false);
+  const [showSpaceship, setShowSpaceship] = useState(false);
+  const [showHyperSpeed, setShowHyperSpeed] = useState(false);
+  const [hyperSpeedDestination, setHyperSpeedDestination] = useState("/");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -42,6 +47,31 @@ const AIBotAssistant = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Listen for notifications from CyberLink World
+  useEffect(() => {
+    const channel = supabase
+      .channel('cyberlink-notifications')
+      .on('broadcast', { event: 'notification' }, (payload: any) => {
+        const { type, destination, bot } = payload.payload || {};
+        
+        // Only respond to Zozo notifications
+        if (bot === 'zozo') {
+          if (type === 'hyperspeed') {
+            setHyperSpeedDestination(destination || '/');
+            setShowHyperSpeed(true);
+            setIsOpen(false);
+          } else {
+            setShowSpaceship(true);
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     // Auto-link to live when enabled
@@ -233,6 +263,12 @@ const AIBotAssistant = () => {
     }
   };
 
+  const handleHyperSpeedJump = (destination: string) => {
+    setHyperSpeedDestination(destination);
+    setShowHyperSpeed(true);
+    setIsOpen(false);
+  };
+
   const startRecording = async () => {
     if (!isActive) {
       toast.error("Voice features require a subscription");
@@ -329,16 +365,32 @@ const AIBotAssistant = () => {
 
   return (
     <>
+      <HyperSpeedSequence
+        isActive={showHyperSpeed}
+        destination={hyperSpeedDestination}
+        onComplete={() => setShowHyperSpeed(false)}
+      />
+
+      <ZozoSpaceshipEntrance 
+        isActive={showSpaceship} 
+        onComplete={() => {
+          setShowSpaceship(false);
+          setIsOpen(true);
+        }} 
+      />
+
       {/* Floating Bot Button - Zozo */}
-      <Button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full shadow-lg transition-all ${
-          isSpeaking ? "animate-pulse glow-accent scale-110" : "glow-primary"
-        }`}
-        size="icon"
-      >
-        <Bot className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""}`} />
-      </Button>
+      {!isOpen && !showSpaceship && !showHyperSpeed && (
+        <Button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full shadow-lg transition-all ${
+            isSpeaking ? "animate-pulse glow-accent scale-110" : "glow-primary"
+          }`}
+          size="icon"
+        >
+          <Bot className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""}`} />
+        </Button>
+      )}
 
       {/* Chat Window */}
       {isOpen && (
@@ -365,9 +417,20 @@ const AIBotAssistant = () => {
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleHyperSpeedJump("/")}
+                className="text-accent hover:text-accent/80 hover:bg-accent/10"
+                title="Hyper Speed to Hub"
+              >
+                <Rocket className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
           
           {/* Voice Waveform Indicator */}

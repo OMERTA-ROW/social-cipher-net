@@ -1,28 +1,31 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type NotificationType = "spaceship" | "hyperspeed";
+export type BotType = "draco" | "zozo";
 
 export interface DracoNotification {
   type: NotificationType;
   destination?: string;
   message?: string;
+  bot?: BotType;
 }
 
 /**
- * Send a notification to trigger Draco AI entrance
+ * Send a notification to trigger AI bot entrance (Draco or Zozo)
  * @param notification - The notification configuration
  * @example
- * // Trigger spaceship entrance
- * sendDracoNotification({ type: "spaceship" });
+ * // Trigger Draco spaceship entrance
+ * sendBotNotification({ type: "spaceship", bot: "draco" });
  * 
- * // Trigger hyper speed to specific destination
- * sendDracoNotification({ 
+ * // Trigger Zozo hyper speed to specific destination
+ * sendBotNotification({ 
  *   type: "hyperspeed", 
+ *   bot: "zozo",
  *   destination: "/cyber-world",
  *   message: "New trading signal detected!"
  * });
  */
-export async function sendDracoNotification(notification: DracoNotification) {
+export async function sendBotNotification(notification: DracoNotification) {
   const channel = supabase.channel('cyberlink-notifications');
   
   await channel.subscribe(async (status) => {
@@ -45,7 +48,7 @@ export async function sendDracoNotification(notification: DracoNotification) {
  * Trigger Draco spaceship entrance
  */
 export async function triggerDracoSpaceship() {
-  await sendDracoNotification({ type: "spaceship" });
+  await sendBotNotification({ type: "spaceship", bot: "draco" });
 }
 
 /**
@@ -54,8 +57,30 @@ export async function triggerDracoSpaceship() {
  * @param message - Optional message to display
  */
 export async function triggerDracoHyperSpeed(destination: string, message?: string) {
-  await sendDracoNotification({ 
+  await sendBotNotification({ 
     type: "hyperspeed", 
+    bot: "draco",
+    destination,
+    message 
+  });
+}
+
+/**
+ * Trigger Zozo spaceship entrance
+ */
+export async function triggerZozoSpaceship() {
+  await sendBotNotification({ type: "spaceship", bot: "zozo" });
+}
+
+/**
+ * Trigger Zozo hyper speed jump to destination
+ * @param destination - Route to navigate to (e.g., "/cyber-world")
+ * @param message - Optional message to display
+ */
+export async function triggerZozoHyperSpeed(destination: string, message?: string) {
+  await sendBotNotification({ 
+    type: "hyperspeed", 
+    bot: "zozo",
     destination,
     message 
   });

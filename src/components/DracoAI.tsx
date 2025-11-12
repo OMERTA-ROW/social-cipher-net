@@ -45,16 +45,17 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
     const channel = supabase
       .channel('cyberlink-notifications')
       .on('broadcast', { event: 'notification' }, (payload: any) => {
-        const { type, destination } = payload.payload || {};
+        const { type, destination, bot } = payload.payload || {};
         
-        if (type === 'hyperspeed') {
-          // Trigger hyper speed sequence
-          setHyperSpeedDestination(destination || '/');
-          setShowHyperSpeed(true);
-          setIsOpen(false);
-        } else {
-          // Default to spaceship entrance
-          setShowSpaceship(true);
+        // Only respond to Draco notifications
+        if (bot === 'draco') {
+          if (type === 'hyperspeed') {
+            setHyperSpeedDestination(destination || '/');
+            setShowHyperSpeed(true);
+            setIsOpen(false);
+          } else {
+            setShowSpaceship(true);
+          }
         }
       })
       .subscribe();
