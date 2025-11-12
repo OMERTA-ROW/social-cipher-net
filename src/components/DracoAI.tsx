@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Target, Send, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import TradingSignalsPanel from "./TradingSignalsPanel";
+import { SpaceshipEntrance } from "./SpaceshipEntrance";
 
 interface Message {
   role: "user" | "assistant";
@@ -27,6 +28,7 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSpaceship, setShowSpaceship] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,6 +36,20 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Listen for notifications from CyberLink World
+  useEffect(() => {
+    const channel = supabase
+      .channel('cyberlink-notifications')
+      .on('broadcast', { event: 'notification' }, () => {
+        setShowSpaceship(true);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const streamChat = async (userMessage: string) => {
     const newMessages = [...messages, { role: "user" as const, content: userMessage }];
@@ -134,20 +150,28 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
     setInput("");
   };
 
-  if (!isOpen) {
-    return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-red-600 via-orange-600 to-red-700 hover:from-red-700 hover:via-orange-700 hover:to-red-800 shadow-lg shadow-red-500/50"
-        size="lg"
-      >
-        <Target className="mr-2 h-5 w-5" />
-        Call Draco
-      </Button>
-    );
-  }
-
   return (
+    <>
+      <SpaceshipEntrance 
+        isActive={showSpaceship} 
+        onComplete={() => {
+          setShowSpaceship(false);
+          setIsOpen(true);
+        }} 
+      />
+
+      {!isOpen && !showSpaceship && (
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-red-600 via-orange-600 to-red-700 hover:from-red-700 hover:via-orange-700 hover:to-red-800 shadow-lg shadow-red-500/50"
+          size="lg"
+        >
+          <Target className="mr-2 h-5 w-5" />
+          Call Draco
+        </Button>
+      )}
+
+      {isOpen && (
     <div className="fixed bottom-6 right-6 z-50 flex gap-4">
       <TradingSignalsPanel symbol={chartSymbol} />
       
@@ -222,6 +246,8 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
       </div>
       </Card>
     </div>
+      )}
+    </>
   );
 };
 
