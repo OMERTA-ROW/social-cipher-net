@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import DracoAI from "./DracoAI";
+import FibonacciOverlay from "./FibonacciOverlay";
 
 interface CryptoPrice {
   symbol: string;
@@ -27,6 +29,9 @@ const CRYPTO_SYMBOLS = [
 export default function CryptoMarketChart() {
   const [cryptoPrices, setCryptoPrices] = useState<CryptoPrice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFibonacci, setShowFibonacci] = useState(false);
+  const [fibLevels, setFibLevels] = useState<number[]>([]);
+  const [activeSymbol, setActiveSymbol] = useState("");
 
   useEffect(() => {
     fetchCryptoPrices();
@@ -76,12 +81,19 @@ export default function CryptoMarketChart() {
     return data;
   };
 
+  const handleFibonacciRequest = (levels: number[]) => {
+    setFibLevels(levels);
+    setShowFibonacci(true);
+    setTimeout(() => setShowFibonacci(false), 10000);
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading crypto markets...</div>;
   }
 
   return (
-    <div className="space-y-4">
+    <>
+      <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {cryptoPrices.slice(0, 4).map((crypto) => (
           <Card key={crypto.symbol} className="bg-gradient-to-br from-primary/5 to-accent/5">
@@ -99,7 +111,11 @@ export default function CryptoMarketChart() {
         ))}
       </div>
 
-      <Tabs defaultValue={cryptoPrices[0]?.symbol} className="w-full">
+      <Tabs 
+        defaultValue={cryptoPrices[0]?.symbol} 
+        className="w-full"
+        onValueChange={(value) => setActiveSymbol(value)}
+      >
         <TabsList className="grid grid-cols-4 md:grid-cols-8">
           {cryptoPrices.map((crypto) => (
             <TabsTrigger key={crypto.symbol} value={crypto.symbol}>
@@ -108,45 +124,63 @@ export default function CryptoMarketChart() {
           ))}
         </TabsList>
 
-        {cryptoPrices.map((crypto) => (
-          <TabsContent key={crypto.symbol} value={crypto.symbol}>
-            <Card>
-              <CardHeader>
-                <CardTitle>{crypto.name} Price Chart</CardTitle>
-                <CardDescription>24-hour price movement</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={crypto.data}>
-                    <defs>
-                      <linearGradient id={`gradient-${crypto.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="time" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))', 
-                        border: '1px solid hsl(var(--border))' 
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="price" 
-                      stroke="hsl(var(--primary))" 
-                      fillOpacity={1}
-                      fill={`url(#gradient-${crypto.symbol})`}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
+        {cryptoPrices.map((crypto) => {
+          const swingHigh = Math.max(...crypto.data.map(d => d.price));
+          const swingLow = Math.min(...crypto.data.map(d => d.price));
+          
+          return (
+            <TabsContent key={crypto.symbol} value={crypto.symbol}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>{crypto.name} Price Chart</CardTitle>
+                  <CardDescription>24-hour price movement - Call Draco for Fibonacci analysis</CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                  <div className="relative">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={crypto.data}>
+                        <defs>
+                          <linearGradient id={`gradient-${crypto.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="time" className="text-xs" />
+                        <YAxis className="text-xs" />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))' 
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="price" 
+                          stroke="hsl(var(--primary))" 
+                          fillOpacity={1}
+                          fill={`url(#gradient-${crypto.symbol})`}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                    {activeSymbol === crypto.symbol && (
+                      <FibonacciOverlay
+                        levels={fibLevels}
+                        isActive={showFibonacci}
+                        chartHeight={300}
+                        swingHigh={swingHigh}
+                        swingLow={swingLow}
+                      />
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          );
+        })}
       </Tabs>
-    </div>
+      </div>
+      <DracoAI onFibonacciRequest={handleFibonacciRequest} chartSymbol={activeSymbol} />
+    </>
   );
 }
