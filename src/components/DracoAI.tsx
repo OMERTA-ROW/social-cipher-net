@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Target, Send, X, Loader2 } from "lucide-react";
+import { Target, Send, X, Loader2, Rocket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import TradingSignalsPanel from "./TradingSignalsPanel";
 import { SpaceshipEntrance } from "./SpaceshipEntrance";
+import { HyperSpeedSequence } from "./HyperSpeedSequence";
 
 interface Message {
   role: "user" | "assistant";
@@ -29,6 +30,8 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSpaceship, setShowSpaceship] = useState(false);
+  const [showHyperSpeed, setShowHyperSpeed] = useState(false);
+  const [hyperSpeedDestination, setHyperSpeedDestination] = useState("/");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -150,8 +153,20 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
     setInput("");
   };
 
+  const handleHyperSpeedJump = (destination: string) => {
+    setHyperSpeedDestination(destination);
+    setShowHyperSpeed(true);
+    setIsOpen(false);
+  };
+
   return (
     <>
+      <HyperSpeedSequence
+        isActive={showHyperSpeed}
+        destination={hyperSpeedDestination}
+        onComplete={() => setShowHyperSpeed(false)}
+      />
+
       <SpaceshipEntrance 
         isActive={showSpaceship} 
         onComplete={() => {
@@ -182,14 +197,25 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
             <h3 className="font-bold text-red-500">DRACO</h3>
             <span className="text-xs text-red-400/70">Tactical Analysis AI</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsOpen(false)}
-            className="text-red-400 hover:text-red-300 hover:bg-red-950/50"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleHyperSpeedJump("/")}
+              className="text-accent hover:text-accent/80 hover:bg-accent/10"
+              title="Hyper Speed to Hub"
+            >
+              <Rocket className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(false)}
+              className="text-red-400 hover:text-red-300 hover:bg-red-950/50"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
