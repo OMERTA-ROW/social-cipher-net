@@ -96,7 +96,7 @@ const StoriesBar = () => {
   }
 
   return (
-    <div className="w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="w-full border-b border-border/50 bg-black">
       <ScrollArea className="w-full">
         <div className="flex gap-4 p-4">
           {users.map((user) => (
