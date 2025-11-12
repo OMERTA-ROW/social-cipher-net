@@ -66,18 +66,18 @@ serve(async (req) => {
     let subscriptionEnd = null;
     let productId = null;
 
-    // Check for Draco-specific subscriptions
+    // Check for Draco-specific subscriptions (yearly)
     for (const subscription of subscriptions.data) {
       const product = subscription.items.data[0].price.product;
       
-      // Draco Basic: prod_TPIuTPo3dixGa6
-      // Draco Pro: prod_TPIukrqfcWbdPQ
-      if (product === "prod_TPIuTPo3dixGa6") {
+      // Draco Basic (Yearly): prod_TPJ2qUvXtL5eU3
+      // Draco Pro (Yearly): prod_TPJ37SP4f0iOHB
+      if (product === "prod_TPJ2qUvXtL5eU3") {
         tier = "basic";
         productId = product;
         subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
         logStep("Found Draco Basic subscription", { subscriptionId: subscription.id });
-      } else if (product === "prod_TPIukrqfcWbdPQ") {
+      } else if (product === "prod_TPJ37SP4f0iOHB") {
         tier = "pro";
         productId = product;
         subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();

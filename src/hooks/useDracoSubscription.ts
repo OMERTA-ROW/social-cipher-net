@@ -25,9 +25,9 @@ export const DRACO_TIERS = {
   },
   basic: {
     name: "Draco Basic",
-    price: 20,
-    priceId: "price_1SSUITHTVeX8KHmEOjGT69Im",
-    productId: "prod_TPIuTPo3dixGa6",
+    price: 240,
+    priceId: "price_1SSUQqHTVeX8KHmEwsF36DC7",
+    productId: "prod_TPJ2qUvXtL5eU3",
     features: [
       "Unlimited AI conversations",
       "Basic market analysis",
@@ -37,9 +37,9 @@ export const DRACO_TIERS = {
   },
   pro: {
     name: "Draco Pro",
-    price: 40,
-    priceId: "price_1SSUIiHTVeX8KHmEuBKPeaMi",
-    productId: "prod_TPIukrqfcWbdPQ",
+    price: 480,
+    priceId: "price_1SSUR6HTVeX8KHmEBuqv1gRP",
+    productId: "prod_TPJ37SP4f0iOHB",
     features: [
       "Everything in Basic",
       "Advanced trading signals",

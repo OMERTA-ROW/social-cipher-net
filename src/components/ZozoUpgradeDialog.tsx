@@ -51,7 +51,7 @@ const ZozoUpgradeDialog = ({ open, onOpenChange, onSelectTier }: ZozoUpgradeDial
             </Badge>
             <div className="text-center mb-4">
               <h3 className="text-xl font-bold text-foreground mb-2">Basic</h3>
-              <p className="text-3xl font-bold text-primary mb-1">$20</p>
+              <p className="text-3xl font-bold text-primary mb-1">$50</p>
               <p className="text-xs text-muted-foreground">per year</p>
             </div>
             <ul className="space-y-2 mb-6">
@@ -75,7 +75,7 @@ const ZozoUpgradeDialog = ({ open, onOpenChange, onSelectTier }: ZozoUpgradeDial
             </Badge>
             <div className="text-center mb-4">
               <h3 className="text-xl font-bold text-foreground mb-2">Premium</h3>
-              <p className="text-3xl font-bold text-accent mb-1">$40</p>
+              <p className="text-3xl font-bold text-accent mb-1">$100</p>
               <p className="text-xs text-muted-foreground">per year</p>
             </div>
             <ul className="space-y-2 mb-6">

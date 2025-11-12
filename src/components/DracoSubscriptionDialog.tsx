@@ -53,7 +53,7 @@ export const DracoSubscriptionDialog = ({
           <Card className={`p-6 ${currentTier === "basic" ? "border-orange-500 border-2" : "border-orange-900/50"} bg-black/40`}>
             <div className="text-center mb-4">
               <h3 className="text-xl font-bold text-orange-400">Basic</h3>
-              <p className="text-3xl font-bold text-white mt-2">$20<span className="text-sm text-orange-400/70">/month</span></p>
+              <p className="text-3xl font-bold text-white mt-2">$240<span className="text-sm text-orange-400/70">/year</span></p>
             </div>
             <ul className="space-y-2 mb-6">
               {DRACO_TIERS.basic.features.map((feature, idx) => (
@@ -87,7 +87,7 @@ export const DracoSubscriptionDialog = ({
             </div>
             <div className="text-center mb-4">
               <h3 className="text-xl font-bold text-red-400">Pro</h3>
-              <p className="text-3xl font-bold text-white mt-2">$40<span className="text-sm text-red-400/70">/month</span></p>
+              <p className="text-3xl font-bold text-white mt-2">$480<span className="text-sm text-red-400/70">/year</span></p>
             </div>
             <ul className="space-y-2 mb-6">
               {DRACO_TIERS.pro.features.map((feature, idx) => (
