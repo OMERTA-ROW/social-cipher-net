@@ -7,6 +7,7 @@ import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import { QualificationProgress } from "@/components/QualificationProgress";
+import StoriesBar from "@/components/StoriesBar";
 import { WalletCard } from "@/components/WalletCard";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
@@ -224,6 +225,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <RealisticSpaceBackground />
       <Navigation onCreatePost={() => setIsCreateDialogOpen(true)} />
+      <StoriesBar />
       
       <main className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-2xl mx-auto">
