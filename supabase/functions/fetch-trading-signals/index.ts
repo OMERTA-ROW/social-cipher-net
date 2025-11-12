@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { platform, symbol } = await req.json();
+    const { platform, symbol, assetType = "crypto" } = await req.json();
     
     // Simulated signal data from different platforms
     // In production, these would be real API calls to signal providers
-    const signals = {
+    const cryptoSignals = {
       tradingview: {
         signal: "BUY",
         strength: "STRONG",
@@ -54,12 +54,81 @@ serve(async (req) => {
       }
     };
 
-    const platformSignal = signals[platform as keyof typeof signals] || signals.tradingview;
+    const stockSignals = {
+      alpaca: {
+        signal: Math.random() > 0.5 ? "BUY" : "SELL",
+        strength: Math.random() > 0.6 ? "STRONG" : "MODERATE",
+        price: Math.random() * 500 + 50,
+        dayTradeScore: Math.floor(Math.random() * 40) + 60,
+        volume: `${(Math.random() * 50).toFixed(2)}M`,
+        indicators: {
+          movingAverage: "Above 50-day MA",
+          bollingerBands: "Testing upper band"
+        },
+        timestamp: new Date().toISOString()
+      },
+      quantconnect: {
+        signal: Math.random() > 0.4 ? "BUY" : "HOLD",
+        algorithmScore: Math.floor(Math.random() * 30) + 70,
+        price: Math.random() * 500 + 50,
+        backtestResults: {
+          sharpeRatio: (Math.random() * 2 + 1).toFixed(2),
+          winRate: `${Math.floor(Math.random() * 20) + 60}%`
+        },
+        timestamp: new Date().toISOString()
+      },
+      interactivebrokers: {
+        signal: Math.random() > 0.5 ? "ACCUMULATE" : "HOLD",
+        institutionalFlow: Math.random() > 0.5 ? "Bullish" : "Neutral",
+        price: Math.random() * 500 + 50,
+        darkPoolActivity: `${(Math.random() * 10).toFixed(2)}M`,
+        optionsFlow: {
+          callVolume: `${(Math.random() * 5000).toFixed(0)}`,
+          putVolume: `${(Math.random() * 5000).toFixed(0)}`
+        },
+        timestamp: new Date().toISOString()
+      },
+      tradingview_stocks: {
+        signal: "BUY",
+        strength: "MODERATE",
+        price: Math.random() * 500 + 50,
+        technicalRating: "Strong Buy",
+        indicators: {
+          rsi: Math.floor(Math.random() * 30) + 40,
+          macd: Math.random() > 0.5 ? "Bullish" : "Bearish",
+          adx: Math.floor(Math.random() * 40) + 20
+        },
+        timestamp: new Date().toISOString()
+      },
+      tdameritrade: {
+        signal: Math.random() > 0.6 ? "BUY" : "NEUTRAL",
+        dayTradeSetup: Math.random() > 0.5 ? "Breakout" : "Pullback",
+        price: Math.random() * 500 + 50,
+        momentum: {
+          trend: "Uptrend",
+          strength: Math.floor(Math.random() * 30) + 60
+        },
+        timestamp: new Date().toISOString()
+      },
+      robinhood: {
+        signal: Math.random() > 0.5 ? "BUY" : "SELL",
+        retailSentiment: Math.random() > 0.5 ? "Very Bullish" : "Bullish",
+        price: Math.random() * 500 + 50,
+        popularityRank: Math.floor(Math.random() * 100) + 1,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    const signals = assetType === "stock" ? stockSignals : cryptoSignals;
+    const defaultPlatform = assetType === "stock" ? "alpaca" : "tradingview";
+
+    const platformSignal = signals[platform as keyof typeof signals] || signals[defaultPlatform as keyof typeof signals];
 
     return new Response(
       JSON.stringify({
         platform,
         symbol,
+        assetType,
         data: platformSignal
       }),
       {
