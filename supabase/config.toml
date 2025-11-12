@@ -45,6 +45,9 @@ verify_jwt = false
 [functions.draco-ai]
 verify_jwt = false
 
+[functions.fetch-trading-signals]
+verify_jwt = false
+
 [functions.security-audit]
 verify_jwt = true
 

@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Target, Send, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import TradingSignalsPanel from "./TradingSignalsPanel";
 
 interface Message {
   role: "user" | "assistant";
@@ -147,22 +148,25 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 z-50 w-96 h-[600px] flex flex-col bg-black/95 border-red-600/50 shadow-2xl shadow-red-500/20">
-      <div className="flex items-center justify-between p-4 border-b border-red-600/30 bg-gradient-to-r from-red-900/20 to-orange-900/20">
-        <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-red-500 animate-pulse" />
-          <h3 className="font-bold text-red-500">DRACO</h3>
-          <span className="text-xs text-red-400/70">Tactical Analysis AI</span>
+    <div className="fixed bottom-6 right-6 z-50 flex gap-4">
+      <TradingSignalsPanel symbol={chartSymbol} />
+      
+      <Card className="w-96 h-[600px] flex flex-col bg-black/95 border-red-600/50 shadow-2xl shadow-red-500/20">
+        <div className="flex items-center justify-between p-4 border-b border-red-600/30 bg-gradient-to-r from-red-900/20 to-orange-900/20">
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-red-500 animate-pulse" />
+            <h3 className="font-bold text-red-500">DRACO</h3>
+            <span className="text-xs text-red-400/70">Tactical Analysis AI</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsOpen(false)}
+            className="text-red-400 hover:text-red-300 hover:bg-red-950/50"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsOpen(false)}
-          className="text-red-400 hover:text-red-300 hover:bg-red-950/50"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
 
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">
@@ -216,7 +220,8 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
           </Button>
         </div>
       </div>
-    </Card>
+      </Card>
+    </div>
   );
 };
 
