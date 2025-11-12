@@ -44,8 +44,18 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
   useEffect(() => {
     const channel = supabase
       .channel('cyberlink-notifications')
-      .on('broadcast', { event: 'notification' }, () => {
-        setShowSpaceship(true);
+      .on('broadcast', { event: 'notification' }, (payload: any) => {
+        const { type, destination } = payload.payload || {};
+        
+        if (type === 'hyperspeed') {
+          // Trigger hyper speed sequence
+          setHyperSpeedDestination(destination || '/');
+          setShowHyperSpeed(true);
+          setIsOpen(false);
+        } else {
+          // Default to spaceship entrance
+          setShowSpaceship(true);
+        }
       })
       .subscribe();
 
