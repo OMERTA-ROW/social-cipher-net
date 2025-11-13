@@ -14,7 +14,9 @@ import {
   Link as LinkIcon,
   Unlink,
   Linkedin,
-  Music
+  Music,
+  Send,
+  MessageCircle
 } from "lucide-react";
 
 interface PlatformConnection {
@@ -34,6 +36,8 @@ const PLATFORM_ICONS: { [key: string]: any } = {
   facebook: Facebook,
   tiktok: Music,
   linkedin: Linkedin,
+  snapchat: MessageCircle,
+  telegram: Send,
 };
 
 const PLATFORM_NAMES: { [key: string]: string } = {
@@ -45,6 +49,8 @@ const PLATFORM_NAMES: { [key: string]: string } = {
   facebook: "Facebook",
   tiktok: "TikTok",
   linkedin: "LinkedIn",
+  snapchat: "Snapchat",
+  telegram: "Telegram",
 };
 
 interface SocialPlatformConnectionsProps {
@@ -186,7 +192,7 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
     }
   };
 
-  const availablePlatforms = ["instagram", "twitter", "youtube", "twitch", "reddit", "facebook", "tiktok", "linkedin"];
+  const availablePlatforms = ["instagram", "twitter", "youtube", "twitch", "reddit", "facebook", "tiktok", "linkedin", "snapchat", "telegram"];
   const connectedPlatforms = connections.filter(c => c.is_active).map(c => c.platform);
   const unconnectedPlatforms = availablePlatforms.filter(p => !connectedPlatforms.includes(p));
 
