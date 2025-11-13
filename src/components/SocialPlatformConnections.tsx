@@ -47,7 +47,15 @@ const PLATFORM_NAMES: { [key: string]: string } = {
   linkedin: "LinkedIn",
 };
 
-export const SocialPlatformConnections = () => {
+interface SocialPlatformConnectionsProps {
+  onConnectionsUpdate?: (platforms: Array<{
+    platform: string;
+    platform_name: string;
+    is_active: boolean;
+  }>) => void;
+}
+
+export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatformConnectionsProps) => {
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState<string | null>(null);
@@ -77,6 +85,17 @@ export const SocialPlatformConnections = () => {
       })) || [];
 
       setConnections(connectionsWithEarnings);
+      
+      // Notify parent of active connections
+      if (onConnectionsUpdate) {
+        onConnectionsUpdate(
+          connectionsWithEarnings.map(conn => ({
+            platform: conn.platform,
+            platform_name: PLATFORM_NAMES[conn.platform] || conn.platform,
+            is_active: conn.is_active,
+          }))
+        );
+      }
     } catch (error) {
       console.error("Error fetching platform connections:", error);
     } finally {
