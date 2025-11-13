@@ -6,6 +6,7 @@ import PostCard from "@/components/PostCard";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
+import MatrixOverlay from "@/components/MatrixOverlay";
 import { QualificationProgress } from "@/components/QualificationProgress";
 import StoriesBar from "@/components/StoriesBar";
 import { WalletCard } from "@/components/WalletCard";
@@ -224,6 +225,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <RealisticSpaceBackground />
+      <MatrixOverlay />
       <Navigation onCreatePost={() => setIsCreateDialogOpen(true)} />
       <StoriesBar />
       

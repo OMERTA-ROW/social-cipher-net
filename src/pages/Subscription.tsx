@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
+import MatrixOverlay from "@/components/MatrixOverlay";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -201,6 +202,7 @@ const Subscription = () => {
   return (
     <div className="min-h-screen bg-background">
       <RealisticSpaceBackground />
+      <MatrixOverlay />
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-8">
