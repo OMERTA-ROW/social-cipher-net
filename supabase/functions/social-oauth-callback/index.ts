@@ -124,11 +124,14 @@ serve(async (req) => {
     console.log(`Successfully connected ${platform} for user ${user_id}`);
 
     // Redirect back to the app
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const redirectUrl = supabaseUrl.replace('/functions/v1', '') + `/studio?connected=${platform}`;
+    
     return new Response(null, {
       status: 302,
       headers: {
         ...corsHeaders,
-        'Location': `${Deno.env.get('SUPABASE_URL').replace('/functions/v1', '')}/studio?connected=${platform}`,
+        'Location': redirectUrl,
       },
     });
 

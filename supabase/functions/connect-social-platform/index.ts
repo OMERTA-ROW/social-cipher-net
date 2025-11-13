@@ -29,8 +29,19 @@ serve(async (req) => {
 
     console.log(`Initiating OAuth flow for ${platform} for user ${user.id}`);
 
-    // OAuth configuration for each platform
-    const oauthConfigs: { [key: string]: any } = {
+    // Get OAuth configuration from SkyTech config
+    const { data: platformConfig, error: configError } = await supabaseClient
+      .from('skytech_platform_configs')
+      .select('oauth_config, required_scopes, display_name')
+      .eq('platform_name', platform)
+      .eq('is_active', true)
+      .single();
+
+    let config;
+
+    if (configError || !platformConfig) {
+      // Fallback to hardcoded configs
+      const oauthConfigs: { [key: string]: any } = {
       instagram: {
         client_id: Deno.env.get('INSTAGRAM_CLIENT_ID'),
         auth_url: 'https://api.instagram.com/oauth/authorize',
@@ -71,11 +82,19 @@ serve(async (req) => {
         auth_url: 'https://www.linkedin.com/oauth/v2/authorization',
         scope: 'openid profile email',
       },
-    };
+      };
 
-    const config = oauthConfigs[platform];
-    if (!config) {
-      throw new Error(`Unsupported platform: ${platform}`);
+      config = oauthConfigs[platform];
+      if (!config) {
+        throw new Error(`Unsupported platform: ${platform}`);
+      }
+    } else {
+      // Use dynamic config from SkyTech
+      config = {
+        client_id: platformConfig.oauth_config?.client_id || Deno.env.get(`${platform.toUpperCase()}_CLIENT_ID`),
+        auth_url: platformConfig.oauth_config?.auth_url,
+        scope: platformConfig.required_scopes?.join(' ') || '',
+      };
     }
 
     // Store pending connection
