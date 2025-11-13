@@ -42,12 +42,12 @@ export const SkyTechAdmin = () => {
   const loadData = async () => {
     try {
       const [platformsRes, updatesRes] = await Promise.all([
-        supabase.from('skytech_platform_configs').select('*').order('created_at', { ascending: false }),
-        supabase.from('skytech_app_updates').select('*').order('created_at', { ascending: false })
+        supabase.from('skytech_platform_configs' as any).select('*').order('created_at', { ascending: false }),
+        supabase.from('skytech_app_updates' as any).select('*').order('created_at', { ascending: false })
       ]);
 
-      if (platformsRes.data) setPlatforms(platformsRes.data);
-      if (updatesRes.data) setUpdates(updatesRes.data);
+      if (platformsRes.data) setPlatforms(platformsRes.data as unknown as PlatformConfig[]);
+      if (updatesRes.data) setUpdates(updatesRes.data as unknown as AppUpdate[]);
     } catch (error: any) {
       toast({
         title: "Error loading data",
@@ -114,7 +114,7 @@ export const SkyTechAdmin = () => {
   const togglePlatform = async (id: string, currentState: boolean) => {
     try {
       const { error } = await supabase
-        .from('skytech_platform_configs')
+        .from('skytech_platform_configs' as any)
         .update({ is_active: !currentState })
         .eq('id', id);
 
