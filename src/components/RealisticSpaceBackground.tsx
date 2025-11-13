@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -790,12 +790,40 @@ const SpaceScene = () => {
 };
 
 const RealisticSpaceBackground = () => {
+  const [hasWebGLError, setHasWebGLError] = useState(false);
+
+  useEffect(() => {
+    // Check if WebGL is available
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) {
+      setHasWebGLError(true);
+    }
+  }, []);
+
+  if (hasWebGLError) {
+    // Fallback to a simple gradient background if WebGL fails
+    return (
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-black via-slate-900 to-black" />
+    );
+  }
+
   return (
     <>
       <div className="fixed inset-0 z-0">
         <Canvas
           camera={{ position: [0, 20, 50], fov: 75 }}
           style={{ background: "black" }}
+          onCreated={(state) => {
+            // Additional error handling
+            if (!state.gl) {
+              setHasWebGLError(true);
+            }
+          }}
+          onError={(error) => {
+            console.warn('WebGL Error:', error);
+            setHasWebGLError(true);
+          }}
         >
           <SpaceScene />
         </Canvas>
