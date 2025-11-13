@@ -1,8 +1,9 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2, BadgeCheck, Lock, Image as ImageIcon, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import StoryRing from "@/components/StoryRing";
-import { useState } from "react";
 
 interface PostCardProps {
   postId: string;
