@@ -15,10 +15,17 @@ import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
 import NFTMarketWidget from "@/components/NFTMarketWidget";
 import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
+import { SocialPlatformConnections } from "@/components/SocialPlatformConnections";
+import { SocialMediaPoster } from "@/components/SocialMediaPoster";
 
 const Studio = () => {
   const [isLive, setIsLive] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
+  const [activePlatforms, setActivePlatforms] = useState<Array<{
+    platform: string;
+    platform_name: string;
+    is_active: boolean;
+  }>>([]);
   const { windows, openWindow, closeWindow } = useFloatingWindows();
   const [messages, setMessages] = useState<Record<string, Array<{ role: "user" | "assistant"; content: string }>>>({
     twitter: [],
@@ -234,6 +241,16 @@ const Studio = () => {
                   </Button>
                 ))}
               </div>
+              
+              <div className="mt-6">
+                <SocialPlatformConnections onConnectionsUpdate={setActivePlatforms} />
+              </div>
+              
+              {activePlatforms.length > 0 && (
+                <div className="mt-6">
+                  <SocialMediaPoster connectedPlatforms={activePlatforms} />
+                </div>
+              )}
             </div>
           </Card>
 
