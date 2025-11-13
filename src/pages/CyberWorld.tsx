@@ -33,6 +33,7 @@ import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { User } from "@supabase/supabase-js";
+import CouponAI from "@/components/CouponAI";
 
 const CyberWorld = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -444,6 +445,8 @@ const CyberWorld = () => {
                 )}
               </CardContent>
             </Card>
+
+            <CouponAI />
           </TabsContent>
 
           {/* Live Studio Tab */}

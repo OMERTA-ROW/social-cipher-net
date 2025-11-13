@@ -110,3 +110,6 @@ verify_jwt = false
 
 [functions.draco-customer-portal]
 verify_jwt = false
+
+[functions.coupon-ai]
+verify_jwt = false
