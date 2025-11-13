@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Wallet, TrendingUp, Award, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Card } from "@/components/ui/card";
 
 interface Post {
   id: string;
@@ -234,40 +236,52 @@ const Index = () => {
           {currentUserId && (
             <div className="mb-6 p-4 border rounded-lg bg-muted/30">
               <h3 className="text-sm font-semibold mb-3">Quick Access Windows</h3>
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => openWindow("Platform Earnings", <PlatformEarningsCard />)}
-                >
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  Earnings
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => openWindow("My Wallet", <WalletCard />)}
-                >
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Wallet
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => openWindow("Crypto Balance", <CryptoBalanceCard />)}
-                >
-                  <TrendingUp className="w-4 h-4 mr-2" />
-                  Crypto
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => openWindow("Qualification Progress", <QualificationProgress />)}
-                >
-                  <Award className="w-4 h-4 mr-2" />
-                  Progress
-                </Button>
-              </div>
+              <Carousel className="w-full">
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  <CarouselItem className="pl-2 md:pl-4 basis-auto">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => openWindow("Platform Earnings", <PlatformEarningsCard />)}
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Earnings
+                    </Button>
+                  </CarouselItem>
+                  <CarouselItem className="pl-2 md:pl-4 basis-auto">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => openWindow("My Wallet", <WalletCard />)}
+                    >
+                      <Wallet className="w-4 h-4 mr-2" />
+                      Wallet
+                    </Button>
+                  </CarouselItem>
+                  <CarouselItem className="pl-2 md:pl-4 basis-auto">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => openWindow("Crypto Balance", <CryptoBalanceCard />)}
+                    >
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Crypto
+                    </Button>
+                  </CarouselItem>
+                  <CarouselItem className="pl-2 md:pl-4 basis-auto">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => openWindow("Qualification Progress", <QualificationProgress />)}
+                    >
+                      <Award className="w-4 h-4 mr-2" />
+                      Progress
+                    </Button>
+                  </CarouselItem>
+                </CarouselContent>
+                <CarouselPrevious className="hidden md:flex" />
+                <CarouselNext className="hidden md:flex" />
+              </Carousel>
             </div>
           )}
           
@@ -276,40 +290,53 @@ const Index = () => {
             <p className="text-muted-foreground">Stay connected with the cyber community</p>
           </div>
           
-          <div className="space-y-4">
-            {isLoading ? (
-              <>
-                <PostCardSkeleton />
-                <PostCardSkeleton />
-                <PostCardSkeleton />
-              </>
-            ) : posts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No posts yet. Be the first to create one!
-              </div>
-            ) : (
-              posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  postId={post.id}
-                  author={post.profiles.display_name || post.profiles.username || "Anonymous"}
-                  content={post.content}
-                  timestamp={formatTimestamp(post.created_at)}
-                  likes={0}
-                  comments={0}
-                  isVerified={post.profiles.is_verified}
-                  monetizationType={post.monetization_type}
-                  price={post.price}
-                  isPaid={post.has_paid}
-                  hasStory={post.has_story}
-                  isLive={post.is_live}
-                  media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
-                  replyCount={post.reply_count}
-                  onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
-                />
-              ))
-            )}
-          </div>
+          <Carousel className="w-full">
+            <CarouselContent>
+              {isLoading ? (
+                <>
+                  <CarouselItem>
+                    <PostCardSkeleton />
+                  </CarouselItem>
+                  <CarouselItem>
+                    <PostCardSkeleton />
+                  </CarouselItem>
+                  <CarouselItem>
+                    <PostCardSkeleton />
+                  </CarouselItem>
+                </>
+              ) : posts.length === 0 ? (
+                <CarouselItem>
+                  <div className="text-center py-8 text-muted-foreground">
+                    No posts yet. Be the first to create one!
+                  </div>
+                </CarouselItem>
+              ) : (
+                posts.map((post) => (
+                  <CarouselItem key={post.id}>
+                    <PostCard
+                      postId={post.id}
+                      author={post.profiles.display_name || post.profiles.username || "Anonymous"}
+                      content={post.content}
+                      timestamp={formatTimestamp(post.created_at)}
+                      likes={0}
+                      comments={0}
+                      isVerified={post.profiles.is_verified}
+                      monetizationType={post.monetization_type}
+                      price={post.price}
+                      isPaid={post.has_paid}
+                      hasStory={post.has_story}
+                      isLive={post.is_live}
+                      media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
+                      replyCount={post.reply_count}
+                      onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
+                    />
+                  </CarouselItem>
+                ))
+              )}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
         </div>
       </main>
 
