@@ -12,8 +12,7 @@ import StoriesBar from "@/components/StoriesBar";
 import { WalletCard } from "@/components/WalletCard";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
-import FloatingWindow from "@/components/FloatingWindow";
-import { useFloatingWindows } from "@/hooks/useFloatingWindows";
+import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
 import { Wallet, TrendingUp, Award, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +48,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
-  const { windows, openWindow, closeWindow } = useFloatingWindows();
+  const { openWindow } = useFloatingWindowsContext();
 
   useEffect(() => {
     fetchPosts();
@@ -313,23 +312,47 @@ const Index = () => {
               ) : (
                 posts.map((post) => (
                   <CarouselItem key={post.id}>
-                    <PostCard
-                      postId={post.id}
-                      author={post.profiles.display_name || post.profiles.username || "Anonymous"}
-                      content={post.content}
-                      timestamp={formatTimestamp(post.created_at)}
-                      likes={0}
-                      comments={0}
-                      isVerified={post.profiles.is_verified}
-                      monetizationType={post.monetization_type}
-                      price={post.price}
-                      isPaid={post.has_paid}
-                      hasStory={post.has_story}
-                      isLive={post.is_live}
-                      media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
-                      replyCount={post.reply_count}
-                      onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
-                    />
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => openWindow(
+                        `Post by ${post.profiles.display_name || post.profiles.username || "Anonymous"}`,
+                        <PostCard
+                          postId={post.id}
+                          author={post.profiles.display_name || post.profiles.username || "Anonymous"}
+                          content={post.content}
+                          timestamp={formatTimestamp(post.created_at)}
+                          likes={0}
+                          comments={0}
+                          isVerified={post.profiles.is_verified}
+                          monetizationType={post.monetization_type}
+                          price={post.price}
+                          isPaid={post.has_paid}
+                          hasStory={post.has_story}
+                          isLive={post.is_live}
+                          media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
+                          replyCount={post.reply_count}
+                          onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
+                        />
+                      )}
+                    >
+                      <PostCard
+                        postId={post.id}
+                        author={post.profiles.display_name || post.profiles.username || "Anonymous"}
+                        content={post.content}
+                        timestamp={formatTimestamp(post.created_at)}
+                        likes={0}
+                        comments={0}
+                        isVerified={post.profiles.is_verified}
+                        monetizationType={post.monetization_type}
+                        price={post.price}
+                        isPaid={post.has_paid}
+                        hasStory={post.has_story}
+                        isLive={post.is_live}
+                        media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
+                        replyCount={post.reply_count}
+                        onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
+                      />
+                    </div>
                   </CarouselItem>
                 ))
               )}
@@ -345,22 +368,6 @@ const Index = () => {
         onOpenChange={setIsCreateDialogOpen}
         onPost={handleCreatePost}
       />
-
-      {/* Floating Windows */}
-      {windows.map((window) => (
-        <FloatingWindow
-          key={window.id}
-          id={window.id}
-          title={window.title}
-          onClose={() => closeWindow(window.id)}
-          initialX={window.x}
-          initialY={window.y}
-          width={600}
-          height={500}
-        >
-          {window.content}
-        </FloatingWindow>
-      ))}
     </div>
   );
 };

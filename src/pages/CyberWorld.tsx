@@ -30,8 +30,7 @@ import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
 import NFTMarketWidget from "@/components/NFTMarketWidget";
 import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
-import FloatingWindow from "@/components/FloatingWindow";
-import { useFloatingWindows } from "@/hooks/useFloatingWindows";
+import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { User } from "@supabase/supabase-js";
 import CouponAI from "@/components/CouponAI";
 
@@ -41,7 +40,7 @@ const CyberWorld = () => {
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const navigate = useNavigate();
-  const { windows, openWindow, closeWindow, closeAllWindows } = useFloatingWindows();
+  const { openWindow } = useFloatingWindowsContext();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
