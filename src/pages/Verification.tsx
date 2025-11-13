@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
+import MatrixOverlay from "@/components/MatrixOverlay";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BadgeCheck, Users, CreditCard } from "lucide-react";
@@ -115,6 +116,7 @@ const Verification = () => {
     return (
       <div className="min-h-screen">
         <RealisticSpaceBackground />
+        <MatrixOverlay />
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <p className="text-center text-foreground">Loading...</p>
@@ -127,6 +129,7 @@ const Verification = () => {
     return (
       <div className="min-h-screen">
         <RealisticSpaceBackground />
+        <MatrixOverlay />
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-2xl mx-auto p-8 text-center bg-card border-border">
@@ -146,6 +149,7 @@ const Verification = () => {
   return (
     <div className="min-h-screen">
       <RealisticSpaceBackground />
+      <MatrixOverlay />
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">

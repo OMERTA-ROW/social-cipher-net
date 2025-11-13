@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gamepad2, Users, Radio, Trophy, Zap } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
+import MatrixOverlay from "@/components/MatrixOverlay";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { useNavigate } from "react-router-dom";
@@ -33,6 +34,7 @@ const CyberGamers = () => {
   return (
     <div className="min-h-screen bg-background">
       <RealisticSpaceBackground />
+      <MatrixOverlay />
       <Navigation onCreatePost={() => {}} />
       
       <main className="container mx-auto px-4 pt-20 pb-8">
