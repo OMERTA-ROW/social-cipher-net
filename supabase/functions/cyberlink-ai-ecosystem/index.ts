@@ -180,13 +180,14 @@ serve(async (req) => {
           5. Red Note (小红书) algorithm insights for Chinese market
           6. Facebook algorithm insights and engagement strategies
           7. Instagram algorithm insights and Reels optimization
-          8. Cross-platform trend correlations
-          9. Predicted upcoming trends by platform
-          10. Content strategy recommendations per platform
-          11. Optimal posting times and formats for each platform
-          12. Viral potential score for current content
-          13. Localization strategies for different markets
-          14. Action items for maximizing reach globally`
+          8. Twitch algorithm insights and live streaming strategies
+          9. Cross-platform trend correlations
+          10. Predicted upcoming trends by platform
+          11. Content strategy recommendations per platform
+          12. Optimal posting/streaming times and formats for each platform
+          13. Viral potential score for current content
+          14. Localization strategies for different markets
+          15. Action items for maximizing reach globally`
         });
 
         await logEcosystemEvent(supabaseClient, 'viral_trends', trendAnalysis, 'high');
@@ -403,6 +404,10 @@ async function gatherViralTrends(supabase: any) {
       instagram: {
         focus: 'Engagement rate, saves, shares, story completion, reels views',
         recommendations: 'Reels with trending audio, carousel posts, story interactions, consistent posting'
+      },
+      twitch: {
+        focus: 'Average viewers, concurrent viewers, chat activity, subscription rate, bits/donations',
+        recommendations: 'Consistent streaming schedule, interactive chat engagement, community building, raids and hosts'
       }
     },
     timestamp: new Date().toISOString()
