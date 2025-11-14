@@ -10,6 +10,37 @@ import { toast } from "sonner";
 import { SocialPlatformConnections } from "./SocialPlatformConnections";
 import { CyberlinkSocialTransfer } from "./CyberlinkSocialTransfer";
 
+const USD_TO_TOKENS = 1000;
+
+function AnimatedTokenCount({ tokens }: { tokens: number }) {
+  const [displayTokens, setDisplayTokens] = useState(0);
+
+  useEffect(() => {
+    const duration = 2000;
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      
+      setDisplayTokens(Math.floor(tokens * easeOut));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [tokens]);
+
+  return (
+    <span className="font-mono animate-scale-in">
+      {displayTokens.toLocaleString()}
+    </span>
+  );
+}
+
 export const WalletCard = () => {
   const navigate = useNavigate();
   const [balance, setBalance] = useState<number>(0);
@@ -119,11 +150,26 @@ export const WalletCard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="p-6 rounded-lg bg-primary/10 border border-primary/20">
-            <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
-            <p className="text-4xl font-bold text-primary">
-              ${balance.toFixed(2)}
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-6 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
+              <p className="text-sm text-muted-foreground mb-1">USD Balance</p>
+              <p className="text-4xl font-bold text-primary animate-fade-in">
+                ${balance.toFixed(2)}
+              </p>
+            </div>
+            
+            <div className="p-6 rounded-lg bg-gradient-to-r from-secondary/10 to-primary/20 border border-primary/30 space-y-2">
+              <div className="flex items-center gap-2">
+                <Coins className="w-5 h-5 text-primary animate-pulse" />
+                <p className="text-sm text-muted-foreground">Token Balance</p>
+              </div>
+              <p className="text-4xl font-bold text-primary">
+                <AnimatedTokenCount tokens={balance * USD_TO_TOKENS} />
+              </p>
+              <p className="text-xs text-muted-foreground">
+                1,000 tokens = $1 | 1M tokens = $1,000
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
