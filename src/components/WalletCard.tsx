@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Wallet, ArrowDownToLine, CreditCard } from "lucide-react";
+import { Wallet, ArrowDownToLine, CreditCard, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { SocialPlatformConnections } from "./SocialPlatformConnections";
 import { CyberlinkSocialTransfer } from "./CyberlinkSocialTransfer";
 
 export const WalletCard = () => {
+  const navigate = useNavigate();
   const [balance, setBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -124,7 +126,7 @@ export const WalletCard = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full" disabled={balance < 10}>
@@ -166,10 +168,19 @@ export const WalletCard = () => {
               </DialogContent>
             </Dialog>
 
-            <Button variant="default" className="w-full" asChild>
+            <Button 
+              variant="default" 
+              className="w-full"
+              onClick={() => navigate("/token-purchase")}
+            >
+              <Coins className="w-4 h-4 mr-2" />
+              Buy Tokens
+            </Button>
+
+            <Button variant="outline" className="w-full" asChild>
               <a href="/subscription">
                 <CreditCard className="w-4 h-4 mr-2" />
-                Use for Subscription
+                Subscription
               </a>
             </Button>
           </div>

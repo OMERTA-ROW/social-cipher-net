@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Coins } from "lucide-react";
 import { GiftGallery } from "./GiftGallery";
 import { GiftOverlay } from "./GiftOverlay";
 
@@ -29,6 +32,7 @@ interface OmegaChatProps {
 }
 
 export function OmegaChat({ streamId, streamerId }: OmegaChatProps) {
+  const navigate = useNavigate();
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [activeGifts, setActiveGifts] = useState<StreamGift[]>([]);
   const [showGallery, setShowGallery] = useState(false);
@@ -136,8 +140,30 @@ export function OmegaChat({ streamId, streamerId }: OmegaChatProps) {
   };
 
   return (
-    <>
+    <div className="relative">
       <GiftOverlay gifts={activeGifts} />
+      
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+        <Button
+          onClick={() => navigate("/token-purchase")}
+          className="rounded-full w-14 h-14 shadow-lg hover:scale-110 transition-transform"
+          size="icon"
+          title="Buy Tokens"
+        >
+          <Coins className="w-6 h-6" />
+        </Button>
+        
+        <Button
+          onClick={() => setShowGallery(true)}
+          className="rounded-full w-14 h-14 shadow-lg hover:scale-110 transition-transform"
+          size="icon"
+          variant="secondary"
+          title="Send Gift"
+        >
+          <span className="text-2xl">🎁</span>
+        </Button>
+      </div>
+
       {showGallery && (
         <GiftGallery
           gifts={gifts}
@@ -146,6 +172,6 @@ export function OmegaChat({ streamId, streamerId }: OmegaChatProps) {
           onClose={() => setShowGallery(false)}
         />
       )}
-    </>
+    </div>
   );
 }

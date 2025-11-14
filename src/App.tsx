@@ -23,6 +23,7 @@ import Subscription from "./pages/Subscription";
 import AffiliateLinks from "./pages/AffiliateLinks";
 import CyberWorld from "./pages/CyberWorld";
 import UserProfile from "./pages/UserProfile";
+import TokenPurchase from "./pages/TokenPurchase";
 import AIBotAssistant from "./components/AIBotAssistant";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/affiliate-links" element={<AffiliateLinks />} />
           <Route path="/cyber-world" element={<CyberWorld />} />
           <Route path="/profile/:userId" element={<UserProfile />} />
+          <Route path="/token-purchase" element={<TokenPurchase />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
