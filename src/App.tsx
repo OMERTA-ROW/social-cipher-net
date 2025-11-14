@@ -44,7 +44,7 @@ const App = () => (
           <Route path="/seller-register" element={<SellerRegister />} />
           <Route path="/seller-dashboard" element={<SellerDashboard />} />
           <Route path="/monetization" element={<Monetization />} />
-          <Route path="/cyber-gamers" element={<CyberGamers />} />
+          <Route path="/cyber-arena" element={<CyberGamers />} />
           <Route path="/cyber-streamer" element={<CyberStreamer />} />
           <Route path="/security" element={<Security />} />
           <Route path="/community-guidelines" element={<CommunityGuidelines />} />
