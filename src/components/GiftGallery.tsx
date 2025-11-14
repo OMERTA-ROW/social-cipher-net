@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,37 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Gift as GiftIcon } from "lucide-react";
+import { X, Gift as GiftIcon, Coins } from "lucide-react";
+
+const USD_TO_TOKENS = 1000;
+
+function TokenDisplay({ tokens }: { tokens: number }) {
+  const [displayTokens, setDisplayTokens] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const duration = 1500;
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      
+      setDisplayTokens(Math.floor(tokens * easeOut));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [tokens]);
+
+  return (
+    <span className="font-mono">{displayTokens.toLocaleString()}</span>
+  );
+}
 
 interface Gift {
   id: string;
@@ -49,7 +79,7 @@ export function GiftGallery({ gifts, streamId, streamerId, onClose }: GiftGaller
         .single();
 
       if (!wallet || wallet.balance < selectedGift.price) {
-        toast.error("Insufficient balance. Please add funds to your wallet.");
+        toast.error(`Insufficient balance. Need ${(selectedGift.price * USD_TO_TOKENS).toLocaleString()} tokens ($${selectedGift.price}). Please add funds to your wallet.`);
         setSending(false);
         return;
       }
@@ -113,7 +143,7 @@ export function GiftGallery({ gifts, streamId, streamerId, onClose }: GiftGaller
         }
       ]);
 
-      toast.success(`${selectedGift.name} sent successfully! (25% commission collected)`);
+      toast.success(`${selectedGift.name} sent successfully! ${(selectedGift.price * USD_TO_TOKENS).toLocaleString()} tokens (25% commission collected)`);
       setMessage("");
       setSelectedGift(null);
       onClose();
@@ -145,24 +175,34 @@ export function GiftGallery({ gifts, streamId, streamerId, onClose }: GiftGaller
 
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {gifts.map((gift) => (
-              <Card
-                key={gift.id}
-                className={`p-4 cursor-pointer transition-all hover:scale-105 hover:shadow-lg ${
-                  selectedGift?.id === gift.id
-                    ? "ring-2 ring-primary bg-primary/10"
-                    : "bg-background"
-                }`}
-                onClick={() => setSelectedGift(gift)}
-              >
-                <div className="text-center space-y-2">
-                  <div className="text-6xl animate-bounce">{gift.icon_url}</div>
-                  <h3 className="font-bold text-foreground">{gift.name}</h3>
-                  <p className="text-xs text-muted-foreground">{gift.description}</p>
-                  <p className="text-lg font-bold text-primary">${gift.price}</p>
-                </div>
-              </Card>
-            ))}
+            {gifts.sort((a, b) => b.price - a.price).map((gift, idx) => {
+              const tokenPrice = gift.price * USD_TO_TOKENS;
+              return (
+                <Card
+                  key={gift.id}
+                  className={`p-4 cursor-pointer transition-all hover:scale-105 hover:shadow-lg animate-fade-in ${
+                    selectedGift?.id === gift.id
+                      ? "ring-2 ring-primary bg-primary/10"
+                      : "bg-background"
+                  }`}
+                  style={{ animationDelay: `${idx * 50}ms` }}
+                  onClick={() => setSelectedGift(gift)}
+                >
+                  <div className="text-center space-y-2">
+                    <div className="text-6xl animate-bounce">{gift.icon_url}</div>
+                    <h3 className="font-bold text-foreground">{gift.name}</h3>
+                    <p className="text-xs text-muted-foreground">{gift.description}</p>
+                    <div className="space-y-1">
+                      <p className="text-lg font-bold text-primary flex items-center justify-center gap-1">
+                        <Coins className="w-4 h-4" />
+                        <TokenDisplay tokens={tokenPrice} />
+                      </p>
+                      <p className="text-xs text-muted-foreground">${gift.price}</p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </ScrollArea>
 
@@ -184,9 +224,17 @@ export function GiftGallery({ gifts, streamId, streamerId, onClose }: GiftGaller
               <Button
                 onClick={sendGift}
                 disabled={sending}
-                className="flex-1"
+                className="flex-1 hover-scale"
               >
-                {sending ? "Sending..." : `Send ${selectedGift.name} for $${selectedGift.price}`}
+                {sending ? "Sending..." : (
+                  <span className="flex items-center gap-2">
+                    Send {selectedGift.name} for
+                    <span className="flex items-center gap-1">
+                      <Coins className="w-4 h-4" />
+                      {(selectedGift.price * USD_TO_TOKENS).toLocaleString()}
+                    </span>
+                  </span>
+                )}
               </Button>
               <Button
                 variant="outline"

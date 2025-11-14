@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +6,48 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Wallet, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { GiftGallery } from "@/components/GiftGallery";
+
+// Conversion rate: $1 = 1000 tokens, $1000 = 1,000,000 tokens
+const USD_TO_TOKENS = 1000;
+
+function AnimatedTokenCount({ tokens, duration = 2000 }: { tokens: number; duration?: number }) {
+  const [displayTokens, setDisplayTokens] = useState(0);
+  const startTimeRef = useRef<number | null>(null);
+  const animationRef = useRef<number>();
+
+  useEffect(() => {
+    startTimeRef.current = null;
+    setDisplayTokens(0);
+
+    const animate = (currentTime: number) => {
+      if (!startTimeRef.current) startTimeRef.current = currentTime;
+      const elapsed = currentTime - startTimeRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Ease out cubic
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      setDisplayTokens(Math.floor(tokens * easeOut));
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [tokens, duration]);
+
+  return (
+    <span className="font-mono">
+      {displayTokens.toLocaleString()}
+    </span>
+  );
+}
 
 interface Gift {
   id: string;
@@ -24,12 +66,12 @@ export default function TokenPurchase() {
   const [loading, setLoading] = useState(true);
 
   const tokenPackages = [
-    { tokens: 100, price: 0.99, bonus: 0 },
-    { tokens: 500, price: 4.99, bonus: 50 },
-    { tokens: 1000, price: 9.99, bonus: 150 },
-    { tokens: 5000, price: 49.99, bonus: 1000 },
-    { tokens: 10000, price: 99.99, bonus: 2500 },
-    { tokens: 100000, price: 999.99, bonus: 50000 },
+    { price: 0.01, tokens: 10, bonus: 0 },
+    { price: 0.10, tokens: 100, bonus: 10 },
+    { price: 1, tokens: 1000, bonus: 100 },
+    { price: 10, tokens: 10000, bonus: 2000 },
+    { price: 100, tokens: 100000, bonus: 25000 },
+    { price: 1000, tokens: 1000000, bonus: 500000 },
   ];
 
   useEffect(() => {
@@ -73,10 +115,12 @@ export default function TokenPurchase() {
     // In a real app, this would integrate with a payment processor
     toast.info("Payment integration coming soon! Tokens added for demo.");
     
-    const totalTokens = (pkg.tokens + pkg.bonus) / 100; // Convert to dollars
+    const totalTokens = pkg.tokens + pkg.bonus;
+    const usdAmount = pkg.price;
+    
     const { error } = await supabase.from("user_wallets").upsert({
       user_id: user.id,
-      balance: balance + totalTokens,
+      balance: balance + usdAmount,
     });
 
     if (error) {
@@ -86,13 +130,13 @@ export default function TokenPurchase() {
 
     await supabase.from("wallet_transactions").insert({
       user_id: user.id,
-      amount: totalTokens,
+      amount: usdAmount,
       transaction_type: "token_purchase",
-      description: `Purchased ${pkg.tokens} tokens (+${pkg.bonus} bonus)`,
-      metadata: { package: pkg },
+      description: `Purchased ${totalTokens.toLocaleString()} tokens`,
+      metadata: { package: pkg, tokens: totalTokens },
     });
 
-    toast.success(`Added ${pkg.tokens + pkg.bonus} tokens to your wallet!`);
+    toast.success(`Added ${totalTokens.toLocaleString()} tokens to your wallet!`);
     fetchWalletAndGifts();
   };
 
@@ -117,10 +161,15 @@ export default function TokenPurchase() {
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-            <CardContent className="p-4 flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-primary" />
-              <span className="font-semibold">${balance.toFixed(2)}</span>
+          <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 backdrop-blur-sm border-primary/30">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Coins className="w-6 h-6 text-primary animate-pulse" />
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Token Balance</span>
+                <span className="font-bold text-lg text-primary">
+                  <AnimatedTokenCount tokens={balance * USD_TO_TOKENS} />
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -128,42 +177,48 @@ export default function TokenPurchase() {
         <Card className="bg-gradient-to-br from-primary/10 via-card/50 to-secondary/10 backdrop-blur-sm border-primary/20">
           <CardHeader>
             <CardTitle className="text-3xl flex items-center gap-2">
-              <Coins className="w-8 h-8 text-primary" />
+              <Coins className="w-8 h-8 text-primary animate-pulse" />
               Purchase Cyber Tokens
             </CardTitle>
             <CardDescription>
-              Buy tokens to send animated gifts to live streamers. Tokens are tracked in your wallet.
+              Buy tokens to send animated gifts. 1,000 tokens = $1 | 1,000,000 tokens = $1,000
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {tokenPackages.map((pkg) => (
+              {tokenPackages.map((pkg, idx) => (
                 <Card
-                  key={pkg.tokens}
-                  className="bg-background/50 border-primary/20 hover:border-primary/40 transition-all hover:scale-105"
+                  key={pkg.price}
+                  className="bg-background/50 border-primary/20 hover:border-primary/40 transition-all hover:scale-105 animate-fade-in"
+                  style={{ animationDelay: `${idx * 100}ms` }}
                 >
                   <CardHeader>
-                    <CardTitle className="text-2xl">
-                      {pkg.tokens.toLocaleString()} Tokens
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl">
+                        <AnimatedTokenCount tokens={pkg.tokens} />
+                      </CardTitle>
+                      <Coins className="w-6 h-6 text-primary" />
+                    </div>
                     {pkg.bonus > 0 && (
-                      <CardDescription className="text-green-500 font-semibold">
-                        +{pkg.bonus.toLocaleString()} Bonus Tokens!
+                      <CardDescription className="text-green-500 font-semibold animate-pulse">
+                        +<AnimatedTokenCount tokens={pkg.bonus} duration={1500} /> Bonus!
                       </CardDescription>
                     )}
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-3xl font-bold text-primary">${pkg.price}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Total: {(pkg.tokens + pkg.bonus).toLocaleString()} tokens
+                    <div className="text-center space-y-2">
+                      <p className="text-4xl font-bold text-primary animate-scale-in">
+                        ${pkg.price.toFixed(pkg.price < 1 ? 2 : 0)}
+                      </p>
+                      <p className="text-sm text-muted-foreground font-mono">
+                        Total: <AnimatedTokenCount tokens={pkg.tokens + pkg.bonus} duration={2500} /> tokens
                       </p>
                     </div>
                     <Button
-                      className="w-full"
+                      className="w-full hover-scale"
                       onClick={() => handlePurchaseTokens(pkg)}
                     >
-                      Purchase
+                      Purchase Package
                     </Button>
                   </CardContent>
                 </Card>
@@ -176,23 +231,32 @@ export default function TokenPurchase() {
           <CardHeader>
             <CardTitle className="text-2xl">Animated Gifts Gallery</CardTitle>
             <CardDescription>
-              Preview available animated gifts for live streams. Prices range from $0.01 to $1,000.
+              Preview available animated gifts. Prices from 10 tokens ($0.01) to 1M tokens ($1,000)
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {gifts.map((gift) => (
-                <Card
-                  key={gift.id}
-                  className="bg-background/50 border-primary/20 hover:scale-105 transition-all"
-                >
-                  <CardContent className="p-4 text-center space-y-2">
-                    <div className="text-4xl">{gift.icon_url}</div>
-                    <p className="font-semibold text-sm">{gift.name}</p>
-                    <p className="text-primary font-bold">${gift.price}</p>
-                  </CardContent>
-                </Card>
-              ))}
+              {gifts.sort((a, b) => b.price - a.price).map((gift, idx) => {
+                const tokenPrice = gift.price * USD_TO_TOKENS;
+                return (
+                  <Card
+                    key={gift.id}
+                    className="bg-background/50 border-primary/20 hover:scale-105 transition-all animate-fade-in"
+                    style={{ animationDelay: `${idx * 50}ms` }}
+                  >
+                    <CardContent className="p-4 text-center space-y-2">
+                      <div className="text-4xl animate-bounce">{gift.icon_url}</div>
+                      <p className="font-semibold text-sm">{gift.name}</p>
+                      <div className="space-y-1">
+                        <p className="text-primary font-bold font-mono text-xs">
+                          <AnimatedTokenCount tokens={tokenPrice} duration={1500} />
+                        </p>
+                        <p className="text-xs text-muted-foreground">${gift.price}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
