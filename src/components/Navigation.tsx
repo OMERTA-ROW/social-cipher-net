@@ -67,8 +67,9 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => navigate("/cyber-gamers")}
+              onClick={() => navigate("/cyber-arena")}
               className="text-foreground hover:text-primary"
+              title="CyberLink Arena"
             >
               <Gamepad2 className="w-5 h-5" />
             </Button>

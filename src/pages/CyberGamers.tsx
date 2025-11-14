@@ -41,9 +41,9 @@ const CyberGamers = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <Gamepad2 className="w-10 h-10 text-primary text-glow" />
-                <h1 className="text-4xl font-bold text-primary text-glow">Cyber Gamers</h1>
+                <h1 className="text-4xl font-bold text-primary text-glow">CyberLink Arena</h1>
               </div>
-              <p className="text-muted-foreground">Join the ultimate gaming community and stream live</p>
+              <p className="text-muted-foreground">Battle in the ultimate cyber gaming arena</p>
             </div>
             <div className="flex gap-2">
               <Button 
