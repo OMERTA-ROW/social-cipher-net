@@ -183,15 +183,17 @@ serve(async (req) => {
           8. Twitch algorithm insights and live streaming strategies
           9. Celebrity algorithm insights - trending celebrities, mentions, and influence patterns
           10. Consistency algorithm insights - posting frequency, schedule reliability, engagement patterns
-          11. Cross-platform trend correlations
-          12. Predicted upcoming trends by platform
-          13. Content strategy recommendations per platform
-          14. Optimal posting/streaming times and formats for each platform
-          15. Viral potential score for current content
-          16. Celebrity collaboration opportunities
-          17. Consistency score and improvement recommendations
-          18. Localization strategies for different markets
-          19. Action items for maximizing reach globally`
+          11. Infinity Loop algorithm insights - content retention, scroll behavior, session optimization
+          12. Cross-platform trend correlations
+          13. Predicted upcoming trends by platform
+          14. Content strategy recommendations per platform
+          15. Optimal posting/streaming times and formats for each platform
+          16. Viral potential score for current content
+          17. Celebrity collaboration opportunities
+          18. Consistency score and improvement recommendations
+          19. Infinity loop optimization strategies
+          20. Localization strategies for different markets
+          21. Action items for maximizing reach globally`
         });
 
         await logEcosystemEvent(supabaseClient, 'viral_trends', trendAnalysis, 'high');
@@ -392,6 +394,9 @@ async function gatherViralTrends(supabase: any) {
   const postingDates = trendingPosts.data?.map((post: any) => new Date(post.created_at)) || [];
   const consistencyMetrics = analyzeConsistency(postingDates);
 
+  // Analyze infinity loop engagement
+  const infinityLoopMetrics = analyzeInfinityLoop(trendingPosts.data || []);
+
   return {
     trendingContent: trendingPosts.data || [],
     topHashtags: sortedHashtags,
@@ -401,6 +406,7 @@ async function gatherViralTrends(supabase: any) {
       totalCelebrityMentions: Object.keys(celebrityMentions).length,
     },
     consistencyAnalysis: consistencyMetrics,
+    infinityLoopAnalysis: infinityLoopMetrics,
     metrics: {
       totalTrendingPosts: trendingPosts.data?.length || 0,
       uniqueHashtags: Object.keys(hashtagCounts).length,
@@ -442,9 +448,84 @@ async function gatherViralTrends(supabase: any) {
       consistency: {
         focus: 'Posting frequency, schedule reliability, content cadence, audience expectation management',
         recommendations: 'Regular posting schedule, consistent content themes, predictable upload times, sustained engagement'
+      },
+      infinity_loop: {
+        focus: 'Content retention, scroll depth, session duration, recommendation accuracy, auto-play engagement, next-content transition',
+        recommendations: 'Hook within 3 seconds, seamless transitions, personalized recommendations, optimized content length, strategic cliffhangers'
       }
     },
     timestamp: new Date().toISOString()
+  };
+}
+
+function analyzeInfinityLoop(posts: any[]) {
+  if (posts.length === 0) {
+    return {
+      score: 0,
+      engagementRate: 0,
+      averageRetention: 0,
+      loopEfficiency: 'insufficient_data',
+      recommendation: 'Need content data to analyze infinity loop performance'
+    };
+  }
+
+  // Calculate engagement metrics
+  const totalViews = posts.reduce((sum, post) => sum + (post.view_count || 0), 0);
+  const totalClicks = posts.reduce((sum, post) => sum + (post.click_count || 0), 0);
+  const engagementRate = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+
+  // Calculate average retention (views per post)
+  const avgViewsPerPost = totalViews / posts.length;
+
+  // Estimate scroll depth and session continuation
+  // Posts with high click rates indicate users are staying in the loop
+  const highEngagementPosts = posts.filter(post => {
+    const rate = (post.click_count || 0) / (post.view_count || 1);
+    return rate > 0.1; // 10% engagement threshold
+  });
+
+  const loopEfficiency = (highEngagementPosts.length / posts.length) * 100;
+
+  // Calculate infinity loop score (0-100)
+  const score = Math.min(100, 
+    (engagementRate * 0.4) + 
+    (Math.min(loopEfficiency, 100) * 0.4) + 
+    (Math.min((avgViewsPerPost / 100), 1) * 20)
+  );
+
+  let rating: string;
+  let recommendation: string;
+
+  if (score >= 80) {
+    rating = 'viral_loop';
+    recommendation = 'Excellent infinity loop! Content is keeping users engaged. Maintain hooks and transitions.';
+  } else if (score >= 60) {
+    rating = 'strong_loop';
+    recommendation = 'Good engagement loop. Improve content hooks and optimize video length for better retention.';
+  } else if (score >= 40) {
+    rating = 'moderate_loop';
+    recommendation = 'Average loop performance. Add stronger hooks, improve transitions, optimize for quick consumption.';
+  } else {
+    rating = 'weak_loop';
+    recommendation = 'Loop needs improvement. Focus on: instant hooks, shorter content, seamless transitions, personalized recommendations.';
+  }
+
+  return {
+    score: Math.round(score),
+    engagementRate: Math.round(engagementRate * 100) / 100,
+    averageRetention: Math.round(avgViewsPerPost),
+    loopEfficiency: rating,
+    recommendation,
+    totalPosts: posts.length,
+    totalViews,
+    totalClicks,
+    highEngagementPostsCount: highEngagementPosts.length,
+    insights: {
+      hookEffectiveness: engagementRate > 5 ? 'strong' : engagementRate > 2 ? 'moderate' : 'weak',
+      contentLength: 'Optimize for 15-60 second videos for maximum loop retention',
+      transitionQuality: loopEfficiency > 50 ? 'smooth' : 'needs_work',
+      recommendationAccuracy: 'Personalize content based on user behavior and preferences'
+    }
   };
 }
 
