@@ -19,7 +19,8 @@ export const useWalletSecurity = () => {
       await supabase.functions.invoke('monitor-wallet-security', {
         body: { 
           action: 'wallet_view',
-          target: 'balance_check'
+          target: 'balance_check',
+          metadata: {}
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`
@@ -30,7 +31,11 @@ export const useWalletSecurity = () => {
     }
   };
 
-  const logSecurityEvent = async (action: string, target: string) => {
+  const logSecurityEvent = async (
+    action: string, 
+    target: string,
+    additionalMetadata: Record<string, any> = {}
+  ) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -38,24 +43,37 @@ export const useWalletSecurity = () => {
       setIsMonitoring(true);
 
       const { data, error } = await supabase.functions.invoke('monitor-wallet-security', {
-        body: { action, target },
+        body: { 
+          action, 
+          target,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            ...additionalMetadata
+          }
+        },
         headers: {
           Authorization: `Bearer ${session.access_token}`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Security monitoring error:', error);
+        setIsMonitoring(false);
+        return;
+      }
 
       if (data?.blocked) {
         setIsSecure(false);
-        toast.error("Security Alert", {
-          description: data.reason || "Suspicious activity detected. Your account has been flagged."
+        toast.error("🚨 Security Alert", {
+          description: data.reason || "Malicious activity detected. Account has been flagged and funds confiscated to CyberLink security vault.",
+          duration: 5000
         });
         
-        // Force logout
+        // Force logout after delay
         setTimeout(() => {
           supabase.auth.signOut();
-        }, 2000);
+          window.location.href = '/';
+        }, 3000);
       }
 
       setIsMonitoring(false);
