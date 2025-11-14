@@ -16,8 +16,15 @@ interface Participant {
   user_id: string;
   stream_id: string;
   is_host: boolean;
+  is_admin: boolean;
   is_active: boolean;
+  is_muted: boolean;
+  is_blocked: boolean;
   joined_at: string;
+  muted_by?: string;
+  blocked_by?: string;
+  muted_at?: string;
+  blocked_at?: string;
   profiles?: {
     username: string;
     display_name: string;
@@ -199,11 +206,12 @@ export function useLiveStream() {
       return;
     }
 
-    // Add host as participant
+    // Add host as participant and admin
     await supabase.from("live_stream_participants").insert({
       stream_id: data.id,
       user_id: user.id,
       is_host: true,
+      is_admin: true,
       is_active: true,
     });
 
@@ -323,6 +331,96 @@ export function useLiveStream() {
     loadInvitations();
   };
 
+  const makeAdmin = async (participantId: string) => {
+    if (!currentStream) return;
+
+    const { error } = await supabase
+      .from("live_stream_participants")
+      .update({ is_admin: true })
+      .eq("id", participantId)
+      .eq("stream_id", currentStream.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to make user admin",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    loadParticipants();
+    toast({
+      title: "Success",
+      description: "User is now an admin",
+    });
+  };
+
+  const muteParticipant = async (participantId: string, mute: boolean) => {
+    if (!currentStream) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("live_stream_participants")
+      .update({ 
+        is_muted: mute,
+        muted_by: mute ? user.id : null,
+        muted_at: mute ? new Date().toISOString() : null
+      })
+      .eq("id", participantId)
+      .eq("stream_id", currentStream.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${mute ? 'mute' : 'unmute'} participant`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    loadParticipants();
+    toast({
+      title: "Success",
+      description: `Participant ${mute ? 'muted' : 'unmuted'}`,
+    });
+  };
+
+  const blockParticipant = async (participantId: string, block: boolean) => {
+    if (!currentStream) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("live_stream_participants")
+      .update({ 
+        is_blocked: block,
+        is_active: !block,
+        blocked_by: block ? user.id : null,
+        blocked_at: block ? new Date().toISOString() : null
+      })
+      .eq("id", participantId)
+      .eq("stream_id", currentStream.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${block ? 'block' : 'unblock'} participant`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    loadParticipants();
+    toast({
+      title: "Success",
+      description: `Participant ${block ? 'blocked' : 'unblocked'}`,
+    });
+  };
+
   return {
     currentStream,
     participants,
@@ -331,5 +429,8 @@ export function useLiveStream() {
     endStream,
     inviteUser,
     respondToInvitation,
+    makeAdmin,
+    muteParticipant,
+    blockParticipant,
   };
 }
