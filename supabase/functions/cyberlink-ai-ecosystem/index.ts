@@ -9,7 +9,7 @@ const corsHeaders = {
 const LOVABLE_AI_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 
 interface EcosystemTask {
-  type: 'monitor' | 'enhance' | 'update' | 'protect' | 'analyze';
+  type: 'monitor' | 'enhance' | 'update' | 'protect' | 'analyze' | 'trends';
   priority: 'low' | 'medium' | 'high' | 'critical';
   data: any;
 }
@@ -162,6 +162,43 @@ serve(async (req) => {
         );
       }
 
+      case 'viral_trends': {
+        // Analyze viral trends across platforms
+        const trendData = await gatherViralTrends(supabaseClient);
+        const trendAnalysis = await analyzeWithAI(LOVABLE_API_KEY, {
+          task: 'viral_trends_analysis',
+          trends: trendData,
+          prompt: `Analyze these viral trends and social media patterns:
+          
+          ${JSON.stringify(trendData, null, 2)}
+          
+          Provide comprehensive analysis including:
+          1. Top trending topics and hashtags
+          2. YouTube algorithm insights and trending video patterns
+          3. TikTok algorithm insights and viral content patterns
+          4. Snapchat trends and engagement patterns
+          5. Cross-platform trend correlations
+          6. Predicted upcoming trends
+          7. Content strategy recommendations
+          8. Optimal posting times and formats
+          9. Viral potential score for current content
+          10. Action items for maximizing reach`
+        });
+
+        await logEcosystemEvent(supabaseClient, 'viral_trends', trendAnalysis, 'high');
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            action: 'viral_trends',
+            analysis: trendAnalysis,
+            trendData,
+            timestamp: new Date().toISOString()
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
       case 'full_analysis': {
         // Comprehensive ecosystem analysis
         const fullReport = await generateFullReport(supabaseClient, LOVABLE_API_KEY);
@@ -293,10 +330,74 @@ async function logEcosystemEvent(supabase: any, action: string, data: any, prior
     });
 }
 
+async function gatherViralTrends(supabase: any) {
+  // Gather trending content from posts
+  const [trendingPosts, topHashtags, platformActivity] = await Promise.all([
+    supabase
+      .from('posts')
+      .select('id, content, view_count, click_count, created_at')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .order('view_count', { ascending: false })
+      .limit(50),
+    supabase
+      .from('posts')
+      .select('content')
+      .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+      .limit(500),
+    supabase
+      .from('platform_connections')
+      .select('platform, metadata')
+      .eq('is_active', true)
+  ]);
+
+  // Extract hashtags and analyze patterns
+  const hashtagCounts: { [key: string]: number } = {};
+  if (topHashtags.data) {
+    topHashtags.data.forEach((post: any) => {
+      const hashtags = post.content.match(/#\w+/g) || [];
+      hashtags.forEach((tag: string) => {
+        hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1;
+      });
+    });
+  }
+
+  const sortedHashtags = Object.entries(hashtagCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 20)
+    .map(([tag, count]) => ({ tag, count }));
+
+  return {
+    trendingContent: trendingPosts.data || [],
+    topHashtags: sortedHashtags,
+    platformActivity: platformActivity.data || [],
+    metrics: {
+      totalTrendingPosts: trendingPosts.data?.length || 0,
+      uniqueHashtags: Object.keys(hashtagCounts).length,
+      activePlatforms: platformActivity.data?.length || 0,
+    },
+    algorithms: {
+      youtube: {
+        focus: 'Watch time, CTR, engagement velocity, session time',
+        recommendations: 'Long-form content, strong thumbnails, early engagement'
+      },
+      tiktok: {
+        focus: 'Completion rate, re-watches, shares, comment velocity',
+        recommendations: 'Hook in first 3s, trending sounds, duets enabled'
+      },
+      snapchat: {
+        focus: 'Story completion, screenshot rate, chat replies',
+        recommendations: 'Authentic content, behind-scenes, interactive elements'
+      }
+    },
+    timestamp: new Date().toISOString()
+  };
+}
+
 async function generateFullReport(supabase: any, apiKey: string) {
   const metrics = await gatherSystemMetrics(supabase);
   const patterns = await analyzeUsagePatterns(supabase);
   const threats = await detectThreats(supabase);
+  const trends = await gatherViralTrends(supabase);
 
   const report = await analyzeWithAI(apiKey, {
     task: 'full_ecosystem_report',
@@ -305,16 +406,19 @@ async function generateFullReport(supabase: any, apiKey: string) {
     System Metrics: ${JSON.stringify(metrics)}
     Usage Patterns: ${JSON.stringify(patterns)}
     Security Threats: ${JSON.stringify(threats)}
+    Viral Trends: ${JSON.stringify(trends)}
     
     Provide a complete analysis covering:
     1. Executive Summary
     2. System Health Status
     3. Performance Analysis
     4. Security Assessment
-    5. Enhancement Opportunities
-    6. Update Recommendations
-    7. Protection Strategy
-    8. Action Items (prioritized)`
+    5. Viral Trends & Algorithm Insights
+    6. Enhancement Opportunities
+    7. Update Recommendations
+    8. Protection Strategy
+    9. Content Strategy Recommendations
+    10. Action Items (prioritized)`
   });
 
   return report;
