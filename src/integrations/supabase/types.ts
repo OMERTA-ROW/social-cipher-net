@@ -402,6 +402,38 @@ export type Database = {
         }
         Relationships: []
       }
+      mentions: {
+        Row: {
+          created_at: string | null
+          id: string
+          mentioned_user_id: string
+          mentioner_user_id: string
+          post_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mentioned_user_id: string
+          mentioner_user_id: string
+          post_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mentioned_user_id?: string
+          mentioner_user_id?: string
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_connections: {
         Row: {
           access_token: string | null
@@ -1010,6 +1042,147 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      skytech_affiliate_programs: {
+        Row: {
+          api_config: Json | null
+          auto_enabled: boolean
+          categories: string[] | null
+          commission_rate: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          metadata: Json | null
+          network_name: string | null
+          program_name: string
+          tracking_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_config?: Json | null
+          auto_enabled?: boolean
+          categories?: string[] | null
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          metadata?: Json | null
+          network_name?: string | null
+          program_name: string
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_config?: Json | null
+          auto_enabled?: boolean
+          categories?: string[] | null
+          commission_rate?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          metadata?: Json | null
+          network_name?: string | null
+          program_name?: string
+          tracking_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      skytech_app_updates: {
+        Row: {
+          applied_at: string | null
+          auto_apply: boolean
+          changes: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_applied: boolean
+          title: string
+          update_type: string
+          version: string
+        }
+        Insert: {
+          applied_at?: string | null
+          auto_apply?: boolean
+          changes: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_applied?: boolean
+          title: string
+          update_type: string
+          version: string
+        }
+        Update: {
+          applied_at?: string | null
+          auto_apply?: boolean
+          changes?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_applied?: boolean
+          title?: string
+          update_type?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      skytech_platform_configs: {
+        Row: {
+          api_config: Json | null
+          auto_enabled: boolean
+          created_at: string
+          description: string | null
+          display_name: string
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          oauth_config: Json | null
+          platform_name: string
+          platform_type: string
+          required_scopes: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          api_config?: Json | null
+          auto_enabled?: boolean
+          created_at?: string
+          description?: string | null
+          display_name: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          oauth_config?: Json | null
+          platform_name: string
+          platform_type: string
+          required_scopes?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          api_config?: Json | null
+          auto_enabled?: boolean
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          oauth_config?: Json | null
+          platform_name?: string
+          platform_type?: string
+          required_scopes?: string[] | null
+          updated_at?: string
         }
         Relationships: []
       }
