@@ -10,6 +10,7 @@ import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { useNavigate } from "react-router-dom";
+import { TokenPoolManager } from "@/components/TokenPoolManager";
 
 interface GangMember {
   id: number;
@@ -98,8 +99,12 @@ const CyberGamers = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="gang" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+        <Tabs defaultValue="pools" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsTrigger value="pools" className="flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
+              Token Pools
+            </TabsTrigger>
             <TabsTrigger value="gang" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               Gang Members
@@ -113,6 +118,10 @@ const CyberGamers = () => {
               Tournaments
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="pools" className="space-y-6">
+            <TokenPoolManager />
+          </TabsContent>
 
           <TabsContent value="gang" className="space-y-6">
             <Card className="p-6 bg-card/50 backdrop-blur border-primary/20">

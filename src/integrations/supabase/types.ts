@@ -647,6 +647,82 @@ export type Database = {
           },
         ]
       }
+      pool_participants: {
+        Row: {
+          entry_paid: number
+          id: string
+          joined_at: string | null
+          pool_id: string
+          position: number | null
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          entry_paid: number
+          id?: string
+          joined_at?: string | null
+          pool_id: string
+          position?: number | null
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          entry_paid?: number
+          id?: string
+          joined_at?: string | null
+          pool_id?: string
+          position?: number | null
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pool_participants_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "token_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pool_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          pool_id: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          pool_id: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          pool_id?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pool_transactions_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "token_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_clicks: {
         Row: {
           clicker_id: string | null
@@ -1434,6 +1510,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      token_pools: {
+        Row: {
+          commission_rate: number
+          completed_at: string | null
+          created_at: string | null
+          creator_id: string
+          current_participants: number | null
+          entry_fee: number
+          game_type: string
+          id: string
+          max_participants: number | null
+          metadata: Json | null
+          pool_name: string
+          started_at: string | null
+          status: string
+          total_pool: number
+          winner_id: string | null
+        }
+        Insert: {
+          commission_rate?: number
+          completed_at?: string | null
+          created_at?: string | null
+          creator_id: string
+          current_participants?: number | null
+          entry_fee?: number
+          game_type: string
+          id?: string
+          max_participants?: number | null
+          metadata?: Json | null
+          pool_name: string
+          started_at?: string | null
+          status?: string
+          total_pool?: number
+          winner_id?: string | null
+        }
+        Update: {
+          commission_rate?: number
+          completed_at?: string | null
+          created_at?: string | null
+          creator_id?: string
+          current_participants?: number | null
+          entry_fee?: number
+          game_type?: string
+          id?: string
+          max_participants?: number | null
+          metadata?: Json | null
+          pool_name?: string
+          started_at?: string | null
+          status?: string
+          total_pool?: number
+          winner_id?: string | null
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
