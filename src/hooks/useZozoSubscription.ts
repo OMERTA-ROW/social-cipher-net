@@ -174,6 +174,18 @@ export const useZozoSubscription = () => {
             }
           });
           toast.success(`${tierConfig.tokenBonus} bonus tokens added to your wallet!`);
+
+          // Unlock mining features
+          const { data: miningData } = await supabase.functions.invoke('unlock-mining-features', {
+            body: { subscriptionType: 'zozo' },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
+
+          if (miningData?.message) {
+            toast.success(miningData.message, { duration: 10000 });
+          }
         }
         
         checkSubscription();
@@ -205,6 +217,18 @@ export const useZozoSubscription = () => {
                   Authorization: `Bearer ${session.access_token}`
                 }
               });
+
+              // Unlock mining features
+              const { data: miningData } = await supabase.functions.invoke('unlock-mining-features', {
+                body: { subscriptionType: 'zozo' },
+                headers: {
+                  Authorization: `Bearer ${session.access_token}`
+                }
+              });
+
+              if (miningData?.message) {
+                toast.success(miningData.message, { duration: 10000 });
+              }
             }, 5000);
           }
         }
