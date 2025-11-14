@@ -342,11 +342,11 @@ async function logEcosystemEvent(supabase: any, action: string, data: any, prior
 }
 
 async function gatherViralTrends(supabase: any) {
-  // Gather trending content from posts
-  const [trendingPosts, topHashtags, platformActivity] = await Promise.all([
+  // Gather trending content from posts and live streams
+  const [trendingPosts, topHashtags, platformActivity, liveStreams] = await Promise.all([
     supabase
       .from('posts')
-      .select('id, content, view_count, click_count, created_at')
+      .select('id, content, view_count, click_count, created_at, media_type')
       .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
       .order('view_count', { ascending: false })
       .limit(50),
@@ -358,7 +358,13 @@ async function gatherViralTrends(supabase: any) {
     supabase
       .from('platform_connections')
       .select('platform, metadata')
-      .eq('is_active', true)
+      .eq('is_active', true),
+    supabase
+      .from('live_streams')
+      .select('id, title, viewer_count, is_live, started_at, ended_at')
+      .gte('started_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .order('viewer_count', { ascending: false })
+      .limit(30)
   ]);
 
   // Extract hashtags and analyze patterns
@@ -394,11 +400,15 @@ async function gatherViralTrends(supabase: any) {
   const postingDates = trendingPosts.data?.map((post: any) => new Date(post.created_at)) || [];
   const consistencyMetrics = analyzeConsistency(postingDates);
 
-  // Analyze infinity loop engagement
-  const infinityLoopMetrics = analyzeInfinityLoop(trendingPosts.data || []);
+  // Analyze infinity loop engagement (posts + live streams)
+  const infinityLoopMetrics = analyzeInfinityLoop(
+    trendingPosts.data || [], 
+    liveStreams.data || []
+  );
 
   return {
     trendingContent: trendingPosts.data || [],
+    liveStreams: liveStreams.data || [],
     topHashtags: sortedHashtags,
     platformActivity: platformActivity.data || [],
     celebrityTrends: {
@@ -409,6 +419,8 @@ async function gatherViralTrends(supabase: any) {
     infinityLoopAnalysis: infinityLoopMetrics,
     metrics: {
       totalTrendingPosts: trendingPosts.data?.length || 0,
+      totalLiveStreams: liveStreams.data?.length || 0,
+      activeLiveStreams: liveStreams.data?.filter((s: any) => s.is_live).length || 0,
       uniqueHashtags: Object.keys(hashtagCounts).length,
       activePlatforms: platformActivity.data?.length || 0,
     },
@@ -458,24 +470,46 @@ async function gatherViralTrends(supabase: any) {
   };
 }
 
-function analyzeInfinityLoop(posts: any[]) {
-  if (posts.length === 0) {
+function analyzeInfinityLoop(posts: any[], liveStreams: any[] = []) {
+  if (posts.length === 0 && liveStreams.length === 0) {
     return {
       score: 0,
       engagementRate: 0,
       averageRetention: 0,
       loopEfficiency: 'insufficient_data',
-      recommendation: 'Need content data to analyze infinity loop performance'
+      recommendation: 'Need content data to analyze infinity loop performance',
+      contentBreakdown: { posts: 0, liveStreams: 0, videos: 0, text: 0 }
     };
   }
 
-  // Calculate engagement metrics
+  // Categorize posts by media type
+  const videoPosts = posts.filter((p: any) => p.media_type === 'video');
+  const textPosts = posts.filter((p: any) => !p.media_type || p.media_type === 'text');
+  
+  // Calculate engagement metrics for posts
   const totalViews = posts.reduce((sum, post) => sum + (post.view_count || 0), 0);
   const totalClicks = posts.reduce((sum, post) => sum + (post.click_count || 0), 0);
-  const engagementRate = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+  
+  // Calculate live stream engagement
+  const totalStreamViews = liveStreams.reduce((sum, stream) => sum + (stream.viewer_count || 0), 0);
+  const activeLiveStreams = liveStreams.filter((s: any) => s.is_live).length;
+  
+  // Calculate session duration for live streams (estimated)
+  const avgStreamDuration = liveStreams
+    .filter((s: any) => s.ended_at)
+    .reduce((sum, s) => {
+      const duration = new Date(s.ended_at).getTime() - new Date(s.started_at).getTime();
+      return sum + duration / (1000 * 60); // minutes
+    }, 0) / (liveStreams.filter((s: any) => s.ended_at).length || 1);
+  
+  // Combined engagement rate
+  const totalEngagements = totalClicks + (totalStreamViews * 0.5); // Stream views count as 0.5 engagement
+  const totalImpressions = totalViews + totalStreamViews;
+  const engagementRate = totalImpressions > 0 ? (totalEngagements / totalImpressions) * 100 : 0;
 
-  // Calculate average retention (views per post)
-  const avgViewsPerPost = totalViews / posts.length;
+  // Calculate average retention (views per content piece)
+  const totalContent = posts.length + liveStreams.length;
+  const avgViewsPerContent = totalImpressions / totalContent;
 
   // Estimate scroll depth and session continuation
   // Posts with high click rates indicate users are staying in the loop
@@ -490,7 +524,7 @@ function analyzeInfinityLoop(posts: any[]) {
   const score = Math.min(100, 
     (engagementRate * 0.4) + 
     (Math.min(loopEfficiency, 100) * 0.4) + 
-    (Math.min((avgViewsPerPost / 100), 1) * 20)
+    (Math.min((avgViewsPerContent / 100), 1) * 20)
   );
 
   let rating: string;
@@ -513,18 +547,31 @@ function analyzeInfinityLoop(posts: any[]) {
   return {
     score: Math.round(score),
     engagementRate: Math.round(engagementRate * 100) / 100,
-    averageRetention: Math.round(avgViewsPerPost),
+    averageRetention: Math.round(avgViewsPerContent),
     loopEfficiency: rating,
     recommendation,
+    totalContent: totalContent,
     totalPosts: posts.length,
+    totalLiveStreams: liveStreams.length,
+    activeLiveStreams,
     totalViews,
     totalClicks,
+    totalStreamViews,
+    avgStreamDuration: Math.round(avgStreamDuration * 10) / 10,
     highEngagementPostsCount: highEngagementPosts.length,
+    contentBreakdown: {
+      posts: posts.length,
+      liveStreams: liveStreams.length,
+      videos: videoPosts.length,
+      text: textPosts.length
+    },
     insights: {
       hookEffectiveness: engagementRate > 5 ? 'strong' : engagementRate > 2 ? 'moderate' : 'weak',
       contentLength: 'Optimize for 15-60 second videos for maximum loop retention',
       transitionQuality: loopEfficiency > 50 ? 'smooth' : 'needs_work',
-      recommendationAccuracy: 'Personalize content based on user behavior and preferences'
+      recommendationAccuracy: 'Personalize content based on user behavior and preferences',
+      liveStreamPerformance: activeLiveStreams > 0 ? 'engaging_live_audience' : 'consider_live_streaming',
+      contentMixStrategy: 'Balance posts, videos, text, and live streams for optimal infinity loop'
     }
   };
 }
