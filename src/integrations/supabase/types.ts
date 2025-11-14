@@ -306,6 +306,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gifts: {
+        Row: {
+          animation_type: string
+          created_at: string | null
+          description: string | null
+          icon_url: string | null
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          animation_type?: string
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          name: string
+          price: number
+        }
+        Update: {
+          animation_type?: string
+          created_at?: string | null
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
       identity_verification: {
         Row: {
           created_at: string | null
@@ -1353,6 +1383,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "stream_chat_messages_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stream_gifts: {
+        Row: {
+          created_at: string | null
+          gift_id: string
+          id: string
+          message: string | null
+          receiver_id: string
+          sender_id: string
+          stream_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          gift_id: string
+          id?: string
+          message?: string | null
+          receiver_id: string
+          sender_id: string
+          stream_id: string
+        }
+        Update: {
+          created_at?: string | null
+          gift_id?: string
+          id?: string
+          message?: string | null
+          receiver_id?: string
+          sender_id?: string
+          stream_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_gifts_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stream_gifts_stream_id_fkey"
             columns: ["stream_id"]
             isOneToOne: false
             referencedRelation: "live_streams"

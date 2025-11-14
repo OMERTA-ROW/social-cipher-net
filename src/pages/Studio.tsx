@@ -8,7 +8,7 @@ import { Radio, Send, Zap, Loader2, Video, MessageSquare, BarChart3, UserPlus, U
 import Navigation from "@/components/Navigation";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
-import { useFloatingWindows } from "@/hooks/useFloatingWindows";
+import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
 import { useLiveStream } from "@/hooks/useLiveStream";
 import { TipDialog } from "@/components/TipDialog";
@@ -23,6 +23,7 @@ import { LiveStreamParticipants } from "@/components/LiveStreamParticipants";
 import { StartLiveStreamDialog } from "@/components/StartLiveStreamDialog";
 import { InviteToStreamDialog } from "@/components/InviteToStreamDialog";
 import { MegaChat } from "@/components/MegaChat";
+import { OmegaChat } from "@/components/OmegaChat";
 import { supabase } from "@/integrations/supabase/client";
 
 const Studio = () => {
@@ -35,7 +36,7 @@ const Studio = () => {
   }>>([]);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const { windows, openWindow, closeWindow } = useFloatingWindows();
+  const { windows, openWindow, closeWindow } = useFloatingWindowsContext();
   const { 
     currentStream, 
     participants, 
@@ -131,6 +132,7 @@ const Studio = () => {
     <div className="min-h-screen bg-background">
       <RealisticSpaceBackground />
       <Navigation onCreatePost={() => {}} />
+      {currentStream && <OmegaChat streamId={currentStream.id} streamerId={currentStream.user_id} />}
       
       <main className="container mx-auto px-4 pt-20 pb-8">
         <div className="flex items-center justify-between mb-8">
