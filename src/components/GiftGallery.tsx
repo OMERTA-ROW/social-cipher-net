@@ -54,6 +54,10 @@ export function GiftGallery({ gifts, streamId, streamerId, onClose }: GiftGaller
         return;
       }
 
+      // Calculate commission (25% platform, 75% streamer)
+      const platformCommission = selectedGift.price * 0.25;
+      const streamerAmount = selectedGift.price * 0.75;
+
       // Deduct from sender's wallet
       const { error: walletError } = await supabase
         .from("user_wallets")
@@ -62,14 +66,14 @@ export function GiftGallery({ gifts, streamId, streamerId, onClose }: GiftGaller
 
       if (walletError) throw walletError;
 
-      // Add to receiver's wallet
+      // Add to receiver's wallet (75%)
       const { data: receiverWallet } = await supabase
         .from("user_wallets")
         .select("balance")
         .eq("user_id", streamerId)
         .single();
 
-      const newReceiverBalance = (receiverWallet?.balance || 0) + selectedGift.price;
+      const newReceiverBalance = (receiverWallet?.balance || 0) + streamerAmount;
 
       const { error: receiverWalletError } = await supabase
         .from("user_wallets")
@@ -91,16 +95,25 @@ export function GiftGallery({ gifts, streamId, streamerId, onClose }: GiftGaller
 
       if (giftError) throw giftError;
 
-      // Record wallet transaction
-      await supabase.from("wallet_transactions").insert({
-        user_id: user.id,
-        amount: -selectedGift.price,
-        transaction_type: "gift_sent",
-        description: `Sent ${selectedGift.name} to streamer`,
-        metadata: { gift_id: selectedGift.id, stream_id: streamId },
-      });
+      // Record wallet transactions
+      await supabase.from("wallet_transactions").insert([
+        {
+          user_id: user.id,
+          amount: -selectedGift.price,
+          transaction_type: "gift_sent",
+          description: `Sent ${selectedGift.name} to streamer`,
+          metadata: { gift_id: selectedGift.id, stream_id: streamId, platform_commission: platformCommission },
+        },
+        {
+          user_id: streamerId,
+          amount: streamerAmount,
+          transaction_type: "gift_received",
+          description: `Received ${selectedGift.name} (75% after commission)`,
+          metadata: { gift_id: selectedGift.id, stream_id: streamId, commission_rate: 0.25 },
+        }
+      ]);
 
-      toast.success(`${selectedGift.name} sent successfully!`);
+      toast.success(`${selectedGift.name} sent successfully! (25% commission collected)`);
       setMessage("");
       setSelectedGift(null);
       onClose();
