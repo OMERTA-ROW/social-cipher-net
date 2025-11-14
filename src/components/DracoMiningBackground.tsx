@@ -3,9 +3,10 @@ import { Rocket, Sparkles, Star } from "lucide-react";
 
 interface DracoMiningBackgroundProps {
   isActive: boolean;
+  minedCrypto?: string;
 }
 
-export const DracoMiningBackground = ({ isActive }: DracoMiningBackgroundProps) => {
+export const DracoMiningBackground = ({ isActive, minedCrypto = "BTC" }: DracoMiningBackgroundProps) => {
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; size: number; speed: number }>>([]);
 
   useEffect(() => {
@@ -23,6 +24,25 @@ export const DracoMiningBackground = ({ isActive }: DracoMiningBackgroundProps) 
   }, [isActive]);
 
   if (!isActive) return null;
+
+  const getCryptoSymbol = () => {
+    const symbols: Record<string, string> = {
+      'BTC': '₿', 'ETH': 'Ξ', 'DOGE': 'Ð', 'SHIB': '🐕', 'PEPE': '🐸',
+      'USDC': '$', 'USDT': '₮', 'MATIC': '⬡', 'BNB': 'ⓑ', 'SOL': '◎',
+      'ADA': '₳', 'AVAX': '🔺'
+    };
+    return symbols[minedCrypto] || '₿';
+  };
+
+  const getCryptoColor = () => {
+    const colors: Record<string, string> = {
+      'BTC': 'text-orange-500', 'ETH': 'text-blue-500', 'DOGE': 'text-yellow-500',
+      'SHIB': 'text-red-500', 'PEPE': 'text-green-500', 'USDC': 'text-blue-400',
+      'USDT': 'text-green-400', 'MATIC': 'text-purple-500', 'BNB': 'text-yellow-400',
+      'SOL': 'text-cyan-500', 'ADA': 'text-blue-600', 'AVAX': 'text-red-400'
+    };
+    return colors[minedCrypto] || 'text-orange-500';
+  };
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -56,9 +76,12 @@ export const DracoMiningBackground = ({ isActive }: DracoMiningBackgroundProps) 
             {/* Engine trail */}
             <div className="absolute -left-8 top-1/2 w-16 h-2 bg-gradient-to-r from-primary/0 via-primary/60 to-primary/20 blur-sm" />
             
-            {/* Collection particles */}
-            <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
-              <Sparkles className="w-8 h-8 text-yellow-400 animate-spin" />
+            {/* Collection particles - Crypto symbols */}
+            <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2">
+              <Sparkles className="w-6 h-6 text-yellow-400 animate-spin" />
+              <span className={`text-2xl font-bold animate-pulse ${getCryptoColor()}`}>
+                {getCryptoSymbol()}
+              </span>
             </div>
           </div>
         </div>
@@ -86,13 +109,32 @@ export const DracoMiningBackground = ({ isActive }: DracoMiningBackgroundProps) 
         <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500/30 to-cyan-500/30 blur-sm" />
       </div>
 
-      {/* Resource nodes */}
+      {/* Crypto Resource nodes - scattered throughout space */}
       <div className="absolute top-1/2 right-1/3 animate-float-delayed">
-        <Star className="w-6 h-6 text-yellow-400 animate-pulse" />
+        <div className="relative">
+          <Star className="w-6 h-6 text-yellow-400 animate-pulse" />
+          <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold ${getCryptoColor()}`}>
+            {getCryptoSymbol()}
+          </span>
+        </div>
       </div>
 
       <div className="absolute bottom-1/3 left-1/3 animate-float">
-        <Star className="w-5 h-5 text-amber-400 animate-pulse" />
+        <div className="relative">
+          <Star className="w-5 h-5 text-amber-400 animate-pulse" />
+          <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold ${getCryptoColor()}`}>
+            {getCryptoSymbol()}
+          </span>
+        </div>
+      </div>
+
+      <div className="absolute top-1/4 left-1/2 animate-float-delayed">
+        <div className="relative">
+          <Star className="w-4 h-4 text-green-400 animate-pulse" />
+          <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold ${getCryptoColor()}`}>
+            {getCryptoSymbol()}
+          </span>
+        </div>
       </div>
 
       <style>{`

@@ -3,9 +3,10 @@ import { Sparkles, Star, Zap } from "lucide-react";
 
 interface ZozoMiningBackgroundProps {
   isActive: boolean;
+  minedCrypto?: string;
 }
 
-export const ZozoMiningBackground = ({ isActive }: ZozoMiningBackgroundProps) => {
+export const ZozoMiningBackground = ({ isActive, minedCrypto = "BTC" }: ZozoMiningBackgroundProps) => {
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; size: number; speed: number }>>([]);
 
   useEffect(() => {
@@ -23,6 +24,25 @@ export const ZozoMiningBackground = ({ isActive }: ZozoMiningBackgroundProps) =>
   }, [isActive]);
 
   if (!isActive) return null;
+
+  const getCryptoSymbol = () => {
+    const symbols: Record<string, string> = {
+      'BTC': '₿', 'ETH': 'Ξ', 'DOGE': 'Ð', 'SHIB': '🐕', 'PEPE': '🐸',
+      'USDC': '$', 'USDT': '₮', 'MATIC': '⬡', 'BNB': 'ⓑ', 'SOL': '◎',
+      'ADA': '₳', 'AVAX': '🔺'
+    };
+    return symbols[minedCrypto] || '₿';
+  };
+
+  const getCryptoColor = () => {
+    const colors: Record<string, string> = {
+      'BTC': 'text-orange-500', 'ETH': 'text-blue-500', 'DOGE': 'text-yellow-500',
+      'SHIB': 'text-red-500', 'PEPE': 'text-green-500', 'USDC': 'text-blue-400',
+      'USDT': 'text-green-400', 'MATIC': 'text-purple-500', 'BNB': 'text-yellow-400',
+      'SOL': 'text-cyan-500', 'ADA': 'text-blue-600', 'AVAX': 'text-red-400'
+    };
+    return colors[minedCrypto] || 'text-orange-500';
+  };
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -68,9 +88,12 @@ export const ZozoMiningBackground = ({ isActive }: ZozoMiningBackgroundProps) =>
             {/* Engine trail */}
             <div className="absolute -right-8 top-1/2 w-16 h-2 bg-gradient-to-l from-cyan-400/0 via-cyan-400/60 to-cyan-400/20 blur-sm" />
             
-            {/* Collection particles */}
-            <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
-              <Sparkles className="w-8 h-8 text-cyan-400 animate-spin" />
+            {/* Collection particles - Crypto symbols */}
+            <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2">
+              <Sparkles className="w-6 h-6 text-cyan-400 animate-spin" />
+              <span className={`text-2xl font-bold animate-pulse ${getCryptoColor()}`}>
+                {getCryptoSymbol()}
+              </span>
             </div>
           </div>
         </div>
@@ -98,18 +121,40 @@ export const ZozoMiningBackground = ({ isActive }: ZozoMiningBackgroundProps) =>
         <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500/30 to-cyan-500/30 blur-sm" />
       </div>
 
-      {/* Resource nodes with electric effect */}
+      {/* Crypto Resource nodes with electric effect */}
       <div className="absolute top-1/2 left-1/3 animate-float-delayed">
-        <Star className="w-6 h-6 text-cyan-300 animate-pulse" />
-        <div className="absolute inset-0 animate-ping">
-          <Zap className="w-6 h-6 text-cyan-400 opacity-50" />
+        <div className="relative">
+          <Star className="w-6 h-6 text-cyan-300 animate-pulse" />
+          <div className="absolute inset-0 animate-ping">
+            <Zap className="w-6 h-6 text-cyan-400 opacity-50" />
+          </div>
+          <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold ${getCryptoColor()}`}>
+            {getCryptoSymbol()}
+          </span>
         </div>
       </div>
 
       <div className="absolute bottom-1/3 right-1/3 animate-float">
-        <Star className="w-5 h-5 text-blue-300 animate-pulse" />
-        <div className="absolute inset-0 animate-ping">
-          <Zap className="w-5 h-5 text-blue-400 opacity-50" />
+        <div className="relative">
+          <Star className="w-5 h-5 text-blue-300 animate-pulse" />
+          <div className="absolute inset-0 animate-ping">
+            <Zap className="w-5 h-5 text-blue-400 opacity-50" />
+          </div>
+          <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold ${getCryptoColor()}`}>
+            {getCryptoSymbol()}
+          </span>
+        </div>
+      </div>
+
+      <div className="absolute top-1/4 right-1/2 animate-float-delayed">
+        <div className="relative">
+          <Star className="w-4 h-4 text-purple-300 animate-pulse" />
+          <div className="absolute inset-0 animate-ping">
+            <Zap className="w-4 h-4 text-purple-400 opacity-50" />
+          </div>
+          <span className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold ${getCryptoColor()}`}>
+            {getCryptoSymbol()}
+          </span>
         </div>
       </div>
 
