@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Pickaxe, TrendingUp, Clock, Coins } from "lucide-react";
 import { DracoMiningBackground } from "./DracoMiningBackground";
 import { ZozoMiningBackground } from "./ZozoMiningBackground";
+import { Badge } from "@/components/ui/badge";
 
 interface MiningSession {
   id: string;
@@ -22,6 +23,21 @@ interface MiningSession {
   total_mined: number;
 }
 
+const CRYPTO_OPTIONS = [
+  { symbol: 'BTC', name: 'Bitcoin', icon: '₿', color: 'text-orange-500' },
+  { symbol: 'ETH', name: 'Ethereum', icon: 'Ξ', color: 'text-blue-500' },
+  { symbol: 'DOGE', name: 'Dogecoin', icon: 'Ð', color: 'text-yellow-500' },
+  { symbol: 'SHIB', name: 'Shiba Inu', icon: '🐕', color: 'text-red-500' },
+  { symbol: 'PEPE', name: 'Pepe', icon: '🐸', color: 'text-green-500' },
+  { symbol: 'USDC', name: 'USD Coin', icon: '$', color: 'text-blue-400' },
+  { symbol: 'USDT', name: 'Tether', icon: '₮', color: 'text-green-400' },
+  { symbol: 'MATIC', name: 'Polygon', icon: '⬡', color: 'text-purple-500' },
+  { symbol: 'BNB', name: 'Binance Coin', icon: 'ⓑ', color: 'text-yellow-400' },
+  { symbol: 'SOL', name: 'Solana', icon: '◎', color: 'text-cyan-500' },
+  { symbol: 'ADA', name: 'Cardano', icon: '₳', color: 'text-blue-600' },
+  { symbol: 'AVAX', name: 'Avalanche', icon: '🔺', color: 'text-red-400' },
+];
+
 interface MiningDashboardProps {
   miningType: "draco" | "zozo";
   isUnlocked: boolean;
@@ -31,6 +47,7 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
   const [sessions, setSessions] = useState<MiningSession[]>([]);
   const [tokenAmount, setTokenAmount] = useState("1000");
   const [duration, setDuration] = useState("3");
+  const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -71,6 +88,7 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
           miningType,
           tokenAmount: amount,
           duration: days,
+          cryptoCurrency: selectedCrypto,
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -102,6 +120,8 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
   const activeSessions = sessions.filter(s => s.status === "active");
   const hasDracoMining = activeSessions.some(s => s.mining_type === "draco");
   const hasZozoMining = activeSessions.some(s => s.mining_type === "zozo");
+  
+  const selectedCryptoInfo = CRYPTO_OPTIONS.find(c => c.symbol === selectedCrypto);
 
   if (!isUnlocked) {
     return (
@@ -127,22 +147,53 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
   return (
     <>
       {/* Mining backgrounds */}
-      <DracoMiningBackground isActive={hasDracoMining} />
-      <ZozoMiningBackground isActive={hasZozoMining} />
+      <DracoMiningBackground isActive={hasDracoMining} minedCrypto={selectedCrypto} />
+      <ZozoMiningBackground isActive={hasZozoMining} minedCrypto={selectedCrypto} />
       
       <div className="space-y-6 relative z-10">
-      <Card className="bg-gradient-to-br from-primary/5 to-secondary/10 border-primary/30">
+      <Card className="bg-gradient-to-br from-primary/5 to-secondary/10 border-primary/30 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Pickaxe className="h-5 w-5 text-primary" />
-            Start Mining Session
+            Start Crypto Mining Session
           </CardTitle>
           <CardDescription>
-            Pay tokens to boost your mining performance for 2-4 days
+            Mine real cryptocurrency and meme coins through space! Pay tokens for 2-4 days of mining.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
+            <div className="flex items-center gap-3">
+              <span className={`text-4xl ${selectedCryptoInfo?.color}`}>
+                {selectedCryptoInfo?.icon}
+              </span>
+              <div>
+                <p className="font-bold text-lg">{selectedCryptoInfo?.name}</p>
+                <p className="text-sm text-muted-foreground">Mining through space nodes</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="crypto">Cryptocurrency</Label>
+              <Select value={selectedCrypto} onValueChange={setSelectedCrypto}>
+                <SelectTrigger id="crypto">
+                  <SelectValue placeholder="Select crypto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CRYPTO_OPTIONS.map((crypto) => (
+                    <SelectItem key={crypto.symbol} value={crypto.symbol}>
+                      <span className="flex items-center gap-2">
+                        <span className={crypto.color}>{crypto.icon}</span>
+                        {crypto.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="tokens">Token Amount (1 - 100,000)</Label>
               <Input
@@ -188,10 +239,15 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
             </div>
           </div>
 
-          <Button onClick={startMining} disabled={loading} className="w-full">
-            <Pickaxe className="mr-2 h-4 w-4" />
-            {loading ? "Starting..." : "Start Mining Session"}
+          <Button onClick={startMining} disabled={loading} className="w-full group">
+            <Pickaxe className="mr-2 h-4 w-4 group-hover:animate-bounce" />
+            {loading ? "Launching Spaceship..." : `Start Mining ${selectedCrypto}`}
           </Button>
+          
+          <div className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
+            <p className="font-semibold mb-1">🚀 Space Node Mining</p>
+            <p>Your {miningType === "draco" ? "DRACO" : "ZoZo"} spaceship will traverse the galaxy, discovering {selectedCryptoInfo?.name} nodes on planets, asteroids, and comets!</p>
+          </div>
         </CardContent>
       </Card>
 
