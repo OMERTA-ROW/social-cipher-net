@@ -2,13 +2,14 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Crown, User, MoreVertical, Mic, MicOff, Ban, Shield } from "lucide-react";
+import { Crown, User, MoreVertical, Mic, MicOff, Ban, Shield, UserX } from "lucide-react";
 
 interface Participant {
   id: string;
@@ -33,6 +34,7 @@ interface LiveStreamParticipantsProps {
   onMakeAdmin?: (participantId: string) => void;
   onMute?: (participantId: string, mute: boolean) => void;
   onBlock?: (participantId: string, block: boolean) => void;
+  onKick?: (participantId: string) => void;
 }
 
 export function LiveStreamParticipants({ 
@@ -41,7 +43,8 @@ export function LiveStreamParticipants({
   isCurrentUserAdmin,
   onMakeAdmin,
   onMute,
-  onBlock
+  onBlock,
+  onKick
 }: LiveStreamParticipantsProps) {
   return (
     <div className="space-y-3">
@@ -130,23 +133,34 @@ export function LiveStreamParticipants({
                             )}
                           </DropdownMenuItem>
                         )}
-                        {onBlock && (
+                        {onKick && (
                           <DropdownMenuItem 
-                            onClick={() => onBlock(participant.id, !participant.is_blocked)}
-                            className="text-destructive"
+                            onClick={() => onKick(participant.id)}
                           >
-                            {participant.is_blocked ? (
-                              <>
-                                <User className="w-4 h-4 mr-2" />
-                                Unblock
-                              </>
-                            ) : (
-                              <>
-                                <Ban className="w-4 h-4 mr-2" />
-                                Block
-                              </>
-                            )}
+                            <UserX className="w-4 h-4 mr-2" />
+                            Kick from Stream
                           </DropdownMenuItem>
+                        )}
+                        {onBlock && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => onBlock(participant.id, !participant.is_blocked)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              {participant.is_blocked ? (
+                                <>
+                                  <User className="w-4 h-4 mr-2" />
+                                  Unblock
+                                </>
+                              ) : (
+                                <>
+                                  <Ban className="w-4 h-4 mr-2" />
+                                  Block Permanently
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                          </>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>

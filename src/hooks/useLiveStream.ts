@@ -421,6 +421,34 @@ export function useLiveStream() {
     });
   };
 
+  const kickParticipant = async (participantId: string) => {
+    if (!currentStream) return;
+
+    const { error } = await supabase
+      .from("live_stream_participants")
+      .update({ 
+        is_active: false,
+        left_at: new Date().toISOString()
+      })
+      .eq("id", participantId)
+      .eq("stream_id", currentStream.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to kick participant",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    loadParticipants();
+    toast({
+      title: "Success",
+      description: "Participant removed from stream",
+    });
+  };
+
   return {
     currentStream,
     participants,
@@ -432,5 +460,6 @@ export function useLiveStream() {
     makeAdmin,
     muteParticipant,
     blockParticipant,
+    kickParticipant,
   };
 }
