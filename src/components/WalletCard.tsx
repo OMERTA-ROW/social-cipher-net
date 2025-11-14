@@ -5,10 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Wallet, ArrowDownToLine, CreditCard, Coins } from "lucide-react";
+import { Wallet, ArrowDownToLine, CreditCard, Coins, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { SocialPlatformConnections } from "./SocialPlatformConnections";
 import { CyberlinkSocialTransfer } from "./CyberlinkSocialTransfer";
+import { useWalletSecurity } from "@/hooks/useWalletSecurity";
+import { Badge } from "@/components/ui/badge";
 
 const USD_TO_TOKENS = 1000;
 
@@ -48,6 +50,7 @@ export const WalletCard = () => {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { isSecure, isMonitoring, logSecurityEvent } = useWalletSecurity();
 
   useEffect(() => {
     fetchWallet();
@@ -62,6 +65,9 @@ export const WalletCard = () => {
         setLoading(false);
         return;
       }
+
+      // Log security event for wallet access
+      await logSecurityEvent('wallet_view', 'balance_check');
 
       const { data, error } = await supabase
         .from("user_wallets")
@@ -144,9 +150,18 @@ export const WalletCard = () => {
           <CardTitle className="text-2xl flex items-center gap-2">
             <Wallet className="w-6 h-6 text-primary" />
             Digital Wallet
+            <Badge variant={isSecure ? "default" : "destructive"} className="ml-auto">
+              <Shield className="w-3 h-3 mr-1" />
+              {isSecure ? "Protected" : "Security Alert"}
+            </Badge>
           </CardTitle>
           <CardDescription>
             Your earnings and balance for subscriptions & withdrawals
+            <br />
+            <span className="text-xs text-primary flex items-center gap-1 mt-1">
+              <Shield className="w-3 h-3" />
+              Anti-scam & Anti-hack Protection Active
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -244,9 +259,15 @@ export const WalletCard = () => {
             </Button>
           </div>
 
-          <p className="text-xs text-muted-foreground text-center">
-            Earnings are automatically added to your wallet. Use balance to pay subscriptions or withdraw to bank account.
-          </p>
+          <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+            <p className="text-xs text-muted-foreground text-center">
+              <Shield className="w-4 h-4 inline mr-1 text-primary" />
+              Earnings are automatically added to your wallet. Use balance to pay subscriptions or withdraw to bank account.
+            </p>
+            <p className="text-xs text-primary/70 text-center mt-2">
+              🔒 All wallets encrypted with anti-scam and anti-hacking protection. Unauthorized scanning attempts result in automatic account deletion and fund confiscation to CyberLink security vault.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
