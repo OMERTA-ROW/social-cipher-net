@@ -351,6 +351,85 @@ export type Database = {
         }
         Relationships: []
       }
+      live_stream_invitations: {
+        Row: {
+          created_at: string | null
+          id: string
+          invitee_id: string
+          inviter_id: string
+          responded_at: string | null
+          status: string | null
+          stream_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invitee_id: string
+          inviter_id: string
+          responded_at?: string | null
+          status?: string | null
+          stream_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invitee_id?: string
+          inviter_id?: string
+          responded_at?: string | null
+          status?: string | null
+          stream_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_invitations_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_stream_participants: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_host: boolean | null
+          joined_at: string | null
+          left_at: string | null
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_host?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_host?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
+          stream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_participants_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_streams: {
         Row: {
           category: string | null

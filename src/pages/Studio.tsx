@@ -4,12 +4,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Send, Zap, Loader2, Video, MessageSquare, BarChart3 } from "lucide-react";
+import { Radio, Send, Zap, Loader2, Video, MessageSquare, BarChart3, UserPlus, Users } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
+import { useLiveStream } from "@/hooks/useLiveStream";
 import { TipDialog } from "@/components/TipDialog";
 import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
@@ -17,6 +18,10 @@ import NFTMarketWidget from "@/components/NFTMarketWidget";
 import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
 import { SocialPlatformConnections } from "@/components/SocialPlatformConnections";
 import { SocialMediaPoster } from "@/components/SocialMediaPoster";
+import { LiveStreamInvitations } from "@/components/LiveStreamInvitations";
+import { LiveStreamParticipants } from "@/components/LiveStreamParticipants";
+import { StartLiveStreamDialog } from "@/components/StartLiveStreamDialog";
+import { InviteToStreamDialog } from "@/components/InviteToStreamDialog";
 
 const Studio = () => {
   const [isLive, setIsLive] = useState(false);
@@ -26,7 +31,18 @@ const Studio = () => {
     platform_name: string;
     is_active: boolean;
   }>>([]);
+  const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
   const { windows, openWindow, closeWindow } = useFloatingWindows();
+  const { 
+    currentStream, 
+    participants, 
+    invitations,
+    startStream, 
+    endStream, 
+    inviteUser, 
+    respondToInvitation 
+  } = useLiveStream();
   const [messages, setMessages] = useState<Record<string, Array<{ role: "user" | "assistant"; content: string }>>>({
     twitter: [],
     instagram: [],
@@ -118,6 +134,27 @@ const Studio = () => {
           </div>
           
           <div className="flex items-center gap-4 flex-wrap">
+            {currentStream && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowInviteDialog(true)}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Invite Users
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openWindow("Participants", <LiveStreamParticipants participants={participants} />)}
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Participants ({participants.length})
+                </Button>
+              </>
+            )}
+            
             <Button
               size="sm"
               variant="outline"
@@ -198,7 +235,7 @@ const Studio = () => {
                 </Button>
               );
             })}
-            {isLive && (
+            {currentStream && (
               <>
                 <Badge variant="destructive" className="animate-pulse">
                   <Radio className="w-4 h-4 mr-1" />
@@ -208,11 +245,11 @@ const Studio = () => {
               </>
             )}
             <Button
-              onClick={() => setIsLive(!isLive)}
-              variant={isLive ? "destructive" : "default"}
-              className={isLive ? "" : "glow-primary"}
+              onClick={() => currentStream ? endStream() : setShowStartDialog(true)}
+              variant={currentStream ? "destructive" : "default"}
+              className={currentStream ? "" : "glow-primary"}
             >
-              {isLive ? "End Stream" : "Go Live"}
+              {currentStream ? "End Stream" : "Go Live"}
             </Button>
           </div>
         </div>
@@ -334,6 +371,26 @@ const Studio = () => {
           </Card>
         </div>
       </main>
+
+      {/* Live Stream Invitations */}
+      <LiveStreamInvitations 
+        invitations={invitations} 
+        onRespond={respondToInvitation}
+      />
+
+      {/* Live Stream Dialogs */}
+      <StartLiveStreamDialog 
+        open={showStartDialog}
+        onOpenChange={setShowStartDialog}
+        onStart={startStream}
+      />
+      
+      <InviteToStreamDialog
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+        streamId={currentStream?.id || ""}
+        onInvite={inviteUser}
+      />
 
       {/* Floating Windows */}
       {windows.map((window) => (
