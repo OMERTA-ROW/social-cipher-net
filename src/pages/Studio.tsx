@@ -45,7 +45,8 @@ const Studio = () => {
     respondToInvitation,
     makeAdmin,
     muteParticipant,
-    blockParticipant
+    blockParticipant,
+    kickParticipant
   } = useLiveStream();
   const [messages, setMessages] = useState<Record<string, Array<{ role: "user" | "assistant"; content: string }>>>({
     twitter: [],
@@ -164,6 +165,7 @@ const Studio = () => {
                         onMakeAdmin={makeAdmin}
                         onMute={muteParticipant}
                         onBlock={blockParticipant}
+                        onKick={kickParticipant}
                       />
                     ));
                   }}
