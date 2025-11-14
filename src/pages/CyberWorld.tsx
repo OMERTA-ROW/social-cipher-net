@@ -40,7 +40,7 @@ const CyberWorld = () => {
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const navigate = useNavigate();
-  const { openWindow } = useFloatingWindowsContext();
+  const { openWindow, windows, closeAllWindows } = useFloatingWindowsContext();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -522,21 +522,6 @@ const CyberWorld = () => {
         </Tabs>
       </div>
 
-      {/* Floating Windows */}
-      {windows.map((window) => (
-        <FloatingWindow
-          key={window.id}
-          id={window.id}
-          title={window.title}
-          onClose={() => closeWindow(window.id)}
-          initialX={window.x}
-          initialY={window.y}
-          width={800}
-          height={600}
-        >
-          {window.content}
-        </FloatingWindow>
-      ))}
     </div>
   );
 };
