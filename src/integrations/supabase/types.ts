@@ -391,32 +391,53 @@ export type Database = {
       }
       live_stream_participants: {
         Row: {
+          blocked_at: string | null
+          blocked_by: string | null
           created_at: string | null
           id: string
           is_active: boolean | null
+          is_admin: boolean | null
+          is_blocked: boolean | null
           is_host: boolean | null
+          is_muted: boolean | null
           joined_at: string | null
           left_at: string | null
+          muted_at: string | null
+          muted_by: string | null
           stream_id: string
           user_id: string
         }
         Insert: {
+          blocked_at?: string | null
+          blocked_by?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_admin?: boolean | null
+          is_blocked?: boolean | null
           is_host?: boolean | null
+          is_muted?: boolean | null
           joined_at?: string | null
           left_at?: string | null
+          muted_at?: string | null
+          muted_by?: string | null
           stream_id: string
           user_id: string
         }
         Update: {
+          blocked_at?: string | null
+          blocked_by?: string | null
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          is_admin?: boolean | null
+          is_blocked?: boolean | null
           is_host?: boolean | null
+          is_muted?: boolean | null
           joined_at?: string | null
           left_at?: string | null
+          muted_at?: string | null
+          muted_by?: string | null
           stream_id?: string
           user_id?: string
         }
@@ -1507,6 +1528,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_stream_admin: {
+        Args: { _stream_id: string; _user_id: string }
         Returns: boolean
       }
       is_user_adult: { Args: { user_uuid: string }; Returns: boolean }

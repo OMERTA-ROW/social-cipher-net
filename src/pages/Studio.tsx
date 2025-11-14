@@ -22,6 +22,7 @@ import { LiveStreamInvitations } from "@/components/LiveStreamInvitations";
 import { LiveStreamParticipants } from "@/components/LiveStreamParticipants";
 import { StartLiveStreamDialog } from "@/components/StartLiveStreamDialog";
 import { InviteToStreamDialog } from "@/components/InviteToStreamDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 const Studio = () => {
   const [isLive, setIsLive] = useState(false);
@@ -41,7 +42,10 @@ const Studio = () => {
     startStream, 
     endStream, 
     inviteUser, 
-    respondToInvitation 
+    respondToInvitation,
+    makeAdmin,
+    muteParticipant,
+    blockParticipant
   } = useLiveStream();
   const [messages, setMessages] = useState<Record<string, Array<{ role: "user" | "assistant"; content: string }>>>({
     twitter: [],
@@ -147,7 +151,22 @@ const Studio = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => openWindow("Participants", <LiveStreamParticipants participants={participants} />)}
+                  onClick={async () => {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const currentUserParticipant = participants.find(p => p.user_id === user?.id);
+                    const isAdmin = currentUserParticipant?.is_admin || currentUserParticipant?.is_host;
+                    
+                    openWindow("Participants", (
+                      <LiveStreamParticipants 
+                        participants={participants}
+                        currentUserId={user?.id}
+                        isCurrentUserAdmin={isAdmin}
+                        onMakeAdmin={makeAdmin}
+                        onMute={muteParticipant}
+                        onBlock={blockParticipant}
+                      />
+                    ));
+                  }}
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Participants ({participants.length})
