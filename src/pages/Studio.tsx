@@ -22,6 +22,7 @@ import { LiveStreamInvitations } from "@/components/LiveStreamInvitations";
 import { LiveStreamParticipants } from "@/components/LiveStreamParticipants";
 import { StartLiveStreamDialog } from "@/components/StartLiveStreamDialog";
 import { InviteToStreamDialog } from "@/components/InviteToStreamDialog";
+import { MegaChat } from "@/components/MegaChat";
 import { supabase } from "@/integrations/supabase/client";
 
 const Studio = () => {
@@ -172,6 +173,20 @@ const Studio = () => {
                 >
                   <Users className="w-4 h-4 mr-2" />
                   Participants ({participants.length})
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (currentStream) {
+                      openWindow("Mega Chat", (
+                        <MegaChat streamId={currentStream.id} />
+                      ));
+                    }
+                  }}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Mega Chat
                 </Button>
               </>
             )}
