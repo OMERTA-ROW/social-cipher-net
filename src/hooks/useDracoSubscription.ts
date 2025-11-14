@@ -140,6 +140,22 @@ export const useDracoSubscription = () => {
                 Authorization: `Bearer ${session.access_token}`
               }
             });
+
+            // Unlock mining features
+            const { data: miningData } = await supabase.functions.invoke('unlock-mining-features', {
+              body: { subscriptionType: 'draco' },
+              headers: {
+                Authorization: `Bearer ${session.access_token}`
+              }
+            });
+
+            if (miningData?.message) {
+              toast({
+                title: "Mining Features Unlocked! 🎉",
+                description: miningData.message,
+                duration: 10000,
+              });
+            }
           }, 5000);
         }
       }
