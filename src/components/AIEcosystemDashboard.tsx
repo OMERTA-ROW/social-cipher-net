@@ -232,6 +232,28 @@ export const AIEcosystemDashboard = () => {
           <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardHeader>
               <div className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-pink-500" />
+                <CardTitle className="text-lg">Viral Trends</CardTitle>
+              </div>
+              <CardDescription>
+                Analyze viral trends, YouTube, TikTok & Snapchat algorithms
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => runSpecificAction('viral_trends', 'Viral Trends')}
+                disabled={loading}
+                variant="outline"
+                className="w-full"
+              >
+                Analyze Trends
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardHeader>
+              <div className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-orange-500" />
                 <CardTitle className="text-lg">AI Learning</CardTitle>
               </div>
