@@ -1370,6 +1370,7 @@ export type Database = {
           id: string
           ip_address: string | null
           metadata: Json | null
+          severity: string | null
           user_agent: string | null
           user_id: string | null
         }
@@ -1379,6 +1380,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           metadata?: Json | null
+          severity?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1388,6 +1390,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           metadata?: Json | null
+          severity?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1934,6 +1937,10 @@ export type Database = {
       calculate_mining_multiplier: {
         Args: { tokens_paid: number }
         Returns: number
+      }
+      detect_suspicious_activity: {
+        Args: { _event_type: string; _time_window?: unknown; _user_id: string }
+        Returns: boolean
       }
       get_follower_count: { Args: { user_uuid: string }; Returns: number }
       get_total_views: { Args: { user_uuid: string }; Returns: number }

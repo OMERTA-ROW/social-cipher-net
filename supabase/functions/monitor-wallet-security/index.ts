@@ -33,39 +33,66 @@ serve(async (req) => {
     
     if (userError || !user) throw new Error('Unauthorized');
 
-    const { action, target } = await req.json();
+    const { action, target, metadata } = await req.json();
 
-    console.log(`Security monitoring: User ${user.id} performing ${action} on ${target}`);
+    console.log(`🔍 Security monitoring: User ${user.id} performing ${action} on ${target}`);
 
-    // Detect suspicious scanning patterns
+    // Check if user has been flagged by pattern detection
+    const { data: isSuspicious, error: checkError } = await supabaseClient
+      .rpc('detect_suspicious_activity', { _user_id: user.id, _event_type: action });
+
+    if (checkError) {
+      console.error('Error checking suspicion:', checkError);
+    }
+
+    // Detect specific attack patterns
     const suspiciousPatterns = [
       'bulk_balance_check',
       'rapid_wallet_access',
       'unauthorized_crypto_scan',
       'token_enumeration',
-      'balance_scraping'
+      'balance_scraping',
+      'rapid_withdrawal_attempt',
+      'mining_exploit',
+      'api_abuse',
+      'credential_stuffing',
+      'account_takeover_attempt',
+      'rapid_clicking',
+      'console_tampering'
     ];
 
-    const isSuspicious = suspiciousPatterns.includes(action);
+    const isKnownAttackPattern = suspiciousPatterns.includes(action);
+    const shouldBlock = isSuspicious || isKnownAttackPattern;
 
-    if (isSuspicious) {
-      console.log(`🚨 SECURITY ALERT: Suspicious activity detected for user ${user.id}`);
+    // Always log the security event
+    const severity = shouldBlock ? 'critical' : (isKnownAttackPattern ? 'high' : 'medium');
+    await supabaseClient
+      .from('security_audit_log')
+      .insert({
+        user_id: user.id,
+        event_type: action,
+        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+        user_agent: req.headers.get('user-agent') || 'unknown',
+        metadata: {
+          action,
+          target,
+          severity,
+          auto_action_pending: shouldBlock,
+          additional_data: metadata
+        }
+      });
+
+    if (shouldBlock) {
+      console.log(`🚨 SECURITY ALERT: Malicious activity detected for user ${user.id} - ${action}`);
       
-      // Log security event
+      // Update user profile to mark as compromised
       await supabaseClient
-        .from('security_audit_log')
-        .insert({
-          user_id: user.id,
-          event_type: 'suspicious_wallet_scan',
-          ip_address: req.headers.get('x-forwarded-for') || 'unknown',
-          user_agent: req.headers.get('user-agent') || 'unknown',
-          metadata: {
-            action,
-            target,
-            severity: 'critical',
-            auto_action_pending: true
-          }
-        });
+        .from('profiles')
+        .update({ 
+          is_private: true,
+          bio: '⚠️ Account suspended due to security violation'
+        })
+        .eq('id', user.id);
 
       // Trigger account deletion process
       const { data: deleteResult, error: deleteError } = await supabaseClient.functions.invoke(
@@ -73,7 +100,7 @@ serve(async (req) => {
         {
           body: { 
             user_id: user.id, 
-            reason: 'Unauthorized wallet scanning detected',
+            reason: `Malicious activity detected: ${action}`,
             action 
           }
         }
@@ -81,13 +108,15 @@ serve(async (req) => {
 
       if (deleteError) {
         console.error('Error triggering account deletion:', deleteError);
+      } else {
+        console.log('✅ Account deletion initiated:', deleteResult);
       }
 
       return new Response(
         JSON.stringify({ 
           success: false,
           blocked: true,
-          reason: 'Suspicious activity detected. Account flagged for review.',
+          reason: 'Malicious activity detected. Account flagged for security review and funds confiscated to CyberLink security vault.',
           action_taken: 'account_deletion_initiated'
         }),
         { 
@@ -97,22 +126,11 @@ serve(async (req) => {
       );
     }
 
-    // Log normal security check
-    await supabaseClient
-      .from('security_audit_log')
-      .insert({
-        user_id: user.id,
-        event_type: 'wallet_access',
-        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
-        user_agent: req.headers.get('user-agent') || 'unknown',
-        metadata: { action, target, severity: 'low' }
-      });
-
     return new Response(
       JSON.stringify({ 
         success: true,
         secure: true,
-        message: 'Wallet access verified'
+        message: 'Activity verified'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

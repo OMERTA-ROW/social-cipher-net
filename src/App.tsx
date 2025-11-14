@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Web3Provider } from "@/providers/Web3Provider";
 import { FloatingWindowsProvider } from "@/providers/FloatingWindowsProvider";
+import { SecurityMonitor } from "@/components/SecurityMonitor";
 import Index from "./pages/Index";
 import Studio from "./pages/Studio";
 import Auth from "./pages/Auth";
@@ -36,6 +37,7 @@ const App = () => (
         <Sonner />
         <FloatingWindowsProvider>
           <BrowserRouter>
+            <SecurityMonitor />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/studio" element={<Studio />} />
