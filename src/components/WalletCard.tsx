@@ -150,11 +150,12 @@ export const WalletCard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-6 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
               <p className="text-sm text-muted-foreground mb-1">USD Balance</p>
-              <p className="text-4xl font-bold text-primary animate-fade-in">
-                ${balance.toFixed(2)}
+              <p className="text-4xl font-bold text-primary animate-fade-in flex items-center gap-2">
+                <span className="text-5xl">∞</span>
+                <span className="text-2xl">Unlimited</span>
               </p>
             </div>
             
@@ -163,11 +164,23 @@ export const WalletCard = () => {
                 <Coins className="w-5 h-5 text-primary animate-pulse" />
                 <p className="text-sm text-muted-foreground">Token Balance</p>
               </div>
-              <p className="text-4xl font-bold text-primary">
-                <AnimatedTokenCount tokens={balance * USD_TO_TOKENS} />
+              <p className="text-4xl font-bold text-primary flex items-center gap-2">
+                <span className="text-5xl">∞</span>
+                <span className="text-2xl">Unlimited</span>
               </p>
               <p className="text-xs text-muted-foreground">
                 1,000 tokens = $1 | 1M tokens = $1,000
+              </p>
+            </div>
+
+            <div className="p-6 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/20 border border-primary/30 space-y-2">
+              <div className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-primary animate-pulse" />
+                <p className="text-sm text-muted-foreground">Crypto Balance</p>
+              </div>
+              <p className="text-4xl font-bold text-primary flex items-center gap-2">
+                <span className="text-5xl">∞</span>
+                <span className="text-2xl">Unlimited</span>
               </p>
             </div>
           </div>

@@ -166,8 +166,9 @@ export default function TokenPurchase() {
               <Coins className="w-6 h-6 text-primary animate-pulse" />
               <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground">Token Balance</span>
-                <span className="font-bold text-lg text-primary">
-                  <AnimatedTokenCount tokens={balance * USD_TO_TOKENS} />
+                <span className="font-bold text-lg text-primary flex items-center gap-2">
+                  <span className="text-2xl">∞</span>
+                  <span>Unlimited</span>
                 </span>
               </div>
             </CardContent>
