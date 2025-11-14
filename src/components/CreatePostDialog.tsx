@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MediaUpload from "@/components/MediaUpload";
 import { Switch } from "@/components/ui/switch";
+import { MentionTextarea } from "@/components/MentionTextarea";
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -25,6 +25,7 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
   const [mediaFiles, setMediaFiles] = useState<Array<{ file: File; preview: string; type: 'image' | 'video' }>>([]);
   const [isThread, setIsThread] = useState(false);
   const [threadPosts, setThreadPosts] = useState<string[]>([content]);
+  const [mentions, setMentions] = useState<string[]>([]);
 
   const handlePost = async () => {
     const postsToCreate = isThread ? threadPosts.filter(p => p.trim()) : [content];
@@ -124,6 +125,24 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
               .eq('id', parentPostId);
           }
         }
+
+        // Save mentions for this post
+        if (i === 0 && mentions.length > 0) {
+          const { data: mentionedUsers } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .in('username', mentions);
+
+          if (mentionedUsers && mentionedUsers.length > 0) {
+            const mentionInserts = mentionedUsers.map(u => ({
+              post_id: post.id,
+              mentioned_user_id: u.id,
+              mentioner_user_id: user.id
+            }));
+
+            await supabase.from('mentions').insert(mentionInserts);
+          }
+        }
       }
 
       toast.success(isThread ? "Thread created!" : "Post created!");
@@ -173,16 +192,17 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
             {isThread ? (
               <div className="space-y-2">
                 {threadPosts.map((post, idx) => (
-                  <Textarea
+                  <MentionTextarea
                     key={idx}
-                    placeholder={idx === 0 ? "Start your thread..." : `Add to thread (${idx + 1})`}
+                    placeholder={idx === 0 ? "Start your thread... (use @ to mention)" : `Add to thread (${idx + 1})`}
                     value={post}
-                    onChange={(e) => {
+                    onChange={(value) => {
                       const newPosts = [...threadPosts];
-                      newPosts[idx] = e.target.value;
+                      newPosts[idx] = value;
                       setThreadPosts(newPosts);
-                      if (idx === 0) setContent(e.target.value);
+                      if (idx === 0) setContent(value);
                     }}
+                    onMentionsChange={idx === 0 ? setMentions : undefined}
                     className="min-h-[80px] bg-secondary border-border text-foreground placeholder:text-muted-foreground resize-none"
                   />
                 ))}
@@ -196,10 +216,11 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
                 </Button>
               </div>
             ) : (
-              <Textarea
-                placeholder="What's on your mind?"
+              <MentionTextarea
+                placeholder="What's on your mind? (use @ to mention)"
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={setContent}
+                onMentionsChange={setMentions}
                 className="min-h-[120px] bg-secondary border-border text-foreground placeholder:text-muted-foreground resize-none"
               />
             )}
