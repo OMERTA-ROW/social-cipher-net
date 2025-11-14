@@ -193,23 +193,23 @@ export function MegaChat({ streamId }: MegaChatProps) {
         <div className="space-y-4">
           {messages.map((msg) => (
             <div key={msg.id} className="flex gap-3 group hover:bg-accent/50 p-2 rounded-lg transition-colors">
-              <Avatar className="w-8 h-8">
+              <Avatar className="w-8 h-8 relative">
                 <AvatarImage src={msg.user_avatar} />
                 <AvatarFallback className="text-xs">
                   {msg.username[0]?.toUpperCase()}
                 </AvatarFallback>
+                <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full ${getPlatformColor(msg.platform)} flex items-center justify-center border-2 border-background`}>
+                  {getPlatformIcon(msg.platform)}
+                </div>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-5 h-5 rounded flex items-center justify-center ${getPlatformColor(msg.platform)}`}>
+                    {getPlatformIcon(msg.platform)}
+                  </div>
                   <span className="font-semibold text-sm text-foreground truncate">
                     {msg.username}
                   </span>
-                  <Badge
-                    variant="outline"
-                    className={`${getPlatformColor(msg.platform)} text-white border-0 text-xs px-1.5 py-0`}
-                  >
-                    {getPlatformIcon(msg.platform)}
-                  </Badge>
                   <span className="text-xs text-muted-foreground">
                     {new Date(msg.created_at).toLocaleTimeString()}
                   </span>
