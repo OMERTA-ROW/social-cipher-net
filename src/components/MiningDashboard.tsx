@@ -10,6 +10,7 @@ import { Pickaxe, TrendingUp, Clock, Coins } from "lucide-react";
 import { DracoMiningBackground } from "./DracoMiningBackground";
 import { ZozoMiningBackground } from "./ZozoMiningBackground";
 import { Badge } from "@/components/ui/badge";
+import { ExternalMiningAccounts } from "./ExternalMiningAccounts";
 
 interface MiningSession {
   id: string;
@@ -304,6 +305,8 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
           )}
         </CardContent>
       </Card>
+
+      <ExternalMiningAccounts miningType={miningType} isUnlocked={isUnlocked} />
     </div>
     </>
   );
