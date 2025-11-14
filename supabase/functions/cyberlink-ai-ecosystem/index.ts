@@ -181,13 +181,15 @@ serve(async (req) => {
           6. Facebook algorithm insights and engagement strategies
           7. Instagram algorithm insights and Reels optimization
           8. Twitch algorithm insights and live streaming strategies
-          9. Cross-platform trend correlations
-          10. Predicted upcoming trends by platform
-          11. Content strategy recommendations per platform
-          12. Optimal posting/streaming times and formats for each platform
-          13. Viral potential score for current content
-          14. Localization strategies for different markets
-          15. Action items for maximizing reach globally`
+          9. Celebrity algorithm insights - trending celebrities, mentions, and influence patterns
+          10. Cross-platform trend correlations
+          11. Predicted upcoming trends by platform
+          12. Content strategy recommendations per platform
+          13. Optimal posting/streaming times and formats for each platform
+          14. Viral potential score for current content
+          15. Celebrity collaboration opportunities
+          16. Localization strategies for different markets
+          17. Action items for maximizing reach globally`
         });
 
         await logEcosystemEvent(supabaseClient, 'viral_trends', trendAnalysis, 'high');
@@ -357,11 +359,19 @@ async function gatherViralTrends(supabase: any) {
 
   // Extract hashtags and analyze patterns
   const hashtagCounts: { [key: string]: number } = {};
+  const celebrityMentions: { [key: string]: number } = {};
+  
   if (topHashtags.data) {
     topHashtags.data.forEach((post: any) => {
       const hashtags = post.content.match(/#\w+/g) || [];
       hashtags.forEach((tag: string) => {
         hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1;
+      });
+      
+      // Detect celebrity mentions (basic pattern matching for @mentions)
+      const mentions = post.content.match(/@\w+/g) || [];
+      mentions.forEach((mention: string) => {
+        celebrityMentions[mention] = (celebrityMentions[mention] || 0) + 1;
       });
     });
   }
@@ -371,10 +381,19 @@ async function gatherViralTrends(supabase: any) {
     .slice(0, 20)
     .map(([tag, count]) => ({ tag, count }));
 
+  const topCelebrityMentions = Object.entries(celebrityMentions)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 15)
+    .map(([mention, count]) => ({ mention, count }));
+
   return {
     trendingContent: trendingPosts.data || [],
     topHashtags: sortedHashtags,
     platformActivity: platformActivity.data || [],
+    celebrityTrends: {
+      topMentions: topCelebrityMentions,
+      totalCelebrityMentions: Object.keys(celebrityMentions).length,
+    },
     metrics: {
       totalTrendingPosts: trendingPosts.data?.length || 0,
       uniqueHashtags: Object.keys(hashtagCounts).length,
@@ -408,6 +427,10 @@ async function gatherViralTrends(supabase: any) {
       twitch: {
         focus: 'Average viewers, concurrent viewers, chat activity, subscription rate, bits/donations',
         recommendations: 'Consistent streaming schedule, interactive chat engagement, community building, raids and hosts'
+      },
+      celebrity: {
+        focus: 'Celebrity mentions, influencer collaborations, brand partnerships, viral moments, trending celebrities',
+        recommendations: 'Celebrity tie-ins, trending celebrity hashtags, influencer partnerships, celebrity-inspired content'
       }
     },
     timestamp: new Date().toISOString()
