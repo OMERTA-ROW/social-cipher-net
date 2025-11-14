@@ -285,6 +285,57 @@ export type Database = {
         }
         Relationships: []
       }
+      external_mining_accounts: {
+        Row: {
+          account_name: string
+          account_type: string
+          api_key: string | null
+          api_secret: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          mining_type: string
+          optimization_level: string
+          platform: string
+          updated_at: string
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          account_name: string
+          account_type: string
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          mining_type: string
+          optimization_level?: string
+          platform: string
+          updated_at?: string
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          account_name?: string
+          account_type?: string
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          mining_type?: string
+          optimization_level?: string
+          platform?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string | null
