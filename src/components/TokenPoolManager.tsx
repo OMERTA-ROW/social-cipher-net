@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy, Users, Coins, Shield } from "lucide-react";
 import { toast } from "sonner";
+import { PoolConsentDialog } from "./PoolConsentDialog";
 
 interface Pool {
   id: string;
@@ -24,6 +25,8 @@ export const TokenPoolManager = () => {
   const [pools, setPools] = useState<Pool[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
+  const [selectedPoolId, setSelectedPoolId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     pool_name: "",
     entry_fee: "100",
@@ -102,6 +105,32 @@ export const TokenPoolManager = () => {
     }
   };
 
+  const initiateJoinPool = async (poolId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Please sign in to join a pool");
+      return;
+    }
+
+    // Check if consent already exists
+    const { data: existingConsent } = await supabase
+      .from('pool_consent')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .eq('pool_id', poolId)
+      .eq('consent_given', true)
+      .maybeSingle();
+
+    if (existingConsent) {
+      // Consent already given, proceed directly
+      joinPool(poolId);
+    } else {
+      // Show consent dialog
+      setSelectedPoolId(poolId);
+      setShowConsent(true);
+    }
+  };
+
   const joinPool = async (poolId: string) => {
     setLoading(true);
     try {
@@ -128,6 +157,18 @@ export const TokenPoolManager = () => {
 
   return (
     <div className="space-y-6">
+      <PoolConsentDialog
+        open={showConsent}
+        onOpenChange={setShowConsent}
+        poolId={selectedPoolId || ''}
+        onConsentComplete={() => {
+          if (selectedPoolId) {
+            joinPool(selectedPoolId);
+            setSelectedPoolId(null);
+          }
+        }}
+      />
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Trophy className="w-6 h-6 text-primary" />
@@ -243,7 +284,7 @@ export const TokenPoolManager = () => {
                 <span>AI-Protected • 15% Commission</span>
               </div>
               <Button 
-                onClick={() => joinPool(pool.id)} 
+                onClick={() => initiateJoinPool(pool.id)} 
                 disabled={loading || pool.status === 'ready'}
                 className="w-full"
                 variant={pool.status === 'ready' ? 'secondary' : 'default'}

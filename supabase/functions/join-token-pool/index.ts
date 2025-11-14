@@ -25,6 +25,19 @@ serve(async (req) => {
 
     const { pool_id } = await req.json();
 
+    // Verify user has given consent
+    const { data: consent } = await supabaseClient
+      .from('pool_consent')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('pool_id', pool_id)
+      .eq('consent_given', true)
+      .maybeSingle();
+
+    if (!consent) {
+      throw new Error('Biometric consent required. Please verify your identity first.');
+    }
+
     // Get pool details
     const { data: pool, error: poolError } = await supabaseClient
       .from('token_pools')

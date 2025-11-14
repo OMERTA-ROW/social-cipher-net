@@ -647,6 +647,47 @@ export type Database = {
           },
         ]
       }
+      pool_consent: {
+        Row: {
+          consent_given: boolean
+          consent_type: string
+          created_at: string | null
+          id: string
+          pool_id: string
+          user_id: string
+          verification_data: Json | null
+          verified_at: string | null
+        }
+        Insert: {
+          consent_given?: boolean
+          consent_type: string
+          created_at?: string | null
+          id?: string
+          pool_id: string
+          user_id: string
+          verification_data?: Json | null
+          verified_at?: string | null
+        }
+        Update: {
+          consent_given?: boolean
+          consent_type?: string
+          created_at?: string | null
+          id?: string
+          pool_id?: string
+          user_id?: string
+          verification_data?: Json | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pool_consent_pool_id_fkey"
+            columns: ["pool_id"]
+            isOneToOne: false
+            referencedRelation: "token_pools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pool_participants: {
         Row: {
           entry_paid: number
