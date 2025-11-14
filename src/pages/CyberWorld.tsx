@@ -23,7 +23,8 @@ import {
   BarChart3,
   Radio,
   Send,
-  MessageSquare
+  MessageSquare,
+  Trophy
 } from "lucide-react";
 import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
@@ -32,6 +33,7 @@ import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { User } from "@supabase/supabase-js";
 import CouponAI from "@/components/CouponAI";
+import { TokenPoolManager } from "@/components/TokenPoolManager";
 
 const CyberWorld = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -184,8 +186,12 @@ const CyberWorld = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="discover" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+        <Tabs defaultValue="pools" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="pools">
+              <Trophy className="w-4 h-4 mr-2" />
+              Pools
+            </TabsTrigger>
             <TabsTrigger value="discover">Discover</TabsTrigger>
             <TabsTrigger value="communities">Communities</TabsTrigger>
             <TabsTrigger value="events">Live Events</TabsTrigger>
@@ -199,6 +205,11 @@ const CyberWorld = () => {
               Live Studio
             </TabsTrigger>
           </TabsList>
+
+          {/* Token Pools Tab */}
+          <TabsContent value="pools" className="space-y-6">
+            <TokenPoolManager />
+          </TabsContent>
 
           {/* Discover Tab */}
           <TabsContent value="discover" className="space-y-6">
