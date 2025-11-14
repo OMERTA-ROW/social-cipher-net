@@ -21,6 +21,7 @@ export const ZOZO_TIERS = {
       "No restrictions",
       "Upgrade at 1K followers + 10K views"
     ],
+    tokenBonus: 0
   },
   basic: {
     name: "CyberBasis",
@@ -35,6 +36,7 @@ export const ZOZO_TIERS = {
       "Notification assistance",
       "Voice features",
     ],
+    tokenBonus: 0
   },
   premium: {
     name: "CyberPro",
@@ -48,7 +50,10 @@ export const ZOZO_TIERS = {
       "Priority support",
       "Advanced automation",
       "Auto-live linking",
+      "🎁 10,000 Bonus Tokens on signup",
+      "💰 Token-based payment features"
     ],
+    tokenBonus: 10000
   },
 };
 
@@ -143,6 +148,8 @@ export const useZozoSubscription = () => {
         return;
       }
 
+      const tierConfig = ZOZO_TIERS[tier];
+
       if (useWallet) {
         const { data, error } = await supabase.functions.invoke("pay-subscription-from-wallet", {
           body: { tier },
@@ -154,9 +161,24 @@ export const useZozoSubscription = () => {
         if (error) throw error;
 
         toast.success(data.message || "Subscription activated!");
+        
+        // Grant bonus tokens for Premium tier
+        if (tier === "premium" && tierConfig.tokenBonus) {
+          await supabase.functions.invoke('grant-subscription-tokens', {
+            body: { 
+              productId: tierConfig.productId,
+              tokenAmount: tierConfig.tokenBonus 
+            },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
+          toast.success(`${tierConfig.tokenBonus} bonus tokens added to your wallet!`);
+        }
+        
         checkSubscription();
       } else {
-        const priceId = ZOZO_TIERS[tier].priceId;
+        const priceId = tierConfig.priceId;
 
         const { data, error } = await supabase.functions.invoke("create-checkout", {
           body: { priceId },
@@ -170,6 +192,21 @@ export const useZozoSubscription = () => {
         if (data?.url) {
           window.open(data.url, "_blank");
           toast.success("Opening checkout...");
+          
+          // Grant bonus tokens for Premium tier after checkout
+          if (tier === "premium" && tierConfig.tokenBonus) {
+            setTimeout(async () => {
+              await supabase.functions.invoke('grant-subscription-tokens', {
+                body: { 
+                  productId: tierConfig.productId,
+                  tokenAmount: tierConfig.tokenBonus 
+                },
+                headers: {
+                  Authorization: `Bearer ${session.access_token}`
+                }
+              });
+            }, 5000);
+          }
         }
       }
     } catch (error: any) {

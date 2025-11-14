@@ -21,7 +21,8 @@ export const DRACO_TIERS = {
       "Basic chat access",
       "Limited trading signals",
       "5 messages per day"
-    ]
+    ],
+    tokenBonus: 0
   },
   basic: {
     name: "Draco Basic",
@@ -33,7 +34,8 @@ export const DRACO_TIERS = {
       "Basic market analysis",
       "Real-time trading signals",
       "Chart analysis support"
-    ]
+    ],
+    tokenBonus: 0
   },
   pro: {
     name: "Draco Pro",
@@ -46,8 +48,11 @@ export const DRACO_TIERS = {
       "Fibonacci overlay analysis",
       "Priority support",
       "Custom alerts",
-      "Market insights reports"
-    ]
+      "Market insights reports",
+      "🎁 5,000 Bonus Tokens on signup",
+      "💰 Token-based payment features"
+    ],
+    tokenBonus: 5000
   }
 };
 
@@ -122,6 +127,21 @@ export const useDracoSubscription = () => {
 
       if (data?.url) {
         window.open(data.url, '_blank');
+        
+        // Grant bonus tokens for Pro tier
+        if (tier === "pro" && DRACO_TIERS.pro.tokenBonus) {
+          setTimeout(async () => {
+            await supabase.functions.invoke('grant-subscription-tokens', {
+              body: { 
+                productId: DRACO_TIERS.pro.productId,
+                tokenAmount: DRACO_TIERS.pro.tokenBonus 
+              },
+              headers: {
+                Authorization: `Bearer ${session.access_token}`
+              }
+            });
+          }, 5000);
+        }
       }
     } catch (error) {
       console.error("Error starting checkout:", error);
