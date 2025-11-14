@@ -30,6 +30,28 @@ serve(async (req) => {
 
     if (!pool) throw new Error('Pool not found');
 
+    // Verify all participants have given consent
+    const { data: participants } = await supabaseClient
+      .from('pool_participants')
+      .select('user_id')
+      .eq('pool_id', pool_id);
+
+    if (participants) {
+      for (const participant of participants) {
+        const { data: consent } = await supabaseClient
+          .from('pool_consent')
+          .select('*')
+          .eq('user_id', participant.user_id)
+          .eq('pool_id', pool_id)
+          .eq('consent_given', true)
+          .maybeSingle();
+
+        if (!consent) {
+          throw new Error(`Participant ${participant.user_id} has not given biometric consent. Cannot disperse tokens.`);
+        }
+      }
+    }
+
     // Use AI to verify winner legitimacy
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
