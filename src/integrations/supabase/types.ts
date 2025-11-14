@@ -564,6 +564,89 @@ export type Database = {
           },
         ]
       }
+      mining_earnings: {
+        Row: {
+          amount_mined: number
+          created_at: string | null
+          id: string
+          mining_date: string
+          mining_type: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_mined: number
+          created_at?: string | null
+          id?: string
+          mining_date?: string
+          mining_type: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          amount_mined?: number
+          created_at?: string | null
+          id?: string
+          mining_date?: string
+          mining_type?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mining_earnings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "mining_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mining_sessions: {
+        Row: {
+          created_at: string | null
+          days_duration: number
+          end_date: string
+          id: string
+          mining_type: string
+          performance_multiplier: number
+          start_date: string
+          status: string
+          tokens_paid: number
+          total_mined: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          days_duration: number
+          end_date: string
+          id?: string
+          mining_type: string
+          performance_multiplier?: number
+          start_date?: string
+          status?: string
+          tokens_paid: number
+          total_mined?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          days_duration?: number
+          end_date?: string
+          id?: string
+          mining_type?: string
+          performance_multiplier?: number
+          start_date?: string
+          status?: string
+          tokens_paid?: number
+          total_mined?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       platform_connections: {
         Row: {
           access_token: string | null
@@ -1552,6 +1635,36 @@ export type Database = {
           },
         ]
       }
+      subscription_unlocks: {
+        Row: {
+          created_at: string | null
+          feature_unlocked: string
+          id: string
+          message_sent: boolean | null
+          subscription_type: string
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          feature_unlocked: string
+          id?: string
+          message_sent?: boolean | null
+          subscription_type: string
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          feature_unlocked?: string
+          id?: string
+          message_sent?: boolean | null
+          subscription_type?: string
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       token_pools: {
         Row: {
           commission_rate: number
@@ -1767,6 +1880,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_mining_multiplier: {
+        Args: { tokens_paid: number }
+        Returns: number
+      }
       get_follower_count: { Args: { user_uuid: string }; Returns: number }
       get_total_views: { Args: { user_uuid: string }; Returns: number }
       has_role: {
