@@ -182,14 +182,16 @@ serve(async (req) => {
           7. Instagram algorithm insights and Reels optimization
           8. Twitch algorithm insights and live streaming strategies
           9. Celebrity algorithm insights - trending celebrities, mentions, and influence patterns
-          10. Cross-platform trend correlations
-          11. Predicted upcoming trends by platform
-          12. Content strategy recommendations per platform
-          13. Optimal posting/streaming times and formats for each platform
-          14. Viral potential score for current content
-          15. Celebrity collaboration opportunities
-          16. Localization strategies for different markets
-          17. Action items for maximizing reach globally`
+          10. Consistency algorithm insights - posting frequency, schedule reliability, engagement patterns
+          11. Cross-platform trend correlations
+          12. Predicted upcoming trends by platform
+          13. Content strategy recommendations per platform
+          14. Optimal posting/streaming times and formats for each platform
+          15. Viral potential score for current content
+          16. Celebrity collaboration opportunities
+          17. Consistency score and improvement recommendations
+          18. Localization strategies for different markets
+          19. Action items for maximizing reach globally`
         });
 
         await logEcosystemEvent(supabaseClient, 'viral_trends', trendAnalysis, 'high');
@@ -386,6 +388,10 @@ async function gatherViralTrends(supabase: any) {
     .slice(0, 15)
     .map(([mention, count]) => ({ mention, count }));
 
+  // Analyze consistency patterns
+  const postingDates = trendingPosts.data?.map((post: any) => new Date(post.created_at)) || [];
+  const consistencyMetrics = analyzeConsistency(postingDates);
+
   return {
     trendingContent: trendingPosts.data || [],
     topHashtags: sortedHashtags,
@@ -394,6 +400,7 @@ async function gatherViralTrends(supabase: any) {
       topMentions: topCelebrityMentions,
       totalCelebrityMentions: Object.keys(celebrityMentions).length,
     },
+    consistencyAnalysis: consistencyMetrics,
     metrics: {
       totalTrendingPosts: trendingPosts.data?.length || 0,
       uniqueHashtags: Object.keys(hashtagCounts).length,
@@ -431,9 +438,69 @@ async function gatherViralTrends(supabase: any) {
       celebrity: {
         focus: 'Celebrity mentions, influencer collaborations, brand partnerships, viral moments, trending celebrities',
         recommendations: 'Celebrity tie-ins, trending celebrity hashtags, influencer partnerships, celebrity-inspired content'
+      },
+      consistency: {
+        focus: 'Posting frequency, schedule reliability, content cadence, audience expectation management',
+        recommendations: 'Regular posting schedule, consistent content themes, predictable upload times, sustained engagement'
       }
     },
     timestamp: new Date().toISOString()
+  };
+}
+
+function analyzeConsistency(dates: Date[]) {
+  if (dates.length < 2) {
+    return {
+      score: 0,
+      averageGapHours: 0,
+      consistencyRating: 'insufficient_data',
+      recommendation: 'Need more posts to analyze consistency'
+    };
+  }
+
+  // Sort dates
+  const sortedDates = dates.sort((a, b) => a.getTime() - b.getTime());
+  
+  // Calculate gaps between posts in hours
+  const gaps: number[] = [];
+  for (let i = 1; i < sortedDates.length; i++) {
+    const gapMs = sortedDates[i].getTime() - sortedDates[i - 1].getTime();
+    gaps.push(gapMs / (1000 * 60 * 60)); // Convert to hours
+  }
+
+  // Calculate average and standard deviation
+  const avgGap = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
+  const variance = gaps.reduce((sum, gap) => sum + Math.pow(gap - avgGap, 2), 0) / gaps.length;
+  const stdDev = Math.sqrt(variance);
+  
+  // Calculate consistency score (0-100, higher is more consistent)
+  const coefficientOfVariation = stdDev / avgGap;
+  const score = Math.max(0, Math.min(100, 100 * (1 - coefficientOfVariation)));
+
+  let rating: string;
+  let recommendation: string;
+
+  if (score >= 80) {
+    rating = 'excellent';
+    recommendation = 'Maintain your excellent posting schedule';
+  } else if (score >= 60) {
+    rating = 'good';
+    recommendation = 'Try to reduce variation in posting times for better consistency';
+  } else if (score >= 40) {
+    rating = 'fair';
+    recommendation = 'Establish a more regular posting schedule to improve engagement';
+  } else {
+    rating = 'needs_improvement';
+    recommendation = 'Create and stick to a consistent posting schedule for better algorithm performance';
+  }
+
+  return {
+    score: Math.round(score),
+    averageGapHours: Math.round(avgGap * 10) / 10,
+    consistencyRating: rating,
+    recommendation,
+    totalPosts: dates.length,
+    timeSpanDays: Math.round((sortedDates[sortedDates.length - 1].getTime() - sortedDates[0].getTime()) / (1000 * 60 * 60 * 24))
   };
 }
 
