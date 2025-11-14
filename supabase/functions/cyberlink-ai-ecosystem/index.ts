@@ -173,16 +173,20 @@ serve(async (req) => {
           ${JSON.stringify(trendData, null, 2)}
           
           Provide comprehensive analysis including:
-          1. Top trending topics and hashtags
+          1. Top trending topics and hashtags across all platforms
           2. YouTube algorithm insights and trending video patterns
           3. TikTok algorithm insights and viral content patterns
           4. Snapchat trends and engagement patterns
-          5. Cross-platform trend correlations
-          6. Predicted upcoming trends
-          7. Content strategy recommendations
-          8. Optimal posting times and formats
-          9. Viral potential score for current content
-          10. Action items for maximizing reach`
+          5. Red Note (小红书) algorithm insights for Chinese market
+          6. Facebook algorithm insights and engagement strategies
+          7. Instagram algorithm insights and Reels optimization
+          8. Cross-platform trend correlations
+          9. Predicted upcoming trends by platform
+          10. Content strategy recommendations per platform
+          11. Optimal posting times and formats for each platform
+          12. Viral potential score for current content
+          13. Localization strategies for different markets
+          14. Action items for maximizing reach globally`
         });
 
         await logEcosystemEvent(supabaseClient, 'viral_trends', trendAnalysis, 'high');
@@ -387,6 +391,18 @@ async function gatherViralTrends(supabase: any) {
       snapchat: {
         focus: 'Story completion, screenshot rate, chat replies',
         recommendations: 'Authentic content, behind-scenes, interactive elements'
+      },
+      rednote: {
+        focus: 'Engagement rate, save rate, authentic lifestyle content, community interaction',
+        recommendations: 'High-quality lifestyle photos, detailed captions, trending topics in Chinese market'
+      },
+      facebook: {
+        focus: 'Meaningful interactions, watch time, shares, comment depth',
+        recommendations: 'Conversation-starting content, groups engagement, video content, live streams'
+      },
+      instagram: {
+        focus: 'Engagement rate, saves, shares, story completion, reels views',
+        recommendations: 'Reels with trending audio, carousel posts, story interactions, consistent posting'
       }
     },
     timestamp: new Date().toISOString()
