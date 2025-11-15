@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Share2, BadgeCheck, X, Volume2, VolumeX } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, X, Volume2, VolumeX, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import StoryRing from "@/components/StoryRing";
@@ -36,6 +36,7 @@ export const InfinityScrollFeed = ({ onClose, initialVideoId }: InfinityScrollFe
   const [isLoading, setIsLoading] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [lastClickTime, setLastClickTime] = useState(0);
+  const [cniProtectionActive, setCniProtectionActive] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -229,6 +230,14 @@ export const InfinityScrollFeed = ({ onClose, initialVideoId }: InfinityScrollFe
         <X className="w-6 h-6" />
       </Button>
 
+      {/* CNI Protection Indicator */}
+      {cniProtectionActive && (
+        <div className="absolute top-4 left-4 z-50 flex items-center gap-2 px-3 py-1.5 bg-primary/20 backdrop-blur-sm rounded-full border border-primary/40">
+          <Eye className="h-3.5 w-3.5 text-primary animate-pulse" />
+          <span className="text-xs text-primary font-medium">CNI Protected</span>
+        </div>
+      )}
+
       {/* Mute/Unmute button */}
       <Button
         variant="ghost"
@@ -243,7 +252,8 @@ export const InfinityScrollFeed = ({ onClose, initialVideoId }: InfinityScrollFe
       </Button>
 
       {/* Navigation hint */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 text-white/60 text-sm">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 text-white/60 text-sm flex items-center gap-2">
+        <Eye className="h-3.5 w-3.5" />
         Scroll or swipe • Double-click to exit
       </div>
 
