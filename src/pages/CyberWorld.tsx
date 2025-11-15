@@ -38,6 +38,10 @@ import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { TradingAccountConnect } from "@/components/TradingAccountConnect";
 import { BTCAlgorithmEngine } from "@/components/BTCAlgorithmEngine";
 import { StockAlgorithmEngine } from "@/components/StockAlgorithmEngine";
+import { NFTAlgorithmEngine } from "@/components/NFTAlgorithmEngine";
+import { MoonshotAlgorithmEngine } from "@/components/MoonshotAlgorithmEngine";
+import { BinaryOptionsAlgorithmEngine } from "@/components/BinaryOptionsAlgorithmEngine";
+import { CyberLinkExchangeAgent } from "@/components/CyberLinkExchangeAgent";
 import { AIEcosystemDashboard } from "@/components/AIEcosystemDashboard";
 
 const CyberWorld = () => {
@@ -480,8 +484,14 @@ const CyberWorld = () => {
                 </CardHeader>
               </Card>
               
+              {/* CyberLink Exchange AI Agent - Master Controller */}
+              <CyberLinkExchangeAgent />
+              
               <BTCAlgorithmEngine />
               <StockAlgorithmEngine />
+              <NFTAlgorithmEngine />
+              <MoonshotAlgorithmEngine />
+              <BinaryOptionsAlgorithmEngine />
             </div>
 
             {/* AI Ecosystem Dashboard */}
