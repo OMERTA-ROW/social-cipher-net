@@ -31,7 +31,8 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    const { action, task } = await req.json();
+    const requestBody = await req.json();
+    const { action, task, prompt, context } = requestBody;
 
     console.log(`🤖 CyberLink AI Ecosystem: ${action}`);
 
@@ -262,6 +263,69 @@ serve(async (req) => {
             duplicates: videoAnalysis.duplicates,
             distributionPlan: videoAnalysis.distributionPlan,
             cniProtection,
+            timestamp: new Date().toISOString()
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'generate_viewpoint': {
+        // AI-powered multiverse viewpoint generation
+        console.log(`🌌 Generating AI viewpoint: ${prompt}`);
+        
+        const viewpointData = await analyzeWithAI(LOVABLE_API_KEY, {
+          task: 'multiverse_viewpoint_generation',
+          prompt: `Generate a cosmic viewpoint for: "${prompt}"
+          
+          Context: ${context || 'unlimited multiverse perspective'}
+          
+          Create a unique cosmic perspective with these parameters:
+          
+          1. Camera Position: [x, y, z] coordinates in 3D space
+             - Consider astronomical scales (-200 to 200 range)
+             - Account for multiverse dimensions
+             - Create visually interesting positions
+          
+          2. Look At Target: [x, y, z] point to focus on
+             - Celestial bodies, phenomena, or abstract points
+             - Create compelling compositions
+          
+          3. Field of View: 45-120 degrees
+             - Wider for expansive views
+             - Narrower for focused perspectives
+          
+          4. Visual Effects:
+             - Distortion level (0-1): gravitational lensing, warp effects
+             - Chromatic aberration (0-1): light dispersion
+             - Bloom intensity (0-1): stellar glow
+          
+          5. Description: Vivid narrative of this viewpoint
+             - What astronomical phenomena are visible
+             - The feeling and atmosphere
+             - Multiverse characteristics
+          
+          Respond with a JSON object containing:
+          {
+            "name": "Brief viewpoint name",
+            "camera": {
+              "position": [x, y, z],
+              "lookAt": [x, y, z],
+              "fov": degrees
+            },
+            "effects": {
+              "distortion": 0-1,
+              "chromatic": 0-1,
+              "bloom": 0-1
+            },
+            "description": "Detailed narrative"
+          }`
+        });
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            action: 'generate_viewpoint',
+            response: viewpointData,
             timestamp: new Date().toISOString()
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

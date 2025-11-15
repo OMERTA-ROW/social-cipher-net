@@ -341,6 +341,7 @@ export type Database = {
           created_at: string
           custom_name: string | null
           id: string
+          metadata: Json | null
           pov_index: number
           pov_name: string
           user_id: string
@@ -349,6 +350,7 @@ export type Database = {
           created_at?: string
           custom_name?: string | null
           id?: string
+          metadata?: Json | null
           pov_index: number
           pov_name: string
           user_id: string
@@ -357,6 +359,7 @@ export type Database = {
           created_at?: string
           custom_name?: string | null
           id?: string
+          metadata?: Json | null
           pov_index?: number
           pov_name?: string
           user_id?: string
