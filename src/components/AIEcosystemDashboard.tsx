@@ -20,7 +20,15 @@ export const AIEcosystemDashboard = () => {
     nft: { status: 'monitoring', volume: 0, change: 0 },
     binaryOptions: { status: 'monitoring', signals: 0, accuracy: 0 },
     nasa: { status: 'monitoring', updates: 0, events: 0 },
-    web3: { status: 'monitoring', gasPrice: 0, transactions: 0, defi: 0 }
+    web3: { status: 'monitoring', gasPrice: 0, transactions: 0, defi: 0 },
+    constellations: { 
+      status: 'monitoring', 
+      activeStars: 0, 
+      magnitude: 0, 
+      visibleConstellations: [] as string[],
+      currentConstellation: '',
+      stellarActivity: 0
+    }
   });
 
   useEffect(() => {
@@ -49,6 +57,18 @@ export const AIEcosystemDashboard = () => {
   const updateLiveMetrics = () => {
     // Simulate real-time market updates with millisecond precision
     const now = Date.now();
+    
+    // NASA Star Constellations data
+    const constellations = [
+      'Orion', 'Ursa Major', 'Cassiopeia', 'Andromeda', 'Perseus',
+      'Draco', 'Cygnus', 'Lyra', 'Aquila', 'Pegasus', 'Scorpius',
+      'Sagittarius', 'Gemini', 'Leo', 'Virgo', 'Taurus'
+    ];
+    const visibleCount = Math.floor(5 + Math.random() * 7);
+    const visibleConstellations = [...constellations]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, visibleCount);
+    
     setLiveMetrics(prev => ({
       stockMarket: {
         status: 'active',
@@ -80,6 +100,14 @@ export const AIEcosystemDashboard = () => {
         gasPrice: Math.floor(20 + Math.random() * 100),
         transactions: Math.floor(Math.random() * 500),
         defi: Math.floor(Math.random() * 10000)
+      },
+      constellations: {
+        status: 'active',
+        activeStars: Math.floor(1000 + Math.random() * 5000),
+        magnitude: parseFloat((-6 + Math.random() * 12).toFixed(2)),
+        visibleConstellations,
+        currentConstellation: visibleConstellations[0],
+        stellarActivity: Math.floor(50 + Math.random() * 150)
       }
     }));
 
@@ -91,7 +119,10 @@ export const AIEcosystemDashboard = () => {
         { type: '🌌 NASA EVENT', category: 'nasa' },
         { type: '💎 WEB3 OPPORTUNITY', category: 'web3' },
         { type: '🚀 NFT SPIKE', category: 'nft' },
-        { type: '⚠️ GAS ALERT', category: 'web3' }
+        { type: '⚠️ GAS ALERT', category: 'web3' },
+        { type: '⭐ CONSTELLATION SHIFT', category: 'constellation' },
+        { type: '✨ STELLAR SURGE', category: 'constellation' },
+        { type: '🌟 COSMIC ALIGNMENT', category: 'constellation' }
       ];
       const alert = alertTypes[Math.floor(Math.random() * alertTypes.length)];
       const newAlert = {
@@ -225,7 +256,7 @@ export const AIEcosystemDashboard = () => {
         )}
 
         {/* Critical Live Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4 mb-6">
           <Card className="bg-background/40 backdrop-blur-xl border-green-500/30 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent animate-pulse" />
             <CardContent className="pt-4 relative z-10">
@@ -318,6 +349,25 @@ export const AIEcosystemDashboard = () => {
               </div>
               <div className="text-xs text-pink-400">
                 ${(liveMetrics.web3.defi / 1000).toFixed(1)}K TVL • {liveMetrics.web3.transactions} TX
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-background/40 backdrop-blur-xl border-yellow-500/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-amber-500/10 to-transparent animate-pulse" />
+            <CardContent className="pt-4 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-yellow-400">⭐ NASA CONSTELLATIONS</span>
+                <div className="h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
+              </div>
+              <div className="text-2xl font-bold text-yellow-300">
+                {liveMetrics.constellations.currentConstellation}
+              </div>
+              <div className="text-xs text-yellow-400">
+                {liveMetrics.constellations.activeStars.toLocaleString()} Stars • Mag {liveMetrics.constellations.magnitude}
+              </div>
+              <div className="text-xs text-amber-400 mt-1">
+                {liveMetrics.constellations.visibleConstellations.length} Visible • Activity {liveMetrics.constellations.stellarActivity}%
               </div>
             </CardContent>
           </Card>
