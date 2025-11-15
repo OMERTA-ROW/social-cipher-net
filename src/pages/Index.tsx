@@ -65,6 +65,28 @@ const Index = () => {
     }
   }, [searchParams]);
 
+  // Auto-open All Seeing Eye 3D space on login
+  useEffect(() => {
+    const initializeMultiverse = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Wait a brief moment for UI to settle
+        setTimeout(() => {
+          setShowSpaceBackground(false);
+          openWindow(
+            "All Seeing Eye - Multiverse Explorer", 
+            <RealisticSpaceBackground />, 
+            900, 
+            700
+          );
+          toast.success("Welcome to the Multiverse - 360° exploration active");
+        }, 1000);
+      }
+    };
+
+    initializeMultiverse();
+  }, []);
+
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setCurrentUserId(user?.id || null);
