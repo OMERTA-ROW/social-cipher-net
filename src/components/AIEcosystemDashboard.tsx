@@ -13,22 +13,84 @@ export const AIEcosystemDashboard = () => {
   const [autoMode, setAutoMode] = useState(false);
   const [ecosystemStatus, setEcosystemStatus] = useState<any>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [criticalUpdates, setCriticalUpdates] = useState<any[]>([]);
+  const [liveMetrics, setLiveMetrics] = useState({
+    stockMarket: { status: 'monitoring', lastPrice: 0, change: 0 },
+    crypto: { status: 'monitoring', lastPrice: 0, change: 0 },
+    nft: { status: 'monitoring', volume: 0, change: 0 },
+    binaryOptions: { status: 'monitoring', signals: 0, accuracy: 0 },
+    nasa: { status: 'monitoring', updates: 0, events: 0 }
+  });
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let ecosystemInterval: NodeJS.Timeout;
+    let criticalInterval: NodeJS.Timeout;
+    
+    // Critical updates every 500ms
+    criticalInterval = setInterval(() => {
+      updateLiveMetrics();
+    }, 500);
     
     if (autoMode) {
-      // Run ecosystem checks every 5 minutes in auto mode
+      // Run ecosystem checks every 30 seconds in auto mode
       runFullEcosystemCheck();
-      interval = setInterval(() => {
+      ecosystemInterval = setInterval(() => {
         runFullEcosystemCheck();
-      }, 5 * 60 * 1000);
+      }, 30 * 1000);
     }
 
     return () => {
-      if (interval) clearInterval(interval);
+      if (ecosystemInterval) clearInterval(ecosystemInterval);
+      if (criticalInterval) clearInterval(criticalInterval);
     };
   }, [autoMode]);
+
+  const updateLiveMetrics = () => {
+    // Simulate real-time market updates
+    setLiveMetrics(prev => ({
+      stockMarket: {
+        status: 'active',
+        lastPrice: 45000 + Math.random() * 1000,
+        change: (Math.random() - 0.5) * 5
+      },
+      crypto: {
+        status: 'active',
+        lastPrice: 98000 + Math.random() * 2000,
+        change: (Math.random() - 0.5) * 3
+      },
+      nft: {
+        status: 'active',
+        volume: Math.floor(Math.random() * 1000000),
+        change: (Math.random() - 0.5) * 10
+      },
+      binaryOptions: {
+        status: 'active',
+        signals: Math.floor(Math.random() * 100),
+        accuracy: 75 + Math.random() * 20
+      },
+      nasa: {
+        status: 'active',
+        updates: Math.floor(Math.random() * 50),
+        events: Math.floor(Math.random() * 10)
+      }
+    }));
+
+    // Generate critical alerts for significant changes
+    if (Math.random() > 0.95) {
+      const alertTypes = ['CRITICAL SURGE', 'MARKET SHIFT', 'NASA EVENT', 'OPPORTUNITY'];
+      const newAlert = {
+        id: Date.now(),
+        type: alertTypes[Math.floor(Math.random() * alertTypes.length)],
+        message: 'Critical market movement detected',
+        timestamp: new Date()
+      };
+      setCriticalUpdates(prev => [newAlert, ...prev].slice(0, 5));
+      
+      toast.error(newAlert.type, {
+        description: newAlert.message
+      });
+    }
+  };
 
   const runFullEcosystemCheck = async () => {
     setLoading(true);
@@ -138,6 +200,116 @@ export const AIEcosystemDashboard = () => {
                 <Badge variant="outline" className="text-green-400 border-green-400 bg-green-400/10">
                   Multiverse Active
                 </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Critical Live Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <Card className="bg-background/40 backdrop-blur-xl border-green-500/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent animate-pulse" />
+            <CardContent className="pt-4 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-green-400">STOCK MARKET</span>
+                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+              </div>
+              <div className="text-2xl font-bold text-green-300">
+                ${liveMetrics.stockMarket.lastPrice.toFixed(2)}
+              </div>
+              <div className={`text-xs ${liveMetrics.stockMarket.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {liveMetrics.stockMarket.change >= 0 ? '↑' : '↓'} {Math.abs(liveMetrics.stockMarket.change).toFixed(2)}%
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-background/40 backdrop-blur-xl border-orange-500/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent animate-pulse" />
+            <CardContent className="pt-4 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-orange-400">CRYPTO</span>
+                <div className="h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
+              </div>
+              <div className="text-2xl font-bold text-orange-300">
+                ${liveMetrics.crypto.lastPrice.toFixed(2)}
+              </div>
+              <div className={`text-xs ${liveMetrics.crypto.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {liveMetrics.crypto.change >= 0 ? '↑' : '↓'} {Math.abs(liveMetrics.crypto.change).toFixed(2)}%
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-background/40 backdrop-blur-xl border-purple-500/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent animate-pulse" />
+            <CardContent className="pt-4 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-purple-400">NFT MARKET</span>
+                <div className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
+              </div>
+              <div className="text-2xl font-bold text-purple-300">
+                ${(liveMetrics.nft.volume / 1000).toFixed(1)}K
+              </div>
+              <div className={`text-xs ${liveMetrics.nft.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {liveMetrics.nft.change >= 0 ? '↑' : '↓'} {Math.abs(liveMetrics.nft.change).toFixed(2)}%
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-background/40 backdrop-blur-xl border-blue-500/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent animate-pulse" />
+            <CardContent className="pt-4 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-blue-400">BINARY OPTIONS</span>
+                <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+              </div>
+              <div className="text-2xl font-bold text-blue-300">
+                {liveMetrics.binaryOptions.signals}
+              </div>
+              <div className="text-xs text-blue-400">
+                {liveMetrics.binaryOptions.accuracy.toFixed(1)}% Accuracy
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-background/40 backdrop-blur-xl border-cyan-500/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent animate-pulse" />
+            <CardContent className="pt-4 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-cyan-400">NASA DATA</span>
+                <div className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+              </div>
+              <div className="text-2xl font-bold text-cyan-300">
+                {liveMetrics.nasa.updates}
+              </div>
+              <div className="text-xs text-cyan-400">
+                {liveMetrics.nasa.events} Events
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Critical Alerts */}
+        {criticalUpdates.length > 0 && (
+          <Card className="bg-red-500/10 backdrop-blur-xl border-red-500/50 mb-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-transparent animate-pulse" />
+            <CardContent className="pt-4 relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="h-5 w-5 text-red-400 animate-pulse" />
+                <h3 className="text-lg font-bold text-red-300">⚠️ CRITICAL UPDATES</h3>
+              </div>
+              <div className="space-y-2">
+                {criticalUpdates.map((alert) => (
+                  <div key={alert.id} className="flex items-center justify-between bg-red-500/20 p-2 rounded border border-red-500/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                      <div>
+                        <p className="text-sm font-semibold text-red-300">{alert.type}</p>
+                        <p className="text-xs text-red-400/80">{alert.message}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-red-400">{alert.timestamp.toLocaleTimeString()}</span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
