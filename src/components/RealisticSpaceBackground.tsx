@@ -1,7 +1,8 @@
 import { useRef, useMemo, useEffect, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Stars, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Matrix Rain Overlay Component (standard React, not R3F)
 const MatrixRain = () => {
@@ -610,10 +611,48 @@ const MilkyWayDisk = () => {
   );
 };
 
+// Camera Controller for POV switching
+const CameraController = ({ povIndex }: { povIndex: number }) => {
+  const { camera } = useThree();
+  
+  const povPositions = useMemo(() => [
+    { pos: [0, 80, 120], lookAt: [0, 0, 0] }, // God's eye view
+    { pos: [25, 5, 25], lookAt: [22, 0, 0] }, // Planet view (Earth)
+    { pos: [-35, 15, -35], lookAt: [-40, 12, -40] }, // Comet view
+    { pos: [0, 0, 200], lookAt: [0, 0, 0] }, // Void/Space view
+    { pos: [120, 40, 120], lookAt: [125, 35, 125] }, // Star constellation
+    { pos: [-150, 100, -150], lookAt: [0, 0, 0] }, // Multiverse view
+    { pos: [0, 150, 80], lookAt: [0, 0, 0] }, // Heaven view
+    { pos: [135, 35, 135], lookAt: [130, 35, 130] }, // Orion's belt
+    { pos: [0, 2, 0], lookAt: [100, 0, 0] }, // Milky Way inside view
+    { pos: [155, 155, 155], lookAt: [150, 150, 150] }, // Northern Star
+    { pos: [0, 200, 0], lookAt: [0, 0, 0] }, // Heaven avenue
+  ], []);
+
+  useFrame(() => {
+    const target = povPositions[povIndex];
+    const targetPos = new THREE.Vector3(...target.pos);
+    const lookAtTarget = new THREE.Vector3(...target.lookAt);
+    
+    // Smooth camera transition
+    camera.position.lerp(targetPos, 0.02);
+    
+    // Smooth lookAt transition
+    const currentLookAt = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const targetLookDir = lookAtTarget.clone().sub(camera.position).normalize();
+    currentLookAt.lerp(targetLookDir, 0.02);
+    
+    camera.lookAt(camera.position.clone().add(currentLookAt.multiplyScalar(100)));
+  });
+
+  return null;
+};
+
 // Main Scene
-const SpaceScene = () => {
+const SpaceScene = ({ povIndex }: { povIndex: number }) => {
   return (
     <>
+      <CameraController povIndex={povIndex} />
       <color attach="background" args={["#000000"]} />
       <fog attach="fog" args={["#000000", 80, 250]} />
 
@@ -775,15 +814,12 @@ const SpaceScene = () => {
         <Comet key={delay} delay={delay} />
       ))}
 
-      {/* Camera controls */}
+      {/* Camera controls - disabled for POV mode */}
       <OrbitControls
-        enableZoom={true}
-        enablePan={true}
-        enableRotate={true}
-        minDistance={10}
-        maxDistance={200}
-        autoRotate
-        autoRotateSpeed={0.3}
+        enabled={false}
+        enableZoom={false}
+        enablePan={false}
+        enableRotate={false}
       />
     </>
   );
@@ -791,6 +827,8 @@ const SpaceScene = () => {
 
 const RealisticSpaceBackground = () => {
   const [hasWebGLError, setHasWebGLError] = useState(false);
+  const [povIndex, setPovIndex] = useState(0);
+  const totalPOVs = 11;
 
   useEffect(() => {
     // Check if WebGL is available
@@ -800,6 +838,16 @@ const RealisticSpaceBackground = () => {
       setHasWebGLError(true);
     }
   }, []);
+
+  const cyclePOV = (direction: 'left' | 'right') => {
+    setPovIndex(prev => {
+      if (direction === 'left') {
+        return prev === 0 ? totalPOVs - 1 : prev - 1;
+      } else {
+        return prev === totalPOVs - 1 ? 0 : prev + 1;
+      }
+    });
+  };
 
   if (hasWebGLError) {
     // Fallback to a simple gradient background if WebGL fails
@@ -825,9 +873,37 @@ const RealisticSpaceBackground = () => {
             setHasWebGLError(true);
           }}
         >
-          <SpaceScene />
+          <SpaceScene povIndex={povIndex} />
         </Canvas>
       </div>
+      
+      {/* POV Controls - All Seeing Eye */}
+      <div className="fixed top-4 left-4 z-30 flex items-center gap-2">
+        <button
+          onClick={() => cyclePOV('left')}
+          className="w-10 h-10 rounded-full bg-background/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 transition-all group"
+          aria-label="Previous view"
+        >
+          <ChevronLeft className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+        </button>
+        
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/30 via-blue-500/30 to-cyan-500/30 backdrop-blur-xl border-2 border-primary/40 flex items-center justify-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-blue-400/20 to-cyan-400/20 animate-pulse" />
+          <div className="relative w-8 h-8 rounded-full border-2 border-primary/60 flex items-center justify-center">
+            <div className="w-4 h-4 rounded-full bg-primary/80 animate-pulse" />
+            <div className="absolute inset-0 rounded-full border border-primary/40 animate-ping" />
+          </div>
+        </div>
+        
+        <button
+          onClick={() => cyclePOV('right')}
+          className="w-10 h-10 rounded-full bg-background/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 transition-all group"
+          aria-label="Next view"
+        >
+          <ChevronRight className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+        </button>
+      </div>
+      
       <MatrixRain />
     </>
   );
