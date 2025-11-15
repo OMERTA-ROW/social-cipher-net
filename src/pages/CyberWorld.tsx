@@ -34,6 +34,8 @@ import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { User } from "@supabase/supabase-js";
 import CouponAI from "@/components/CouponAI";
 import { TokenPoolManager } from "@/components/TokenPoolManager";
+import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
+import { TradingAccountConnect } from "@/components/TradingAccountConnect";
 
 const CyberWorld = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -455,6 +457,12 @@ const CyberWorld = () => {
             </Card>
 
             <CouponAI />
+            
+            {/* Financial Accounts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CryptoWalletConnect />
+              <TradingAccountConnect />
+            </div>
           </TabsContent>
 
           {/* Live Studio Tab */}
