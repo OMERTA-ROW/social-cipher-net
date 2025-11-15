@@ -617,9 +617,11 @@ const MilkyWayDisk = () => {
   );
 };
 
-// Camera Controller for POV switching
-const CameraController = ({ povIndex }: { povIndex: number }) => {
+// Camera Controller for POV switching with 360-degree orbital viewing
+const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; orbitControlsRef: any }) => {
   const { camera } = useThree();
+  const [isTransitioning, setIsTransitioning] = useState(true);
+  const prevPovIndex = useRef(povIndex);
   
   const povPositions = useMemo(() => [
     { pos: [0, 80, 120], lookAt: [0, 0, 0] }, // God's eye view
@@ -635,20 +637,53 @@ const CameraController = ({ povIndex }: { povIndex: number }) => {
     { pos: [0, 200, 0], lookAt: [0, 0, 0] }, // Heaven avenue
   ], []);
 
+  // Detect POV change and start transition
+  useEffect(() => {
+    if (prevPovIndex.current !== povIndex) {
+      setIsTransitioning(true);
+      prevPovIndex.current = povIndex;
+    }
+  }, [povIndex]);
+
   useFrame(() => {
     const target = povPositions[povIndex];
     const targetPos = new THREE.Vector3(...target.pos);
     const lookAtTarget = new THREE.Vector3(...target.lookAt);
     
-    // Smooth camera transition
-    camera.position.lerp(targetPos, 0.02);
-    
-    // Smooth lookAt transition
-    const currentLookAt = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-    const targetLookDir = lookAtTarget.clone().sub(camera.position).normalize();
-    currentLookAt.lerp(targetLookDir, 0.02);
-    
-    camera.lookAt(camera.position.clone().add(currentLookAt.multiplyScalar(100)));
+    if (isTransitioning) {
+      // Disable OrbitControls during transition
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = false;
+      }
+      
+      // Smooth camera transition
+      camera.position.lerp(targetPos, 0.02);
+      
+      // Smooth lookAt transition
+      const currentLookAt = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      const targetLookDir = lookAtTarget.clone().sub(camera.position).normalize();
+      currentLookAt.lerp(targetLookDir, 0.02);
+      
+      camera.lookAt(camera.position.clone().add(currentLookAt.multiplyScalar(100)));
+      
+      // Check if transition is complete (camera close enough to target)
+      const distanceToTarget = camera.position.distanceTo(targetPos);
+      if (distanceToTarget < 0.5) {
+        setIsTransitioning(false);
+        
+        // Enable OrbitControls and set target
+        if (orbitControlsRef.current) {
+          orbitControlsRef.current.enabled = true;
+          orbitControlsRef.current.target.copy(lookAtTarget);
+          orbitControlsRef.current.update();
+        }
+      }
+    } else {
+      // Update OrbitControls target when at viewpoint (for AI-generated viewpoints)
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.target.copy(lookAtTarget);
+      }
+    }
   });
 
   return null;
@@ -656,9 +691,21 @@ const CameraController = ({ povIndex }: { povIndex: number }) => {
 
 // Main Scene
 const SpaceScene = ({ povIndex }: { povIndex: number }) => {
+  const orbitControlsRef = useRef<any>(null);
+  
   return (
     <>
-      <CameraController povIndex={povIndex} />
+      <CameraController povIndex={povIndex} orbitControlsRef={orbitControlsRef} />
+      <OrbitControls
+        ref={orbitControlsRef}
+        enableDamping
+        dampingFactor={0.05}
+        rotateSpeed={0.5}
+        enableZoom={true}
+        enablePan={false}
+        minDistance={1}
+        maxDistance={500}
+      />
       <color attach="background" args={["#000000"]} />
       <fog attach="fog" args={["#000000", 80, 250]} />
 
