@@ -19,7 +19,8 @@ export const AIEcosystemDashboard = () => {
     crypto: { status: 'monitoring', lastPrice: 0, change: 0 },
     nft: { status: 'monitoring', volume: 0, change: 0 },
     binaryOptions: { status: 'monitoring', signals: 0, accuracy: 0 },
-    nasa: { status: 'monitoring', updates: 0, events: 0 }
+    nasa: { status: 'monitoring', updates: 0, events: 0 },
+    web3: { status: 'monitoring', gasPrice: 0, transactions: 0, defi: 0 }
   });
 
   useEffect(() => {
@@ -46,7 +47,8 @@ export const AIEcosystemDashboard = () => {
   }, [autoMode]);
 
   const updateLiveMetrics = () => {
-    // Simulate real-time market updates
+    // Simulate real-time market updates with millisecond precision
+    const now = Date.now();
     setLiveMetrics(prev => ({
       stockMarket: {
         status: 'active',
@@ -72,22 +74,39 @@ export const AIEcosystemDashboard = () => {
         status: 'active',
         updates: Math.floor(Math.random() * 50),
         events: Math.floor(Math.random() * 10)
+      },
+      web3: {
+        status: 'active',
+        gasPrice: Math.floor(20 + Math.random() * 100),
+        transactions: Math.floor(Math.random() * 500),
+        defi: Math.floor(Math.random() * 10000)
       }
     }));
 
-    // Generate critical alerts for significant changes
-    if (Math.random() > 0.95) {
-      const alertTypes = ['CRITICAL SURGE', 'MARKET SHIFT', 'NASA EVENT', 'OPPORTUNITY'];
+    // Generate critical AI alerts for significant changes
+    if (Math.random() > 0.92) {
+      const alertTypes = [
+        { type: '🔴 CRITICAL SURGE', category: 'crypto' },
+        { type: '⚡ MARKET SHIFT', category: 'stock' },
+        { type: '🌌 NASA EVENT', category: 'nasa' },
+        { type: '💎 WEB3 OPPORTUNITY', category: 'web3' },
+        { type: '🚀 NFT SPIKE', category: 'nft' },
+        { type: '⚠️ GAS ALERT', category: 'web3' }
+      ];
+      const alert = alertTypes[Math.floor(Math.random() * alertTypes.length)];
       const newAlert = {
-        id: Date.now(),
-        type: alertTypes[Math.floor(Math.random() * alertTypes.length)],
-        message: 'Critical market movement detected',
-        timestamp: new Date()
+        id: now,
+        type: alert.type,
+        category: alert.category,
+        message: `Critical AI detected ${alert.category.toUpperCase()} movement at ${new Date(now).toLocaleTimeString()}.${now % 1000}`,
+        timestamp: new Date(),
+        severity: Math.random() > 0.7 ? 'high' : 'medium'
       };
-      setCriticalUpdates(prev => [newAlert, ...prev].slice(0, 5));
+      setCriticalUpdates(prev => [newAlert, ...prev].slice(0, 8));
       
       toast.error(newAlert.type, {
-        description: newAlert.message
+        description: newAlert.message,
+        duration: 3000
       });
     }
   };
@@ -206,7 +225,7 @@ export const AIEcosystemDashboard = () => {
         )}
 
         {/* Critical Live Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
           <Card className="bg-background/40 backdrop-blur-xl border-green-500/30 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent animate-pulse" />
             <CardContent className="pt-4 relative z-10">
@@ -286,6 +305,22 @@ export const AIEcosystemDashboard = () => {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-background/40 backdrop-blur-xl border-pink-500/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 to-transparent animate-pulse" />
+            <CardContent className="pt-4 relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-pink-400">WEB3 / DeFi</span>
+                <div className="h-2 w-2 rounded-full bg-pink-400 animate-pulse" />
+              </div>
+              <div className="text-2xl font-bold text-pink-300">
+                {liveMetrics.web3.gasPrice} Gwei
+              </div>
+              <div className="text-xs text-pink-400">
+                ${(liveMetrics.web3.defi / 1000).toFixed(1)}K TVL • {liveMetrics.web3.transactions} TX
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Critical Alerts */}
@@ -299,15 +334,36 @@ export const AIEcosystemDashboard = () => {
               </div>
               <div className="space-y-2">
                 {criticalUpdates.map((alert) => (
-                  <div key={alert.id} className="flex items-center justify-between bg-red-500/20 p-2 rounded border border-red-500/30">
+                  <div 
+                    key={alert.id} 
+                    className={`flex items-center justify-between p-2 rounded border ${
+                      alert.severity === 'high' 
+                        ? 'bg-red-500/20 border-red-500/30' 
+                        : 'bg-yellow-500/20 border-yellow-500/30'
+                    }`}
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                      <div className={`h-2 w-2 rounded-full animate-pulse ${
+                        alert.severity === 'high' ? 'bg-red-400' : 'bg-yellow-400'
+                      }`} />
                       <div>
-                        <p className="text-sm font-semibold text-red-300">{alert.type}</p>
-                        <p className="text-xs text-red-400/80">{alert.message}</p>
+                        <p className={`text-sm font-semibold ${
+                          alert.severity === 'high' ? 'text-red-300' : 'text-yellow-300'
+                        }`}>
+                          {alert.type} <span className="text-xs opacity-60">({alert.category})</span>
+                        </p>
+                        <p className={`text-xs ${
+                          alert.severity === 'high' ? 'text-red-400/80' : 'text-yellow-400/80'
+                        }`}>
+                          {alert.message}
+                        </p>
                       </div>
                     </div>
-                    <span className="text-xs text-red-400">{alert.timestamp.toLocaleTimeString()}</span>
+                    <span className={`text-xs font-mono ${
+                      alert.severity === 'high' ? 'text-red-400' : 'text-yellow-400'
+                    }`}>
+                      {alert.timestamp.toLocaleTimeString()}.{alert.timestamp.getMilliseconds()}
+                    </span>
                   </div>
                 ))}
               </div>
