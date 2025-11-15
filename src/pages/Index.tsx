@@ -11,9 +11,10 @@ import StoriesBar from "@/components/StoriesBar";
 import { WalletCard } from "@/components/WalletCard";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
+import { InfinityScrollFeed } from "@/components/InfinityScrollFeed";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Award, DollarSign } from "lucide-react";
+import { Wallet, TrendingUp, Award, DollarSign, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -46,6 +47,8 @@ const Index = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [showInfinityScroll, setShowInfinityScroll] = useState(false);
+  const [initialVideoId, setInitialVideoId] = useState<string | undefined>();
   const [searchParams] = useSearchParams();
   const { openWindow } = useFloatingWindowsContext();
 
@@ -275,6 +278,17 @@ const Index = () => {
                       Progress
                     </Button>
                   </CarouselItem>
+                  <CarouselItem className="pl-2 md:pl-4 basis-auto">
+                    <Button 
+                      size="sm" 
+                      variant="default"
+                      className="bg-gradient-to-r from-purple-600 to-pink-600"
+                      onClick={() => setShowInfinityScroll(true)}
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Infinity Scroll
+                    </Button>
+                  </CarouselItem>
                 </CarouselContent>
                 <CarouselPrevious className="hidden md:flex" />
                 <CarouselNext className="hidden md:flex" />
@@ -312,26 +326,37 @@ const Index = () => {
                   <CarouselItem key={post.id}>
                     <div 
                       className="cursor-pointer"
-                      onClick={() => openWindow(
-                        `Post by ${post.profiles.display_name || post.profiles.username || "Anonymous"}`,
-                        <PostCard
-                          postId={post.id}
-                          author={post.profiles.display_name || post.profiles.username || "Anonymous"}
-                          content={post.content}
-                          timestamp={formatTimestamp(post.created_at)}
-                          likes={0}
-                          comments={0}
-                          isVerified={post.profiles.is_verified}
-                          monetizationType={post.monetization_type}
-                          price={post.price}
-                          isPaid={post.has_paid}
-                          hasStory={post.has_story}
-                          isLive={post.is_live}
-                          media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
-                          replyCount={post.reply_count}
-                          onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
-                        />
-                      )}
+                      onClick={() => {
+                        // Check if it's a video post
+                        const hasVideo = post.post_media && post.post_media.length > 0 && 
+                                        post.post_media.some(m => m.media_type === 'video');
+                        
+                        if (hasVideo) {
+                          setInitialVideoId(post.id);
+                          setShowInfinityScroll(true);
+                        } else {
+                          openWindow(
+                            `Post by ${post.profiles.display_name || post.profiles.username || "Anonymous"}`,
+                            <PostCard
+                              postId={post.id}
+                              author={post.profiles.display_name || post.profiles.username || "Anonymous"}
+                              content={post.content}
+                              timestamp={formatTimestamp(post.created_at)}
+                              likes={0}
+                              comments={0}
+                              isVerified={post.profiles.is_verified}
+                              monetizationType={post.monetization_type}
+                              price={post.price}
+                              isPaid={post.has_paid}
+                              hasStory={post.has_story}
+                              isLive={post.is_live}
+                              media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
+                              replyCount={post.reply_count}
+                              onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
+                            />
+                          );
+                        }
+                      }}
                     >
                       <PostCard
                         postId={post.id}
@@ -366,6 +391,16 @@ const Index = () => {
         onOpenChange={setIsCreateDialogOpen}
         onPost={handleCreatePost}
       />
+
+      {showInfinityScroll && (
+        <InfinityScrollFeed 
+          onClose={() => {
+            setShowInfinityScroll(false);
+            setInitialVideoId(undefined);
+          }}
+          initialVideoId={initialVideoId}
+        />
+      )}
     </div>
   );
 };
