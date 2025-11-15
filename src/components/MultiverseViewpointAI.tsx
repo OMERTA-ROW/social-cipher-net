@@ -51,7 +51,7 @@ export const MultiverseViewpointAI = ({ onViewpointGenerated }: MultiverseViewpo
       // Parse AI response to extract viewpoint parameters
       const viewpoint = parseAIViewpoint(aiResult.response, prompt);
       
-      // Save to database
+      // Save to database with metadata
       const { error } = await supabase
         .from('favorite_pov_views')
         .insert({
@@ -59,7 +59,13 @@ export const MultiverseViewpointAI = ({ onViewpointGenerated }: MultiverseViewpo
           pov_index: -1, // AI-generated custom viewpoint
           pov_name: viewpoint.name,
           custom_name: prompt.substring(0, 50),
-          // Store viewpoint data in a new metadata column we'll add
+          metadata: {
+            camera: viewpoint.camera,
+            effects: viewpoint.effects,
+            description: viewpoint.description,
+            generated_at: new Date().toISOString(),
+            type: 'ai_multiverse'
+          }
         });
 
       if (error) throw error;
