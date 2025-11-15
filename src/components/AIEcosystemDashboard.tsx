@@ -561,7 +561,7 @@ export const AIEcosystemDashboard = () => {
                 <CardTitle className="text-lg text-cyan-300">Multiverse 3D</CardTitle>
               </div>
               <CardDescription>
-                360° orbital exploration with AI-generated viewpoints
+                360° orbital exploration with Draco & Zozo spaceship cockpit views
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -573,11 +573,15 @@ export const AIEcosystemDashboard = () => {
                   </Badge>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-cyan-400/80">Rotation Speed</span>
-                  <span className="text-cyan-300">1.0x</span>
+                  <span className="text-cyan-400/80">Spaceships</span>
+                  <span className="text-cyan-300">Draco & Zozo</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-cyan-400/80">AI Viewpoints</span>
+                  <span className="text-cyan-400/80">Viewpoints</span>
+                  <span className="text-cyan-300">13 POV Modes</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-cyan-400/80">Cockpit Views</span>
                   <span className="text-cyan-300">Enabled</span>
                 </div>
                 <Progress value={100} className="bg-cyan-500/20" />
