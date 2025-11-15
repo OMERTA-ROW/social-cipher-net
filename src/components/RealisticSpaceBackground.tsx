@@ -2,12 +2,13 @@ import { useRef, useMemo, useEffect, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Stars, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { ChevronLeft, ChevronRight, Star, Heart, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, Heart, X, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MultiverseViewpointAI } from "./MultiverseViewpointAI";
 
 // Matrix Rain Overlay Component (standard React, not R3F)
 const MatrixRain = () => {
@@ -837,6 +838,7 @@ const RealisticSpaceBackground = () => {
   const [favorites, setFavorites] = useState<any[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [customName, setCustomName] = useState("");
   const { toast } = useToast();
 
@@ -988,6 +990,13 @@ const RealisticSpaceBackground = () => {
           >
             <Heart className="w-5 h-5 text-secondary" fill={showFavorites ? "currentColor" : "none"} />
           </button>
+          <button
+            onClick={() => setShowAIGenerator(!showAIGenerator)}
+            className="p-2.5 rounded-full bg-primary/20 backdrop-blur-xl border border-primary/30 hover:bg-primary/30 transition-all"
+            title="AI Viewpoint Generator"
+          >
+            <Sparkles className="w-5 h-5 text-primary" fill={showAIGenerator ? "currentColor" : "none"} />
+          </button>
         </div>
       </div>
 
@@ -1064,6 +1073,33 @@ const RealisticSpaceBackground = () => {
               )}
             </div>
           </ScrollArea>
+        </div>
+      )}
+
+      {/* AI Viewpoint Generator Panel */}
+      {showAIGenerator && (
+        <div className="fixed top-32 left-4 z-40 w-96 bg-card/95 backdrop-blur-md border border-border rounded-lg overflow-hidden shadow-2xl">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-card">
+            <h3 className="font-bold text-foreground flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+              AI Viewpoint Generator
+            </h3>
+            <button onClick={() => setShowAIGenerator(false)} className="p-1 hover:bg-muted rounded">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="p-4">
+            <MultiverseViewpointAI 
+              onViewpointGenerated={(viewpoint) => {
+                toast({ 
+                  title: "✨ AI Viewpoint Ready!", 
+                  description: viewpoint.name 
+                });
+                loadFavorites();
+                setShowAIGenerator(false);
+              }} 
+            />
+          </div>
         </div>
       )}
       
