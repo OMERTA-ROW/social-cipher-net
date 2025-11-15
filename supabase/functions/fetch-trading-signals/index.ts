@@ -119,8 +119,80 @@ serve(async (req) => {
       }
     };
 
-    const signals = assetType === "stock" ? stockSignals : cryptoSignals;
-    const defaultPlatform = assetType === "stock" ? "alpaca" : "tradingview";
+    // NFT Signals
+    const nftSignals = {
+      opensea: {
+        signal: Math.random() > 0.5 ? "BUY" : "SELL",
+        floorPrice: Math.random() * 5 + 0.3,
+        volume24h: `${(Math.random() * 500).toFixed(1)} ETH`,
+        holders: Math.floor(Math.random() * 5000) + 1000,
+        rarity: Math.random() > 0.5 ? "Rare" : "Common",
+        timestamp: new Date().toISOString()
+      },
+      looksrare: {
+        signal: Math.random() > 0.6 ? "BUY" : "HOLD",
+        floorPrice: Math.random() * 3 + 0.5,
+        rewardAPR: `${(Math.random() * 50).toFixed(1)}%`,
+        uniqueBuyers: Math.floor(Math.random() * 2000),
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    // Moonshot Signals
+    const moonshotSignals = {
+      dexscreener: {
+        signal: Math.random() > 0.3 ? "BUY" : "SELL",
+        marketCap: `$${(Math.random() * 5000000).toFixed(0)}`,
+        holders: Math.floor(Math.random() * 10000) + 500,
+        liquidityScore: Math.floor(Math.random() * 40) + 60,
+        socialMomentum: Math.random() > 0.5 ? "Viral" : "Growing",
+        timestamp: new Date().toISOString()
+      },
+      dextools: {
+        signal: Math.random() > 0.4 ? "BUY" : "HOLD",
+        priceChange24h: `${(Math.random() * 200 - 20).toFixed(1)}%`,
+        buyPressure: Math.floor(Math.random() * 100),
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    // Binary Options Signals
+    const binarySignals = {
+      iqoption: {
+        signal: Math.random() > 0.5 ? "CALL" : "PUT",
+        expiryMinutes: [1, 5, 15, 30, 60][Math.floor(Math.random() * 5)],
+        winProbability: Math.floor(Math.random() * 30) + 65,
+        priceDirection: Math.random() > 0.5 ? "Bullish" : "Bearish",
+        rsi: Math.floor(Math.random() * 60) + 20,
+        timestamp: new Date().toISOString()
+      },
+      pocket_option: {
+        signal: Math.random() > 0.5 ? "CALL" : "PUT",
+        payout: `${Math.floor(Math.random() * 30) + 75}%`,
+        momentum: Math.random() > 0.5 ? "Strong" : "Moderate",
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    let signals: any;
+    let defaultPlatform: string;
+
+    if (assetType === "stock") {
+      signals = stockSignals;
+      defaultPlatform = "alpaca";
+    } else if (assetType === "nft") {
+      signals = nftSignals;
+      defaultPlatform = "opensea";
+    } else if (assetType === "moonshot") {
+      signals = moonshotSignals;
+      defaultPlatform = "dexscreener";
+    } else if (assetType === "binary") {
+      signals = binarySignals;
+      defaultPlatform = "iqoption";
+    } else {
+      signals = cryptoSignals;
+      defaultPlatform = "tradingview";
+    }
 
     const platformSignal = signals[platform as keyof typeof signals] || signals[defaultPlatform as keyof typeof signals];
 
