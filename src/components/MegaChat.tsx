@@ -31,7 +31,13 @@ export function MegaChat({ streamId }: MegaChatProps) {
   useEffect(() => {
     loadMessages();
     loadConnectedPlatforms();
-    setupRealtimeSubscription();
+    const messageChannel = setupRealtimeSubscription();
+    const platformChannel = setupPlatformConnectionsSubscription();
+    
+    return () => {
+      messageChannel();
+      platformChannel();
+    };
   }, [streamId]);
 
   useEffect(() => {
@@ -91,6 +97,27 @@ export function MegaChat({ streamId }: MegaChatProps) {
         },
         (payload) => {
           setMessages((prev) => [...prev, payload.new as ChatMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const setupPlatformConnectionsSubscription = () => {
+    const channel = supabase
+      .channel('platform-connections-updates')
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "platform_connections",
+        },
+        () => {
+          loadConnectedPlatforms();
         }
       )
       .subscribe();
