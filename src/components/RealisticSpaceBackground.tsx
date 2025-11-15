@@ -2,7 +2,12 @@ import { useRef, useMemo, useEffect, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Stars, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, Heart, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Matrix Rain Overlay Component (standard React, not R3F)
 const MatrixRain = () => {
@@ -829,6 +834,11 @@ const RealisticSpaceBackground = () => {
   const [hasWebGLError, setHasWebGLError] = useState(false);
   const [povIndex, setPovIndex] = useState(0);
   const totalPOVs = 11;
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     // Check if WebGL is available
@@ -837,7 +847,65 @@ const RealisticSpaceBackground = () => {
     if (!gl) {
       setHasWebGLError(true);
     }
+    
+    // Load favorites
+    loadFavorites();
   }, []);
+
+  const loadFavorites = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data, error } = await supabase
+      .from('favorite_pov_views')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setFavorites(data);
+    }
+  };
+
+  const saveFavorite = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast({ title: "Sign in to save favorites", variant: "destructive" });
+      return;
+    }
+
+    const povNames = ["God's Eye", "Planet View", "Comet View", "Void View", "Constellation View", "Multiverse View", "Heaven View", "Orion's Belt", "Milky Way", "Northern Star", "Heaven Avenue"];
+    const povName = povNames[povIndex];
+
+    const { error } = await supabase
+      .from('favorite_pov_views')
+      .insert({
+        user_id: session.user.id,
+        pov_index: povIndex,
+        pov_name: povName,
+        custom_name: customName || povName
+      });
+
+    if (error) {
+      toast({ title: "Failed to save favorite", variant: "destructive" });
+    } else {
+      toast({ title: "✨ Favorite saved!", description: `${customName || povName} added to your collection` });
+      setShowSaveDialog(false);
+      setCustomName("");
+      loadFavorites();
+    }
+  };
+
+  const deleteFavorite = async (id: string) => {
+    const { error } = await supabase
+      .from('favorite_pov_views')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      toast({ title: "Favorite removed" });
+      loadFavorites();
+    }
+  };
 
   const cyclePOV = (direction: 'left' | 'right') => {
     setPovIndex(prev => {
@@ -878,31 +946,126 @@ const RealisticSpaceBackground = () => {
       </div>
       
       {/* POV Controls - All Seeing Eye */}
-      <div className="fixed top-4 left-4 z-30 flex items-center gap-2">
-        <button
-          onClick={() => cyclePOV('left')}
-          className="w-10 h-10 rounded-full bg-background/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 transition-all group"
-          aria-label="Previous view"
-        >
-          <ChevronLeft className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-        </button>
-        
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/30 via-blue-500/30 to-cyan-500/30 backdrop-blur-xl border-2 border-primary/40 flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-blue-400/20 to-cyan-400/20 animate-pulse" />
-          <div className="relative w-8 h-8 rounded-full border-2 border-primary/60 flex items-center justify-center">
-            <div className="w-4 h-4 rounded-full bg-primary/80 animate-pulse" />
-            <div className="absolute inset-0 rounded-full border border-primary/40 animate-ping" />
+      <div className="fixed top-4 left-4 z-30 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => cyclePOV('left')}
+            className="w-10 h-10 rounded-full bg-background/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 transition-all group"
+            aria-label="Previous view"
+          >
+            <ChevronLeft className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+          </button>
+          
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/30 via-blue-500/30 to-cyan-500/30 backdrop-blur-xl border-2 border-primary/40 flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-blue-400/20 to-cyan-400/20 animate-pulse" />
+            <div className="relative w-8 h-8 rounded-full border-2 border-primary/60 flex items-center justify-center">
+              <div className="w-4 h-4 rounded-full bg-primary/80 animate-pulse" />
+              <div className="absolute inset-0 rounded-full border border-primary/40 animate-ping" />
+            </div>
           </div>
+          
+          <button
+            onClick={() => cyclePOV('right')}
+            className="w-10 h-10 rounded-full bg-background/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 transition-all group"
+            aria-label="Next view"
+          >
+            <ChevronRight className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+          </button>
         </div>
         
-        <button
-          onClick={() => cyclePOV('right')}
-          className="w-10 h-10 rounded-full bg-background/20 backdrop-blur-xl border border-primary/30 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 transition-all group"
-          aria-label="Next view"
-        >
-          <ChevronRight className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowSaveDialog(true)}
+            className="p-2.5 rounded-full bg-accent/20 backdrop-blur-xl border border-accent/30 hover:bg-accent/30 transition-all"
+            title="Save Favorite"
+          >
+            <Star className="w-5 h-5 text-accent" />
+          </button>
+          <button
+            onClick={() => setShowFavorites(!showFavorites)}
+            className="p-2.5 rounded-full bg-secondary/20 backdrop-blur-xl border border-secondary/30 hover:bg-secondary/30 transition-all"
+            title="View Favorites"
+          >
+            <Heart className="w-5 h-5 text-secondary" fill={showFavorites ? "currentColor" : "none"} />
+          </button>
+        </div>
       </div>
+
+      {/* Save Favorite Dialog */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-lg p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <Star className="w-5 h-5 text-accent" />
+                Save Favorite View
+              </h3>
+              <button onClick={() => setShowSaveDialog(false)} className="p-1 hover:bg-muted rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <Input
+              placeholder="Custom name (optional)"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              className="w-full"
+            />
+            <Button onClick={saveFavorite} className="w-full">
+              <Star className="w-4 h-4 mr-2" />
+              Save to Favorites
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Favorites Panel */}
+      {showFavorites && (
+        <div className="fixed top-32 left-4 z-40 w-80 max-h-96 bg-card/95 backdrop-blur-md border border-border rounded-lg overflow-hidden shadow-2xl">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-card">
+            <h3 className="font-bold text-foreground flex items-center gap-2">
+              <Heart className="w-5 h-5 text-secondary" />
+              Favorite Views
+            </h3>
+            <button onClick={() => setShowFavorites(false)} className="p-1 hover:bg-muted rounded">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <ScrollArea className="h-80">
+            <div className="p-4 space-y-2">
+              {favorites.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-8">
+                  No favorites saved yet
+                </p>
+              ) : (
+                favorites.map((fav) => (
+                  <div
+                    key={fav.id}
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <button
+                      onClick={() => {
+                        setPovIndex(fav.pov_index);
+                        setShowFavorites(false);
+                        toast({ title: `Viewing ${fav.custom_name || fav.pov_name}` });
+                      }}
+                      className="flex-1 text-left"
+                    >
+                      <div className="font-medium text-foreground">{fav.custom_name || fav.pov_name}</div>
+                      <div className="text-xs text-muted-foreground">{fav.pov_name}</div>
+                    </button>
+                    <button
+                      onClick={() => deleteFavorite(fav.id)}
+                      className="p-1 hover:bg-destructive/20 rounded text-destructive"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      )}
       
       <MatrixRain />
     </>

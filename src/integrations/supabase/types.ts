@@ -336,6 +336,41 @@ export type Database = {
         }
         Relationships: []
       }
+      favorite_pov_views: {
+        Row: {
+          created_at: string
+          custom_name: string | null
+          id: string
+          pov_index: number
+          pov_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_name?: string | null
+          id?: string
+          pov_index: number
+          pov_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string | null
+          id?: string
+          pov_index?: number
+          pov_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorite_pov_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       followers: {
         Row: {
           created_at: string | null
