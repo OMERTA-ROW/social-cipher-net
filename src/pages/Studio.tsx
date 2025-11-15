@@ -4,7 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Send, Zap, Loader2, Video, MessageSquare, BarChart3, UserPlus, Users } from "lucide-react";
+import { Radio, Send, Zap, Loader2, Video, MessageSquare, BarChart3, UserPlus, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import Navigation from "@/components/Navigation";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
@@ -27,6 +35,7 @@ import { OmegaChat } from "@/components/OmegaChat";
 import { supabase } from "@/integrations/supabase/client";
 
 const Studio = () => {
+  const isMobile = useIsMobile();
   const [isLive, setIsLive] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const [activePlatforms, setActivePlatforms] = useState<Array<{
@@ -36,6 +45,8 @@ const Studio = () => {
   }>>([]);
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<"social" | "affiliate">("social");
+  const [activePlatformIndex, setActivePlatformIndex] = useState(0);
   const { windows, openWindow, closeWindow } = useFloatingWindowsContext();
   const { 
     currentStream, 
@@ -54,28 +65,58 @@ const Studio = () => {
     twitter: [],
     instagram: [],
     tiktok: [],
-    youtube: []
+    youtube: [],
+    facebook: [],
+    linkedin: [],
+    amazon: [],
+    clickbank: [],
+    shareasale: [],
+    cj: []
   });
   const [inputMessages, setInputMessages] = useState<Record<string, string>>({
     twitter: "",
     instagram: "",
     tiktok: "",
-    youtube: ""
+    youtube: "",
+    facebook: "",
+    linkedin: "",
+    amazon: "",
+    clickbank: "",
+    shareasale: "",
+    cj: ""
   });
   const [loadingPlatforms, setLoadingPlatforms] = useState<Record<string, boolean>>({
     twitter: false,
     instagram: false,
     tiktok: false,
-    youtube: false
+    youtube: false,
+    facebook: false,
+    linkedin: false,
+    amazon: false,
+    clickbank: false,
+    shareasale: false,
+    cj: false
   });
   const { streamChat } = usePlatformChat();
 
-  const platforms = [
-    { id: "twitter", name: "Twitter", color: "bg-blue-500" },
-    { id: "instagram", name: "Instagram", color: "bg-pink-500" },
-    { id: "tiktok", name: "TikTok", color: "bg-cyan-500" },
-    { id: "youtube", name: "YouTube", color: "bg-red-500" }
+  const socialPlatforms = [
+    { id: "twitter", name: "Twitter", color: "bg-blue-500", category: "social" },
+    { id: "instagram", name: "Instagram", color: "bg-pink-500", category: "social" },
+    { id: "tiktok", name: "TikTok", color: "bg-cyan-500", category: "social" },
+    { id: "youtube", name: "YouTube", color: "bg-red-500", category: "social" },
+    { id: "facebook", name: "Facebook", color: "bg-blue-600", category: "social" },
+    { id: "linkedin", name: "LinkedIn", color: "bg-blue-700", category: "social" },
   ];
+
+  const affiliatePlatforms = [
+    { id: "amazon", name: "Amazon Associates", color: "bg-orange-500", category: "affiliate" },
+    { id: "clickbank", name: "ClickBank", color: "bg-purple-500", category: "affiliate" },
+    { id: "shareasale", name: "ShareASale", color: "bg-green-500", category: "affiliate" },
+    { id: "cj", name: "CJ Affiliate", color: "bg-indigo-500", category: "affiliate" },
+  ];
+
+  const platforms = [...socialPlatforms, ...affiliatePlatforms];
+  const currentCategoryPlatforms = activeCategory === "social" ? socialPlatforms : affiliatePlatforms;
 
   const togglePlatform = (platformId: string) => {
     setConnectedPlatforms(prev =>
@@ -304,18 +345,164 @@ const Studio = () => {
             
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Connected Platforms</h3>
-              <div className="flex flex-wrap gap-2">
-                {platforms.map(platform => (
-                  <Button
-                    key={platform.id}
-                    variant={connectedPlatforms.includes(platform.id) ? "default" : "outline"}
-                    onClick={() => togglePlatform(platform.id)}
-                    className={connectedPlatforms.includes(platform.id) ? platform.color : ""}
-                  >
-                    {platform.name}
-                  </Button>
-                ))}
-              </div>
+              
+              {/* Category Tabs */}
+              <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(v as "social" | "affiliate")} className="w-full">
+                <TabsList className="w-full grid grid-cols-2">
+                  <TabsTrigger value="social">Social Media</TabsTrigger>
+                  <TabsTrigger value="affiliate">Affiliate</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="social" className="mt-4">
+                  {isMobile ? (
+                    /* Mobile/Tablet: Swipeable Carousel */
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        {socialPlatforms.map(platform => {
+                          const isConnected = activePlatforms.some(
+                            ap => ap.platform.toLowerCase() === platform.id.toLowerCase() && ap.is_active
+                          );
+                          return (
+                            <CarouselItem key={platform.id} className="basis-1/2 md:basis-1/3">
+                              <div className="p-1">
+                                <Button
+                                  variant={connectedPlatforms.includes(platform.id) ? "default" : "outline"}
+                                  onClick={() => togglePlatform(platform.id)}
+                                  className={`w-full relative ${connectedPlatforms.includes(platform.id) ? platform.color : ""}`}
+                                >
+                                  <span className={`absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${
+                                    isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                                  }`}></span>
+                                  <span className="ml-3">{platform.name}</span>
+                                </Button>
+                              </div>
+                            </CarouselItem>
+                          );
+                        })}
+                      </CarouselContent>
+                      <CarouselPrevious />
+                      <CarouselNext />
+                    </Carousel>
+                  ) : (
+                    /* Desktop: Grid with Arrow Navigation */
+                    <div className="relative">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setActivePlatformIndex(Math.max(0, activePlatformIndex - 1))}
+                          disabled={activePlatformIndex === 0}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <div className="flex-1 flex flex-wrap gap-2">
+                          {socialPlatforms.map(platform => {
+                            const isConnected = activePlatforms.some(
+                              ap => ap.platform.toLowerCase() === platform.id.toLowerCase() && ap.is_active
+                            );
+                            return (
+                              <Button
+                                key={platform.id}
+                                variant={connectedPlatforms.includes(platform.id) ? "default" : "outline"}
+                                onClick={() => togglePlatform(platform.id)}
+                                className={`relative ${connectedPlatforms.includes(platform.id) ? platform.color : ""}`}
+                              >
+                                <span className={`absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${
+                                  isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                                }`}></span>
+                                <span className="ml-3">{platform.name}</span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setActivePlatformIndex(Math.min(socialPlatforms.length - 1, activePlatformIndex + 1))}
+                          disabled={activePlatformIndex >= socialPlatforms.length - 1}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="affiliate" className="mt-4">
+                  {isMobile ? (
+                    /* Mobile/Tablet: Swipeable Carousel */
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        {affiliatePlatforms.map(platform => {
+                          const isConnected = activePlatforms.some(
+                            ap => ap.platform.toLowerCase() === platform.id.toLowerCase() && ap.is_active
+                          );
+                          return (
+                            <CarouselItem key={platform.id} className="basis-1/2 md:basis-1/3">
+                              <div className="p-1">
+                                <Button
+                                  variant={connectedPlatforms.includes(platform.id) ? "default" : "outline"}
+                                  onClick={() => togglePlatform(platform.id)}
+                                  className={`w-full relative ${connectedPlatforms.includes(platform.id) ? platform.color : ""}`}
+                                >
+                                  <span className={`absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${
+                                    isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                                  }`}></span>
+                                  <span className="ml-3">{platform.name}</span>
+                                </Button>
+                              </div>
+                            </CarouselItem>
+                          );
+                        })}
+                      </CarouselContent>
+                      <CarouselPrevious />
+                      <CarouselNext />
+                    </Carousel>
+                  ) : (
+                    /* Desktop: Grid with Arrow Navigation */
+                    <div className="relative">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setActivePlatformIndex(Math.max(0, activePlatformIndex - 1))}
+                          disabled={activePlatformIndex === 0}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <div className="flex-1 flex flex-wrap gap-2">
+                          {affiliatePlatforms.map(platform => {
+                            const isConnected = activePlatforms.some(
+                              ap => ap.platform.toLowerCase() === platform.id.toLowerCase() && ap.is_active
+                            );
+                            return (
+                              <Button
+                                key={platform.id}
+                                variant={connectedPlatforms.includes(platform.id) ? "default" : "outline"}
+                                onClick={() => togglePlatform(platform.id)}
+                                className={`relative ${connectedPlatforms.includes(platform.id) ? platform.color : ""}`}
+                              >
+                                <span className={`absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${
+                                  isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                                }`}></span>
+                                <span className="ml-3">{platform.name}</span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setActivePlatformIndex(Math.min(affiliatePlatforms.length - 1, activePlatformIndex + 1))}
+                          disabled={activePlatformIndex >= affiliatePlatforms.length - 1}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
               
               <div className="mt-6">
                 <SocialPlatformConnections onConnectionsUpdate={setActivePlatforms} />
