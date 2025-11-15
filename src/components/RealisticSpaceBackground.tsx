@@ -31,7 +31,7 @@ const MatrixRain = () => {
 
     let animationId: number;
     let lastTime = 0;
-    const frameDelay = 100; // Milliseconds between frames (slower = higher number)
+    const frameDelay = 180; // Milliseconds between frames (slower = higher number)
 
     const animate = (currentTime: number) => {
       // Throttle animation speed
@@ -126,7 +126,7 @@ const Planet = ({
       const time = clock.getElapsedTime() * speed;
       meshRef.current.position.x = position[0] * Math.cos(time);
       meshRef.current.position.z = position[2] * Math.sin(time);
-      meshRef.current.rotation.y += 0.003;
+      meshRef.current.rotation.y += 0.0012;
       
       if (ringsRef.current) {
         ringsRef.current.position.x = meshRef.current.position.x;
@@ -232,10 +232,10 @@ const Sun = () => {
 
   useFrame(() => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.001;
+      meshRef.current.rotation.y += 0.0004;
     }
     if (coronaRef.current) {
-      coronaRef.current.rotation.y -= 0.0005;
+      coronaRef.current.rotation.y -= 0.0002;
     }
   });
 
@@ -313,9 +313,9 @@ const Comet = ({ delay }: { delay: number }) => {
 
   useFrame(({ clock }) => {
     if (meshRef.current && dustTrailRef.current && glowRef.current) {
-      // Much slower speed - comets take 30 seconds to cross (was 5 seconds)
-      const time = (clock.getElapsedTime() + delay) * 0.33;
-      const progress = (time % 30) / 30;
+      // Much slower speed - comets take 50 seconds to cross
+      const time = (clock.getElapsedTime() + delay) * 0.2;
+      const progress = (time % 50) / 50;
       
       if (progress < 0.9) {
         // Varied comet paths based on delay for diversity
@@ -474,7 +474,7 @@ const BlackHole = () => {
 
   useFrame(() => {
     if (accretionRef.current) {
-      accretionRef.current.rotation.z += 0.01;
+      accretionRef.current.rotation.z += 0.004;
     }
   });
 
@@ -579,7 +579,7 @@ const MilkyWayDisk = () => {
 
   useFrame(() => {
     if (pointsRef.current) {
-      pointsRef.current.rotation.y += 0.0001;
+      pointsRef.current.rotation.y += 0.00004;
     }
   });
 
@@ -629,7 +629,7 @@ const SpaceScene = () => {
         factor={6}
         saturation={0}
         fade
-        speed={0.5}
+        speed={0.2}
       />
 
       {/* Milky Way */}
@@ -651,7 +651,7 @@ const SpaceScene = () => {
         position={[8, 0, 0]} 
         size={0.38} 
         color="#9D9D9D" 
-        speed={0.02} 
+        speed={0.008}
         roughness={0.98} 
         metalness={0.02}
         emissiveIntensity={0.02}
@@ -662,7 +662,7 @@ const SpaceScene = () => {
         position={[14, 0, 0]} 
         size={0.95} 
         color="#FFC649" 
-        speed={0.015} 
+        speed={0.006}
         hasAtmosphere 
         atmosphereColor="#FFDB80"
         hasClouds
@@ -677,7 +677,7 @@ const SpaceScene = () => {
         position={[22, 0, 0]} 
         size={1} 
         color="#1A5FB4" 
-        speed={0.012} 
+        speed={0.005}
         hasAtmosphere 
         atmosphereColor="#4A90D9"
         hasClouds
@@ -692,7 +692,7 @@ const SpaceScene = () => {
         position={[30, 0, 0]} 
         size={0.53} 
         color="#C1440E" 
-        speed={0.01} 
+        speed={0.004}
         hasAtmosphere 
         atmosphereColor="#E89C7E"
         roughness={0.92} 
@@ -705,7 +705,7 @@ const SpaceScene = () => {
         position={[45, 0, 0]} 
         size={2.5} 
         color="#D8AC6B" 
-        speed={0.006} 
+        speed={0.0025}
         hasAtmosphere 
         atmosphereColor="#E8C99A"
         hasClouds
@@ -720,7 +720,7 @@ const SpaceScene = () => {
         position={[60, 0, 0]} 
         size={2.2} 
         color="#F4E4C1" 
-        speed={0.005} 
+        speed={0.002}
         hasRings 
         hasAtmosphere 
         atmosphereColor="#FFF8DC"
@@ -736,7 +736,7 @@ const SpaceScene = () => {
         position={[75, 0, 0]} 
         size={1.5} 
         color="#4FD0E7" 
-        speed={0.004} 
+        speed={0.0016}
         hasAtmosphere 
         atmosphereColor="#7FE3F0"
         hasClouds
@@ -751,7 +751,7 @@ const SpaceScene = () => {
         position={[90, 0, 0]} 
         size={1.45} 
         color="#2E5090" 
-        speed={0.003} 
+        speed={0.0012}
         hasAtmosphere 
         atmosphereColor="#4169E1"
         hasClouds
