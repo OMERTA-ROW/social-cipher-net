@@ -342,9 +342,15 @@ const Studio = () => {
                 <TabsList className="w-full">
                   {connectedPlatforms.map(platformId => {
                     const platform = platforms.find(p => p.id === platformId);
+                    const isConnected = activePlatforms.some(
+                      ap => ap.platform.toLowerCase() === platformId.toLowerCase() && ap.is_active
+                    );
                     return (
-                      <TabsTrigger key={platformId} value={platformId} className="flex-1">
-                        {platform?.name}
+                      <TabsTrigger key={platformId} value={platformId} className="flex-1 relative">
+                        <span className={`absolute left-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${
+                          isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                        }`}></span>
+                        <span className="ml-3">{platform?.name}</span>
                       </TabsTrigger>
                     );
                   })}

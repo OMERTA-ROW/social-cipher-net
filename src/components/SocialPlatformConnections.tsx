@@ -65,10 +65,23 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
   const [connections, setConnections] = useState<PlatformConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState<string | null>(null);
+  const [showConnections, setShowConnections] = useState(true);
 
   useEffect(() => {
     fetchConnections();
     const interval = setInterval(fetchConnections, 30000);
+    
+    // Check URL for OAuth callback
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('platform_connected') === 'true') {
+      const platform = params.get('platform');
+      toast.success(`${platform ? PLATFORM_NAMES[platform] : 'Platform'} connected successfully!`);
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // Auto-collapse after successful connection
+      setTimeout(() => setShowConnections(false), 2000);
+    }
+    
     return () => clearInterval(interval);
   }, []);
 
@@ -196,22 +209,30 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
   const connectedPlatforms = connections.filter(c => c.is_active).map(c => c.platform);
   const unconnectedPlatforms = availablePlatforms.filter(p => !connectedPlatforms.includes(p));
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-8 bg-muted rounded"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      <Card>
+      <Button 
+        variant="outline" 
+        onClick={() => setShowConnections(!showConnections)}
+        className="w-full"
+      >
+        {showConnections ? "Hide" : "Show"} Platform Connections
+      </Button>
+      
+      {showConnections && (
+        <>
+          {loading ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-8 bg-muted rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LinkIcon className="w-5 h-5" />
@@ -303,6 +324,10 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
             </div>
           </CardContent>
         </Card>
+      )}
+            </>
+          )}
+        </>
       )}
     </div>
   );
