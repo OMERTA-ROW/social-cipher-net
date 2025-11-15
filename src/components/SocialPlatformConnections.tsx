@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { 
   Instagram, 
@@ -16,7 +17,9 @@ import {
   Linkedin,
   Music,
   Send,
-  MessageCircle
+  MessageCircle,
+  Search,
+  Globe
 } from "lucide-react";
 
 interface PlatformConnection {
@@ -66,6 +69,8 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState<string | null>(null);
   const [showConnections, setShowConnections] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{ domain: string; platform: string; name: string }>>([]);
 
   useEffect(() => {
     fetchConnections();
@@ -120,6 +125,65 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
     } finally {
       setLoading(false);
     }
+  };
+
+  const detectPlatformFromDomain = (domain: string): string => {
+    const domainLower = domain.toLowerCase();
+    if (domainLower.includes('instagram')) return 'instagram';
+    if (domainLower.includes('twitter') || domainLower.includes('x.com')) return 'twitter';
+    if (domainLower.includes('youtube')) return 'youtube';
+    if (domainLower.includes('twitch')) return 'twitch';
+    if (domainLower.includes('reddit')) return 'reddit';
+    if (domainLower.includes('facebook')) return 'facebook';
+    if (domainLower.includes('tiktok')) return 'tiktok';
+    if (domainLower.includes('linkedin')) return 'linkedin';
+    if (domainLower.includes('snapchat')) return 'snapchat';
+    if (domainLower.includes('telegram')) return 'telegram';
+    return 'other';
+  };
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length < 3) {
+      setSearchResults([]);
+      return;
+    }
+
+    // Simulate website search results with domain detection
+    const mockResults = [
+      { domain: query, platform: detectPlatformFromDomain(query), name: query }
+    ];
+
+    // Add common platform suggestions if query matches
+    const platforms = Object.keys(PLATFORM_NAMES);
+    platforms.forEach(platform => {
+      const platformName = PLATFORM_NAMES[platform].toLowerCase();
+      if (platformName.includes(query.toLowerCase()) || platform.includes(query.toLowerCase())) {
+        mockResults.push({
+          domain: `${platform}.com`,
+          platform: platform,
+          name: PLATFORM_NAMES[platform]
+        });
+      }
+    });
+
+    setSearchResults(mockResults.slice(0, 5));
+  };
+
+  const handleSelectWebsite = async (result: { domain: string; platform: string; name: string }) => {
+    const platform = result.platform;
+    
+    if (platform === 'other') {
+      toast.info(`Creating custom connection for ${result.domain}`);
+      // For unknown platforms, still create a connection
+      await handleConnect(result.domain);
+    } else {
+      toast.info(`Connecting to ${PLATFORM_NAMES[platform] || result.name}...`);
+      await handleConnect(platform);
+    }
+    
+    setSearchQuery("");
+    setSearchResults([]);
   };
 
   const handleConnect = async (platform: string) => {
@@ -211,6 +275,54 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
 
   return (
     <div className="space-y-4">
+      {/* Global Search Bar */}
+      <Card className="bg-card/50 backdrop-blur border-border/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="w-5 h-5" />
+            Discover Platforms
+          </CardTitle>
+          <CardDescription>
+            Search for any website to automatically connect and organize
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search for websites, platforms, or domains..."
+              className="pl-10"
+            />
+            
+            {searchResults.length > 0 && (
+              <div className="absolute z-10 w-full mt-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+                {searchResults.map((result, index) => {
+                  const Icon = PLATFORM_ICONS[result.platform] || Globe;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleSelectWebsite(result)}
+                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-accent transition-colors text-left"
+                    >
+                      <Icon className="w-5 h-5 text-primary" />
+                      <div className="flex-1">
+                        <div className="font-medium">{result.name}</div>
+                        <div className="text-xs text-muted-foreground">{result.domain}</div>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {PLATFORM_NAMES[result.platform] || 'Custom'}
+                      </Badge>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       <Button 
         variant="outline" 
         onClick={() => setShowConnections(!showConnections)}
