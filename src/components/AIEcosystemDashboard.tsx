@@ -81,16 +81,19 @@ export const AIEcosystemDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="relative space-y-6">
+      {/* Space-themed overlay effect */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/5 to-transparent pointer-events-none" />
+      
+      <div className="max-w-7xl mx-auto space-y-6 relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-              🤖 CyberLink AI Ecosystem
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-pulse">
+              🤖 AI Infinity Multiverse Algorithm
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Self-monitoring, self-enhancing, and self-protecting AI system
+            <p className="text-cyan-300/80 mt-2">
+              Infinite Expansion • Self-Evolution • Cosmic Intelligence
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -119,20 +122,21 @@ export const AIEcosystemDashboard = () => {
 
         {/* Status Overview */}
         {lastUpdate && (
-          <Card className="border-primary/20">
-            <CardContent className="pt-6">
+          <Card className="bg-background/40 backdrop-blur-xl border-primary/20 shadow-2xl shadow-primary/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5 animate-pulse" />
+            <CardContent className="pt-6 relative z-10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Brain className="h-6 w-6 text-primary" />
+                  <div className="h-12 w-12 rounded-full bg-cyan-500/20 flex items-center justify-center animate-pulse">
+                    <Brain className="h-6 w-6 text-cyan-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Last Analysis</p>
-                    <p className="text-lg font-semibold">{lastUpdate.toLocaleString()}</p>
+                    <p className="text-sm text-cyan-400/60">Last Cosmic Analysis</p>
+                    <p className="text-lg font-semibold text-cyan-300">{lastUpdate.toLocaleString()}</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="text-green-500 border-green-500">
-                  System Active
+                <Badge variant="outline" className="text-green-400 border-green-400 bg-green-400/10">
+                  Multiverse Active
                 </Badge>
               </div>
             </CardContent>
@@ -296,14 +300,18 @@ export const AIEcosystemDashboard = () => {
 
         {/* Results Display */}
         {ecosystemStatus && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Latest Analysis Results</CardTitle>
-              <CardDescription>
-                Comprehensive ecosystem analysis and recommendations
+          <Card className="bg-background/30 backdrop-blur-xl border-cyan-500/30 shadow-2xl shadow-cyan-500/10 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-purple-500/5 to-pink-500/5" />
+            <CardHeader className="relative z-10">
+              <CardTitle className="text-cyan-300 flex items-center gap-2">
+                <Brain className="h-5 w-5 text-cyan-400 animate-pulse" />
+                Cosmic Intelligence Analysis
+              </CardTitle>
+              <CardDescription className="text-cyan-400/60">
+                Multiverse ecosystem analysis and cosmic recommendations
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative z-10">
               <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
