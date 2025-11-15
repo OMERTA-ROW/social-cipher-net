@@ -36,6 +36,9 @@ import CouponAI from "@/components/CouponAI";
 import { TokenPoolManager } from "@/components/TokenPoolManager";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { TradingAccountConnect } from "@/components/TradingAccountConnect";
+import { BTCAlgorithmEngine } from "@/components/BTCAlgorithmEngine";
+import { StockAlgorithmEngine } from "@/components/StockAlgorithmEngine";
+import { AIEcosystemDashboard } from "@/components/AIEcosystemDashboard";
 
 const CyberWorld = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -463,6 +466,26 @@ const CyberWorld = () => {
               <CryptoWalletConnect />
               <TradingAccountConnect />
             </div>
+
+            {/* AI Trading Algorithms */}
+            <div className="space-y-6">
+              <Card className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-purple-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                    🤖 CyberLink AI Trading Algorithms
+                  </CardTitle>
+                  <CardDescription>
+                    Advanced AI-powered trading algorithms with real-time analysis and auto-trading capabilities
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              
+              <BTCAlgorithmEngine />
+              <StockAlgorithmEngine />
+            </div>
+
+            {/* AI Ecosystem Dashboard */}
+            <AIEcosystemDashboard />
           </TabsContent>
 
           {/* Live Studio Tab */}
