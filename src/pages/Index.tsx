@@ -14,7 +14,7 @@ import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
 import { InfinityScrollFeed } from "@/components/InfinityScrollFeed";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Award, DollarSign, Play } from "lucide-react";
+import { Wallet, TrendingUp, Award, DollarSign, Play, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -51,6 +51,7 @@ const Index = () => {
   const [initialVideoId, setInitialVideoId] = useState<string | undefined>();
   const [searchParams] = useSearchParams();
   const { openWindow } = useFloatingWindowsContext();
+  const [showSpaceBackground, setShowSpaceBackground] = useState(true);
 
   useEffect(() => {
     fetchPosts();
@@ -227,7 +228,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <RealisticSpaceBackground />
+      {showSpaceBackground && <RealisticSpaceBackground />}
       <Navigation onCreatePost={() => setIsCreateDialogOpen(true)} />
       <StoriesBar />
       
@@ -276,6 +277,19 @@ const Index = () => {
                     >
                       <Award className="w-4 h-4 mr-2" />
                       Progress
+                    </Button>
+                  </CarouselItem>
+                  <CarouselItem className="pl-2 md:pl-4 basis-auto">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => {
+                        setShowSpaceBackground(false);
+                        openWindow("All Seeing Eye - Multiverse Explorer", <RealisticSpaceBackground />, 900, 700);
+                      }}
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      All Seeing Eye
                     </Button>
                   </CarouselItem>
                   <CarouselItem className="pl-2 md:pl-4 basis-auto">

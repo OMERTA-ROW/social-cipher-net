@@ -6,12 +6,14 @@ export interface FloatingWindowData {
   content: ReactNode;
   x: number;
   y: number;
+  width?: number;
+  height?: number;
 }
 
 export function useFloatingWindows() {
   const [windows, setWindows] = useState<FloatingWindowData[]>([]);
 
-  const openWindow = (title: string, content: ReactNode) => {
+  const openWindow = (title: string, content: ReactNode, width?: number, height?: number) => {
     const id = `window-${Date.now()}-${Math.random()}`;
     const offset = windows.length * 30;
     
@@ -23,6 +25,8 @@ export function useFloatingWindows() {
         content,
         x: 100 + offset,
         y: 100 + offset,
+        width,
+        height,
       },
     ]);
   };
