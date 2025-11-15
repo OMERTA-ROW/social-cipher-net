@@ -65,12 +65,32 @@ serve(async (req) => {
 
     console.log(`Mining features unlocked for ${user.id}: ${subscriptionType}`);
 
+    // Insert notification for user
+    await supabaseClient
+      .from("wallet_transactions")
+      .insert({
+        user_id: user.id,
+        amount: 0,
+        transaction_type: "notification",
+        description: `🎉 ${miningName} Mining Features Unlocked!`,
+        status: "completed",
+        metadata: {
+          type: "mining_unlock",
+          subscription_type: subscriptionType,
+          message: `Congratulations! You now have access to the exclusive Miners Hub. Visit the Miners tab in your navigation to connect your mining accounts and start boosting your mining performance with CyberLink tokens. Pay 1-100,000 tokens for 2-4 days of mining sessions. The more you invest, the better your mining performance! 💎`
+        }
+      });
+
     return new Response(
       JSON.stringify({
         success: true,
         message: `🎉 Congratulations! You've unlocked ${miningName} Mining Features! 
         
-You can now use your CyberLink tokens to boost your mining performance. Pay between 1-100,000 tokens for 2-4 days of mining. The more tokens you invest, the better your mining performance!
+The Miners Hub is now available in your navigation. You can now:
+• Connect your internal mining operations
+• Link external mining accounts
+• Use CyberLink tokens to boost mining performance (1-100,000 tokens for 2-4 days)
+• The more tokens you invest, the better your mining performance!
 
 Start mining now and watch your earnings grow! 💎`,
         subscriptionType,

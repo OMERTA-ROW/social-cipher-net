@@ -23,6 +23,7 @@ import VerificationSuccess from "./pages/VerificationSuccess";
 import Subscription from "./pages/Subscription";
 import AffiliateLinks from "./pages/AffiliateLinks";
 import CyberWorld from "./pages/CyberWorld";
+import Miners from "./pages/Miners";
 import UserProfile from "./pages/UserProfile";
 import TokenPurchase from "./pages/TokenPurchase";
 import AIBotAssistant from "./components/AIBotAssistant";
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/affiliate-links" element={<AffiliateLinks />} />
           <Route path="/cyber-world" element={<CyberWorld />} />
+          <Route path="/miners" element={<Miners />} />
           <Route path="/profile/:userId" element={<UserProfile />} />
           <Route path="/token-purchase" element={<TokenPurchase />} />
           <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
