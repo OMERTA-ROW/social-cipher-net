@@ -701,6 +701,8 @@ const SpaceScene = ({ povIndex }: { povIndex: number }) => {
         enableDamping
         dampingFactor={0.05}
         rotateSpeed={0.5}
+        autoRotate={true}
+        autoRotateSpeed={1.0}
         enableZoom={true}
         enablePan={false}
         minDistance={1}
