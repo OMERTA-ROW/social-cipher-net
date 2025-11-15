@@ -554,6 +554,37 @@ export const AIEcosystemDashboard = () => {
             </CardContent>
           </Card>
 
+          <Card className="hover:border-cyan/50 transition-colors cursor-pointer border-cyan-500/30 bg-gradient-to-br from-cyan-950/20 via-purple-950/20 to-pink-950/20">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-cyan-400 animate-pulse" />
+                <CardTitle className="text-lg text-cyan-300">Multiverse 3D</CardTitle>
+              </div>
+              <CardDescription>
+                360° orbital exploration with AI-generated viewpoints
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-cyan-400/80">Status</span>
+                  <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/50">
+                    Active
+                  </Badge>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-cyan-400/80">Rotation Speed</span>
+                  <span className="text-cyan-300">1.0x</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-cyan-400/80">AI Viewpoints</span>
+                  <span className="text-cyan-300">Enabled</span>
+                </div>
+                <Progress value={100} className="bg-cyan-500/20" />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="hover:border-primary/50 transition-colors cursor-pointer">
             <CardHeader>
               <div className="flex items-center gap-2">
