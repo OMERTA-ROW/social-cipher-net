@@ -1773,6 +1773,48 @@ export type Database = {
         }
         Relationships: []
       }
+      trading_accounts: {
+        Row: {
+          account_username: string | null
+          api_key: string | null
+          api_secret: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          platform_name: string
+          platform_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_username?: string | null
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          platform_name: string
+          platform_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_username?: string | null
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          platform_name?: string
+          platform_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
