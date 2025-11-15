@@ -74,6 +74,7 @@ export default function FloatingWindow({
         top: `${position.y}px`,
         width: isMinimized ? "300px" : `${size.width}px`,
         height: isMinimized ? "auto" : `${size.height}px`,
+        pointerEvents: 'auto',
       }}
     >
       <Card className="h-full flex flex-col border-2 border-primary/20 bg-background/95 backdrop-blur-sm">

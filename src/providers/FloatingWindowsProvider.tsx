@@ -4,7 +4,7 @@ import FloatingWindow from "@/components/FloatingWindow";
 
 interface FloatingWindowsContextType {
   windows: FloatingWindowData[];
-  openWindow: (title: string, content: ReactNode) => void;
+  openWindow: (title: string, content: ReactNode, width?: number, height?: number) => void;
   closeWindow: (id: string) => void;
   closeAllWindows: () => void;
 }
@@ -26,19 +26,21 @@ export const FloatingWindowsProvider = ({ children }: { children: ReactNode }) =
     <FloatingWindowsContext.Provider value={floatingWindows}>
       {children}
       
-      {/* Render all floating windows with high z-index */}
-      <div className="fixed inset-0 pointer-events-none z-50">
+      <div className="fixed inset-0 pointer-events-none z-50" style={{ pointerEvents: 'none' }}>
         {floatingWindows.windows.map((window) => (
-          <FloatingWindow
-            key={window.id}
-            id={window.id}
-            title={window.title}
-            onClose={() => floatingWindows.closeWindow(window.id)}
-            initialX={window.x}
-            initialY={window.y}
-          >
-            {window.content}
-          </FloatingWindow>
+          <div key={window.id} style={{ pointerEvents: 'auto' }}>
+            <FloatingWindow
+              id={window.id}
+              title={window.title}
+              onClose={() => floatingWindows.closeWindow(window.id)}
+              initialX={window.x}
+              initialY={window.y}
+              width={window.width}
+              height={window.height}
+            >
+              {window.content}
+            </FloatingWindow>
+          </div>
         ))}
       </div>
     </FloatingWindowsContext.Provider>
