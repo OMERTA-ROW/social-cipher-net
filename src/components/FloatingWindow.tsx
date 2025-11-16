@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Minus, Maximize2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { X, Minus, Maximize2, Move } from "lucide-react";
+import { toast } from "sonner";
 
 interface FloatingWindowProps {
   id: string;
@@ -29,10 +31,38 @@ export default function FloatingWindow({
   const [isDragging, setIsDragging] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDraggable, setIsDraggable] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
+  const [tapTimer, setTapTimer] = useState<NodeJS.Timeout | null>(null);
   const windowRef = useRef<HTMLDivElement>(null);
+
+  // Four-tap gesture handler
+  const handleTap = () => {
+    setTapCount(prev => prev + 1);
+    
+    if (tapTimer) {
+      clearTimeout(tapTimer);
+    }
+    
+    const timer = setTimeout(() => {
+      const currentTapCount = tapCount + 1;
+      
+      if (currentTapCount === 4) {
+        setIsDraggable(prev => !prev);
+        toast(isDraggable ? "Movement locked" : "Movement unlocked - Drag anywhere!", {
+          icon: <Move className="h-4 w-4" />
+        });
+      }
+      
+      setTapCount(0);
+    }, 500);
+    
+    setTapTimer(timer);
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
+    if (!isDraggable) return;
     
     setIsDragging(true);
     setDragOffset({
@@ -41,11 +71,33 @@ export default function FloatingWindow({
     });
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    if (!isDraggable) return;
+    
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setDragOffset({
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y,
+    });
+  };
+
   const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging) {
+    if (isDragging && isDraggable) {
       setPosition({
         x: e.clientX - dragOffset.x,
         y: e.clientY - dragOffset.y,
+      });
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (isDragging && isDraggable) {
+      const touch = e.touches[0];
+      setPosition({
+        x: touch.clientX - dragOffset.x,
+        y: touch.clientY - dragOffset.y,
       });
     }
   };
@@ -54,13 +106,21 @@ export default function FloatingWindow({
     setIsDragging(false);
   };
 
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
   useEffect(() => {
     if (isDragging) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("touchmove", handleTouchMove);
+      window.addEventListener("touchend", handleTouchEnd);
       return () => {
         window.removeEventListener("mousemove", handleMouseMove);
         window.removeEventListener("mouseup", handleMouseUp);
+        window.removeEventListener("touchmove", handleTouchMove);
+        window.removeEventListener("touchend", handleTouchEnd);
       };
     }
   }, [isDragging, dragOffset]);
@@ -68,7 +128,7 @@ export default function FloatingWindow({
   return (
     <div
       ref={windowRef}
-      className="fixed z-50 shadow-2xl"
+      className={`fixed z-50 shadow-2xl transition-all ${isDraggable ? 'ring-2 ring-primary/50' : ''}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -79,11 +139,21 @@ export default function FloatingWindow({
     >
       <Card className="h-full flex flex-col border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
         <CardHeader
-          className="cursor-move border-b bg-muted/30 py-2 px-4"
+          className={`border-b bg-muted/30 py-2 px-4 ${isDraggable ? 'cursor-move' : 'cursor-default'}`}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          onClick={handleTap}
         >
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-medium">{title}</CardTitle>
+              {isDraggable && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <Move className="h-3 w-3" />
+                  Movable
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center gap-1">
               <Button
                 size="icon"
