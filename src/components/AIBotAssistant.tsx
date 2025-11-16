@@ -35,9 +35,9 @@ const AIBotAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showDracoUpgrade, setShowDracoUpgrade] = useState(false);
-  const [aiMode, setAiMode] = useState<"zozo" | "draco" | "infinity">("zozo");
-  const [infinityLoopActive, setInfinityLoopActive] = useState(false);
-  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(false);
+  const [aiMode, setAiMode] = useState<"zozo" | "draco">("zozo");
+  const [infinityLoopActive, setInfinityLoopActive] = useState(true); // Always active
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true); // Always enabled
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -88,7 +88,7 @@ const AIBotAssistant = () => {
   };
   
   const currentChar = aiCharacters[aiMode];
-  const currentActive = aiMode === "zozo" ? isActive : aiMode === "draco" ? isDracoActive : true; // Infinity is always active
+  const currentActive = aiMode === "zozo" ? isActive : isDracoActive;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -179,20 +179,14 @@ const AIBotAssistant = () => {
           toast.info("🤖 Zozo Subscription Options");
         }
         // Infinity mode has no subscription
-      } else if (tapCount === 3) {
-        // Triple tap - Activate infinity loop automation
-        setInfinityLoopActive(prev => !prev);
-        toast.success(infinityLoopActive ? "♾️ Infinity Loop Deactivated" : "♾️ Infinity Loop Activated - Continuous AI monitoring enabled!");
       } else if (tapCount === 2) {
         if (isOpen) {
           // Double tap when open - close assistant
           setIsOpen(false);
           toast.info(`${currentChar.name} Closed`);
         } else {
-          // Double tap when closed - cycle to next AI mode
-          const modes: Array<"zozo" | "draco" | "infinity"> = ["zozo", "draco", "infinity"];
-          const currentIndex = modes.indexOf(aiMode);
-          const nextMode = modes[(currentIndex + 1) % modes.length];
+          // Double tap when closed - cycle between Zozo and Draco
+          const nextMode = aiMode === "zozo" ? "draco" : "zozo";
           setAiMode(nextMode);
           const nextChar = aiCharacters[nextMode];
           toast.success(`${nextChar.name} Activated - ${nextChar.description}`);
@@ -207,10 +201,8 @@ const AIBotAssistant = () => {
     setBotTapTimer(timer);
   };
   
-  // Infinity Loop - Continuous AI monitoring and optimization
+  // Infinity Loop - Continuous AI monitoring and optimization (auto-integrated)
   useEffect(() => {
-    if (!infinityLoopActive) return;
-    
     const infinityInterval = setInterval(() => {
       console.log("♾️ Infinity Loop: Monitoring and optimizing ecosystem...");
       
@@ -223,26 +215,27 @@ const AIBotAssistant = () => {
           aiStates: {
             zozo: isActive,
             draco: isDracoActive,
-            infinity: true // Always active
+            infinityActive: true
           }
         }
       });
+      
+      // Silent background monitoring
+      toast.info("♾️ System optimized", { duration: 1000 });
     }, 30000); // Every 30 seconds
     
     return () => clearInterval(infinityInterval);
-  }, [infinityLoopActive, isActive, isDracoActive]);
+  }, [isActive, isDracoActive]);
   
-  // Auto-update spaceship features
+  // Auto-update spaceship features (auto-integrated)
   useEffect(() => {
-    if (!autoUpdateEnabled) return;
-    
     const updateInterval = setInterval(() => {
       console.log("🚀 Auto-Update: Checking for spaceship enhancements...");
-      toast.info("🚀 Spaceship systems auto-updated", { duration: 2000 });
+      // Silent auto-updates - no toast unless critical
     }, 120000); // Every 2 minutes
     
     return () => clearInterval(updateInterval);
-  }, [autoUpdateEnabled]);
+  }, []);
 
   const streamAIResponse = async (userMessage: string, action = "chat") => {
     if (!currentActive) {
@@ -262,7 +255,7 @@ const AIBotAssistant = () => {
     setIsLoading(true);
 
     try {
-      const functionName = aiMode === "draco" ? "draco-ai" : aiMode === "infinity" ? "ai-bot" : "ai-bot";
+      const functionName = aiMode === "draco" ? "draco-ai" : "ai-bot";
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
         {
@@ -535,24 +528,16 @@ const AIBotAssistant = () => {
               ? "animate-pulse glow-accent scale-110" 
               : aiMode === "draco" 
                 ? "glow-destructive" 
-                : aiMode === "infinity"
-                  ? "glow-purple"
-                  : "glow-primary"
+                : "glow-primary"
           }`}
           size="icon"
           title={`${currentChar.name} AI (Double-tap to cycle modes)`}
         >
-          {aiMode === "infinity" ? (
-            <Infinity className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""} text-purple-400 animate-spin`} style={{ animationDuration: '3s' }} />
-          ) : (
-            <Bot className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""} ${aiMode === "draco" ? "text-red-500" : ""}`} />
-          )}
+          <Bot className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""} ${aiMode === "draco" ? "text-red-500" : ""}`} />
           <Badge className={`absolute -top-2 -right-2 text-white text-xs px-1 ${
             aiMode === "draco" 
               ? "bg-red-500" 
-              : aiMode === "infinity" 
-                ? "bg-purple-500" 
-                : "bg-primary"
+              : "bg-primary"
           }`}>
             {aiMode.toUpperCase()}
           </Badge>
@@ -564,43 +549,31 @@ const AIBotAssistant = () => {
         <Card className={`fixed bottom-28 right-8 z-50 w-96 h-[600px] backdrop-blur shadow-2xl flex flex-col ${
           aiMode === "draco"
             ? 'bg-red-950/95 border-red-600/50' 
-            : aiMode === "infinity"
-              ? 'bg-purple-950/95 border-purple-600/50'
-              : 'bg-card/95 border-primary/20'
+            : 'bg-card/95 border-primary/20'
         }`}>
           <div className={`flex items-center justify-between p-4 border-b ${
             aiMode === "draco" 
               ? 'border-red-600/30' 
-              : aiMode === "infinity"
-                ? 'border-purple-600/30'
-                : 'border-primary/20'
+              : 'border-primary/20'
           }`}>
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   isSpeaking ? "animate-pulse" : ""
                 } bg-gradient-to-br ${currentChar.gradient}`}>
-                  {aiMode === "infinity" ? (
-                    <Infinity className={`w-6 h-6 text-primary-foreground ${isSpeaking ? "animate-bounce" : ""} animate-spin`} style={{ animationDuration: '3s' }} />
-                  ) : (
-                    <Bot className={`w-6 h-6 text-primary-foreground ${isSpeaking ? "animate-bounce" : ""}`} />
-                  )}
+                  <Bot className={`w-6 h-6 text-primary-foreground ${isSpeaking ? "animate-bounce" : ""}`} />
                 </div>
                 {isSpeaking && (
                   <>
                     <div className={`absolute inset-0 rounded-full animate-ping ${
                       aiMode === "draco" 
                         ? 'bg-red-500/30' 
-                        : aiMode === "infinity"
-                          ? 'bg-purple-500/30'
-                          : 'bg-primary/30'
+                        : 'bg-primary/30'
                     }`} />
                     <div className={`absolute inset-0 rounded-full animate-ping ${
                       aiMode === "draco"
                         ? 'bg-orange-500/20'
-                        : aiMode === "infinity"
-                          ? 'bg-pink-500/20'
-                          : 'bg-accent/20'
+                        : 'bg-accent/20'
                     }`} style={{ animationDelay: "0.2s" }} />
                   </>
                 )}
@@ -609,9 +582,7 @@ const AIBotAssistant = () => {
                 <h3 className={`font-bold ${
                   aiMode === "draco" 
                     ? 'text-red-400' 
-                    : aiMode === "infinity"
-                      ? 'text-purple-400'
-                      : 'text-foreground'
+                    : 'text-foreground'
                 }`}>{currentChar.name}</h3>
                 <p className="text-xs text-muted-foreground">
                   {isSpeaking ? "Speaking..." : isRecording ? "Listening..." : currentChar.description}
@@ -645,23 +616,9 @@ const AIBotAssistant = () => {
           <div className={`px-4 py-3 border-b bg-muted/10 space-y-3 ${
             aiMode === "draco" 
               ? 'border-red-600/30' 
-              : aiMode === "infinity"
-                ? 'border-purple-600/30'
-                : 'border-primary/10'
+              : 'border-primary/10'
           }`}>
-            {aiMode === "infinity" ? (
-              // Infinity Mode Settings
-              <>
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-purple-400">Infinity Loop</Label>
-                  <Switch checked={infinityLoopActive} onCheckedChange={setInfinityLoopActive} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs text-purple-400">Auto-Update</Label>
-                  <Switch checked={autoUpdateEnabled} onCheckedChange={setAutoUpdateEnabled} />
-                </div>
-              </>
-            ) : aiMode === "draco" ? (
+            {aiMode === "draco" ? (
               // Draco Mode Settings
               !isDracoActive ? (
                 <div className="text-center py-4 space-y-3">
@@ -803,18 +760,12 @@ const AIBotAssistant = () => {
               <div className="text-center text-muted-foreground py-8">
                 <div className="relative inline-block mb-4">
                   <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${currentChar.gradient} flex items-center justify-center ${currentActive ? 'animate-pulse' : 'opacity-50 grayscale'}`}>
-                    {aiMode === "infinity" ? (
-                      <Infinity className="w-12 h-12 text-primary-foreground animate-spin" style={{ animationDuration: '3s' }} />
-                    ) : (
-                      <Bot className="w-12 h-12 text-primary-foreground" />
-                    )}
+                    <Bot className="w-12 h-12 text-primary-foreground" />
                   </div>
                   {currentActive && <div className={`absolute inset-0 rounded-full ${
                     aiMode === "draco" 
                       ? 'bg-red-500/20' 
-                      : aiMode === "infinity"
-                        ? 'bg-purple-500/20'
-                        : 'bg-primary/20'
+                      : 'bg-primary/20'
                   } animate-ping`} />}
                 </div>
                 <p className="font-bold text-lg mb-1">Hi! I'm {currentChar.name}</p>
@@ -824,13 +775,7 @@ const AIBotAssistant = () => {
                   <>
                     <p className="text-sm mt-2">Try these commands:</p>
                     <div className="text-xs space-y-1 mt-3">
-                      {aiMode === "infinity" ? (
-                        <>
-                          <Badge variant="outline" className="mr-2 mb-1">optimize ecosystem</Badge>
-                          <Badge variant="outline" className="mr-2 mb-1">predict trends</Badge>
-                          <Badge variant="outline" className="mr-2 mb-1">coordinate AIs</Badge>
-                        </>
-                      ) : aiMode === "draco" ? (
+                      {aiMode === "draco" ? (
                         <>
                           <Badge variant="outline" className="mr-2 mb-1">analyze chart</Badge>
                           <Badge variant="outline" className="mr-2 mb-1">trading signals</Badge>
