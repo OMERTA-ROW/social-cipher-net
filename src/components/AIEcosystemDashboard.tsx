@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Loader2, Shield, TrendingUp, RefreshCw, Eye, Brain, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import CyberLinkCriticalAI from "./CyberLinkCriticalAI";
 
 export const AIEcosystemDashboard = () => {
   const [loading, setLoading] = useState(false);
@@ -198,6 +199,9 @@ export const AIEcosystemDashboard = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/5 to-transparent pointer-events-none" />
       
       <div className="max-w-7xl mx-auto space-y-6 relative z-10">
+        {/* Critical AI Ecosystem - Top Priority */}
+        <CyberLinkCriticalAI />
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
