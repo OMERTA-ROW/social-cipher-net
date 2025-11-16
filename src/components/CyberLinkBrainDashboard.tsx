@@ -71,16 +71,21 @@ const CyberLinkBrainDashboard = () => {
     "[BRAIN] CyberLink Brain AI initialized",
     "[SECURITY] Military-grade protection active",
     "[DATABASE] All platforms synchronized",
-    "[ALGORITHM] Viral injection systems ready"
+    "[ALGORITHM] Viral injection systems ready",
+    "[AUTO-UPDATE] Update deployment system active",
+    "[VIRAL-EXPANSION] Infrastructure scaling ready"
   ]);
 
   const [metrics, setMetrics] = useState({
-    totalAgents: 8,
+    totalAgents: 10,
     activeDatabases: 21,
     viralAlgorithms: 150,
     securityLevel: 100,
     injectionRate: 0,
-    surveillanceActive: true
+    surveillanceActive: true,
+    autoUpdatesPending: 3,
+    viralExpansionRate: 125,
+    infrastructureCapacity: 85
   });
 
   useEffect(() => {
@@ -105,7 +110,10 @@ const CyberLinkBrainDashboard = () => {
         setMetrics(prev => ({
           ...prev,
           viralAlgorithms: prev.viralAlgorithms + Math.floor(Math.random() * 10),
-          injectionRate: Math.min(100, prev.injectionRate + Math.random() * 5)
+          injectionRate: Math.min(100, prev.injectionRate + Math.random() * 5),
+          autoUpdatesPending: Math.max(0, prev.autoUpdatesPending - Math.floor(Math.random() * 2)),
+          viralExpansionRate: Math.min(200, prev.viralExpansionRate + Math.random() * 10),
+          infrastructureCapacity: Math.min(100, prev.infrastructureCapacity + Math.random() * 2)
         }));
 
         // Add logs
@@ -115,7 +123,11 @@ const CyberLinkBrainDashboard = () => {
           "[EYE] Surveillance scan complete",
           "[SECURITY] Threat neutralized",
           "[DATABASE] Cross-platform synthesis active",
-          "[QUANTUM] Multi-dimensional analysis running"
+          "[QUANTUM] Multi-dimensional analysis running",
+          "[AUTO-UPDATE] Critical updates deployed",
+          "[VIRAL-EXPANSION] Scaling to new regions",
+          "[AUTO-UPDATE] Algorithm integration complete",
+          "[VIRAL-EXPANSION] Infrastructure at optimal capacity"
         ];
         
         const randomLog = newLogs[Math.floor(Math.random() * newLogs.length)];
@@ -215,7 +227,7 @@ const CyberLinkBrainDashboard = () => {
         ) : (
           <>
             {/* Metrics Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <Card className="bg-muted/50 border-primary/20">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -243,6 +255,28 @@ const CyberLinkBrainDashboard = () => {
                     <TrendingUp className="h-4 w-4 text-purple-500" />
                   </div>
                   <div className="text-2xl font-bold">{metrics.viralAlgorithms}</div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-muted/50 border-green-500/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Auto-Updates</span>
+                    <Zap className="h-4 w-4 text-green-500" />
+                  </div>
+                  <div className="text-2xl font-bold">{metrics.autoUpdatesPending}</div>
+                  <div className="text-xs text-green-500 mt-1">Pending</div>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-muted/50 border-purple-500/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Viral Expansion</span>
+                    <Globe className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <div className="text-2xl font-bold">{metrics.viralExpansionRate}%</div>
+                  <Progress value={metrics.infrastructureCapacity} className="h-1 mt-2" />
                 </CardContent>
               </Card>
             </div>
