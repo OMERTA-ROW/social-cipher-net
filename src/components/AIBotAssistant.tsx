@@ -36,7 +36,7 @@ const AIBotAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showDracoUpgrade, setShowDracoUpgrade] = useState(false);
-  const [aiMode, setAiMode] = useState<"zozo" | "draco">("zozo");
+  const [aiMode, setAiMode] = useState<"zozo" | "draco" | "quantum" | "autofix" | "pageload">("zozo");
   const [infinityLoopActive, setInfinityLoopActive] = useState(true); // Always active
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true); // Always enabled
   const [messages, setMessages] = useState<Message[]>([]);
@@ -77,6 +77,30 @@ const AIBotAssistant = () => {
       color: "red",
       gradient: "from-red-600 to-orange-600",
       description: "Your tactical trading AI strategist"
+    },
+    quantum: {
+      name: "Quantum Realm AI",
+      personality: "Multi-dimensional, probability-based intelligence",
+      expertise: "Quantum analysis, parallel reality processing, predictive modeling",
+      color: "purple",
+      gradient: "from-purple-600 to-pink-600",
+      description: "Your quantum intelligence processor"
+    },
+    autofix: {
+      name: "Auto-Fix Agent",
+      personality: "Precise, systematic, and proactive",
+      expertise: "Error detection, automatic fixes, system monitoring",
+      color: "yellow",
+      gradient: "from-yellow-600 to-orange-600",
+      description: "Your critical error fixing agent"
+    },
+    pageload: {
+      name: "Page Load Agent",
+      personality: "Performance-focused, optimization-driven",
+      expertise: "Performance optimization, Core Web Vitals, loading strategies",
+      color: "blue",
+      gradient: "from-blue-600 to-cyan-600",
+      description: "Your instant page load optimizer"
     },
     infinity: {
       name: "Infinity",
@@ -186,8 +210,11 @@ const AIBotAssistant = () => {
           setIsOpen(false);
           toast.info(`${currentChar.name} Closed`);
         } else {
-          // Double tap when closed - cycle between Zozo and Draco
-          const nextMode = aiMode === "zozo" ? "draco" : "zozo";
+          // Double tap when closed - cycle through all AI modes
+          const modes: Array<"zozo" | "draco" | "quantum" | "autofix" | "pageload"> = 
+            ["zozo", "draco", "quantum", "autofix", "pageload"];
+          const currentIndex = modes.indexOf(aiMode);
+          const nextMode = modes[(currentIndex + 1) % modes.length];
           setAiMode(nextMode);
           const nextChar = aiCharacters[nextMode];
           toast.success(`${nextChar.name} Activated - ${nextChar.description}`);
@@ -239,7 +266,10 @@ const AIBotAssistant = () => {
   }, []);
 
   const streamAIResponse = async (userMessage: string, action = "chat") => {
-    if (!currentActive) {
+    // Check if critical AI modes (quantum, autofix, pageload) - these don't require subscriptions
+    const isCriticalAI = ["quantum", "autofix", "pageload"].includes(aiMode);
+    
+    if (!isCriticalAI && !currentActive) {
       if (aiMode === "draco") {
         toast.error("Draco is inactive. Subscribe to activate tactical features!");
         setShowDracoUpgrade(true);
@@ -256,7 +286,19 @@ const AIBotAssistant = () => {
     setIsLoading(true);
 
     try {
-      const functionName = aiMode === "draco" ? "draco-ai" : "ai-bot";
+      // Route to appropriate AI endpoint
+      let functionName = "ai-bot";
+      let actionParam = action;
+      
+      if (aiMode === "draco") {
+        functionName = "draco-ai";
+      } else if (isCriticalAI) {
+        functionName = "cyberlink-critical-ai";
+        // Map AI mode to action for critical AI
+        actionParam = aiMode === "quantum" ? "quantum_realm" : 
+                     aiMode === "autofix" ? "auto_fix" : "page_load";
+      }
+      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
         {
@@ -267,7 +309,8 @@ const AIBotAssistant = () => {
           },
           body: JSON.stringify({
             messages: updatedMessages,
-            action,
+            action: actionParam,
+            context: userMessage
           }),
         }
       );
