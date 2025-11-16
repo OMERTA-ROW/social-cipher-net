@@ -574,11 +574,11 @@ export const AIEcosystemDashboard = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-cyan-400/80">Spaceships</span>
-                  <span className="text-cyan-300">Draco & Zozo</span>
+                  <span className="text-cyan-300">Mega Hybrid Ship</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-cyan-400/80">Viewpoints</span>
-                  <span className="text-cyan-300">15 POV Modes</span>
+                  <span className="text-cyan-300">13 POV Modes</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-cyan-400/80">Cockpit Views</span>

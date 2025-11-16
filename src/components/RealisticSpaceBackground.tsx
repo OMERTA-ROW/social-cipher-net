@@ -618,161 +618,201 @@ const MilkyWayDisk = () => {
   );
 };
 
-// Draco Spaceship with detailed exterior
-const DracoSpaceship = ({ position }: { position: [number, number, number] }) => {
+// Mega Hybrid Spaceship - Combines Draco and Zozo designs
+const MegaSpaceship = ({ position }: { position: [number, number, number] }) => {
   const meshRef = useRef<THREE.Group>(null);
   
   useFrame(({ clock }) => {
     if (meshRef.current) {
       const time = clock.getElapsedTime();
       // Orbital movement
-      meshRef.current.position.x = position[0] + Math.cos(time * 0.1) * 30;
-      meshRef.current.position.z = position[2] + Math.sin(time * 0.1) * 30;
-      meshRef.current.rotation.y = time * 0.1;
+      meshRef.current.position.x = position[0] + Math.cos(time * 0.08) * 40;
+      meshRef.current.position.z = position[2] + Math.sin(time * 0.08) * 40;
+      meshRef.current.position.y = position[1] + Math.sin(time * 0.2) * 3;
+      meshRef.current.rotation.y = time * 0.08;
     }
   });
 
   return (
     <group ref={meshRef} position={position}>
-      {/* Main hull */}
+      {/* Central Core - Angular red structure from Draco */}
       <mesh>
-        <boxGeometry args={[3, 1, 6]} />
-        <meshStandardMaterial color="#FF0000" metalness={0.8} roughness={0.2} />
+        <boxGeometry args={[4, 2, 8]} />
+        <meshStandardMaterial 
+          color="#CC0033" 
+          metalness={0.9} 
+          roughness={0.15}
+          emissive="#330000"
+          emissiveIntensity={0.3}
+        />
       </mesh>
-      {/* Wings */}
-      <mesh position={[2.5, 0, -1]}>
-        <boxGeometry args={[2, 0.2, 3]} />
-        <meshStandardMaterial color="#8B0000" metalness={0.7} roughness={0.3} />
+      
+      {/* Cylindrical Overlay - Sleek cyan from Zozo */}
+      <mesh position={[0, 0, -1]}>
+        <cylinderGeometry args={[1.5, 2, 6, 12]} />
+        <meshStandardMaterial 
+          color="#00CED1" 
+          metalness={0.95} 
+          roughness={0.05}
+          transparent
+          opacity={0.7}
+        />
       </mesh>
-      <mesh position={[-2.5, 0, -1]}>
-        <boxGeometry args={[2, 0.2, 3]} />
-        <meshStandardMaterial color="#8B0000" metalness={0.7} roughness={0.3} />
+      
+      {/* Large Angular Wings - Red */}
+      <mesh position={[4, 0, -1]}>
+        <boxGeometry args={[3, 0.4, 4]} />
+        <meshStandardMaterial color="#8B0000" metalness={0.8} roughness={0.2} />
       </mesh>
-      {/* Cockpit */}
-      <mesh position={[0, 0.8, 2]}>
-        <sphereGeometry args={[0.8, 16, 16]} />
-        <meshStandardMaterial color="#FFD700" metalness={0.9} roughness={0.1} transparent opacity={0.7} />
+      <mesh position={[-4, 0, -1]}>
+        <boxGeometry args={[3, 0.4, 4]} />
+        <meshStandardMaterial color="#8B0000" metalness={0.8} roughness={0.2} />
       </mesh>
-      {/* Engine glow */}
-      <pointLight position={[0, 0, -3]} intensity={3} distance={10} color="#FF4500" />
-      <mesh position={[0, 0, -3]}>
-        <sphereGeometry args={[0.5, 16, 16]} />
-        <meshStandardMaterial color="#FF4500" emissive="#FF4500" emissiveIntensity={2} />
+      
+      {/* Cyan Stabilizer Fins */}
+      <mesh position={[2.5, 1.5, 0]} rotation={[0, 0, Math.PI / 6]}>
+        <boxGeometry args={[0.3, 4, 2]} />
+        <meshStandardMaterial color="#008B8B" metalness={0.85} roughness={0.15} />
+      </mesh>
+      <mesh position={[-2.5, 1.5, 0]} rotation={[0, 0, -Math.PI / 6]}>
+        <boxGeometry args={[0.3, 4, 2]} />
+        <meshStandardMaterial color="#008B8B" metalness={0.85} roughness={0.15} />
+      </mesh>
+      
+      {/* Dual-Toned Cockpit - Gold and Cyan */}
+      <mesh position={[0, 1.5, 3]}>
+        <sphereGeometry args={[1.2, 20, 20]} />
+        <meshStandardMaterial 
+          color="#FFD700" 
+          metalness={0.9} 
+          roughness={0.1} 
+          transparent 
+          opacity={0.8}
+          emissive="#FFAA00"
+          emissiveIntensity={0.5}
+        />
+      </mesh>
+      <mesh position={[0, 1.5, 3]}>
+        <sphereGeometry args={[1.1, 20, 20]} />
+        <meshStandardMaterial 
+          color="#00FFFF" 
+          metalness={0.95} 
+          roughness={0.05} 
+          transparent 
+          opacity={0.4}
+        />
+      </mesh>
+      
+      {/* Dual Engine System - Red and Cyan */}
+      {/* Red Engine Left */}
+      <pointLight position={[-1, 0, -4]} intensity={5} distance={15} color="#FF4500" />
+      <mesh position={[-1, 0, -4]}>
+        <sphereGeometry args={[0.7, 16, 16]} />
+        <meshStandardMaterial 
+          color="#FF4500" 
+          emissive="#FF4500" 
+          emissiveIntensity={3}
+        />
+      </mesh>
+      <mesh position={[-1, 0, -4.5]}>
+        <coneGeometry args={[0.9, 2, 8]} />
+        <meshStandardMaterial 
+          color="#FF6600" 
+          emissive="#FF4500" 
+          emissiveIntensity={2}
+          transparent
+          opacity={0.8}
+        />
+      </mesh>
+      
+      {/* Cyan Engine Right */}
+      <pointLight position={[1, 0, -4]} intensity={5} distance={15} color="#00FFFF" />
+      <mesh position={[1, 0, -4]}>
+        <sphereGeometry args={[0.7, 16, 16]} />
+        <meshStandardMaterial 
+          color="#00FFFF" 
+          emissive="#00FFFF" 
+          emissiveIntensity={3}
+        />
+      </mesh>
+      <mesh position={[1, 0, -4.5]}>
+        <coneGeometry args={[0.9, 2, 8]} />
+        <meshStandardMaterial 
+          color="#00CCFF" 
+          emissive="#00FFFF" 
+          emissiveIntensity={2}
+          transparent
+          opacity={0.8}
+        />
+      </mesh>
+      
+      {/* Additional Hull Details */}
+      <mesh position={[0, 0, 1]}>
+        <boxGeometry args={[2.5, 1.5, 3]} />
+        <meshStandardMaterial 
+          color="#660033" 
+          metalness={0.85} 
+          roughness={0.25}
+        />
       </mesh>
     </group>
   );
 };
 
-// Zozo Spaceship with detailed exterior
-const ZozoSpaceship = ({ position }: { position: [number, number, number] }) => {
-  const meshRef = useRef<THREE.Group>(null);
-  
-  useFrame(({ clock }) => {
-    if (meshRef.current) {
-      const time = clock.getElapsedTime();
-      // Orbital movement (opposite direction from Draco)
-      meshRef.current.position.x = position[0] + Math.cos(time * 0.12 + Math.PI) * 35;
-      meshRef.current.position.z = position[2] + Math.sin(time * 0.12 + Math.PI) * 35;
-      meshRef.current.rotation.y = time * 0.12 + Math.PI;
-    }
-  });
-
-  return (
-    <group ref={meshRef} position={position}>
-      {/* Main hull - sleeker design */}
-      <mesh>
-        <cylinderGeometry args={[0.8, 1.2, 5, 8]} />
-        <meshStandardMaterial color="#00CED1" metalness={0.9} roughness={0.1} />
-      </mesh>
-      {/* Stabilizer fins */}
-      <mesh position={[1.5, 0, 0]} rotation={[0, 0, Math.PI / 4]}>
-        <boxGeometry args={[0.2, 3, 1.5]} />
-        <meshStandardMaterial color="#008B8B" metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh position={[-1.5, 0, 0]} rotation={[0, 0, -Math.PI / 4]}>
-        <boxGeometry args={[0.2, 3, 1.5]} />
-        <meshStandardMaterial color="#008B8B" metalness={0.8} roughness={0.2} />
-      </mesh>
-      {/* Cockpit dome */}
-      <mesh position={[0, 1.5, 1]}>
-        <sphereGeometry args={[0.9, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#00FFFF" metalness={0.95} roughness={0.05} transparent opacity={0.8} />
-      </mesh>
-      {/* Engine glow - cyan */}
-      <pointLight position={[0, 0, -2.5]} intensity={4} distance={12} color="#00FFFF" />
-      <mesh position={[0, 0, -2.5]}>
-        <sphereGeometry args={[0.6, 16, 16]} />
-        <meshStandardMaterial color="#00FFFF" emissive="#00FFFF" emissiveIntensity={2.5} />
-      </mesh>
-    </group>
-  );
-};
-
-// Draco Interior Cockpit View
-const DracoCockpitInterior = () => {
+// Mega Hybrid Cockpit Interior - Combines both designs
+const MegaCockpitInterior = () => {
   return (
     <group position={[0, 0, 0]}>
-      {/* Control panels */}
-      <mesh position={[0, -0.5, -2]} rotation={[-Math.PI / 6, 0, 0]}>
-        <boxGeometry args={[2, 0.1, 1]} />
-        <meshStandardMaterial color="#1a1a1a" />
-      </mesh>
-      {/* Holographic displays */}
-      <mesh position={[-0.8, -0.3, -1.8]}>
-        <boxGeometry args={[0.6, 0.4, 0.05]} />
-        <meshStandardMaterial color="#FF0000" emissive="#FF0000" emissiveIntensity={1.5} />
-      </mesh>
-      <mesh position={[0.8, -0.3, -1.8]}>
-        <boxGeometry args={[0.6, 0.4, 0.05]} />
-        <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={1.5} />
-      </mesh>
-      <mesh position={[0, -0.1, -1.8]}>
-        <boxGeometry args={[0.6, 0.4, 0.05]} />
-        <meshStandardMaterial color="#FF4500" emissive="#FF4500" emissiveIntensity={1.5} />
-      </mesh>
-      {/* Ambient cockpit lighting */}
-      <pointLight position={[0, 1, 0]} intensity={0.5} color="#FF0000" />
-      <pointLight position={[-1, 0, -1]} intensity={0.3} color="#FFD700" />
-      <pointLight position={[1, 0, -1]} intensity={0.3} color="#FFD700" />
-    </group>
-  );
-};
-
-// Zozo Interior Cockpit View
-const ZozoCockpitInterior = () => {
-  return (
-    <group position={[0, 0, 0]}>
-      {/* Control console */}
-      <mesh position={[0, -0.6, -2.2]} rotation={[-Math.PI / 5, 0, 0]}>
+      {/* Central control console */}
+      <mesh position={[0, -0.55, -2.1]} rotation={[-Math.PI / 5.5, 0, 0]}>
         <boxGeometry args={[2.5, 0.1, 1.2]} />
         <meshStandardMaterial color="#0a0a0a" metalness={0.9} />
       </mesh>
-      {/* Holographic displays - cyan theme */}
-      <mesh position={[-1, -0.35, -2]}>
-        <boxGeometry args={[0.7, 0.5, 0.05]} />
-        <meshStandardMaterial color="#00CED1" emissive="#00CED1" emissiveIntensity={2} />
+      
+      {/* Red holographic displays (Draco style) */}
+      <mesh position={[-1.2, -0.35, -2]}>
+        <boxGeometry args={[0.6, 0.45, 0.05]} />
+        <meshStandardMaterial color="#FF0000" emissive="#FF0000" emissiveIntensity={1.8} />
       </mesh>
-      <mesh position={[0, -0.2, -2]}>
-        <boxGeometry args={[0.8, 0.6, 0.05]} />
+      <mesh position={[-0.4, -0.25, -1.9]}>
+        <boxGeometry args={[0.6, 0.5, 0.05]} />
+        <meshStandardMaterial color="#FF4500" emissive="#FF4500" emissiveIntensity={1.6} />
+      </mesh>
+      
+      {/* Cyan holographic displays (Zozo style) */}
+      <mesh position={[0.4, -0.25, -1.9]}>
+        <boxGeometry args={[0.6, 0.5, 0.05]} />
         <meshStandardMaterial color="#00FFFF" emissive="#00FFFF" emissiveIntensity={2} />
       </mesh>
-      <mesh position={[1, -0.35, -2]}>
-        <boxGeometry args={[0.7, 0.5, 0.05]} />
-        <meshStandardMaterial color="#20B2AA" emissive="#20B2AA" emissiveIntensity={2} />
+      <mesh position={[1.2, -0.35, -2]}>
+        <boxGeometry args={[0.6, 0.45, 0.05]} />
+        <meshStandardMaterial color="#00CED1" emissive="#00CED1" emissiveIntensity={1.8} />
       </mesh>
-      {/* Side panels */}
+      
+      {/* Center main display - dual color */}
+      <mesh position={[0, -0.1, -1.85]}>
+        <boxGeometry args={[0.8, 0.6, 0.05]} />
+        <meshStandardMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={1.5} />
+      </mesh>
+      
+      {/* Side panels - Red theme */}
       <mesh position={[-1.5, 0, -1]} rotation={[0, Math.PI / 6, 0]}>
         <boxGeometry args={[0.05, 1.5, 1.5]} />
-        <meshStandardMaterial color="#008B8B" emissive="#00CED1" emissiveIntensity={0.3} />
+        <meshStandardMaterial color="#8B0000" emissive="#FF0000" emissiveIntensity={0.3} />
       </mesh>
+      
+      {/* Side panels - Cyan theme */}
       <mesh position={[1.5, 0, -1]} rotation={[0, -Math.PI / 6, 0]}>
         <boxGeometry args={[0.05, 1.5, 1.5]} />
         <meshStandardMaterial color="#008B8B" emissive="#00CED1" emissiveIntensity={0.3} />
       </mesh>
-      {/* Ambient cockpit lighting - cyan */}
-      <pointLight position={[0, 1.2, 0]} intensity={0.6} color="#00FFFF" />
-      <pointLight position={[-1, 0.2, -1]} intensity={0.4} color="#00CED1" />
-      <pointLight position={[1, 0.2, -1]} intensity={0.4} color="#00CED1" />
+      
+      {/* Dual ambient cockpit lighting */}
+      <pointLight position={[-0.5, 1, 0]} intensity={0.5} color="#FF0000" />
+      <pointLight position={[0.5, 1, 0]} intensity={0.5} color="#00FFFF" />
+      <pointLight position={[-1, 0, -1]} intensity={0.35} color="#FFD700" />
+      <pointLight position={[1, 0, -1]} intensity={0.35} color="#00CED1" />
+      <pointLight position={[0, 0.5, -1.5]} intensity={0.4} color="#FFFFFF" />
     </group>
   );
 };
@@ -788,10 +828,8 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
     { pos: [25, 5, 25], lookAt: [22, 0, 0] }, // Planet view (Earth)
     { pos: [-35, 15, -35], lookAt: [-40, 12, -40] }, // Comet view
     { pos: [0, 0, 200], lookAt: [0, 0, 0] }, // Void/Space view
-    { pos: [0, 0, 0], lookAt: [0, 0, -2] }, // Draco Cockpit Interior
-    { pos: [0, 0, 0], lookAt: [0, 0, -2] }, // Zozo Cockpit Interior
-    { pos: [0, 0, 0], lookAt: [0, 0, 0] }, // Follow Draco (calculated dynamically)
-    { pos: [0, 0, 0], lookAt: [0, 0, 0] }, // Follow Zozo (calculated dynamically)
+    { pos: [0, 0, 0], lookAt: [0, 0, -2] }, // Mega Cockpit Interior
+    { pos: [0, 0, 0], lookAt: [0, 0, 0] }, // Follow Mega (calculated dynamically)
     { pos: [120, 40, 120], lookAt: [125, 35, 125] }, // Star constellation
     { pos: [-150, 100, -150], lookAt: [0, 0, 0] }, // Multiverse view
     { pos: [0, 150, 80], lookAt: [0, 0, 0] }, // Heaven view
@@ -815,40 +853,22 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
     let targetPos = new THREE.Vector3(...target.pos);
     let lookAtTarget = new THREE.Vector3(...target.lookAt);
     
-    // Calculate dynamic positions for Follow Draco (POV 6)
-    if (povIndex === 6) {
-      const dracoAngle = time * 0.1;
-      const dracoRadius = 30;
-      const dracoX = Math.cos(dracoAngle) * dracoRadius;
-      const dracoZ = Math.sin(dracoAngle) * dracoRadius;
-      const dracoY = 0;
+    // Calculate dynamic positions for Follow Mega (POV 5)
+    if (povIndex === 5) {
+      const megaAngle = time * 0.08;
+      const megaRadius = 40;
+      const megaX = Math.cos(megaAngle) * megaRadius;
+      const megaZ = Math.sin(megaAngle) * megaRadius;
+      const megaY = 5 + Math.sin(time * 0.2) * 3;
       
-      // Camera behind Draco
-      const offsetDistance = 12;
-      const cameraX = dracoX - Math.cos(dracoAngle) * offsetDistance;
-      const cameraZ = dracoZ - Math.sin(dracoAngle) * offsetDistance;
-      const cameraY = dracoY + 4;
-      
-      targetPos = new THREE.Vector3(cameraX, cameraY, cameraZ);
-      lookAtTarget = new THREE.Vector3(dracoX, dracoY, dracoZ);
-    }
-    
-    // Calculate dynamic positions for Follow Zozo (POV 7)
-    if (povIndex === 7) {
-      const zozoAngle = time * 0.12 + Math.PI;
-      const zozoRadius = 35;
-      const zozoX = Math.cos(zozoAngle) * zozoRadius;
-      const zozoZ = Math.sin(zozoAngle) * zozoRadius;
-      const zozoY = 0;
-      
-      // Camera behind Zozo
-      const offsetDistance = 15;
-      const cameraX = zozoX - Math.cos(zozoAngle) * offsetDistance;
-      const cameraZ = zozoZ - Math.sin(zozoAngle) * offsetDistance;
-      const cameraY = zozoY + 5;
+      // Camera behind Mega
+      const offsetDistance = 18;
+      const cameraX = megaX - Math.cos(megaAngle) * offsetDistance;
+      const cameraZ = megaZ - Math.sin(megaAngle) * offsetDistance;
+      const cameraY = megaY + 6;
       
       targetPos = new THREE.Vector3(cameraX, cameraY, cameraZ);
-      lookAtTarget = new THREE.Vector3(zozoX, zozoY, zozoZ);
+      lookAtTarget = new THREE.Vector3(megaX, megaY, megaZ);
     }
     
     if (isTransitioning) {
@@ -872,16 +892,16 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
       if (distanceToTarget < 0.5) {
         setIsTransitioning(false);
         
-        // Enable OrbitControls and set target (except for follow modes)
+        // Enable OrbitControls and set target (except for follow mode)
         if (orbitControlsRef.current) {
-          orbitControlsRef.current.enabled = povIndex !== 6 && povIndex !== 7;
+          orbitControlsRef.current.enabled = povIndex !== 5;
           orbitControlsRef.current.target.copy(lookAtTarget);
           orbitControlsRef.current.update();
         }
       }
     } else {
-      // For follow modes, continuously update camera position
-      if (povIndex === 6 || povIndex === 7) {
+      // For follow mode, continuously update camera position
+      if (povIndex === 5) {
         camera.position.copy(targetPos);
         camera.lookAt(lookAtTarget);
         
@@ -1080,13 +1100,11 @@ const SpaceScene = ({ povIndex }: { povIndex: number }) => {
         <Comet key={delay} delay={delay} />
       ))}
 
-      {/* Draco and Zozo Spaceships */}
-      <DracoSpaceship position={[10, 5, 10]} />
-      <ZozoSpaceship position={[-10, 8, -10]} />
+      {/* Mega Hybrid Spaceship */}
+      <MegaSpaceship position={[0, 5, 0]} />
 
-      {/* Cockpit Interiors - Only shown when in cockpit POV */}
-      {povIndex === 4 && <DracoCockpitInterior />}
-      {povIndex === 5 && <ZozoCockpitInterior />}
+      {/* Mega Cockpit Interior - Only shown when in cockpit POV */}
+      {povIndex === 4 && <MegaCockpitInterior />}
 
       {/* Camera controls - disabled for POV mode */}
       <OrbitControls
@@ -1102,7 +1120,7 @@ const SpaceScene = ({ povIndex }: { povIndex: number }) => {
 const RealisticSpaceBackground = () => {
   const [hasWebGLError, setHasWebGLError] = useState(false);
   const [povIndex, setPovIndex] = useState(0);
-  const totalPOVs = 15;
+  const totalPOVs = 13;
   const [favorites, setFavorites] = useState<any[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -1143,7 +1161,7 @@ const RealisticSpaceBackground = () => {
       return;
     }
 
-    const povNames = ["God's Eye", "Planet View", "Comet View", "Void View", "Draco Cockpit", "Zozo Cockpit", "Follow Draco", "Follow Zozo", "Constellation View", "Multiverse View", "Heaven View", "Orion's Belt", "Milky Way", "Northern Star", "Heaven Avenue"];
+    const povNames = ["God's Eye", "Planet View", "Comet View", "Void View", "Mega Cockpit", "Follow Mega", "Constellation View", "Multiverse View", "Heaven View", "Orion's Belt", "Milky Way", "Northern Star", "Heaven Avenue"];
     const povName = povNames[povIndex];
 
     const { error } = await supabase
@@ -1268,38 +1286,38 @@ const RealisticSpaceBackground = () => {
         </div>
       </div>
 
-      {/* Spaceship Quick Access - Top Right */}
+      {/* Mega Spaceship Quick Access - Top Right */}
       <div className="fixed top-4 right-4 z-30 flex flex-col gap-2">
         <button
           onClick={() => setPovIndex(4)}
-          className={`p-3 rounded-full backdrop-blur-xl border transition-all shadow-xl hover:scale-110 ${
+          className={`p-3 rounded-full backdrop-blur-xl border transition-all shadow-xl hover:scale-110 relative overflow-hidden ${
             povIndex === 4 
-              ? 'bg-red-500/30 border-red-500/50' 
-              : 'bg-background/20 border-red-500/30 hover:bg-red-500/20'
+              ? 'bg-gradient-to-br from-red-500/40 to-cyan-500/40 border-purple-500/50' 
+              : 'bg-background/20 border-purple-500/30 hover:from-red-500/20 hover:to-cyan-500/20'
           }`}
-          title="Draco Cockpit View"
+          title="Mega Ship Cockpit View"
         >
-          <Rocket className="w-6 h-6 text-red-500" />
+          <Rocket className="w-6 h-6 text-purple-300" />
         </button>
         <button
           onClick={() => setPovIndex(5)}
-          className={`p-3 rounded-full backdrop-blur-xl border transition-all shadow-xl hover:scale-110 ${
+          className={`p-2.5 rounded-full backdrop-blur-xl border transition-all shadow-xl hover:scale-110 ${
             povIndex === 5 
-              ? 'bg-cyan-500/30 border-cyan-500/50' 
-              : 'bg-background/20 border-cyan-500/30 hover:bg-cyan-500/20'
+              ? 'bg-gradient-to-br from-red-500/30 to-cyan-500/30 border-purple-400/50' 
+              : 'bg-background/20 border-purple-400/30 hover:from-red-500/15 hover:to-cyan-500/15'
           }`}
-          title="Zozo Cockpit View"
+          title="Follow Mega Ship"
         >
-          <Rocket className="w-6 h-6 text-cyan-500" />
+          <Rocket className="w-5 h-5 text-purple-400" />
         </button>
         {povIndex === 4 && (
-          <Badge className="bg-red-500/20 text-red-400 border-red-500/50 text-xs animate-pulse">
-            Draco Active
+          <Badge className="bg-gradient-to-r from-red-500/20 to-cyan-500/20 text-purple-300 border-purple-500/50 text-xs animate-pulse">
+            Mega Cockpit
           </Badge>
         )}
         {povIndex === 5 && (
-          <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/50 text-xs animate-pulse">
-            Zozo Active
+          <Badge className="bg-gradient-to-r from-red-500/20 to-cyan-500/20 text-purple-300 border-purple-400/50 text-xs animate-pulse">
+            Following
           </Badge>
         )}
       </div>
