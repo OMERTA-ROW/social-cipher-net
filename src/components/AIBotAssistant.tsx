@@ -16,9 +16,7 @@ import { HyperSpeedSequence } from "./HyperSpeedSequence";
 import { useNavigate } from "react-router-dom";
 import { useZozoSubscription, ZOZO_TIERS } from "@/hooks/useZozoSubscription";
 import { useDracoSubscription, DRACO_TIERS } from "@/hooks/useDracoSubscription";
-import { useInfinitySubscription, INFINITY_TIERS } from "@/hooks/useInfinitySubscription";
 import { DracoSubscriptionDialog } from "./DracoSubscriptionDialog";
-import { InfinitySubscriptionDialog } from "./InfinitySubscriptionDialog";
 
 interface Message {
   role: "user" | "assistant";
@@ -34,16 +32,9 @@ const AIBotAssistant = () => {
     startCheckout: startDracoCheckout, 
     openCustomerPortal: openDracoPortal 
   } = useDracoSubscription();
-  const {
-    status: infinityStatus,
-    loading: infinityLoading,
-    startCheckout: startInfinityCheckout,
-    openCustomerPortal: openInfinityPortal
-  } = useInfinitySubscription();
   const [isOpen, setIsOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showDracoUpgrade, setShowDracoUpgrade] = useState(false);
-  const [showInfinityUpgrade, setShowInfinityUpgrade] = useState(false);
   const [aiMode, setAiMode] = useState<"zozo" | "draco" | "infinity">("zozo");
   const [infinityLoopActive, setInfinityLoopActive] = useState(false);
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(false);
@@ -67,7 +58,6 @@ const AIBotAssistant = () => {
   const isActive = tier !== "free";
   const isPremium = tier === "premium";
   const isDracoActive = dracoStatus.tier !== "free";
-  const isInfinityActive = infinityStatus.tier !== "free";
   
   // AI Character Profiles
   const aiCharacters = {
@@ -98,7 +88,7 @@ const AIBotAssistant = () => {
   };
   
   const currentChar = aiCharacters[aiMode];
-  const currentActive = aiMode === "zozo" ? isActive : aiMode === "draco" ? isDracoActive : isInfinityActive;
+  const currentActive = aiMode === "zozo" ? isActive : aiMode === "draco" ? isDracoActive : true; // Infinity is always active
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -184,22 +174,15 @@ const AIBotAssistant = () => {
         if (aiMode === "draco") {
           setShowDracoUpgrade(true);
           toast.info("🔥 Draco Subscription Options");
-        } else if (aiMode === "infinity") {
-          setShowInfinityUpgrade(true);
-          toast.info("♾️ Infinity Subscription Options");
-        } else {
+        } else if (aiMode === "zozo") {
           setShowUpgrade(true);
           toast.info("🤖 Zozo Subscription Options");
         }
+        // Infinity mode has no subscription
       } else if (tapCount === 3) {
         // Triple tap - Activate infinity loop automation
-        if (isInfinityActive) {
-          setInfinityLoopActive(prev => !prev);
-          toast.success(infinityLoopActive ? "♾️ Infinity Loop Deactivated" : "♾️ Infinity Loop Activated - Continuous AI monitoring enabled!");
-        } else {
-          toast.error("♾️ Infinity subscription required for infinity loop");
-          setShowInfinityUpgrade(true);
-        }
+        setInfinityLoopActive(prev => !prev);
+        toast.success(infinityLoopActive ? "♾️ Infinity Loop Deactivated" : "♾️ Infinity Loop Activated - Continuous AI monitoring enabled!");
       } else if (tapCount === 2) {
         if (isOpen) {
           // Double tap when open - close assistant
@@ -226,7 +209,7 @@ const AIBotAssistant = () => {
   
   // Infinity Loop - Continuous AI monitoring and optimization
   useEffect(() => {
-    if (!infinityLoopActive || !isInfinityActive) return;
+    if (!infinityLoopActive) return;
     
     const infinityInterval = setInterval(() => {
       console.log("♾️ Infinity Loop: Monitoring and optimizing ecosystem...");
@@ -240,18 +223,18 @@ const AIBotAssistant = () => {
           aiStates: {
             zozo: isActive,
             draco: isDracoActive,
-            infinity: isInfinityActive
+            infinity: true // Always active
           }
         }
       });
     }, 30000); // Every 30 seconds
     
     return () => clearInterval(infinityInterval);
-  }, [infinityLoopActive, isInfinityActive, isActive, isDracoActive]);
+  }, [infinityLoopActive, isActive, isDracoActive]);
   
   // Auto-update spaceship features
   useEffect(() => {
-    if (!autoUpdateEnabled || !isInfinityActive) return;
+    if (!autoUpdateEnabled) return;
     
     const updateInterval = setInterval(() => {
       console.log("🚀 Auto-Update: Checking for spaceship enhancements...");
@@ -259,16 +242,13 @@ const AIBotAssistant = () => {
     }, 120000); // Every 2 minutes
     
     return () => clearInterval(updateInterval);
-  }, [autoUpdateEnabled, isInfinityActive]);
+  }, [autoUpdateEnabled]);
 
   const streamAIResponse = async (userMessage: string, action = "chat") => {
     if (!currentActive) {
       if (aiMode === "draco") {
         toast.error("Draco is inactive. Subscribe to activate tactical features!");
         setShowDracoUpgrade(true);
-      } else if (aiMode === "infinity") {
-        toast.error("Infinity is inactive. Subscribe to activate infinite intelligence!");
-        setShowInfinityUpgrade(true);
       } else {
         toast.error("Zozo is inactive. Subscribe to activate AI features!");
         setShowUpgrade(true);
@@ -671,29 +651,16 @@ const AIBotAssistant = () => {
           }`}>
             {aiMode === "infinity" ? (
               // Infinity Mode Settings
-              !isInfinityActive ? (
-                <div className="text-center py-4 space-y-3">
-                  <Infinity className="w-8 h-8 mx-auto text-purple-500 animate-spin" style={{ animationDuration: '3s' }} />
-                  <p className="text-sm font-medium">Infinity is in Free Mode</p>
-                  <Button size="sm" onClick={() => setShowInfinityUpgrade(true)} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                    Activate Infinity
-                  </Button>
+              <>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-purple-400">Infinity Loop</Label>
+                  <Switch checked={infinityLoopActive} onCheckedChange={setInfinityLoopActive} />
                 </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs text-purple-400">Infinity Loop</Label>
-                    <Switch checked={infinityLoopActive} onCheckedChange={setInfinityLoopActive} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs text-purple-400">Auto-Update</Label>
-                    <Switch checked={autoUpdateEnabled} onCheckedChange={setAutoUpdateEnabled} />
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={openInfinityPortal} className="w-full text-xs">
-                    Manage Subscription
-                  </Button>
-                </>
-              )
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-purple-400">Auto-Update</Label>
+                  <Switch checked={autoUpdateEnabled} onCheckedChange={setAutoUpdateEnabled} />
+                </div>
+              </>
             ) : aiMode === "draco" ? (
               // Draco Mode Settings
               !isDracoActive ? (
@@ -793,24 +760,6 @@ const AIBotAssistant = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {aiMode === "infinity" && !isInfinityActive && (
-              <div className="bg-purple-950/30 border border-purple-600/20 rounded-lg p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <Lock className="w-5 h-5 text-purple-500 flex-shrink-0 mt-1" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground mb-1">Infinity is in Free Mode</p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Infinity is visible but orchestration features are locked. Subscribe to unlock infinite intelligence!
-                    </p>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => setShowInfinityUpgrade(true)} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                        View Infinity Plans
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
             
             {aiMode === "draco" && !isDracoActive && (
               <div className="bg-red-950/30 border border-red-600/20 rounded-lg p-4 mb-4">
@@ -1001,10 +950,6 @@ const AIBotAssistant = () => {
           setShowDracoUpgrade(false);
         }}
         onManageSubscription={openDracoPortal}
-      />
-      <InfinitySubscriptionDialog 
-        open={showInfinityUpgrade} 
-        onOpenChange={setShowInfinityUpgrade}
       />
     </>
   );
