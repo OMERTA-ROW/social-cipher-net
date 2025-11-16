@@ -125,7 +125,7 @@ const AIBotAssistant = () => {
     await streamAIResponse(autoReplyPrompt, "message");
   };
 
-  // Double-tap handler for AI Assistant button - toggles between Zozo and Draco
+  // Multi-tap handler for AI Assistant button
   const handleBotButtonTap = () => {
     setBotTapCount(prev => prev + 1);
     
@@ -134,11 +134,28 @@ const AIBotAssistant = () => {
     }
     
     const timer = setTimeout(() => {
-      if (botTapCount + 1 === 2) {
-        // Double tap - activate Draco mode
-        setDracoMode(prev => !prev);
-        toast.success(dracoMode ? "🤖 Zozo Activated - Switched to Zozo AI Assistant" : "🔥 Draco Activated - Switched to Draco AI Mode");
-      } else if (botTapCount + 1 === 1) {
+      const tapCount = botTapCount + 1;
+      
+      if (tapCount === 4) {
+        // Four taps - Open subscription/upgrade dialog
+        if (dracoMode) {
+          setShowDracoUpgrade(true);
+          toast.info("🔥 Draco Subscription Options");
+        } else {
+          setShowUpgrade(true);
+          toast.info("🤖 Zozo Subscription Options");
+        }
+      } else if (tapCount === 2) {
+        if (isOpen) {
+          // Double tap when open - close assistant
+          setIsOpen(false);
+          toast.info(dracoMode ? "🔥 Draco Closed" : "🤖 Zozo Closed");
+        } else {
+          // Double tap when closed - switch mode
+          setDracoMode(prev => !prev);
+          toast.success(dracoMode ? "🤖 Zozo Activated - Switched to Zozo AI Assistant" : "🔥 Draco Activated - Switched to Draco AI Mode");
+        }
+      } else if (tapCount === 1) {
         // Single tap - open current mode
         setIsOpen(true);
       }
