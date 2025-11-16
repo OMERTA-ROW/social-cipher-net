@@ -3,6 +3,9 @@ project_id = "vovgmknghvohenvhsduw"
 [functions.ai-bot]
 verify_jwt = false
 
+[functions.cyberlink-brain-ai]
+verify_jwt = false
+
 [functions.cyberlink-critical-ai]
 verify_jwt = false
 
