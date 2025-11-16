@@ -40,6 +40,8 @@ All colors MUST be HSL.
 
     --glow-primary: 190 95% 55%;
     --glow-accent: 280 85% 65%;
+    --glow-purple: 280 80% 60%;
+    --glow-destructive: 0 75% 60%;
   }
 }
 
@@ -61,8 +63,17 @@ All colors MUST be HSL.
   .glow-accent {
     box-shadow: 0 0 20px hsl(var(--glow-accent) / 0.3);
   }
+  
+  .glow-purple {
+    box-shadow: 0 0 20px hsl(var(--glow-purple) / 0.4), 0 0 40px hsl(var(--glow-purple) / 0.2);
+  }
+  
+  .glow-destructive {
+    box-shadow: 0 0 20px hsl(var(--glow-destructive) / 0.4), 0 0 40px hsl(var(--glow-destructive) / 0.2);
+  }
 
   .text-glow {
     text-shadow: 0 0 10px hsl(var(--glow-primary) / 0.5);
   }
 }
+

@@ -113,3 +113,6 @@ verify_jwt = false
 
 [functions.coupon-ai]
 verify_jwt = false
+
+[functions.infinity-ai]
+verify_jwt = false
