@@ -818,10 +818,16 @@ const MegaCockpitInterior = () => {
 };
 
 // Camera Controller for POV switching with 360-degree orbital viewing
-const CameraController = ({ povIndex, orbitControlsRef, zoomLevel }: { povIndex: number; orbitControlsRef: any; zoomLevel: number }) => {
+const CameraController = ({ povIndex, orbitControlsRef, zoomLevel, isStationaryMode }: { 
+  povIndex: number; 
+  orbitControlsRef: any; 
+  zoomLevel: number;
+  isStationaryMode: boolean;
+}) => {
   const { camera } = useThree();
   const [isTransitioning, setIsTransitioning] = useState(true);
   const prevPovIndex = useRef(povIndex);
+  const stationaryCameraPos = useRef<THREE.Vector3 | null>(null);
   
   const povPositions = useMemo(() => [
     { pos: [0, 80, 120], lookAt: [0, 0, 0] }, // God's eye view
@@ -847,6 +853,25 @@ const CameraController = ({ povIndex, orbitControlsRef, zoomLevel }: { povIndex:
     }
   }, [povIndex]);
 
+  // Initialize stationary camera position when entering stationary mode
+  useEffect(() => {
+    if (povIndex === 5 && isStationaryMode && !stationaryCameraPos.current) {
+      const zoomDistances = [12, 20, 35];
+      const offsetDistance = zoomDistances[zoomLevel];
+      // Set initial stationary position - slightly offset from center
+      stationaryCameraPos.current = new THREE.Vector3(
+        offsetDistance * 0.7,
+        offsetDistance * 0.4,
+        offsetDistance * 0.7
+      );
+    }
+    
+    // Reset stationary position when leaving follow mode or stationary mode
+    if (povIndex !== 5 || !isStationaryMode) {
+      stationaryCameraPos.current = null;
+    }
+  }, [povIndex, isStationaryMode, zoomLevel]);
+
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime();
     const target = povPositions[povIndex];
@@ -861,26 +886,49 @@ const CameraController = ({ povIndex, orbitControlsRef, zoomLevel }: { povIndex:
       const megaZ = Math.sin(megaAngle) * megaRadius;
       const megaY = 5 + Math.sin(time * 0.2) * 3;
       
-      // Calculate camera offset based on zoom level
-      const zoomDistances = [12, 20, 35]; // close, medium, far
-      const offsetDistance = zoomDistances[zoomLevel];
-      
-      // Camera trailing behind - follows ship's direction
-      const cameraX = megaX - Math.cos(megaAngle) * offsetDistance;
-      const cameraZ = megaZ - Math.sin(megaAngle) * offsetDistance;
-      const cameraY = megaY + (offsetDistance * 0.35); // Height scales with distance
-      
-      targetPos = new THREE.Vector3(cameraX, cameraY, cameraZ);
       lookAtTarget = new THREE.Vector3(megaX, megaY, megaZ);
       
-      // Apply camera position smoothly
-      camera.position.lerp(targetPos, 0.05);
-      
-      // Enable OrbitControls for 360° view while following
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.enabled = true;
-        orbitControlsRef.current.target.lerp(lookAtTarget, 0.05);
-        orbitControlsRef.current.update();
+      if (isStationaryMode && stationaryCameraPos.current) {
+        // STATIONARY MODE: Camera stays in fixed position, can rotate 360°
+        targetPos = stationaryCameraPos.current;
+        
+        // Keep camera at stationary position
+        camera.position.lerp(targetPos, 0.05);
+        
+        // Enable full OrbitControls for 360° rotation around the fixed point
+        if (orbitControlsRef.current) {
+          orbitControlsRef.current.enabled = true;
+          orbitControlsRef.current.enableRotate = true;
+          orbitControlsRef.current.enableZoom = true;
+          orbitControlsRef.current.enablePan = false;
+          // Set target to ship position so user can rotate around to track it
+          orbitControlsRef.current.target.lerp(lookAtTarget, 0.03);
+          orbitControlsRef.current.update();
+        }
+      } else {
+        // TRAILING MODE: Camera follows behind ship
+        const zoomDistances = [12, 20, 35];
+        const offsetDistance = zoomDistances[zoomLevel];
+        
+        // Camera trailing behind - follows ship's direction
+        const cameraX = megaX - Math.cos(megaAngle) * offsetDistance;
+        const cameraZ = megaZ - Math.sin(megaAngle) * offsetDistance;
+        const cameraY = megaY + (offsetDistance * 0.35);
+        
+        targetPos = new THREE.Vector3(cameraX, cameraY, cameraZ);
+        
+        // Apply camera position smoothly
+        camera.position.lerp(targetPos, 0.05);
+        
+        // Enable OrbitControls for 360° view while trailing
+        if (orbitControlsRef.current) {
+          orbitControlsRef.current.enabled = true;
+          orbitControlsRef.current.enableRotate = true;
+          orbitControlsRef.current.enableZoom = true;
+          orbitControlsRef.current.enablePan = false;
+          orbitControlsRef.current.target.lerp(lookAtTarget, 0.05);
+          orbitControlsRef.current.update();
+        }
       }
       
       return; // Skip rest of the frame logic for follow mode
@@ -926,12 +974,21 @@ const CameraController = ({ povIndex, orbitControlsRef, zoomLevel }: { povIndex:
 };
 
 // Main Scene
-const SpaceScene = ({ povIndex, zoomLevel }: { povIndex: number; zoomLevel: number }) => {
+const SpaceScene = ({ povIndex, zoomLevel, isStationaryMode }: { 
+  povIndex: number; 
+  zoomLevel: number;
+  isStationaryMode: boolean;
+}) => {
   const orbitControlsRef = useRef<any>(null);
   
   return (
     <>
-      <CameraController povIndex={povIndex} orbitControlsRef={orbitControlsRef} zoomLevel={zoomLevel} />
+      <CameraController 
+        povIndex={povIndex} 
+        orbitControlsRef={orbitControlsRef} 
+        zoomLevel={zoomLevel}
+        isStationaryMode={isStationaryMode}
+      />
       <OrbitControls
         ref={orbitControlsRef}
         enableDamping
@@ -1127,6 +1184,7 @@ const RealisticSpaceBackground = () => {
   const [povIndex, setPovIndex] = useState(0);
   const totalPOVs = 13;
   const [zoomLevel, setZoomLevel] = useState(1); // 0: close, 1: medium, 2: far
+  const [isStationaryMode, setIsStationaryMode] = useState(false); // Fixed camera position
   const [favorites, setFavorites] = useState<any[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -1235,7 +1293,7 @@ const RealisticSpaceBackground = () => {
             setHasWebGLError(true);
           }}
         >
-          <SpaceScene povIndex={povIndex} zoomLevel={zoomLevel} />
+          <SpaceScene povIndex={povIndex} zoomLevel={zoomLevel} isStationaryMode={isStationaryMode} />
         </Canvas>
       </div>
       
@@ -1364,6 +1422,22 @@ const RealisticSpaceBackground = () => {
             >
               Far
             </button>
+            
+            {/* Camera Mode Toggle */}
+            <div className="mt-2 border-t border-purple-500/30 pt-2">
+              <div className="text-xs text-purple-300 text-center font-semibold mb-2">Camera</div>
+              <button
+                onClick={() => setIsStationaryMode(!isStationaryMode)}
+                className={`w-full px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
+                  isStationaryMode
+                    ? 'bg-cyan-500/40 border-cyan-400/60 text-white'
+                    : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-cyan-500/20'
+                }`}
+                title={isStationaryMode ? "Fixed Position - 360° View" : "Trailing Behind Ship"}
+              >
+                {isStationaryMode ? '📍 Fixed' : '🚀 Trail'}
+              </button>
+            </div>
           </div>
         )}
       </div>
