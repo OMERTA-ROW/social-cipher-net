@@ -818,7 +818,7 @@ const MegaCockpitInterior = () => {
 };
 
 // Camera Controller for POV switching with 360-degree orbital viewing
-const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; orbitControlsRef: any }) => {
+const CameraController = ({ povIndex, orbitControlsRef, zoomLevel }: { povIndex: number; orbitControlsRef: any; zoomLevel: number }) => {
   const { camera } = useThree();
   const [isTransitioning, setIsTransitioning] = useState(true);
   const prevPovIndex = useRef(povIndex);
@@ -861,14 +861,29 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
       const megaZ = Math.sin(megaAngle) * megaRadius;
       const megaY = 5 + Math.sin(time * 0.2) * 3;
       
-      // Camera behind Mega
-      const offsetDistance = 18;
+      // Calculate camera offset based on zoom level
+      const zoomDistances = [12, 20, 35]; // close, medium, far
+      const offsetDistance = zoomDistances[zoomLevel];
+      
+      // Camera trailing behind - follows ship's direction
       const cameraX = megaX - Math.cos(megaAngle) * offsetDistance;
       const cameraZ = megaZ - Math.sin(megaAngle) * offsetDistance;
-      const cameraY = megaY + 6;
+      const cameraY = megaY + (offsetDistance * 0.35); // Height scales with distance
       
       targetPos = new THREE.Vector3(cameraX, cameraY, cameraZ);
       lookAtTarget = new THREE.Vector3(megaX, megaY, megaZ);
+      
+      // Apply camera position smoothly
+      camera.position.lerp(targetPos, 0.05);
+      
+      // Enable OrbitControls for 360° view while following
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = true;
+        orbitControlsRef.current.target.lerp(lookAtTarget, 0.05);
+        orbitControlsRef.current.update();
+      }
+      
+      return; // Skip rest of the frame logic for follow mode
     }
     
     if (isTransitioning) {
@@ -892,27 +907,17 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
       if (distanceToTarget < 0.5) {
         setIsTransitioning(false);
         
-        // Enable OrbitControls and set target (except for follow mode)
+        // Enable OrbitControls and set target
         if (orbitControlsRef.current) {
-          orbitControlsRef.current.enabled = povIndex !== 5;
+          orbitControlsRef.current.enabled = true;
           orbitControlsRef.current.target.copy(lookAtTarget);
           orbitControlsRef.current.update();
         }
       }
     } else {
-      // For follow mode, continuously update camera position
-      if (povIndex === 5) {
-        camera.position.copy(targetPos);
-        camera.lookAt(lookAtTarget);
-        
-        if (orbitControlsRef.current) {
-          orbitControlsRef.current.enabled = false;
-        }
-      } else {
-        // Update OrbitControls target when at viewpoint (for AI-generated viewpoints)
-        if (orbitControlsRef.current) {
-          orbitControlsRef.current.target.copy(lookAtTarget);
-        }
+      // Update OrbitControls target when at viewpoint
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.target.copy(lookAtTarget);
       }
     }
   });
@@ -921,12 +926,12 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
 };
 
 // Main Scene
-const SpaceScene = ({ povIndex }: { povIndex: number }) => {
+const SpaceScene = ({ povIndex, zoomLevel }: { povIndex: number; zoomLevel: number }) => {
   const orbitControlsRef = useRef<any>(null);
   
   return (
     <>
-      <CameraController povIndex={povIndex} orbitControlsRef={orbitControlsRef} />
+      <CameraController povIndex={povIndex} orbitControlsRef={orbitControlsRef} zoomLevel={zoomLevel} />
       <OrbitControls
         ref={orbitControlsRef}
         enableDamping
@@ -1121,6 +1126,7 @@ const RealisticSpaceBackground = () => {
   const [hasWebGLError, setHasWebGLError] = useState(false);
   const [povIndex, setPovIndex] = useState(0);
   const totalPOVs = 13;
+  const [zoomLevel, setZoomLevel] = useState(1); // 0: close, 1: medium, 2: far
   const [favorites, setFavorites] = useState<any[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -1229,7 +1235,7 @@ const RealisticSpaceBackground = () => {
             setHasWebGLError(true);
           }}
         >
-          <SpaceScene povIndex={povIndex} />
+          <SpaceScene povIndex={povIndex} zoomLevel={zoomLevel} />
         </Canvas>
       </div>
       
@@ -1319,6 +1325,46 @@ const RealisticSpaceBackground = () => {
           <Badge className="bg-gradient-to-r from-red-500/20 to-cyan-500/20 text-purple-300 border-purple-400/50 text-xs animate-pulse">
             Following
           </Badge>
+        )}
+        
+        {/* Zoom Controls - Only show when following */}
+        {povIndex === 5 && (
+          <div className="mt-4 flex flex-col gap-2 border-t border-purple-500/30 pt-2">
+            <div className="text-xs text-purple-300 text-center font-semibold">Zoom</div>
+            <button
+              onClick={() => setZoomLevel(0)}
+              className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
+                zoomLevel === 0
+                  ? 'bg-purple-500/40 border-purple-400/60 text-white'
+                  : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
+              }`}
+              title="Close Follow"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => setZoomLevel(1)}
+              className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
+                zoomLevel === 1
+                  ? 'bg-purple-500/40 border-purple-400/60 text-white'
+                  : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
+              }`}
+              title="Medium Follow"
+            >
+              Medium
+            </button>
+            <button
+              onClick={() => setZoomLevel(2)}
+              className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
+                zoomLevel === 2
+                  ? 'bg-purple-500/40 border-purple-400/60 text-white'
+                  : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
+              }`}
+              title="Far Follow"
+            >
+              Far
+            </button>
+          </div>
         )}
       </div>
 
