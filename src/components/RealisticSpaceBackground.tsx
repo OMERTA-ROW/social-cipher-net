@@ -790,6 +790,8 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
     { pos: [0, 0, 200], lookAt: [0, 0, 0] }, // Void/Space view
     { pos: [0, 0, 0], lookAt: [0, 0, -2] }, // Draco Cockpit Interior
     { pos: [0, 0, 0], lookAt: [0, 0, -2] }, // Zozo Cockpit Interior
+    { pos: [0, 0, 0], lookAt: [0, 0, 0] }, // Follow Draco (calculated dynamically)
+    { pos: [0, 0, 0], lookAt: [0, 0, 0] }, // Follow Zozo (calculated dynamically)
     { pos: [120, 40, 120], lookAt: [125, 35, 125] }, // Star constellation
     { pos: [-150, 100, -150], lookAt: [0, 0, 0] }, // Multiverse view
     { pos: [0, 150, 80], lookAt: [0, 0, 0] }, // Heaven view
@@ -807,10 +809,47 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
     }
   }, [povIndex]);
 
-  useFrame(() => {
+  useFrame(({ clock }) => {
+    const time = clock.getElapsedTime();
     const target = povPositions[povIndex];
-    const targetPos = new THREE.Vector3(...target.pos);
-    const lookAtTarget = new THREE.Vector3(...target.lookAt);
+    let targetPos = new THREE.Vector3(...target.pos);
+    let lookAtTarget = new THREE.Vector3(...target.lookAt);
+    
+    // Calculate dynamic positions for Follow Draco (POV 6)
+    if (povIndex === 6) {
+      const dracoAngle = time * 0.1;
+      const dracoRadius = 30;
+      const dracoX = Math.cos(dracoAngle) * dracoRadius;
+      const dracoZ = Math.sin(dracoAngle) * dracoRadius;
+      const dracoY = 0;
+      
+      // Camera behind Draco
+      const offsetDistance = 12;
+      const cameraX = dracoX - Math.cos(dracoAngle) * offsetDistance;
+      const cameraZ = dracoZ - Math.sin(dracoAngle) * offsetDistance;
+      const cameraY = dracoY + 4;
+      
+      targetPos = new THREE.Vector3(cameraX, cameraY, cameraZ);
+      lookAtTarget = new THREE.Vector3(dracoX, dracoY, dracoZ);
+    }
+    
+    // Calculate dynamic positions for Follow Zozo (POV 7)
+    if (povIndex === 7) {
+      const zozoAngle = time * 0.12 + Math.PI;
+      const zozoRadius = 35;
+      const zozoX = Math.cos(zozoAngle) * zozoRadius;
+      const zozoZ = Math.sin(zozoAngle) * zozoRadius;
+      const zozoY = 0;
+      
+      // Camera behind Zozo
+      const offsetDistance = 15;
+      const cameraX = zozoX - Math.cos(zozoAngle) * offsetDistance;
+      const cameraZ = zozoZ - Math.sin(zozoAngle) * offsetDistance;
+      const cameraY = zozoY + 5;
+      
+      targetPos = new THREE.Vector3(cameraX, cameraY, cameraZ);
+      lookAtTarget = new THREE.Vector3(zozoX, zozoY, zozoZ);
+    }
     
     if (isTransitioning) {
       // Disable OrbitControls during transition
@@ -833,17 +872,27 @@ const CameraController = ({ povIndex, orbitControlsRef }: { povIndex: number; or
       if (distanceToTarget < 0.5) {
         setIsTransitioning(false);
         
-        // Enable OrbitControls and set target
+        // Enable OrbitControls and set target (except for follow modes)
         if (orbitControlsRef.current) {
-          orbitControlsRef.current.enabled = true;
+          orbitControlsRef.current.enabled = povIndex !== 6 && povIndex !== 7;
           orbitControlsRef.current.target.copy(lookAtTarget);
           orbitControlsRef.current.update();
         }
       }
     } else {
-      // Update OrbitControls target when at viewpoint (for AI-generated viewpoints)
-      if (orbitControlsRef.current) {
-        orbitControlsRef.current.target.copy(lookAtTarget);
+      // For follow modes, continuously update camera position
+      if (povIndex === 6 || povIndex === 7) {
+        camera.position.copy(targetPos);
+        camera.lookAt(lookAtTarget);
+        
+        if (orbitControlsRef.current) {
+          orbitControlsRef.current.enabled = false;
+        }
+      } else {
+        // Update OrbitControls target when at viewpoint (for AI-generated viewpoints)
+        if (orbitControlsRef.current) {
+          orbitControlsRef.current.target.copy(lookAtTarget);
+        }
       }
     }
   });
@@ -1053,7 +1102,7 @@ const SpaceScene = ({ povIndex }: { povIndex: number }) => {
 const RealisticSpaceBackground = () => {
   const [hasWebGLError, setHasWebGLError] = useState(false);
   const [povIndex, setPovIndex] = useState(0);
-  const totalPOVs = 13;
+  const totalPOVs = 15;
   const [favorites, setFavorites] = useState<any[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -1094,7 +1143,7 @@ const RealisticSpaceBackground = () => {
       return;
     }
 
-    const povNames = ["God's Eye", "Planet View", "Comet View", "Void View", "Draco Cockpit", "Zozo Cockpit", "Constellation View", "Multiverse View", "Heaven View", "Orion's Belt", "Milky Way", "Northern Star", "Heaven Avenue"];
+    const povNames = ["God's Eye", "Planet View", "Comet View", "Void View", "Draco Cockpit", "Zozo Cockpit", "Follow Draco", "Follow Zozo", "Constellation View", "Multiverse View", "Heaven View", "Orion's Belt", "Milky Way", "Northern Star", "Heaven Avenue"];
     const povName = povNames[povIndex];
 
     const { error } = await supabase
