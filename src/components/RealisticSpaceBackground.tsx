@@ -442,8 +442,8 @@ const Comet = ({ delay }: { delay: number }) => {
 // Asteroid Belt
 const AsteroidBelt = () => {
   const asteroids = useMemo(() => {
-    return Array.from({ length: 2000 }, (_, i) => {
-      const angle = (i / 2000) * Math.PI * 2;
+    return Array.from({ length: 400 }, (_, i) => {
+      const angle = (i / 400) * Math.PI * 2;
       const radius = 20 + Math.random() * 5;
       const height = (Math.random() - 0.5) * 2;
       const size = 0.1 + Math.random() * 0.3;
@@ -516,7 +516,7 @@ const BlackHole = () => {
 // Distant Galaxies
 const DistantGalaxies = () => {
   const galaxies = useMemo(() => {
-    return Array.from({ length: 50 }, (_, i) => ({
+    return Array.from({ length: 10 }, (_, i) => ({
       position: [
         -150 + (i % 10) * 70,
         (Math.random() - 0.5) * 80,
@@ -553,10 +553,10 @@ const MilkyWayDisk = () => {
   const pointsRef = useRef<THREE.Points>(null);
 
   const particles = useMemo(() => {
-    const positions = new Float32Array(80000 * 3);
-    const colors = new Float32Array(80000 * 3);
+    const positions = new Float32Array(16000 * 3);
+    const colors = new Float32Array(16000 * 3);
 
-    for (let i = 0; i < 80000; i++) {
+    for (let i = 0; i < 16000; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = 50 + Math.random() * 100;
       const height = (Math.random() - 0.5) * 5;
@@ -1012,7 +1012,7 @@ const SpaceScene = ({ povIndex, zoomLevel, isStationaryMode }: {
       <Stars
         radius={300}
         depth={100}
-        count={150000}
+        count={30000}
         factor={6}
         saturation={0}
         fade
