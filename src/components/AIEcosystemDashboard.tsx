@@ -8,6 +8,7 @@ import { Loader2, Shield, TrendingUp, RefreshCw, Eye, Brain, Zap } from "lucide-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import CyberLinkCriticalAI from "./CyberLinkCriticalAI";
+import CyberLinkBrainDashboard from "./CyberLinkBrainDashboard";
 
 export const AIEcosystemDashboard = () => {
   const [loading, setLoading] = useState(false);
@@ -199,6 +200,9 @@ export const AIEcosystemDashboard = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/5 to-transparent pointer-events-none" />
       
       <div className="max-w-7xl mx-auto space-y-6 relative z-10">
+        {/* CyberLink Brain AI - Supreme Intelligence Hub */}
+        <CyberLinkBrainDashboard />
+        
         {/* Critical AI Ecosystem - Top Priority */}
         <CyberLinkCriticalAI />
 

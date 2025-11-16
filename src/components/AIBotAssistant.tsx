@@ -36,7 +36,7 @@ const AIBotAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showDracoUpgrade, setShowDracoUpgrade] = useState(false);
-  const [aiMode, setAiMode] = useState<"zozo" | "draco" | "quantum" | "autofix" | "pageload">("zozo");
+  const [aiMode, setAiMode] = useState<"zozo" | "draco" | "quantum" | "autofix" | "pageload" | "brain">("zozo");
   const [infinityLoopActive, setInfinityLoopActive] = useState(true); // Always active
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true); // Always enabled
   const [messages, setMessages] = useState<Message[]>([]);
@@ -211,8 +211,8 @@ const AIBotAssistant = () => {
           toast.info(`${currentChar.name} Closed`);
         } else {
           // Double tap when closed - cycle through all AI modes
-          const modes: Array<"zozo" | "draco" | "quantum" | "autofix" | "pageload"> = 
-            ["zozo", "draco", "quantum", "autofix", "pageload"];
+          const modes: Array<"zozo" | "draco" | "quantum" | "autofix" | "pageload" | "brain"> = 
+            ["zozo", "draco", "quantum", "autofix", "pageload", "brain"];
           const currentIndex = modes.indexOf(aiMode);
           const nextMode = modes[(currentIndex + 1) % modes.length];
           setAiMode(nextMode);
@@ -266,8 +266,8 @@ const AIBotAssistant = () => {
   }, []);
 
   const streamAIResponse = async (userMessage: string, action = "chat") => {
-    // Check if critical AI modes (quantum, autofix, pageload) - these don't require subscriptions
-    const isCriticalAI = ["quantum", "autofix", "pageload"].includes(aiMode);
+    // Check if critical AI modes (quantum, autofix, pageload, brain) - these don't require subscriptions
+    const isCriticalAI = ["quantum", "autofix", "pageload", "brain"].includes(aiMode);
     
     if (!isCriticalAI && !currentActive) {
       if (aiMode === "draco") {
@@ -289,9 +289,22 @@ const AIBotAssistant = () => {
       // Route to appropriate AI endpoint
       let functionName = "ai-bot";
       let actionParam = action;
+      let requestBody: any = {
+        messages: updatedMessages,
+        action: actionParam,
+        context: userMessage
+      };
       
       if (aiMode === "draco") {
         functionName = "draco-ai";
+      } else if (aiMode === "brain") {
+        functionName = "cyberlink-brain-ai";
+        actionParam = "orchestrate";
+        requestBody = {
+          action: actionParam,
+          context: userMessage,
+          password: "Dupree$$$01"
+        };
       } else if (isCriticalAI) {
         functionName = "cyberlink-critical-ai";
         // Map AI mode to action for critical AI
@@ -307,11 +320,7 @@ const AIBotAssistant = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({
-            messages: updatedMessages,
-            action: actionParam,
-            context: userMessage
-          }),
+          body: JSON.stringify(requestBody),
         }
       );
 
