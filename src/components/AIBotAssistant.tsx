@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare, Crown, Lock, Rocket, Infinity, Sparkles, RefreshCw } from "lucide-react";
+import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare, Crown, Lock, Rocket, Infinity, Sparkles, RefreshCw, Brain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import VoiceWaveform from "./VoiceWaveform";
@@ -533,7 +533,7 @@ const AIBotAssistant = () => {
           size="icon"
           title={`${currentChar.name} AI (Double-tap to cycle modes)`}
         >
-          <Bot className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""} ${aiMode === "draco" ? "text-red-500" : ""}`} />
+          <Brain className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""} ${aiMode === "draco" ? "text-red-500" : ""}`} />
           <Badge className={`absolute -top-2 -right-2 text-white text-xs px-1 ${
             aiMode === "draco" 
               ? "bg-red-500" 
