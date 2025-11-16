@@ -1190,7 +1190,29 @@ const RealisticSpaceBackground = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
   const [customName, setCustomName] = useState("");
+  const [showCameraControls, setShowCameraControls] = useState(true); // Dropdown for camera controls
+  const [tapCount, setTapCount] = useState(0);
+  const [tapTimer, setTapTimer] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+
+  // Triple-tap handler for rocket button
+  const handleRocketTap = () => {
+    setTapCount(prev => prev + 1);
+    
+    if (tapTimer) {
+      clearTimeout(tapTimer);
+    }
+    
+    const timer = setTimeout(() => {
+      if (tapCount + 1 === 3) {
+        setPovIndex(0); // Exit to default view
+        toast({ title: "🚀 Exited spaceship view", description: "Returned to God's Eye view" });
+      }
+      setTapCount(0);
+    }, 500);
+    
+    setTapTimer(timer);
+  };
 
   useEffect(() => {
     // Check if WebGL is available
@@ -1202,7 +1224,14 @@ const RealisticSpaceBackground = () => {
     
     // Load favorites
     loadFavorites();
-  }, []);
+    
+    // Cleanup tap timer on unmount
+    return () => {
+      if (tapTimer) {
+        clearTimeout(tapTimer);
+      }
+    };
+  }, [tapTimer]);
 
   const loadFavorites = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -1353,13 +1382,16 @@ const RealisticSpaceBackground = () => {
       {/* Mega Spaceship Quick Access - Top Right */}
       <div className="fixed top-4 right-4 z-30 flex flex-col gap-2">
         <button
-          onClick={() => setPovIndex(4)}
+          onClick={() => {
+            handleRocketTap();
+            setPovIndex(4);
+          }}
           className={`p-3 rounded-full backdrop-blur-xl border transition-all shadow-xl hover:scale-110 relative overflow-hidden ${
             povIndex === 4 
               ? 'bg-gradient-to-br from-red-500/40 to-cyan-500/40 border-purple-500/50' 
               : 'bg-background/20 border-purple-500/30 hover:from-red-500/20 hover:to-cyan-500/20'
           }`}
-          title="Mega Ship Cockpit View"
+          title="Mega Ship Cockpit View (Triple-tap to exit)"
         >
           <Rocket className="w-6 h-6 text-purple-300" />
         </button>
@@ -1385,59 +1417,73 @@ const RealisticSpaceBackground = () => {
           </Badge>
         )}
         
-        {/* Zoom Controls - Only show when following */}
+        {/* Camera Controls Toggle - Only show when following */}
         {povIndex === 5 && (
-          <div className="mt-4 flex flex-col gap-2 border-t border-purple-500/30 pt-2">
-            <div className="text-xs text-purple-300 text-center font-semibold">Zoom</div>
+          <div className="mt-4 border-t border-purple-500/30 pt-2">
             <button
-              onClick={() => setZoomLevel(0)}
-              className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
-                zoomLevel === 0
-                  ? 'bg-purple-500/40 border-purple-400/60 text-white'
-                  : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
-              }`}
-              title="Close Follow"
+              onClick={() => setShowCameraControls(!showCameraControls)}
+              className="w-full px-3 py-2 rounded-lg backdrop-blur-xl border border-purple-500/30 bg-background/20 hover:bg-purple-500/20 transition-all text-xs font-medium text-purple-300 flex items-center justify-between"
+              title="Toggle Camera Controls"
             >
-              Close
-            </button>
-            <button
-              onClick={() => setZoomLevel(1)}
-              className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
-                zoomLevel === 1
-                  ? 'bg-purple-500/40 border-purple-400/60 text-white'
-                  : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
-              }`}
-              title="Medium Follow"
-            >
-              Medium
-            </button>
-            <button
-              onClick={() => setZoomLevel(2)}
-              className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
-                zoomLevel === 2
-                  ? 'bg-purple-500/40 border-purple-400/60 text-white'
-                  : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
-              }`}
-              title="Far Follow"
-            >
-              Far
+              <span>Camera Controls</span>
+              <ChevronRight className={`w-4 h-4 transition-transform ${showCameraControls ? 'rotate-90' : ''}`} />
             </button>
             
-            {/* Camera Mode Toggle */}
-            <div className="mt-2 border-t border-purple-500/30 pt-2">
-              <div className="text-xs text-purple-300 text-center font-semibold mb-2">Camera</div>
-              <button
-                onClick={() => setIsStationaryMode(!isStationaryMode)}
-                className={`w-full px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
-                  isStationaryMode
-                    ? 'bg-cyan-500/40 border-cyan-400/60 text-white'
-                    : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-cyan-500/20'
-                }`}
-                title={isStationaryMode ? "Fixed Position - 360° View" : "Trailing Behind Ship"}
-              >
-                {isStationaryMode ? '📍 Fixed' : '🚀 Trail'}
-              </button>
-            </div>
+            {/* Collapsible Camera Controls */}
+            {showCameraControls && (
+              <div className="mt-2 flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="text-xs text-purple-300 text-center font-semibold">Zoom</div>
+                <button
+                  onClick={() => setZoomLevel(0)}
+                  className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
+                    zoomLevel === 0
+                      ? 'bg-purple-500/40 border-purple-400/60 text-white'
+                      : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
+                  }`}
+                  title="Close Follow"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => setZoomLevel(1)}
+                  className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
+                    zoomLevel === 1
+                      ? 'bg-purple-500/40 border-purple-400/60 text-white'
+                      : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
+                  }`}
+                  title="Medium Follow"
+                >
+                  Medium
+                </button>
+                <button
+                  onClick={() => setZoomLevel(2)}
+                  className={`px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
+                    zoomLevel === 2
+                      ? 'bg-purple-500/40 border-purple-400/60 text-white'
+                      : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-purple-500/20'
+                  }`}
+                  title="Far Follow"
+                >
+                  Far
+                </button>
+                
+                {/* Camera Mode Toggle */}
+                <div className="mt-2 border-t border-purple-500/30 pt-2">
+                  <div className="text-xs text-purple-300 text-center font-semibold mb-2">Camera</div>
+                  <button
+                    onClick={() => setIsStationaryMode(!isStationaryMode)}
+                    className={`w-full px-3 py-2 rounded-lg backdrop-blur-xl border transition-all text-xs font-medium ${
+                      isStationaryMode
+                        ? 'bg-cyan-500/40 border-cyan-400/60 text-white'
+                        : 'bg-background/20 border-purple-500/30 text-purple-300 hover:bg-cyan-500/20'
+                    }`}
+                    title={isStationaryMode ? "Fixed Position - 360° View" : "Trailing Behind Ship"}
+                  >
+                    {isStationaryMode ? '📍 Fixed' : '🚀 Trail'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
