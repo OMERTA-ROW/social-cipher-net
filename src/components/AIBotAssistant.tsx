@@ -37,6 +37,9 @@ const AIBotAssistant = () => {
   const [showSpaceship, setShowSpaceship] = useState(false);
   const [showHyperSpeed, setShowHyperSpeed] = useState(false);
   const [hyperSpeedDestination, setHyperSpeedDestination] = useState("/");
+  const [dracoMode, setDracoMode] = useState(false);
+  const [botTapCount, setBotTapCount] = useState(0);
+  const [botTapTimer, setBotTapTimer] = useState<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -47,6 +50,15 @@ const AIBotAssistant = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Cleanup tap timer on unmount
+  useEffect(() => {
+    return () => {
+      if (botTapTimer) {
+        clearTimeout(botTapTimer);
+      }
+    };
+  }, [botTapTimer]);
 
   // Listen for notifications from CyberLink World
   useEffect(() => {
@@ -101,6 +113,29 @@ const AIBotAssistant = () => {
     // Generate auto-reply using AI
     const autoReplyPrompt = `Generate a brief, friendly auto-reply to this message: "${originalMessage}". Keep it under 50 words.`;
     await streamAIResponse(autoReplyPrompt, "message");
+  };
+
+  // Double-tap handler for AI Assistant button - toggles between Zozo and Draco
+  const handleBotButtonTap = () => {
+    setBotTapCount(prev => prev + 1);
+    
+    if (botTapTimer) {
+      clearTimeout(botTapTimer);
+    }
+    
+    const timer = setTimeout(() => {
+      if (botTapCount + 1 === 2) {
+        // Double tap - activate Draco mode
+        setDracoMode(prev => !prev);
+        toast.success(dracoMode ? "🤖 Zozo Activated - Switched to Zozo AI Assistant" : "🔥 Draco Activated - Switched to Draco AI Mode");
+      } else if (botTapCount + 1 === 1) {
+        // Single tap - open current mode
+        setIsOpen(true);
+      }
+      setBotTapCount(0);
+    }, 500);
+    
+    setBotTapTimer(timer);
   };
 
   const streamAIResponse = async (userMessage: string, action = "chat") => {
@@ -379,16 +414,22 @@ const AIBotAssistant = () => {
         }} 
       />
 
-      {/* Floating Bot Button - Zozo */}
+      {/* Floating Bot Button - Zozo/Draco */}
       {!isOpen && !showSpaceship && !showHyperSpeed && (
         <Button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleBotButtonTap}
           className={`fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full shadow-lg transition-all ${
-            isSpeaking ? "animate-pulse glow-accent scale-110" : "glow-primary"
+            isSpeaking ? "animate-pulse glow-accent scale-110" : dracoMode ? "glow-destructive" : "glow-primary"
           }`}
           size="icon"
+          title={dracoMode ? "Draco AI (Double-tap to switch)" : "Zozo AI (Double-tap to switch)"}
         >
-          <Bot className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""}`} />
+          <Bot className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""} ${dracoMode ? "text-red-500" : ""}`} />
+          {dracoMode && (
+            <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1">
+              DRACO
+            </Badge>
+          )}
         </Button>
       )}
 
@@ -411,9 +452,9 @@ const AIBotAssistant = () => {
                 )}
               </div>
               <div>
-                <h3 className="font-bold text-foreground">Zozo</h3>
+                <h3 className="font-bold text-foreground">{dracoMode ? "Draco" : "Zozo"}</h3>
                 <p className="text-xs text-muted-foreground">
-                  {isSpeaking ? "Speaking..." : isRecording ? "Listening..." : "AI Assistant"}
+                  {isSpeaking ? "Speaking..." : isRecording ? "Listening..." : dracoMode ? "Tactical AI" : "AI Assistant"}
                 </p>
               </div>
             </div>
