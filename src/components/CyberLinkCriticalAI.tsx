@@ -11,7 +11,8 @@ import {
   Brain, 
   Activity,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  TrendingUp
 } from "lucide-react";
 
 interface AIAgentStatus {
@@ -46,6 +47,18 @@ const CyberLinkCriticalAI = () => {
       status: "active",
       lastAction: "System health check",
       uptime: "100%"
+    },
+    {
+      name: "Auto-Update Agent",
+      status: "active",
+      lastAction: "Deploying critical updates",
+      uptime: "100%"
+    },
+    {
+      name: "Viral Expansion Agent",
+      status: "active",
+      lastAction: "Scaling infrastructure",
+      uptime: "99.9%"
     }
   ]);
 
@@ -54,7 +67,9 @@ const CyberLinkCriticalAI = () => {
     "[SYSTEM] CyberLink AI Ecosystem initialized",
     "[AUTO-FIX] Error detection systems online",
     "[PAGE-LOAD] Performance monitoring active",
-    "[QUANTUM] Multi-dimensional analysis ready"
+    "[QUANTUM] Multi-dimensional analysis ready",
+    "[AUTO-UPDATE] Update deployment system active",
+    "[VIRAL-EXPANSION] Scaling infrastructure ready"
   ]);
 
   useEffect(() => {
@@ -66,7 +81,11 @@ const CyberLinkCriticalAI = () => {
         "[QUANTUM] Processing quantum probabilities",
         "[MONITOR] All systems operational",
         "[AUTO-FIX] Zero critical issues detected",
-        "[PAGE-LOAD] LCP optimized to 1.2s"
+        "[PAGE-LOAD] LCP optimized to 1.2s",
+        "[AUTO-UPDATE] Deploying algorithm updates",
+        "[VIRAL-EXPANSION] Scaling to 1M+ users",
+        "[AUTO-UPDATE] New algorithms integrated",
+        "[VIRAL-EXPANSION] Infrastructure at 95% capacity"
       ];
       
       const randomAction = actions[Math.floor(Math.random() * actions.length)];
@@ -187,6 +206,26 @@ const CyberLinkCriticalAI = () => {
           >
             <RefreshCw className={`h-3 w-3 ${isProcessing ? 'animate-spin' : ''}`} />
             Monitor
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => runCriticalAnalysis('auto_update')}
+            disabled={isProcessing}
+            className="gap-1 bg-gradient-to-r from-green-500/10 to-emerald-500/10 hover:from-green-500/20 hover:to-emerald-500/20"
+          >
+            <Zap className="h-3 w-3 text-green-500" />
+            Auto-Update
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => runCriticalAnalysis('viral_expansion')}
+            disabled={isProcessing}
+            className="gap-1 bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20"
+          >
+            <TrendingUp className="h-3 w-3 text-purple-500" />
+            Viral Expand
           </Button>
         </div>
 
