@@ -15,6 +15,8 @@ import { ZozoSpaceshipEntrance } from "./ZozoSpaceshipEntrance";
 import { HyperSpeedSequence } from "./HyperSpeedSequence";
 import { useNavigate } from "react-router-dom";
 import { useZozoSubscription, ZOZO_TIERS } from "@/hooks/useZozoSubscription";
+import { useDracoSubscription, DRACO_TIERS } from "@/hooks/useDracoSubscription";
+import { DracoSubscriptionDialog } from "./DracoSubscriptionDialog";
 
 interface Message {
   role: "user" | "assistant";
@@ -24,8 +26,15 @@ interface Message {
 const AIBotAssistant = () => {
   const navigate = useNavigate();
   const { tier, loading: subLoading, startCheckout, openCustomerPortal } = useZozoSubscription();
+  const { 
+    status: dracoStatus, 
+    loading: dracoLoading, 
+    startCheckout: startDracoCheckout, 
+    openCustomerPortal: openDracoPortal 
+  } = useDracoSubscription();
   const [isOpen, setIsOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [showDracoUpgrade, setShowDracoUpgrade] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +55,7 @@ const AIBotAssistant = () => {
 
   const isActive = tier !== "free";
   const isPremium = tier === "premium";
+  const isDracoActive = dracoStatus.tier !== "free";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -139,9 +149,16 @@ const AIBotAssistant = () => {
   };
 
   const streamAIResponse = async (userMessage: string, action = "chat") => {
-    if (!isActive) {
-      toast.error("Zozo is inactive. Subscribe to activate AI features!");
-      setShowUpgrade(true);
+    const currentActive = dracoMode ? isDracoActive : isActive;
+    
+    if (!currentActive) {
+      if (dracoMode) {
+        toast.error("Draco is inactive. Subscribe to activate tactical features!");
+        setShowDracoUpgrade(true);
+      } else {
+        toast.error("Zozo is inactive. Subscribe to activate AI features!");
+        setShowUpgrade(true);
+      }
       return;
     }
 
@@ -152,7 +169,7 @@ const AIBotAssistant = () => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-bot`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${dracoMode ? 'draco-ai' : 'ai-bot'}`,
         {
           method: "POST",
           headers: {
@@ -435,24 +452,28 @@ const AIBotAssistant = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-28 right-8 z-50 w-96 h-[600px] bg-card/95 backdrop-blur border-primary/20 shadow-2xl flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-primary/20">
+        <Card className={`fixed bottom-28 right-8 z-50 w-96 h-[600px] backdrop-blur shadow-2xl flex flex-col ${
+          dracoMode 
+            ? 'bg-red-950/95 border-red-600/50' 
+            : 'bg-card/95 border-primary/20'
+        }`}>
+          <div className={`flex items-center justify-between p-4 border-b ${dracoMode ? 'border-red-600/30' : 'border-primary/20'}`}>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center ${
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   isSpeaking ? "animate-pulse" : ""
-                }`}>
+                } ${dracoMode ? 'bg-gradient-to-br from-red-600 to-orange-600' : 'bg-gradient-to-br from-primary to-accent'}`}>
                   <Bot className={`w-6 h-6 text-primary-foreground ${isSpeaking ? "animate-bounce" : ""}`} />
                 </div>
                 {isSpeaking && (
                   <>
-                    <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-                    <div className="absolute inset-0 rounded-full bg-accent/20 animate-ping" style={{ animationDelay: "0.2s" }} />
+                    <div className={`absolute inset-0 rounded-full animate-ping ${dracoMode ? 'bg-red-500/30' : 'bg-primary/30'}`} />
+                    <div className={`absolute inset-0 rounded-full animate-ping ${dracoMode ? 'bg-orange-500/20' : 'bg-accent/20'}`} style={{ animationDelay: "0.2s" }} />
                   </>
                 )}
               </div>
               <div>
-                <h3 className="font-bold text-foreground">{dracoMode ? "Draco" : "Zozo"}</h3>
+                <h3 className={`font-bold ${dracoMode ? 'text-red-400' : 'text-foreground'}`}>{dracoMode ? "Draco" : "Zozo"}</h3>
                 <p className="text-xs text-muted-foreground">
                   {isSpeaking ? "Speaking..." : isRecording ? "Listening..." : dracoMode ? "Tactical AI" : "AI Assistant"}
                 </p>
@@ -482,75 +503,126 @@ const AIBotAssistant = () => {
           )}
           
           {/* Settings Panel */}
-          <div className="px-4 py-3 border-b border-primary/10 bg-muted/10 space-y-3">
-            {!isActive ? (
-              <div className="text-center py-4 space-y-3">
-                <Lock className="w-8 h-8 mx-auto text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Zozo is in free mode - visible but inactive
-                </p>
-                <Button onClick={() => setShowUpgrade(true)} className="w-full glow-primary">
-                  <Crown className="w-4 h-4 mr-2" />
-                  Activate Zozo
-                </Button>
-              </div>
+          <div className={`px-4 py-3 border-b bg-muted/10 space-y-3 ${dracoMode ? 'border-red-600/30' : 'border-primary/10'}`}>
+            {dracoMode ? (
+              // Draco Mode Settings
+              !isDracoActive ? (
+                <div className="text-center py-4 space-y-3">
+                  <Lock className="w-8 h-8 mx-auto text-red-500" />
+                  <p className="text-sm text-muted-foreground">
+                    Draco is in free mode - activate tactical features
+                  </p>
+                  <Button onClick={() => setShowDracoUpgrade(true)} className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700">
+                    <Crown className="w-4 h-4 mr-2" />
+                    Activate Draco
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Crown className="w-4 h-4 text-red-500" />
+                      <span className="text-sm font-semibold text-red-400">{DRACO_TIERS[dracoStatus.tier].name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Tactical AI features active
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={openDracoPortal} className="w-full text-xs">
+                    Manage Draco Subscription
+                  </Button>
+                </>
+              )
             ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Radio className="w-4 h-4 text-primary" />
-                    <Label htmlFor="auto-live" className="text-sm">
-                      Auto-Live Link
-                    </Label>
-                  </div>
-                  <Switch
-                    id="auto-live"
-                    checked={autoLiveLink}
-                    onCheckedChange={setAutoLiveLink}
-                    disabled={!isPremium}
-                  />
+              // Zozo Mode Settings (original)
+              !isActive ? (
+                <div className="text-center py-4 space-y-3">
+                  <Lock className="w-8 h-8 mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Zozo is in free mode - visible but inactive
+                  </p>
+                  <Button onClick={() => setShowUpgrade(true)} className="w-full glow-primary">
+                    <Crown className="w-4 h-4 mr-2" />
+                    Activate Zozo
+                  </Button>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-accent" />
-                    <Label htmlFor="auto-reply" className="text-sm">
-                      Auto-Reply
-                    </Label>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-primary" />
+                      <Label htmlFor="auto-live" className="text-sm">
+                        Auto-Live Link
+                      </Label>
+                    </div>
+                    <Switch
+                      id="auto-live"
+                      checked={autoLiveLink}
+                      onCheckedChange={setAutoLiveLink}
+                      disabled={!isPremium}
+                    />
                   </div>
-                  <Switch
-                    id="auto-reply"
-                    checked={autoReplyEnabled}
-                    onCheckedChange={setAutoReplyEnabled}
-                  />
-                </div>
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (!isPremium) {
-                      toast.error("Hyperspace requires Premium");
-                      setShowUpgrade(true);
-                      return;
-                    }
-                    setHyperspaceOpen(true);
-                  }}
-                  className="w-full glow-primary"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  Open Hyperspace {!isPremium && <Lock className="w-3 h-3 ml-2" />}
-                </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-accent" />
+                      <Label htmlFor="auto-reply" className="text-sm">
+                        Auto-Reply
+                      </Label>
+                    </div>
+                    <Switch
+                      id="auto-reply"
+                      checked={autoReplyEnabled}
+                      onCheckedChange={setAutoReplyEnabled}
+                    />
+                  </div>
 
-                <Button variant="ghost" size="sm" onClick={openCustomerPortal} className="w-full text-xs">
-                  Manage Subscription
-                </Button>
-              </>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!isPremium) {
+                        toast.error("Hyperspace requires Premium");
+                        setShowUpgrade(true);
+                        return;
+                      }
+                      setHyperspaceOpen(true);
+                    }}
+                    className="w-full glow-primary"
+                  >
+                    <Zap className="w-4 h-4 mr-2" />
+                    Open Hyperspace {!isPremium && <Lock className="w-3 h-3 ml-2" />}
+                  </Button>
+
+                  <Button variant="ghost" size="sm" onClick={openCustomerPortal} className="w-full text-xs">
+                    Manage Subscription
+                  </Button>
+                </>
+              )
             )}
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {!isActive && (
+            {dracoMode && !isDracoActive && (
+              <div className="bg-red-950/30 border border-red-600/20 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <Lock className="w-5 h-5 text-red-500 flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground mb-1">Draco is in Free Mode</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Draco is visible but tactical features are locked. Subscribe to unlock advanced trading AI!
+                    </p>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => setShowDracoUpgrade(true)} className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700">
+                        View Draco Plans
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {!dracoMode && !isActive && (
               <div className="bg-muted/30 border border-primary/20 rounded-lg p-4 mb-4">
                 <div className="flex items-start gap-3">
                   <Lock className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-1" />
@@ -572,25 +644,36 @@ const AIBotAssistant = () => {
             {messages.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 <div className="relative inline-block mb-4">
-                  <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center ${isActive ? 'animate-pulse' : 'opacity-50 grayscale'}`}>
+                  <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${dracoMode ? 'from-red-600 to-orange-600' : 'from-primary to-accent'} flex items-center justify-center ${(dracoMode ? isDracoActive : isActive) ? 'animate-pulse' : 'opacity-50 grayscale'}`}>
                     <Bot className="w-12 h-12 text-primary-foreground" />
                   </div>
-                  {isActive && <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />}
+                  {(dracoMode ? isDracoActive : isActive) && <div className={`absolute inset-0 rounded-full ${dracoMode ? 'bg-red-500/20' : 'bg-primary/20'} animate-ping`} />}
                 </div>
-                <p className="font-bold text-lg mb-1">Hi! I'm Zozo</p>
-                <p className="text-sm">{isActive ? 'Your CyberLink AI assistant with animated voice' : 'I\'m visible but inactive in free mode'}</p>
-                {isActive && (
+                <p className="font-bold text-lg mb-1">Hi! I'm {dracoMode ? "Draco" : "Zozo"}</p>
+                <p className="text-sm">{(dracoMode ? isDracoActive : isActive) ? (dracoMode ? 'Your tactical trading AI assistant' : 'Your CyberLink AI assistant with animated voice') : 'I\'m visible but inactive in free mode'}</p>
+                {(dracoMode ? isDracoActive : isActive) && (
                   <>
                     <p className="text-sm mt-2">Try these commands:</p>
                     <div className="text-xs space-y-1 mt-3">
-                      {isPremium && <Badge variant="outline" className="mr-2 mb-1">hyperspace</Badge>}
-                      <Badge variant="outline" className="mr-2 mb-1">go live</Badge>
-                      <Badge variant="outline" className="mr-2 mb-1">cyber streamer</Badge>
-                      <Badge variant="outline" className="mr-2 mb-1">cyber gamers</Badge>
-                      <Badge variant="outline" className="mr-2 mb-1">monetization</Badge>
-                      <Badge variant="outline" className="mr-2 mb-1">affiliate</Badge>
-                      <Badge variant="outline" className="mr-2 mb-1">seller dashboard</Badge>
-                      <Badge variant="outline" className="mr-2 mb-1">create thread: [text]</Badge>
+                      {dracoMode ? (
+                        <>
+                          <Badge variant="outline" className="mr-2 mb-1">analyze chart</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">trading signals</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">fibonacci levels</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">market insights</Badge>
+                        </>
+                      ) : (
+                        <>
+                          {isPremium && <Badge variant="outline" className="mr-2 mb-1">hyperspace</Badge>}
+                          <Badge variant="outline" className="mr-2 mb-1">go live</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">cyber streamer</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">cyber gamers</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">monetization</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">affiliate</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">seller dashboard</Badge>
+                          <Badge variant="outline" className="mr-2 mb-1">create thread: [text]</Badge>
+                        </>
+                      )}
                     </div>
                   </>
                 )}
@@ -641,7 +724,7 @@ const AIBotAssistant = () => {
                 </div>
                 <div className="bg-muted p-3 rounded-lg">
                   <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                  <p className="text-xs text-muted-foreground mt-1">Zozo is thinking...</p>
+                  <p className="text-xs text-muted-foreground mt-1">{dracoMode ? "Draco" : "Zozo"} is thinking...</p>
                 </div>
               </div>
             )}
@@ -682,6 +765,16 @@ const AIBotAssistant = () => {
           startCheckout(tier);
           setShowUpgrade(false);
         }}
+      />
+      <DracoSubscriptionDialog
+        isOpen={showDracoUpgrade}
+        onClose={() => setShowDracoUpgrade(false)}
+        currentTier={dracoStatus.tier}
+        onSubscribe={(tier) => {
+          startDracoCheckout(tier);
+          setShowDracoUpgrade(false);
+        }}
+        onManageSubscription={openDracoPortal}
       />
     </>
   );
