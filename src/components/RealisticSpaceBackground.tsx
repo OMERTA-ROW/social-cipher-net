@@ -843,6 +843,7 @@ const CameraController = ({ povIndex, orbitControlsRef, zoomLevel, isStationaryM
     { pos: [0, 2, 0], lookAt: [100, 0, 0] }, // Milky Way inside view
     { pos: [155, 155, 155], lookAt: [150, 150, 150] }, // Northern Star
     { pos: [0, 200, 0], lookAt: [0, 0, 0] }, // Heaven avenue
+    { pos: [0, 0, 0], lookAt: [0, 0, 0] }, // 360 Orbital View (calculated dynamically)
   ], []);
 
   // Detect POV change and start transition
@@ -877,6 +878,36 @@ const CameraController = ({ povIndex, orbitControlsRef, zoomLevel, isStationaryM
     const target = povPositions[povIndex];
     let targetPos = new THREE.Vector3(...target.pos);
     let lookAtTarget = new THREE.Vector3(...target.lookAt);
+    
+    // Calculate dynamic positions for 360 Orbital View (POV 13)
+    if (povIndex === 13) {
+      const orbitRadius = 100;
+      const orbitSpeed = 0.05;
+      const orbitHeight = 50;
+      const orbitAngle = time * orbitSpeed;
+      
+      // Circular orbit around solar system center
+      const orbitX = Math.cos(orbitAngle) * orbitRadius;
+      const orbitZ = Math.sin(orbitAngle) * orbitRadius;
+      
+      targetPos = new THREE.Vector3(orbitX, orbitHeight, orbitZ);
+      lookAtTarget = new THREE.Vector3(0, 0, 0); // Always look at center
+      
+      // Smooth camera movement
+      camera.position.lerp(targetPos, 0.02);
+      
+      // Enable OrbitControls for manual override
+      if (orbitControlsRef.current) {
+        orbitControlsRef.current.enabled = true;
+        orbitControlsRef.current.enableRotate = true;
+        orbitControlsRef.current.enableZoom = true;
+        orbitControlsRef.current.enablePan = true;
+        orbitControlsRef.current.target.lerp(lookAtTarget, 0.02);
+        orbitControlsRef.current.update();
+      }
+      
+      return; // Skip rest of frame logic
+    }
     
     // Calculate dynamic positions for Follow Mega (POV 5)
     if (povIndex === 5) {
@@ -1182,7 +1213,7 @@ const SpaceScene = ({ povIndex, zoomLevel, isStationaryMode }: {
 const RealisticSpaceBackground = () => {
   const [hasWebGLError, setHasWebGLError] = useState(false);
   const [povIndex, setPovIndex] = useState(0);
-  const totalPOVs = 13;
+  const totalPOVs = 14;
   const [zoomLevel, setZoomLevel] = useState(1); // 0: close, 1: medium, 2: far
   const [isStationaryMode, setIsStationaryMode] = useState(false); // Fixed camera position
   const [favorites, setFavorites] = useState<any[]>([]);
@@ -1432,6 +1463,19 @@ const RealisticSpaceBackground = () => {
         >
           <Rocket className="w-5 h-5 text-purple-400" />
         </button>
+        <button
+          onClick={() => setPovIndex(13)}
+          className={`p-2.5 rounded-full backdrop-blur-xl border transition-all shadow-xl hover:scale-110 ${
+            povIndex === 13 
+              ? 'bg-gradient-to-br from-blue-500/30 to-purple-500/30 border-blue-400/50' 
+              : 'bg-background/20 border-blue-400/30 hover:from-blue-500/15 hover:to-purple-500/15'
+          }`}
+          title="360° Orbital View"
+        >
+          <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+        </button>
         {povIndex === 4 && (
           <Badge className="bg-gradient-to-r from-red-500/20 to-cyan-500/20 text-purple-300 border-purple-500/50 text-xs animate-pulse">
             Mega Cockpit
@@ -1440,6 +1484,11 @@ const RealisticSpaceBackground = () => {
         {povIndex === 5 && (
           <Badge className="bg-gradient-to-r from-red-500/20 to-cyan-500/20 text-purple-300 border-purple-400/50 text-xs animate-pulse">
             Following
+          </Badge>
+        )}
+        {povIndex === 13 && (
+          <Badge className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-300 border-blue-400/50 text-xs animate-pulse">
+            360° Orbit
           </Badge>
         )}
         
