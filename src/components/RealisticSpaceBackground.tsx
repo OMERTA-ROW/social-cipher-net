@@ -1193,9 +1193,11 @@ const RealisticSpaceBackground = () => {
   const [showCameraControls, setShowCameraControls] = useState(true); // Dropdown for camera controls
   const [tapCount, setTapCount] = useState(0);
   const [tapTimer, setTapTimer] = useState<NodeJS.Timeout | null>(null);
+  const [spaceshipTapCount, setSpaceshipTapCount] = useState(0);
+  const [spaceshipTapTimer, setSpaceshipTapTimer] = useState<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
-  // Triple-tap handler for rocket button
+  // Triple-tap handler for rocket button (cockpit view)
   const handleRocketTap = () => {
     setTapCount(prev => prev + 1);
     
@@ -1214,6 +1216,27 @@ const RealisticSpaceBackground = () => {
     setTapTimer(timer);
   };
 
+  // Double-tap handler for spaceship button (follow view)
+  const handleSpaceshipTap = () => {
+    setSpaceshipTapCount(prev => prev + 1);
+    
+    if (spaceshipTapTimer) {
+      clearTimeout(spaceshipTapTimer);
+    }
+    
+    const timer = setTimeout(() => {
+      if (spaceshipTapCount + 1 === 2) {
+        setPovIndex(0); // Exit to default view
+        toast({ title: "🚀 Exited follow view", description: "Returned to God's Eye view" });
+      } else if (spaceshipTapCount + 1 === 1) {
+        setPovIndex(5); // First tap enters follow mode
+      }
+      setSpaceshipTapCount(0);
+    }, 500);
+    
+    setSpaceshipTapTimer(timer);
+  };
+
   useEffect(() => {
     // Check if WebGL is available
     const canvas = document.createElement('canvas');
@@ -1225,13 +1248,16 @@ const RealisticSpaceBackground = () => {
     // Load favorites
     loadFavorites();
     
-    // Cleanup tap timer on unmount
+    // Cleanup tap timers on unmount
     return () => {
       if (tapTimer) {
         clearTimeout(tapTimer);
       }
+      if (spaceshipTapTimer) {
+        clearTimeout(spaceshipTapTimer);
+      }
     };
-  }, [tapTimer]);
+  }, [tapTimer, spaceshipTapTimer]);
 
   const loadFavorites = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -1396,13 +1422,13 @@ const RealisticSpaceBackground = () => {
           <Rocket className="w-6 h-6 text-purple-300" />
         </button>
         <button
-          onClick={() => setPovIndex(5)}
+          onClick={handleSpaceshipTap}
           className={`p-2.5 rounded-full backdrop-blur-xl border transition-all shadow-xl hover:scale-110 ${
             povIndex === 5 
               ? 'bg-gradient-to-br from-red-500/30 to-cyan-500/30 border-purple-400/50' 
               : 'bg-background/20 border-purple-400/30 hover:from-red-500/15 hover:to-cyan-500/15'
           }`}
-          title="Follow Mega Ship"
+          title="Follow Mega Ship (Double-tap to exit)"
         >
           <Rocket className="w-5 h-5 text-purple-400" />
         </button>
