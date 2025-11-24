@@ -18,6 +18,8 @@ export const PageTabManager = () => {
           variant="secondary"
           className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-primary/20 transition-colors"
           onClick={() => bringToFront(window.id)}
+          onDoubleClick={() => bringToFront(window.id)}
+          title="Click to focus • Double-click to bring to front"
         >
           <span>{window.title}</span>
           <Button
@@ -28,6 +30,7 @@ export const PageTabManager = () => {
               e.stopPropagation();
               closeWindow(window.id);
             }}
+            title="Close tab"
           >
             <X className="h-3 w-3" />
           </Button>

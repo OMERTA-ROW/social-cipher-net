@@ -4,13 +4,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Gamepad2, Users, Radio, Trophy, Zap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Gamepad2, Users, Radio, Trophy, Zap, Search } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
-import { useFloatingWindows } from "@/hooks/useFloatingWindows";
+import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { useNavigate } from "react-router-dom";
 import { TokenPoolManager } from "@/components/TokenPoolManager";
+import { PageTabManager } from "@/components/PageTabManager";
+import DracoAI from "@/components/DracoAI";
+import { toast } from "sonner";
 
 interface GangMember {
   id: number;
@@ -20,9 +24,21 @@ interface GangMember {
   isLive: boolean;
 }
 
+const TRADING_PLATFORMS = [
+  { name: "TradingView", url: "https://www.tradingview.com/chart/" },
+  { name: "Binance", url: "https://www.binance.com/en/trade/" },
+  { name: "Coinbase Pro", url: "https://pro.coinbase.com/trade/" },
+  { name: "Kraken", url: "https://www.kraken.com/charts" },
+  { name: "KuCoin", url: "https://www.kucoin.com/trade/" },
+  { name: "Yahoo Finance", url: "https://finance.yahoo.com/chart/" },
+  { name: "Robinhood", url: "https://robinhood.com/" },
+  { name: "Interactive Brokers", url: "https://www.interactivebrokers.com/" },
+];
+
 const CyberGamers = () => {
   const navigate = useNavigate();
-  const { windows, openWindow, closeWindow } = useFloatingWindows();
+  const { openWindow } = useFloatingWindowsContext();
+  const [searchQuery, setSearchQuery] = useState("");
   const [gangMembers] = useState<GangMember[]>([
     { id: 1, name: "CyberNinja", rank: "Leader", level: 99, isLive: true },
     { id: 2, name: "PixelWarrior", rank: "Elite", level: 87, isLive: false },
@@ -31,12 +47,105 @@ const CyberGamers = () => {
     { id: 5, name: "CodeBreaker", rank: "Member", level: 68, isLive: false },
   ]);
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    // Check if it's a known platform
+    const platform = TRADING_PLATFORMS.find(
+      p => p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (platform) {
+      openWindow(
+        platform.name,
+        <iframe
+          src={platform.url}
+          className="w-full h-full border-0"
+          title={platform.name}
+        />,
+        1200,
+        800
+      );
+      toast.success(`Opening ${platform.name} trading chart`);
+    } else {
+      // Try to open as URL
+      let url = searchQuery;
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      
+      openWindow(
+        searchQuery,
+        <iframe
+          src={url}
+          className="w-full h-full border-0"
+          title={searchQuery}
+        />,
+        1200,
+        800
+      );
+      toast.success(`Opening ${searchQuery}`);
+    }
+    
+    setSearchQuery("");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <RealisticSpaceBackground />
       <Navigation onCreatePost={() => {}} />
+      <PageTabManager />
       
-      <main className="container mx-auto px-4 pt-20 pb-8">
+      {/* Trading Platform Search Bar */}
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-40 w-full max-w-2xl px-4">
+        <form onSubmit={handleSearchSubmit} className="relative">
+          <Input
+            type="text"
+            placeholder="Search for trading platforms (e.g., TradingView, Binance, or enter URL)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pr-12 bg-background/95 backdrop-blur-sm border-primary/30 focus:border-primary"
+          />
+          <Button
+            type="submit"
+            size="icon"
+            className="absolute right-1 top-1/2 -translate-y-1/2"
+            variant="ghost"
+          >
+            <Search className="w-4 h-4" />
+          </Button>
+        </form>
+        
+        {/* Quick Platform Buttons */}
+        <div className="flex flex-wrap gap-2 mt-2 justify-center">
+          {TRADING_PLATFORMS.slice(0, 5).map((platform) => (
+            <Button
+              key={platform.name}
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                openWindow(
+                  platform.name,
+                  <iframe
+                    src={platform.url}
+                    className="w-full h-full border-0"
+                    title={platform.name}
+                  />,
+                  1200,
+                  800
+                );
+                toast.success(`Opening ${platform.name}`);
+              }}
+              className="backdrop-blur-sm bg-background/80 border-primary/20 hover:border-primary/50"
+            >
+              {platform.name}
+            </Button>
+          ))}
+        </div>
+      </div>
+      
+      <main className="container mx-auto px-4 pt-48 pb-8">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -234,21 +343,7 @@ const CyberGamers = () => {
         </Tabs>
       </main>
 
-      {/* Floating Windows */}
-      {windows.map((window) => (
-        <FloatingWindow
-          key={window.id}
-          id={window.id}
-          title={window.title}
-          onClose={() => closeWindow(window.id)}
-          initialX={window.x}
-          initialY={window.y}
-          width={700}
-          height={500}
-        >
-          {window.content}
-        </FloatingWindow>
-      ))}
+      <DracoAI />
     </div>
   );
 };
