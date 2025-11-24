@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Web3Provider } from "@/providers/Web3Provider";
 import { FloatingWindowsProvider } from "@/providers/FloatingWindowsProvider";
+import { FourClickCloseWrapper } from "@/components/FourClickCloseWrapper";
 import { SecurityMonitor } from "@/components/SecurityMonitor";
 import Index from "./pages/Index";
 import Studio from "./pages/Studio";
@@ -39,8 +40,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <FloatingWindowsProvider>
-          <BrowserRouter>
-            <SecurityMonitor />
+          <FourClickCloseWrapper>
+            <BrowserRouter>
+              <SecurityMonitor />
           <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/studio" element={<Studio />} />
@@ -66,8 +68,9 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-          <AIBotAssistant />
-          </BrowserRouter>
+            <AIBotAssistant />
+            </BrowserRouter>
+          </FourClickCloseWrapper>
         </FloatingWindowsProvider>
       </TooltipProvider>
     </Web3Provider>
