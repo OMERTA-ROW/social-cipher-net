@@ -1,4 +1,4 @@
-import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign, Gamepad2, Shield, Tv, FileText, BadgeCheck, CreditCard, ExternalLink, Globe, Brain, Pickaxe } from "lucide-react";
+import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign, Gamepad2, Shield, Tv, FileText, BadgeCheck, CreditCard, ExternalLink, Globe, Brain, Pickaxe, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useMiningFeatures } from "@/hooks/useMiningFeatures";
@@ -91,6 +91,15 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
               title="CyberWorld Hub"
             >
               <Globe className="w-5 h-5" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => navigate("/backgrounds")}
+              className="text-foreground hover:text-primary"
+              title="Space Backgrounds"
+            >
+              <Image className="w-5 h-5" />
             </Button>
             <Button 
               variant="ghost" 
