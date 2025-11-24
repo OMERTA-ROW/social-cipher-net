@@ -4,14 +4,14 @@ import { X } from "lucide-react";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Card } from "@/components/ui/card";
 
-export const BackgroundTabManager = () => {
+export const PageTabManager = () => {
   const { windows, closeWindow, bringToFront } = useFloatingWindowsContext();
 
   if (windows.length === 0) return null;
 
   return (
-    <Card className="fixed top-4 left-1/2 -translate-x-1/2 z-40 bg-background/95 backdrop-blur p-2 flex gap-2 items-center">
-      <span className="text-sm text-muted-foreground px-2">Open Backgrounds:</span>
+    <Card className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur p-2 flex gap-2 items-center">
+      <span className="text-sm text-muted-foreground px-2">Open Pages:</span>
       {windows.map((window) => (
         <Badge
           key={window.id}

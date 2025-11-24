@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Web3Provider } from "@/providers/Web3Provider";
 import { FloatingWindowsProvider } from "@/providers/FloatingWindowsProvider";
+import { GlobalBackgroundProvider } from "@/contexts/GlobalBackgroundContext";
+import { GlobalBackground } from "@/components/GlobalBackground";
 import { SecurityMonitor } from "@/components/SecurityMonitor";
 import Index from "./pages/Index";
 import Studio from "./pages/Studio";
@@ -38,10 +40,12 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <FloatingWindowsProvider>
-          <BrowserRouter>
-            <SecurityMonitor />
-        <Routes>
+        <GlobalBackgroundProvider>
+          <FloatingWindowsProvider>
+            <BrowserRouter>
+              <GlobalBackground />
+              <SecurityMonitor />
+          <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/studio" element={<Studio />} />
           <Route path="/auth" element={<Auth />} />
@@ -66,9 +70,10 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <AIBotAssistant />
-        </BrowserRouter>
-        </FloatingWindowsProvider>
+          <AIBotAssistant />
+          </BrowserRouter>
+          </FloatingWindowsProvider>
+        </GlobalBackgroundProvider>
       </TooltipProvider>
     </Web3Provider>
   </QueryClientProvider>
