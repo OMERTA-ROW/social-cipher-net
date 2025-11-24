@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
 import PostCard from "@/components/PostCard";
@@ -43,6 +43,7 @@ interface Post {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +53,22 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const { openWindow } = useFloatingWindowsContext();
   const [showSpaceBackground, setShowSpaceBackground] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     fetchPosts();
