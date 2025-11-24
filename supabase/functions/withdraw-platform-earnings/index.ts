@@ -82,7 +82,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         amount: amount,
-        transaction_type: 'deposit',
+        transaction_type: 'earning',
         description: `Withdrawal from ${platform}`,
         status: 'completed',
         metadata: {
