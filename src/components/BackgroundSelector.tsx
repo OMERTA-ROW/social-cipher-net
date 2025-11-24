@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGlobalBackgroundContext } from "@/contexts/GlobalBackgroundContext";
+import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import CyberSpaceBackground from "./CyberSpaceBackground";
 import RealisticSpaceBackground from "./RealisticSpaceBackground";
 import SolarMatrixBackground from "./SolarMatrixBackground";
 import { DracoMiningBackground } from "./DracoMiningBackground";
 import MatrixOverlay from "./MatrixOverlay";
-import { Check } from "lucide-react";
 
 const backgrounds = [
   {
@@ -38,10 +37,10 @@ const backgrounds = [
 ];
 
 export const BackgroundSelector = () => {
-  const { setActiveBackground, background } = useGlobalBackgroundContext();
+  const { openWindow } = useFloatingWindowsContext();
 
   const handleSetBackground = (bg: typeof backgrounds[0]) => {
-    setActiveBackground(bg.name, bg.component);
+    openWindow(bg.name, bg.component, 800, 600);
   };
 
   return (
@@ -59,12 +58,9 @@ export const BackgroundSelector = () => {
               <Button
                 key={bg.id}
                 onClick={() => handleSetBackground(bg)}
-                variant={background.name === bg.name ? "default" : "outline"}
-                className="h-24 flex flex-col items-center justify-center gap-2 relative"
+                variant="outline"
+                className="h-24 flex flex-col items-center justify-center gap-2"
               >
-                {background.name === bg.name && (
-                  <Check className="absolute top-2 right-2 h-4 w-4" />
-                )}
                 <span className="text-sm font-medium">{bg.name}</span>
               </Button>
             ))}
@@ -80,9 +76,9 @@ export const BackgroundSelector = () => {
                   <Button 
                     onClick={() => handleSetBackground(bg)} 
                     size="sm"
-                    variant={background.name === bg.name ? "default" : "outline"}
+                    variant="outline"
                   >
-                    {background.name === bg.name ? "Active" : "Set Active"}
+                    Open
                   </Button>
                 </div>
                 <div className="h-40 rounded-lg overflow-hidden border border-border relative">
