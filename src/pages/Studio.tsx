@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import { OmegaChat } from "@/components/OmegaChat";
 import { supabase } from "@/integrations/supabase/client";
 
 const Studio = () => {
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isLive, setIsLive] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
@@ -98,6 +100,22 @@ const Studio = () => {
     cj: false
   });
   const { streamChat } = usePlatformChat();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const socialPlatforms = [
     { id: "twitter", name: "Twitter", color: "bg-blue-500", category: "social" },
