@@ -97,15 +97,22 @@ serve(async (req) => {
       };
     }
 
-    // Store pending connection
+    // Store pending connection - update if exists, insert if new
     const { error: insertError } = await supabaseClient
       .from('platform_connections')
-      .upsert({
-        user_id: user.id,
-        platform,
-        is_active: false,
-        metadata: { pending_auth: true },
-      });
+      .upsert(
+        {
+          user_id: user.id,
+          platform,
+          is_active: false,
+          metadata: { pending_auth: true },
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id,platform',
+          ignoreDuplicates: false,
+        }
+      );
 
     if (insertError) throw insertError;
 
