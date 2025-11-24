@@ -1874,6 +1874,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_saved_tabs: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          login_credentials: Json | null
+          metadata: Json | null
+          tab_name: string
+          tab_type: string
+          tab_url: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          login_credentials?: Json | null
+          metadata?: Json | null
+          tab_name: string
+          tab_type?: string
+          tab_url: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          login_credentials?: Json | null
+          metadata?: Json | null
+          tab_name?: string
+          tab_type?: string
+          tab_url?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_wallets: {
         Row: {
           balance: number
