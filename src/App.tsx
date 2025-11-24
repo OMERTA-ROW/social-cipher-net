@@ -26,6 +26,7 @@ import CyberWorld from "./pages/CyberWorld";
 import Miners from "./pages/Miners";
 import UserProfile from "./pages/UserProfile";
 import TokenPurchase from "./pages/TokenPurchase";
+import Backgrounds from "./pages/Backgrounds";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
 
@@ -61,6 +62,7 @@ const App = () => (
           <Route path="/profile/:userId" element={<UserProfile />} />
           <Route path="/token-purchase" element={<TokenPurchase />} />
           <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
+          <Route path="/backgrounds" element={<Backgrounds />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

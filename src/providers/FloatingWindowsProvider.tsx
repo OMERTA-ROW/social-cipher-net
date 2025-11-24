@@ -7,6 +7,7 @@ interface FloatingWindowsContextType {
   openWindow: (title: string, content: ReactNode, width?: number, height?: number) => void;
   closeWindow: (id: string) => void;
   closeAllWindows: () => void;
+  bringToFront: (id: string) => void;
 }
 
 const FloatingWindowsContext = createContext<FloatingWindowsContextType | undefined>(undefined);
@@ -28,7 +29,11 @@ export const FloatingWindowsProvider = ({ children }: { children: ReactNode }) =
       
       <div className="fixed inset-0 pointer-events-none z-50" style={{ pointerEvents: 'none' }}>
         {floatingWindows.windows.map((window) => (
-          <div key={window.id} style={{ pointerEvents: 'auto' }}>
+          <div 
+            key={window.id} 
+            style={{ pointerEvents: 'auto', zIndex: window.zIndex || 50 }}
+            onClick={() => floatingWindows.bringToFront(window.id)}
+          >
             <FloatingWindow
               id={window.id}
               title={window.title}
