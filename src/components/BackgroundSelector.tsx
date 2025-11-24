@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
+import { useGlobalBackgroundContext } from "@/contexts/GlobalBackgroundContext";
 import CyberSpaceBackground from "./CyberSpaceBackground";
 import RealisticSpaceBackground from "./RealisticSpaceBackground";
 import SolarMatrixBackground from "./SolarMatrixBackground";
 import { DracoMiningBackground } from "./DracoMiningBackground";
 import MatrixOverlay from "./MatrixOverlay";
+import { Check } from "lucide-react";
 
 const backgrounds = [
   {
@@ -37,15 +38,10 @@ const backgrounds = [
 ];
 
 export const BackgroundSelector = () => {
-  const { openWindow } = useFloatingWindowsContext();
+  const { setActiveBackground, background } = useGlobalBackgroundContext();
 
-  const openBackground = (bg: typeof backgrounds[0]) => {
-    openWindow(
-      bg.name,
-      <div className="w-full h-full">{bg.component}</div>,
-      800,
-      600
-    );
+  const handleSetBackground = (bg: typeof backgrounds[0]) => {
+    setActiveBackground(bg.name, bg.component);
   };
 
   return (
@@ -62,10 +58,13 @@ export const BackgroundSelector = () => {
             {backgrounds.map((bg) => (
               <Button
                 key={bg.id}
-                onClick={() => openBackground(bg)}
-                variant="outline"
-                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => handleSetBackground(bg)}
+                variant={background.name === bg.name ? "default" : "outline"}
+                className="h-24 flex flex-col items-center justify-center gap-2 relative"
               >
+                {background.name === bg.name && (
+                  <Check className="absolute top-2 right-2 h-4 w-4" />
+                )}
                 <span className="text-sm font-medium">{bg.name}</span>
               </Button>
             ))}
@@ -78,8 +77,12 @@ export const BackgroundSelector = () => {
               <div key={bg.id} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium">{bg.name}</h3>
-                  <Button onClick={() => openBackground(bg)} size="sm">
-                    Open
+                  <Button 
+                    onClick={() => handleSetBackground(bg)} 
+                    size="sm"
+                    variant={background.name === bg.name ? "default" : "outline"}
+                  >
+                    {background.name === bg.name ? "Active" : "Set Active"}
                   </Button>
                 </div>
                 <div className="h-40 rounded-lg overflow-hidden border border-border relative">
