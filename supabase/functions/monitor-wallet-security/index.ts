@@ -45,24 +45,21 @@ serve(async (req) => {
       console.error('Error checking suspicion:', checkError);
     }
 
-    // Detect specific attack patterns
-    const suspiciousPatterns = [
-      'bulk_balance_check',
-      'rapid_wallet_access',
+    // Detect only critical attack patterns (removed overly aggressive patterns)
+    const criticalAttackPatterns = [
       'unauthorized_crypto_scan',
       'token_enumeration',
       'balance_scraping',
-      'rapid_withdrawal_attempt',
       'mining_exploit',
-      'api_abuse',
       'credential_stuffing',
       'account_takeover_attempt',
-      'rapid_clicking',
       'console_tampering'
     ];
 
-    const isKnownAttackPattern = suspiciousPatterns.includes(action);
-    const shouldBlock = isSuspicious || isKnownAttackPattern;
+    const isKnownAttackPattern = criticalAttackPatterns.includes(action);
+    
+    // Only block on database-confirmed suspicious activity + critical patterns
+    const shouldBlock = isSuspicious && isKnownAttackPattern;
 
     // Always log the security event
     const severity = shouldBlock ? 'critical' : (isKnownAttackPattern ? 'high' : 'medium');
@@ -83,41 +80,31 @@ serve(async (req) => {
       });
 
     if (shouldBlock) {
-      console.log(`🚨 SECURITY ALERT: Malicious activity detected for user ${user.id} - ${action}`);
+      console.log(`🚨 SECURITY ALERT: Critical malicious activity detected for user ${user.id} - ${action}`);
       
-      // Update user profile to mark as compromised
+      // Log the critical security event for manual review
       await supabaseClient
-        .from('profiles')
-        .update({ 
-          is_private: true,
-          bio: '⚠️ Account suspended due to security violation'
-        })
-        .eq('id', user.id);
-
-      // Trigger account deletion process
-      const { data: deleteResult, error: deleteError } = await supabaseClient.functions.invoke(
-        'delete-suspicious-account',
-        {
-          body: { 
-            user_id: user.id, 
-            reason: `Malicious activity detected: ${action}`,
-            action 
+        .from('security_audit_log')
+        .insert({
+          user_id: user.id,
+          event_type: `BLOCKED_${action}`,
+          severity: 'critical',
+          ip_address: req.headers.get('x-forwarded-for') || 'unknown',
+          user_agent: req.headers.get('user-agent') || 'unknown',
+          metadata: {
+            action,
+            target,
+            blocked: true,
+            reason: 'Critical security pattern detected'
           }
-        }
-      );
-
-      if (deleteError) {
-        console.error('Error triggering account deletion:', deleteError);
-      } else {
-        console.log('✅ Account deletion initiated:', deleteResult);
-      }
+        });
 
       return new Response(
         JSON.stringify({ 
           success: false,
           blocked: true,
-          reason: 'Malicious activity detected. Account flagged for security review and funds confiscated to CyberLink security vault.',
-          action_taken: 'account_deletion_initiated'
+          reason: 'Suspicious activity detected. Please contact support if you believe this is an error.',
+          action_taken: 'request_blocked'
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
