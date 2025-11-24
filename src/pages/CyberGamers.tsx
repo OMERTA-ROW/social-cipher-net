@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Gamepad2, Users, Radio, Trophy, Zap, Search } from "lucide-react";
+import { Gamepad2, Users, Radio, Trophy, Zap, Search, Save } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
@@ -15,6 +15,9 @@ import { TokenPoolManager } from "@/components/TokenPoolManager";
 import { PageTabManager } from "@/components/PageTabManager";
 import DracoAI from "@/components/DracoAI";
 import { toast } from "sonner";
+import { useSavedTabs } from "@/hooks/useSavedTabs";
+import { SavedTabsManager } from "@/components/SavedTabsManager";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GangMember {
   id: number;
@@ -38,6 +41,7 @@ const TRADING_PLATFORMS = [
 const CyberGamers = () => {
   const navigate = useNavigate();
   const { openWindow } = useFloatingWindowsContext();
+  const { saveTab, savedTabs } = useSavedTabs();
   const [searchQuery, setSearchQuery] = useState("");
   const [gangMembers] = useState<GangMember[]>([
     { id: 1, name: "CyberNinja", rank: "Leader", level: 99, isLive: true },
@@ -47,46 +51,42 @@ const CyberGamers = () => {
     { id: 5, name: "CodeBreaker", rank: "Member", level: 68, isLive: false },
   ]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
+    // Check authentication
+    const { data: { user } } = await supabase.auth.getUser();
+    
     // Check if it's a known platform
     const platform = TRADING_PLATFORMS.find(
       p => p.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    if (platform) {
-      openWindow(
-        platform.name,
-        <iframe
-          src={platform.url}
-          className="w-full h-full border-0"
-          title={platform.name}
-        />,
-        1200,
-        800
-      );
-      toast.success(`Opening ${platform.name} trading chart`);
-    } else {
-      // Try to open as URL
-      let url = searchQuery;
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-      }
-      
-      openWindow(
-        searchQuery,
-        <iframe
-          src={url}
-          className="w-full h-full border-0"
-          title={searchQuery}
-        />,
-        1200,
-        800
-      );
-      toast.success(`Opening ${searchQuery}`);
+    const tabName = platform ? platform.name : searchQuery;
+    const tabUrl = platform ? platform.url : (searchQuery.startsWith('http') ? searchQuery : 'https://' + searchQuery);
+
+    // Save tab to database if user is authenticated
+    if (user) {
+      saveTab({
+        tab_name: tabName,
+        tab_url: tabUrl,
+        tab_type: "trading_platform",
+        metadata: { source: "arena_search" }
+      });
     }
+
+    // Open the window
+    openWindow(
+      tabName,
+      <iframe
+        src={tabUrl}
+        className="w-full h-full border-0"
+        title={tabName}
+      />,
+      1200,
+      800
+    );
     
     setSearchQuery("");
   };
@@ -124,7 +124,18 @@ const CyberGamers = () => {
               key={platform.name}
               size="sm"
               variant="outline"
-              onClick={() => {
+              onClick={async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (user) {
+                  saveTab({
+                    tab_name: platform.name,
+                    tab_url: platform.url,
+                    tab_type: "trading_platform",
+                    metadata: { source: "quick_access" }
+                  });
+                }
+                
                 openWindow(
                   platform.name,
                   <iframe
@@ -135,7 +146,6 @@ const CyberGamers = () => {
                   1200,
                   800
                 );
-                toast.success(`Opening ${platform.name}`);
               }}
               className="backdrop-blur-sm bg-background/80 border-primary/20 hover:border-primary/50"
             >
@@ -208,8 +218,12 @@ const CyberGamers = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="pools" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+        <Tabs defaultValue="saved-tabs" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsTrigger value="saved-tabs" className="flex items-center gap-2">
+              <Save className="w-4 h-4" />
+              My Tabs
+            </TabsTrigger>
             <TabsTrigger value="pools" className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
               Token Pools
@@ -227,6 +241,10 @@ const CyberGamers = () => {
               Tournaments
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="saved-tabs" className="space-y-6">
+            <SavedTabsManager />
+          </TabsContent>
 
           <TabsContent value="pools" className="space-y-6">
             <TokenPoolManager />
