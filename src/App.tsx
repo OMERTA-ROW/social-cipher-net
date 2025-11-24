@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Web3Provider } from "@/providers/Web3Provider";
 import { FloatingWindowsProvider } from "@/providers/FloatingWindowsProvider";
 import { FourClickCloseWrapper } from "@/components/FourClickCloseWrapper";
@@ -31,6 +31,42 @@ import Backgrounds from "./pages/Backgrounds";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
 
+const AppContent = () => {
+  const location = useLocation();
+  const showAIBot = location.pathname !== "/cyber-arena";
+
+  return (
+    <>
+      <SecurityMonitor />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/studio" element={<Studio />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/affiliate" element={<Affiliate />} />
+        <Route path="/seller-register" element={<SellerRegister />} />
+        <Route path="/seller-dashboard" element={<SellerDashboard />} />
+        <Route path="/monetization" element={<Monetization />} />
+        <Route path="/cyber-arena" element={<CyberGamers />} />
+        <Route path="/cyber-streamer" element={<CyberStreamer />} />
+        <Route path="/security" element={<Security />} />
+        <Route path="/community-guidelines" element={<CommunityGuidelines />} />
+        <Route path="/verification" element={<Verification />} />
+        <Route path="/verification-success" element={<VerificationSuccess />} />
+        <Route path="/subscription" element={<Subscription />} />
+        <Route path="/affiliate-links" element={<AffiliateLinks />} />
+        <Route path="/cyber-world" element={<CyberWorld />} />
+        <Route path="/miners" element={<Miners />} />
+        <Route path="/profile/:userId" element={<UserProfile />} />
+        <Route path="/token-purchase" element={<TokenPurchase />} />
+        <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
+        <Route path="/backgrounds" element={<Backgrounds />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      {showAIBot && <AIBotAssistant />}
+    </>
+  );
+};
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -42,33 +78,7 @@ const App = () => (
         <FloatingWindowsProvider>
           <FourClickCloseWrapper>
             <BrowserRouter>
-              <SecurityMonitor />
-          <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/studio" element={<Studio />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/affiliate" element={<Affiliate />} />
-          <Route path="/seller-register" element={<SellerRegister />} />
-          <Route path="/seller-dashboard" element={<SellerDashboard />} />
-          <Route path="/monetization" element={<Monetization />} />
-          <Route path="/cyber-arena" element={<CyberGamers />} />
-          <Route path="/cyber-streamer" element={<CyberStreamer />} />
-          <Route path="/security" element={<Security />} />
-          <Route path="/community-guidelines" element={<CommunityGuidelines />} />
-          <Route path="/verification" element={<Verification />} />
-          <Route path="/verification-success" element={<VerificationSuccess />} />
-          <Route path="/subscription" element={<Subscription />} />
-          <Route path="/affiliate-links" element={<AffiliateLinks />} />
-          <Route path="/cyber-world" element={<CyberWorld />} />
-          <Route path="/miners" element={<Miners />} />
-          <Route path="/profile/:userId" element={<UserProfile />} />
-          <Route path="/token-purchase" element={<TokenPurchase />} />
-          <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
-          <Route path="/backgrounds" element={<Backgrounds />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-            <AIBotAssistant />
+              <AppContent />
             </BrowserRouter>
           </FourClickCloseWrapper>
         </FloatingWindowsProvider>
