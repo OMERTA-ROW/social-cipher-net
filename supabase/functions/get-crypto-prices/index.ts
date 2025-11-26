@@ -32,7 +32,15 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const { currencies } = await req.json();
+    let currencies;
+    try {
+      const body = await req.json();
+      currencies = body.currencies;
+    } catch (e) {
+      // No body or invalid JSON, use default
+      currencies = undefined;
+    }
+    
     const currencyList = currencies || Object.keys(COIN_IDS);
     
     logStep("Fetching prices for", { currencies: currencyList });
