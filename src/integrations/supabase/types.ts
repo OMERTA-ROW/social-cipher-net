@@ -621,6 +621,36 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          attempt_count: number
+          created_at: string
+          email: string
+          id: string
+          last_attempt_at: string
+          locked_until: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempt_count?: number
+          created_at?: string
+          email: string
+          id?: string
+          last_attempt_at?: string
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempt_count?: number
+          created_at?: string
+          email?: string
+          id?: string
+          last_attempt_at?: string
+          locked_until?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mentions: {
         Row: {
           created_at: string | null
@@ -2057,6 +2087,15 @@ export type Database = {
         Args: { tokens_paid: number }
         Returns: number
       }
+      check_account_locked: {
+        Args: { p_email: string }
+        Returns: {
+          attempts: number
+          is_locked: boolean
+          unlock_time: string
+        }[]
+      }
+      clear_login_attempts: { Args: { p_email: string }; Returns: undefined }
       detect_suspicious_activity: {
         Args: { _event_type: string; _time_window?: unknown; _user_id: string }
         Returns: boolean
@@ -2075,6 +2114,14 @@ export type Database = {
         Returns: boolean
       }
       is_user_adult: { Args: { user_uuid: string }; Returns: boolean }
+      record_failed_login: {
+        Args: { p_email: string }
+        Returns: {
+          attempts: number
+          is_locked: boolean
+          unlock_time: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "seller" | "affiliate" | "user"
