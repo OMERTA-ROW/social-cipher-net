@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Lock } from "lucide-react";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 
 const Auth = () => {
@@ -19,6 +19,9 @@ const Auth = () => {
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [birthdate, setBirthdate] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [isAccountLocked, setIsAccountLocked] = useState(false);
+  const [lockoutEndTime, setLockoutEndTime] = useState<Date | null>(null);
+  const [remainingAttempts, setRemainingAttempts] = useState(6);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -185,17 +188,63 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Check if account is locked before attempting login
+    const { data: lockCheck } = await supabase.rpc('check_account_locked', { p_email: email });
+    
+    if (lockCheck && lockCheck.length > 0 && lockCheck[0].is_locked) {
+      const unlockTime = new Date(lockCheck[0].unlock_time);
+      setIsAccountLocked(true);
+      setLockoutEndTime(unlockTime);
+      toast({
+        title: "Account Locked",
+        description: `Too many failed login attempts. Please try again after ${unlockTime.toLocaleTimeString()}.`,
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Record failed login attempt
+      const { data: attemptResult } = await supabase.rpc('record_failed_login', { p_email: email });
+      
+      if (attemptResult && attemptResult.length > 0) {
+        const result = attemptResult[0];
+        if (result.is_locked) {
+          const unlockTime = new Date(result.unlock_time);
+          setIsAccountLocked(true);
+          setLockoutEndTime(unlockTime);
+          toast({
+            title: "Account Locked",
+            description: `Too many failed login attempts. Your account is locked until ${unlockTime.toLocaleTimeString()}.`,
+            variant: "destructive",
+          });
+        } else {
+          const remaining = 6 - result.attempts;
+          setRemainingAttempts(remaining);
+          toast({
+            title: "Error",
+            description: `${error.message}. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account lockout.`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Clear login attempts on successful login
+      await supabase.rpc('clear_login_attempts', { p_email: email });
+      setIsAccountLocked(false);
+      setRemainingAttempts(6);
     }
 
     setLoading(false);
@@ -264,6 +313,15 @@ const Auth = () => {
                 </form>
               ) : (
                 <form onSubmit={handleSignIn} className="space-y-4">
+                  {isAccountLocked && lockoutEndTime && (
+                    <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg text-center">
+                      <Lock className="h-8 w-8 mx-auto mb-2 text-destructive" />
+                      <p className="text-destructive font-semibold">Account Locked</p>
+                      <p className="text-sm text-muted-foreground">
+                        Try again after {lockoutEndTime.toLocaleTimeString()}
+                      </p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-foreground">Email</Label>
                     <Input
@@ -271,7 +329,11 @@ const Auth = () => {
                       type="email"
                       placeholder="your@email.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setIsAccountLocked(false);
+                        setRemainingAttempts(6);
+                      }}
                       required
                       className="bg-background/50 border-primary/30 focus:border-primary transition-all"
                     />
@@ -287,10 +349,15 @@ const Auth = () => {
                       className="bg-background/50 border-primary/30 focus:border-primary transition-all"
                     />
                   </div>
+                  {remainingAttempts < 6 && remainingAttempts > 0 && (
+                    <p className="text-sm text-amber-500 text-center">
+                      ⚠️ {remainingAttempts} attempt{remainingAttempts !== 1 ? 's' : ''} remaining
+                    </p>
+                  )}
                   <Button 
                     type="submit" 
                     className="w-full glow-primary hover:scale-105 transition-transform" 
-                    disabled={loading}
+                    disabled={loading || isAccountLocked}
                   >
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Enter CyberLink
