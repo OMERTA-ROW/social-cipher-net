@@ -18,8 +18,44 @@ const Auth = () => {
   const [documentType, setDocumentType] = useState<string>("");
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [birthdate, setBirthdate] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?reset=true`,
+    });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Password reset email sent! Check your inbox.",
+      });
+      setShowForgotPassword(false);
+    }
+
+    setLoading(false);
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -189,39 +225,86 @@ const Auth = () => {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="signin" className="animate-fade-in">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="bg-background/50 border-primary/30 focus:border-primary transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-foreground">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="bg-background/50 border-primary/30 focus:border-primary transition-all"
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full glow-primary hover:scale-105 transition-transform" 
-                  disabled={loading}
-                >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Enter CyberLink
-                </Button>
-              </form>
+              {showForgotPassword ? (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-semibold text-foreground">Reset Password</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Enter your email to receive a password reset link
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email" className="text-foreground">Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="bg-background/50 border-primary/30 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full glow-primary hover:scale-105 transition-transform" 
+                    disabled={loading}
+                  >
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Send Reset Link
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-primary hover:text-primary/80"
+                    onClick={() => setShowForgotPassword(false)}
+                  >
+                    Back to Sign In
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-foreground">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="bg-background/50 border-primary/30 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-foreground">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="bg-background/50 border-primary/30 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full glow-primary hover:scale-105 transition-transform" 
+                    disabled={loading}
+                  >
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Enter CyberLink
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="w-full text-primary hover:text-primary/80 p-0 h-auto"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot Password?
+                  </Button>
+                </form>
+              )}
             </TabsContent>
             <TabsContent value="signup" className="animate-fade-in">
               <form onSubmit={handleSignUp} className="space-y-4">
