@@ -658,6 +658,14 @@ const AIBotAssistant = () => {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => setShowProfile(true)}
+                title={`${currentChar.name} profile`}
+              >
+                <Info className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleHyperSpeedJump("/")}
                 className="text-accent hover:text-accent/80 hover:bg-accent/10"
                 title="Hyper Speed to Hub"
