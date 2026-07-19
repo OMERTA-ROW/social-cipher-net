@@ -291,12 +291,9 @@ const SolarSystemVoyage = () => {
 
   // Background engagement controls
   const [palette, setPalette] = useState<PaletteName>("solar");
-  const [intensity, setIntensity] = useState<IntensityName>("vivid");
-  const [starDensity, setStarDensity] = useState(1.4);
-  const [parallax, setParallax] = useState(true);
-  const [interactive, setInteractive] = useState(true);
   const [autoIntensity, setAutoIntensity] = useState(true);
   const [showControls, setShowControls] = useState(true);
+
 
   // Quality tier — overrides individual controls when not "auto"
   const [quality, setQuality] = useState<Quality>("auto");
