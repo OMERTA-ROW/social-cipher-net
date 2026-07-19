@@ -27,8 +27,9 @@ interface BotProfile {
   chassisAccent: string;
   bio: string;
   lore: string;
-  bioMechanical: { label: string; value: string; icon: React.ReactNode }[];
-  abilities: string[];
+  portraitTooltip: string;
+  bioMechanical: { label: string; value: string; icon: React.ReactNode; tooltip?: string }[];
+  abilities: { name: string; description: string }[];
 }
 
 const PROFILES: Record<BotMode, BotProfile> = {
