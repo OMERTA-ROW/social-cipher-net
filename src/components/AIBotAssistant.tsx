@@ -969,6 +969,11 @@ const AIBotAssistant = () => {
         }}
         onManageSubscription={openDracoPortal}
       />
+      <BotProfileModal
+        open={showProfile}
+        onOpenChange={setShowProfile}
+        mode={aiMode}
+      />
     </>
   );
 };
