@@ -96,7 +96,7 @@ const OrbitRing = ({ r }: { r: number }) => {
   );
 };
 
-const Planet = ({ def, onClick, focused }: { def: PlanetDef; onClick: () => void; focused: boolean }) => {
+const Planet = ({ def, onClick, focused, registerRef }: { def: PlanetDef; onClick: () => void; focused: boolean; registerRef?: (m: THREE.Mesh | null) => void }) => {
   const ref = useRef<THREE.Mesh>(null);
   const angleRef = useRef(Math.random() * Math.PI * 2);
   useFrame((_, dt) => {
@@ -108,7 +108,10 @@ const Planet = ({ def, onClick, focused }: { def: PlanetDef; onClick: () => void
     }
   });
   return (
-    <mesh ref={ref} onClick={onClick}>
+    <mesh
+      ref={(m) => { ref.current = m; registerRef?.(m); }}
+      onClick={onClick}
+    >
       <sphereGeometry args={[def.radius, 32, 32]} />
       <meshStandardMaterial
         color={def.color}
@@ -132,6 +135,31 @@ const Planet = ({ def, onClick, focused }: { def: PlanetDef; onClick: () => void
       )}
     </mesh>
   );
+};
+
+// Keeps OrbitControls target locked to the focused planet's world position each frame.
+const FocusFollower = ({
+  controlsRef,
+  planetRefs,
+  focusedPlanet,
+}: {
+  controlsRef: React.MutableRefObject<any>;
+  planetRefs: React.MutableRefObject<Record<string, THREE.Mesh | null>>;
+  focusedPlanet: string | null;
+}) => {
+  const tmp = useMemo(() => new THREE.Vector3(), []);
+  useFrame(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    if (focusedPlanet && planetRefs.current[focusedPlanet]) {
+      planetRefs.current[focusedPlanet]!.getWorldPosition(tmp);
+      controls.target.lerp(tmp, 0.2);
+    } else {
+      controls.target.lerp(tmp.set(0, 0, 0), 0.1);
+    }
+    controls.update();
+  });
+  return null;
 };
 
 const AsteroidField = ({ count = 80 }: { count?: number }) => {
