@@ -487,12 +487,15 @@ const SolarSystemVoyage = () => {
           <CameraRig mode={mode} shipRef={shipRef} cinematicIdx={cinematicIdx} />
 
           {(mode === "orbital" || mode === "closeup") && (
-            <OrbitControls
-              enablePan={mode === "orbital"}
-              target={focusedDef ? [focusedDef.distance, 0, 0] : [0, 0, 0]}
-              minDistance={2}
-              maxDistance={120}
-            />
+            <>
+              <OrbitControls
+                ref={controlsRef}
+                enablePan={mode === "orbital" && !focusedPlanet}
+                minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
+                maxDistance={120}
+              />
+              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} />
+            </>
           )}
         </Suspense>
       </Canvas>
