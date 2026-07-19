@@ -460,6 +460,35 @@ const SolarSystemVoyage = () => {
           </button>
           {showControls && (
             <div className="space-y-3 p-1">
+              {/* Quality tier */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] uppercase text-muted-foreground">Quality</Label>
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    {fps} fps{quality === "auto" ? ` · ${activeTier}` : ""}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-1 mt-1">
+                  {(["low", "medium", "high", "auto"] as Quality[]).map((q) => (
+                    <Button
+                      key={q}
+                      size="sm"
+                      variant={quality === q ? "default" : "outline"}
+                      className="h-7 text-[10px] capitalize px-1"
+                      onClick={() => setQuality(q)}
+                      title={
+                        q === "auto"
+                          ? "Adapts to measured FPS"
+                          : `${QUALITY_PRESETS[q].bgStars} stars · ${QUALITY_PRESETS[q].asteroids} rocks · ${QUALITY_PRESETS[q].intensity}`
+                      }
+                    >
+                      {q}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Palette */}
               <div>
                 <Label className="text-[10px] uppercase text-muted-foreground">Palette</Label>
                 <div className="grid grid-cols-2 gap-1 mt-1">
@@ -476,50 +505,18 @@ const SolarSystemVoyage = () => {
                   ))}
                 </div>
               </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] uppercase text-muted-foreground">Intensity</Label>
-                  <div className="flex items-center gap-1">
-                    <Switch id="auto-intensity" checked={autoIntensity} onCheckedChange={setAutoIntensity} className="scale-75" />
-                    <Label htmlFor="auto-intensity" className="text-[10px]">Auto</Label>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-1 mt-1">
-                  {(["calm", "normal", "vivid", "hyper"] as IntensityName[]).map((i) => (
-                    <Button
-                      key={i}
-                      size="sm"
-                      variant={intensity === i ? "default" : "outline"}
-                      disabled={autoIntensity && speed > 3 && i !== "hyper"}
-                      className="h-7 text-[11px] capitalize"
-                      onClick={() => setIntensity(i)}
-                    >
-                      {i}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label className="text-[10px] uppercase text-muted-foreground">Star Density: {starDensity.toFixed(1)}×</Label>
-                <Slider
-                  value={[starDensity]}
-                  min={0.1}
-                  max={3}
-                  step={0.1}
-                  onValueChange={([v]) => setStarDensity(v)}
-                  className="mt-1"
-                />
-              </div>
+
               <div className="flex items-center justify-between">
-                <Label htmlFor="parallax" className="text-[11px]">Parallax</Label>
-                <Switch id="parallax" checked={parallax} onCheckedChange={setParallax} />
+                <Label htmlFor="auto-intensity" className="text-[11px]">Auto-hyper at warp</Label>
+                <Switch id="auto-intensity" checked={autoIntensity} onCheckedChange={setAutoIntensity} />
               </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="interactive" className="text-[11px]">Interactive</Label>
-                <Switch id="interactive" checked={interactive} onCheckedChange={setInteractive} />
+
+              <div className="text-[10px] text-muted-foreground leading-tight pt-1 border-t border-border/40">
+                Tier tunes stars, particles, parallax & DPR to keep FPS smooth.
               </div>
             </div>
           )}
+
         </div>
       </div>
 
