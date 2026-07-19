@@ -60,6 +60,11 @@ const AIBotAssistant = () => {
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const openProfile = () => {
+    profileTriggerRef.current = document.activeElement as HTMLElement | null;
+    setShowProfile(true);
+  };
+
   const isActive = tier !== "free";
   const isPremium = tier === "premium";
   const isDracoActive = dracoStatus.tier !== "free";
