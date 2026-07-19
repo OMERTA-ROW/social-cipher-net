@@ -35,6 +35,11 @@ const backgrounds = [
     name: "Matrix Rain",
     component: <MatrixOverlay />,
   },
+  {
+    id: "voyage",
+    name: "Solar System Voyage",
+    component: <SolarSystemBackground />,
+  },
 ];
 
 export const BackgroundSelector = () => {
