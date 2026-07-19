@@ -504,10 +504,8 @@ const SolarSystemVoyage = () => {
                 enablePan={mode === "orbital" && !focusedPlanet}
                 minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
                 maxDistance={120}
-                autoRotate={!!focusedPlanet && orbitSpeed !== 0}
-                autoRotateSpeed={orbitSpeed * 2}
               />
-              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} />
+              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} targetOrbitSpeed={orbitSpeed} />
             </>
           )}
         </Suspense>
