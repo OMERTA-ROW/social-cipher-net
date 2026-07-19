@@ -8,8 +8,17 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Settings2, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Settings2, ChevronDown, ChevronUp, Save, Trash2 } from "lucide-react";
 import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
+
+interface VoyagePreset {
+  name: string;
+  palette: PaletteName;
+  quality: Quality;
+  autoIntensity: boolean;
+}
+const PRESETS_KEY = "voyage.presets.v1";
 
 type ViewMode = "cockpit" | "chase" | "orbital" | "cinematic" | "closeup" | "harvest";
 type Quality = "low" | "medium" | "high" | "auto";
@@ -294,6 +303,31 @@ const SolarSystemVoyage = () => {
   const [autoIntensity, setAutoIntensity] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
+  // Named presets (persisted)
+  const [presets, setPresets] = useState<VoyagePreset[]>(() => {
+    try { return JSON.parse(localStorage.getItem(PRESETS_KEY) || "[]"); } catch { return []; }
+  });
+  const [presetName, setPresetName] = useState("");
+  useEffect(() => {
+    localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+  }, [presets]);
+  const savePreset = () => {
+    const name = presetName.trim();
+    if (!name) return;
+    setPresets((prev) => {
+      const next = prev.filter((p) => p.name !== name);
+      next.push({ name, palette, quality, autoIntensity });
+      return next;
+    });
+    setPresetName("");
+  };
+  const loadPreset = (p: VoyagePreset) => {
+    setPalette(p.palette);
+    setQuality(p.quality);
+    setAutoIntensity(p.autoIntensity);
+  };
+  const deletePreset = (name: string) => setPresets((prev) => prev.filter((p) => p.name !== name));
+
 
   // Quality tier — overrides individual controls when not "auto"
   const [quality, setQuality] = useState<Quality>("auto");
@@ -506,6 +540,44 @@ const SolarSystemVoyage = () => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="auto-intensity" className="text-[11px]">Auto-hyper at warp</Label>
                 <Switch id="auto-intensity" checked={autoIntensity} onCheckedChange={setAutoIntensity} />
+              </div>
+
+              {/* Presets */}
+              <div className="pt-2 border-t border-border/40">
+                <Label className="text-[10px] uppercase text-muted-foreground">Presets</Label>
+                <div className="flex gap-1 mt-1">
+                  <Input
+                    value={presetName}
+                    onChange={(e) => setPresetName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && savePreset()}
+                    placeholder="Preset name"
+                    className="h-7 text-[11px] px-2"
+                  />
+                  <Button size="sm" className="h-7 px-2" onClick={savePreset} disabled={!presetName.trim()} title="Save current settings">
+                    <Save className="h-3 w-3" />
+                  </Button>
+                </div>
+                {presets.length > 0 && (
+                  <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                    {presets.map((p) => (
+                      <div key={p.name} className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] flex-1 justify-start truncate"
+                          onClick={() => loadPreset(p)}
+                          title={`${p.palette} · ${p.quality}${p.autoIntensity ? " · auto-hyper" : ""}`}
+                        >
+                          <span className="truncate">{p.name}</span>
+                          <span className="ml-auto opacity-60 text-[9px]">{p.palette}/{p.quality}</span>
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => deletePreset(p.name)} title="Delete">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="text-[10px] text-muted-foreground leading-tight pt-1 border-t border-border/40">
