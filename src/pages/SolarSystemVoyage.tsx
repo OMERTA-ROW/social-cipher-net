@@ -12,6 +12,23 @@ import { Settings2, ChevronDown, ChevronUp } from "lucide-react";
 import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
 
 type ViewMode = "cockpit" | "chase" | "orbital" | "cinematic" | "closeup" | "harvest";
+type Quality = "low" | "medium" | "high" | "auto";
+
+interface QualityPreset {
+  starDensity: number;
+  intensity: IntensityName;
+  parallax: boolean;
+  interactive: boolean;
+  bgStars: number;      // drei <Stars> count
+  asteroids: number;    // asteroid rock count
+  dpr: [number, number]; // Canvas devicePixelRatio range
+}
+
+const QUALITY_PRESETS: Record<Exclude<Quality, "auto">, QualityPreset> = {
+  low:    { starDensity: 0.5, intensity: "calm",   parallax: false, interactive: false, bgStars: 800,  asteroids: 30, dpr: [0.6, 1] },
+  medium: { starDensity: 1.0, intensity: "normal", parallax: true,  interactive: true,  bgStars: 1800, asteroids: 60, dpr: [1, 1.5] },
+  high:   { starDensity: 1.6, intensity: "vivid",  parallax: true,  interactive: true,  bgStars: 3500, asteroids: 100, dpr: [1, 2] },
+};
 
 interface PlanetDef {
   name: string;
@@ -108,9 +125,9 @@ const Planet = ({ def, onClick, focused }: { def: PlanetDef; onClick: () => void
   );
 };
 
-const AsteroidField = () => {
+const AsteroidField = ({ count = 80 }: { count?: number }) => {
   const rocks = useMemo(() => {
-    return Array.from({ length: 80 }, () => {
+    return Array.from({ length: count }, () => {
       const a = Math.random() * Math.PI * 2;
       const r = ASTEROID_BELT_R + (Math.random() - 0.5) * 3;
       return {
@@ -119,7 +136,7 @@ const AsteroidField = () => {
         rot: [Math.random(), Math.random(), Math.random()] as [number, number, number],
       };
     });
-  }, []);
+  }, [count]);
   const groupRef = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
     if (groupRef.current) groupRef.current.rotation.y += dt * 0.02;
@@ -274,15 +291,56 @@ const SolarSystemVoyage = () => {
 
   // Background engagement controls
   const [palette, setPalette] = useState<PaletteName>("solar");
-  const [intensity, setIntensity] = useState<IntensityName>("vivid");
-  const [starDensity, setStarDensity] = useState(1.4);
-  const [parallax, setParallax] = useState(true);
-  const [interactive, setInteractive] = useState(true);
   const [autoIntensity, setAutoIntensity] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
+
+  // Quality tier — overrides individual controls when not "auto"
+  const [quality, setQuality] = useState<Quality>("auto");
+  const [autoTier, setAutoTier] = useState<Exclude<Quality, "auto">>("high");
+  const [fps, setFps] = useState(60);
+
+  // Real-time FPS sampler
+  useEffect(() => {
+    let raf = 0;
+    let frames = 0;
+    let last = performance.now();
+    const loop = (now: number) => {
+      frames++;
+      if (now - last >= 500) {
+        const measured = (frames * 1000) / (now - last);
+        setFps(Math.round(measured));
+        frames = 0;
+        last = now;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Auto quality: downgrade/upgrade with hysteresis based on FPS
+  useEffect(() => {
+    if (quality !== "auto") return;
+    setAutoTier((cur) => {
+      if (fps < 32 && cur !== "low") return cur === "high" ? "medium" : "low";
+      if (fps < 48 && cur === "high") return "medium";
+      if (fps > 56 && cur === "low") return "medium";
+      if (fps > 58 && cur === "medium") return "high";
+      return cur;
+    });
+  }, [fps, quality]);
+
+  const activeTier: Exclude<Quality, "auto"> = quality === "auto" ? autoTier : quality;
+  const preset = QUALITY_PRESETS[activeTier];
+
+  // Quality-overridden effective values (fall back to user controls if we ever add a "custom" tier)
+  const effStarDensity = preset.starDensity;
+  const effParallax = preset.parallax;
+  const effInteractive = preset.interactive;
   const effectiveIntensity: IntensityName =
-    autoIntensity ? (speed > 3 ? "hyper" : intensity) : intensity;
+    autoIntensity ? (speed > 3 ? "hyper" : preset.intensity) : preset.intensity;
+
 
   const tRef = useRef(0);
   const speedRef = useRef(1);
@@ -321,18 +379,19 @@ const SolarSystemVoyage = () => {
       <RealisticSpaceBackground
         palette={palette}
         intensity={effectiveIntensity}
-        starDensity={starDensity}
-        parallax={parallax}
-        interactive={interactive}
+        starDensity={effStarDensity}
+        parallax={effParallax}
+        interactive={effInteractive}
       />
 
       <Canvas
         camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 500 }}
+        dpr={preset.dpr}
         className="!absolute inset-0"
       >
         <Suspense fallback={null}>
           <ambientLight intensity={0.25} />
-          <Stars radius={200} depth={60} count={3000} factor={4} fade speed={0.5} />
+          <Stars key={activeTier} radius={200} depth={60} count={preset.bgStars} factor={4} fade speed={activeTier === "low" ? 0.2 : 0.5} />
           <Sun />
           {PLANETS.map((p) => <OrbitRing key={p.name} r={p.distance} />)}
           <OrbitRing r={ASTEROID_BELT_R} />
@@ -344,7 +403,8 @@ const SolarSystemVoyage = () => {
               onClick={() => { setFocusedPlanet(p.name); setMode("closeup"); }}
             />
           ))}
-          <AsteroidField />
+          <AsteroidField count={preset.asteroids} />
+
           {/* Harvester fleet */}
           <HarvesterBot offset={0}     color="#8fb4c9" personaLabel="Zozo-01" />
           <HarvesterBot offset={2.1}   color="#8fb4c9" personaLabel="Zozo-02" />
@@ -397,6 +457,35 @@ const SolarSystemVoyage = () => {
           </button>
           {showControls && (
             <div className="space-y-3 p-1">
+              {/* Quality tier */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] uppercase text-muted-foreground">Quality</Label>
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    {fps} fps{quality === "auto" ? ` · ${activeTier}` : ""}
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-1 mt-1">
+                  {(["low", "medium", "high", "auto"] as Quality[]).map((q) => (
+                    <Button
+                      key={q}
+                      size="sm"
+                      variant={quality === q ? "default" : "outline"}
+                      className="h-7 text-[10px] capitalize px-1"
+                      onClick={() => setQuality(q)}
+                      title={
+                        q === "auto"
+                          ? "Adapts to measured FPS"
+                          : `${QUALITY_PRESETS[q].bgStars} stars · ${QUALITY_PRESETS[q].asteroids} rocks · ${QUALITY_PRESETS[q].intensity}`
+                      }
+                    >
+                      {q}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Palette */}
               <div>
                 <Label className="text-[10px] uppercase text-muted-foreground">Palette</Label>
                 <div className="grid grid-cols-2 gap-1 mt-1">
@@ -413,50 +502,18 @@ const SolarSystemVoyage = () => {
                   ))}
                 </div>
               </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label className="text-[10px] uppercase text-muted-foreground">Intensity</Label>
-                  <div className="flex items-center gap-1">
-                    <Switch id="auto-intensity" checked={autoIntensity} onCheckedChange={setAutoIntensity} className="scale-75" />
-                    <Label htmlFor="auto-intensity" className="text-[10px]">Auto</Label>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-1 mt-1">
-                  {(["calm", "normal", "vivid", "hyper"] as IntensityName[]).map((i) => (
-                    <Button
-                      key={i}
-                      size="sm"
-                      variant={intensity === i ? "default" : "outline"}
-                      disabled={autoIntensity && speed > 3 && i !== "hyper"}
-                      className="h-7 text-[11px] capitalize"
-                      onClick={() => setIntensity(i)}
-                    >
-                      {i}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label className="text-[10px] uppercase text-muted-foreground">Star Density: {starDensity.toFixed(1)}×</Label>
-                <Slider
-                  value={[starDensity]}
-                  min={0.1}
-                  max={3}
-                  step={0.1}
-                  onValueChange={([v]) => setStarDensity(v)}
-                  className="mt-1"
-                />
-              </div>
+
               <div className="flex items-center justify-between">
-                <Label htmlFor="parallax" className="text-[11px]">Parallax</Label>
-                <Switch id="parallax" checked={parallax} onCheckedChange={setParallax} />
+                <Label htmlFor="auto-intensity" className="text-[11px]">Auto-hyper at warp</Label>
+                <Switch id="auto-intensity" checked={autoIntensity} onCheckedChange={setAutoIntensity} />
               </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="interactive" className="text-[11px]">Interactive</Label>
-                <Switch id="interactive" checked={interactive} onCheckedChange={setInteractive} />
+
+              <div className="text-[10px] text-muted-foreground leading-tight pt-1 border-t border-border/40">
+                Tier tunes stars, particles, parallax & DPR to keep FPS smooth.
               </div>
             </div>
           )}
+
         </div>
       </div>
 
