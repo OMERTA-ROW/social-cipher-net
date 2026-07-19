@@ -14,6 +14,7 @@ interface BotProfileModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: BotMode;
+  triggerRef?: React.RefObject<HTMLElement | null>;
 }
 
 interface BotProfile {
@@ -182,13 +183,22 @@ const handleButtonKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
   }
 };
 
-export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalProps) => {
+export const BotProfileModal = ({ open, onOpenChange, mode, triggerRef }: BotProfileModalProps) => {
   const p = PROFILES[mode];
 
   return (
     <TooltipProvider delayDuration={200}>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden bg-card/95 backdrop-blur border-primary/20">
+        <DialogContent
+          className="max-w-lg p-0 overflow-hidden bg-card/95 backdrop-blur border-primary/20"
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            const el = triggerRef?.current;
+            if (el && typeof el.focus === "function") {
+              queueMicrotask(() => el.focus());
+            }
+          }}
+        >
           {/* Hero */}
           <div className={`group/hero relative h-40 bg-gradient-to-br ${p.accent} overflow-hidden`}>
             {p.scene && (

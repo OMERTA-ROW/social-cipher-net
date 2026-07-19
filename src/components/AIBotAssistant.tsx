@@ -55,9 +55,15 @@ const AIBotAssistant = () => {
   const [botTapCount, setBotTapCount] = useState(0);
   const [botTapTimer, setBotTapTimer] = useState<NodeJS.Timeout | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+  const profileTriggerRef = useRef<HTMLElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const openProfile = () => {
+    profileTriggerRef.current = document.activeElement as HTMLElement | null;
+    setShowProfile(true);
+  };
 
   const isActive = tier !== "free";
   const isPremium = tier === "premium";
@@ -616,7 +622,7 @@ const AIBotAssistant = () => {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setShowProfile(true)}
+                onClick={openProfile}
                 title={`View ${currentChar.name} profile`}
                 aria-label={`View ${currentChar.name} profile`}
                 className="relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-full"
@@ -643,7 +649,7 @@ const AIBotAssistant = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setShowProfile(true)}
+                onClick={openProfile}
                 aria-label={`View ${currentChar.name} profile`}
                 className="text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background p-1 -m-1"
               >
@@ -661,7 +667,7 @@ const AIBotAssistant = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setShowProfile(true)}
+                onClick={openProfile}
                 aria-label={`${currentChar.name} profile`}
                 title={`${currentChar.name} profile`}
               >
@@ -978,6 +984,7 @@ const AIBotAssistant = () => {
         open={showProfile}
         onOpenChange={setShowProfile}
         mode={aiMode}
+        triggerRef={profileTriggerRef}
       />
     </>
   );
