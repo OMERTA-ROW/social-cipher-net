@@ -4,9 +4,10 @@ import dracoPortrait from "@/assets/draco-alien-portrait.jpg";
 interface AlienIconProps {
   className?: string;
   mode?: "zozo" | "draco";
+  tabIndex?: number;
 }
 
-export const AlienIcon = ({ className = "", mode }: AlienIconProps) => {
+export const AlienIcon = ({ className = "", mode, tabIndex = -1 }: AlienIconProps) => {
   // Infer mode from className if not explicitly set (backwards compat)
   const resolved: "zozo" | "draco" =
     mode ?? (className.includes("text-red") ? "draco" : "zozo");
@@ -21,9 +22,15 @@ export const AlienIcon = ({ className = "", mode }: AlienIconProps) => {
       ? "hover:ring-red-400 hover:shadow-[0_0_28px_rgba(239,68,68,0.95)]"
       : "hover:ring-cyan-300 hover:shadow-[0_0_28px_rgba(34,211,238,0.95)]";
 
+  const focusGlow =
+    resolved === "draco"
+      ? "focus-visible:ring-red-400 focus-visible:shadow-[0_0_28px_rgba(239,68,68,0.95)]"
+      : "focus-visible:ring-cyan-300 focus-visible:shadow-[0_0_28px_rgba(34,211,238,0.95)]";
+
   return (
     <span
-      className={`group relative inline-block overflow-hidden rounded-full ring-2 ${ring} ${hoverGlow} ${className} animate-[alien-breathe_3.6s_ease-in-out_infinite] transition-all duration-300 hover:scale-110 hover:animate-none cursor-pointer`}
+      tabIndex={tabIndex}
+      className={`group relative inline-block overflow-hidden rounded-full ring-2 ${ring} ${hoverGlow} ${focusGlow} ${className} animate-[alien-breathe_3.6s_ease-in-out_infinite] transition-all duration-300 hover:scale-110 hover:animate-none cursor-pointer focus-visible:outline-none focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
       aria-label={resolved === "draco" ? "Draco alien AI" : "Zozo alien AI"}
     >
       <img

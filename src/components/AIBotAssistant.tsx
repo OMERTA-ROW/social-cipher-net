@@ -579,7 +579,7 @@ const AIBotAssistant = () => {
       {!isOpen && !showSpaceship && !showHyperSpeed && (
         <Button
           onClick={handleBotButtonTap}
-          className={`fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full shadow-lg transition-all ${
+          className={`fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full shadow-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background ${
             isSpeaking 
               ? "animate-pulse glow-accent scale-110" 
               : aiMode === "draco" 
@@ -587,6 +587,7 @@ const AIBotAssistant = () => {
                 : "glow-primary"
           }`}
           size="icon"
+          aria-label={`Open ${currentChar.name} AI assistant. Double tap cycles modes, four taps opens subscription options.`}
           title={`${currentChar.name} AI (Double-tap to cycle modes)`}
         >
           <AlienIcon mode={aiMode === "draco" ? "draco" : "zozo"} className={`w-10 h-10 transition-transform ${isSpeaking ? "animate-bounce" : ""}`} />
@@ -617,7 +618,8 @@ const AIBotAssistant = () => {
                 type="button"
                 onClick={() => setShowProfile(true)}
                 title={`View ${currentChar.name} profile`}
-                className="relative group"
+                aria-label={`View ${currentChar.name} profile`}
+                className="relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-full"
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   isSpeaking ? "animate-pulse" : ""
@@ -642,7 +644,8 @@ const AIBotAssistant = () => {
               <button
                 type="button"
                 onClick={() => setShowProfile(true)}
-                className="text-left"
+                aria-label={`View ${currentChar.name} profile`}
+                className="text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background p-1 -m-1"
               >
                 <h3 className={`font-bold hover:underline ${
                   aiMode === "draco" 
@@ -659,6 +662,7 @@ const AIBotAssistant = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowProfile(true)}
+                aria-label={`${currentChar.name} profile`}
                 title={`${currentChar.name} profile`}
               >
                 <Info className="h-4 w-4" />
@@ -668,11 +672,12 @@ const AIBotAssistant = () => {
                 size="icon"
                 onClick={() => handleHyperSpeedJump("/")}
                 className="text-accent hover:text-accent/80 hover:bg-accent/10"
+                aria-label="Hyper Speed to Hub"
                 title="Hyper Speed to Hub"
               >
                 <Rocket className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close AI assistant">
                 <X className="w-4 h-4" />
               </Button>
             </div>
