@@ -519,6 +519,43 @@ const SolarSystemVoyage = () => {
           ))}
         </div>
 
+        {/* Planet focus selector */}
+        <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-2 min-w-[180px]">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground px-1 mb-1">Focus Planet</div>
+          <div className="grid grid-cols-2 gap-1">
+            <Button
+              size="sm"
+              variant={!focusedPlanet ? "default" : "outline"}
+              className="h-7 text-[11px] col-span-2"
+              onClick={() => { setFocusedPlanet(null); }}
+              title="Recenter on the Sun"
+            >
+              Sun / Center
+            </Button>
+            {PLANETS.map((p) => (
+              <Button
+                key={p.name}
+                size="sm"
+                variant={focusedPlanet === p.name ? "default" : "outline"}
+                className="h-7 text-[11px]"
+                onClick={() => selectFocus(p.name)}
+                title={`Orbit ${p.name}`}
+              >
+                <span
+                  className="inline-block h-2 w-2 rounded-full mr-1.5"
+                  style={{ background: p.color }}
+                />
+                {p.name}
+              </Button>
+            ))}
+          </div>
+          {focusedPlanet && (
+            <div className="text-[10px] text-muted-foreground mt-1.5 px-1 leading-tight">
+              Camera tracks {focusedPlanet}. Drag to orbit, scroll to zoom.
+            </div>
+          )}
+        </div>
+
         {/* Background engagement controls */}
         <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-2 min-w-[220px]">
           <button
