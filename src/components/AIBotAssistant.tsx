@@ -18,6 +18,8 @@ import { useNavigate } from "react-router-dom";
 import { useZozoSubscription, ZOZO_TIERS } from "@/hooks/useZozoSubscription";
 import { useDracoSubscription, DRACO_TIERS } from "@/hooks/useDracoSubscription";
 import { DracoSubscriptionDialog } from "./DracoSubscriptionDialog";
+import { BotProfileModal } from "./BotProfileModal";
+import { Info } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
