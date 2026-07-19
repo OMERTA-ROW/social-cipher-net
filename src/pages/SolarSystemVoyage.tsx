@@ -435,6 +435,13 @@ const SolarSystemVoyage = () => {
   }, []);
 
   const focusedDef = PLANETS.find((p) => p.name === focusedPlanet);
+  const planetRefs = useRef<Record<string, THREE.Mesh | null>>({});
+  const controlsRef = useRef<any>(null);
+
+  const selectFocus = (name: string | null) => {
+    setFocusedPlanet(name);
+    if (name) setMode((m) => (m === "orbital" || m === "closeup" ? m : "closeup"));
+  };
 
   return (
     <div className="fixed inset-0 overflow-hidden">
@@ -462,7 +469,8 @@ const SolarSystemVoyage = () => {
               key={p.name}
               def={p}
               focused={focusedPlanet === p.name}
-              onClick={() => { setFocusedPlanet(p.name); setMode("closeup"); }}
+              registerRef={(m) => { planetRefs.current[p.name] = m; }}
+              onClick={() => { selectFocus(p.name); }}
             />
           ))}
           <AsteroidField count={preset.asteroids} />
