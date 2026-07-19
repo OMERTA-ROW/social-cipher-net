@@ -2097,7 +2097,7 @@ export type Database = {
       }
       clear_login_attempts: { Args: { p_email: string }; Returns: undefined }
       detect_suspicious_activity: {
-        Args: { _event_type: string; _time_window?: unknown; _user_id: string }
+        Args: { _event_type: string; _time_window?: string; _user_id: string }
         Returns: boolean
       }
       get_follower_count: { Args: { user_uuid: string }; Returns: number }
