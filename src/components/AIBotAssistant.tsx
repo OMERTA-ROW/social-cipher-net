@@ -54,6 +54,7 @@ const AIBotAssistant = () => {
   const [hyperSpeedDestination, setHyperSpeedDestination] = useState("/");
   const [botTapCount, setBotTapCount] = useState(0);
   const [botTapTimer, setBotTapTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
