@@ -667,7 +667,7 @@ const AIBotAssistant = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setShowProfile(true)}
+                onClick={openProfile}
                 aria-label={`${currentChar.name} profile`}
                 title={`${currentChar.name} profile`}
               >
