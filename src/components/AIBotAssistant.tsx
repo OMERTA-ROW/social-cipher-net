@@ -984,6 +984,7 @@ const AIBotAssistant = () => {
         open={showProfile}
         onOpenChange={setShowProfile}
         mode={aiMode}
+        triggerRef={profileTriggerRef}
       />
     </>
   );
