@@ -199,7 +199,10 @@ export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalPro
                     <img
                       src={p.portrait}
                       alt={`${p.name} portrait`}
-                      className={`w-20 h-20 rounded-full object-cover border-2 ${p.chassisAccent} transition-all duration-300 hover:scale-110 hover:rotate-3 hover:shadow-[0_0_28px_rgba(255,255,255,0.5)] hover:brightness-125 cursor-pointer`}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`${p.name} portrait: ${p.portraitTooltip}`}
+                      className={`w-20 h-20 rounded-full object-cover border-2 ${p.chassisAccent} transition-all duration-300 hover:scale-110 hover:rotate-3 hover:shadow-[0_0_28px_rgba(255,255,255,0.5)] hover:brightness-125 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:scale-110 focus-visible:rotate-3 focus-visible:shadow-[0_0_28px_rgba(255,255,255,0.5)]`}
                     />
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[220px] text-xs">
@@ -210,7 +213,12 @@ export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalPro
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className={`w-20 h-20 rounded-full flex items-center justify-center border-2 ${p.chassisAccent} transition-transform duration-300 hover:scale-110 cursor-pointer`}>
+                    <div
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`${p.name} portrait: ${p.portraitTooltip}`}
+                      className={`w-20 h-20 rounded-full flex items-center justify-center border-2 ${p.chassisAccent} transition-transform duration-300 hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:scale-110`}
+                    >
                       <Cpu className="w-8 h-8" />
                     </div>
                   </TooltipTrigger>
