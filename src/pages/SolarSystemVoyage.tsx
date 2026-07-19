@@ -12,6 +12,23 @@ import { Settings2, ChevronDown, ChevronUp } from "lucide-react";
 import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
 
 type ViewMode = "cockpit" | "chase" | "orbital" | "cinematic" | "closeup" | "harvest";
+type Quality = "low" | "medium" | "high" | "auto";
+
+interface QualityPreset {
+  starDensity: number;
+  intensity: IntensityName;
+  parallax: boolean;
+  interactive: boolean;
+  bgStars: number;      // drei <Stars> count
+  asteroids: number;    // asteroid rock count
+  dpr: [number, number]; // Canvas devicePixelRatio range
+}
+
+const QUALITY_PRESETS: Record<Exclude<Quality, "auto">, QualityPreset> = {
+  low:    { starDensity: 0.5, intensity: "calm",   parallax: false, interactive: false, bgStars: 800,  asteroids: 30, dpr: [0.6, 1] },
+  medium: { starDensity: 1.0, intensity: "normal", parallax: true,  interactive: true,  bgStars: 1800, asteroids: 60, dpr: [1, 1.5] },
+  high:   { starDensity: 1.6, intensity: "vivid",  parallax: true,  interactive: true,  bgStars: 3500, asteroids: 100, dpr: [1, 2] },
+};
 
 interface PlanetDef {
   name: string;
