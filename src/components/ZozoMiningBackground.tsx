@@ -19,7 +19,7 @@ export const ZozoMiningBackground = ({ isActive, minedCrypto = "BTC" }: ZozoMini
       <img
         src={miningBg}
         alt="Realistic spaceship mining crypto in deep space"
-        className="absolute inset-0 w-full h-full object-cover animate-[kenburns_35s_ease-in-out_infinite_alternate] scale-x-[-1]"
+        className="absolute inset-0 w-full h-full object-cover animate-[kenburns_35s_ease-in-out_infinite_alternate,ship-hover_8s_ease-in-out_infinite] scale-x-[-1]"
         loading="lazy"
         width={1920}
         height={1280}
@@ -28,7 +28,10 @@ export const ZozoMiningBackground = ({ isActive, minedCrypto = "BTC" }: ZozoMini
       <div className="absolute bottom-8 left-8 text-6xl font-bold text-cyan-300 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)] animate-pulse">
         {symbol}
       </div>
-      <style>{`@keyframes kenburns{0%{transform:scale(1)}100%{transform:scale(1.08)}}`}</style>
+      <style>{`
+        @keyframes kenburns{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.08) translate(1%,-1%)}}
+        @keyframes ship-hover{0%,100%{filter:brightness(1) hue-rotate(0deg)}50%{filter:brightness(1.08) hue-rotate(-10deg)}}
+      `}</style>
     </div>
   );
 };
