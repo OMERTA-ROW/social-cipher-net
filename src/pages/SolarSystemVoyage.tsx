@@ -542,6 +542,44 @@ const SolarSystemVoyage = () => {
                 <Switch id="auto-intensity" checked={autoIntensity} onCheckedChange={setAutoIntensity} />
               </div>
 
+              {/* Presets */}
+              <div className="pt-2 border-t border-border/40">
+                <Label className="text-[10px] uppercase text-muted-foreground">Presets</Label>
+                <div className="flex gap-1 mt-1">
+                  <Input
+                    value={presetName}
+                    onChange={(e) => setPresetName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && savePreset()}
+                    placeholder="Preset name"
+                    className="h-7 text-[11px] px-2"
+                  />
+                  <Button size="sm" className="h-7 px-2" onClick={savePreset} disabled={!presetName.trim()} title="Save current settings">
+                    <Save className="h-3 w-3" />
+                  </Button>
+                </div>
+                {presets.length > 0 && (
+                  <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                    {presets.map((p) => (
+                      <div key={p.name} className="flex items-center gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] flex-1 justify-start truncate"
+                          onClick={() => loadPreset(p)}
+                          title={`${p.palette} · ${p.quality}${p.autoIntensity ? " · auto-hyper" : ""}`}
+                        >
+                          <span className="truncate">{p.name}</span>
+                          <span className="ml-auto opacity-60 text-[9px]">{p.palette}/{p.quality}</span>
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => deletePreset(p.name)} title="Delete">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="text-[10px] text-muted-foreground leading-tight pt-1 border-t border-border/40">
                 Tier tunes stars, particles, parallax & DPR to keep FPS smooth.
               </div>
