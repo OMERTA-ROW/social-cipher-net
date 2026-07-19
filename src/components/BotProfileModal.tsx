@@ -183,7 +183,7 @@ const handleButtonKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
   }
 };
 
-export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalProps) => {
+export const BotProfileModal = ({ open, onOpenChange, mode, triggerRef }: BotProfileModalProps) => {
   const p = PROFILES[mode];
 
   return (
