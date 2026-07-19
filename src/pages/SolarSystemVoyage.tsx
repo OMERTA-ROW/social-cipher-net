@@ -323,6 +323,7 @@ const SolarSystemVoyage = () => {
   const [speed, setSpeed] = useState(1);
   const [travelling, setTravelling] = useState(true);
   const [focusedPlanet, setFocusedPlanet] = useState<string | null>(null);
+  const [orbitSpeed, setOrbitSpeed] = useState(1);
   const [cinematicIdx, setCinematicIdx] = useState(0);
   const [resources, setResources] = useState(0);
 
