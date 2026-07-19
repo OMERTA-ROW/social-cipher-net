@@ -228,6 +228,7 @@ export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalPro
                       tabIndex={0}
                       role="button"
                       aria-label={`${p.name} portrait: ${p.portraitTooltip}`}
+                      onKeyDown={handleButtonKeyDown}
                       className={`w-20 h-20 rounded-full flex items-center justify-center border-2 ${p.chassisAccent} transition-transform duration-300 hover:scale-110 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:scale-110`}
                     >
                       <Cpu className="w-8 h-8" />
