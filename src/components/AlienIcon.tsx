@@ -1,29 +1,35 @@
+import zozoPortrait from "@/assets/zozo-alien-portrait.jpg";
+import dracoPortrait from "@/assets/draco-alien-portrait.jpg";
+
 interface AlienIconProps {
   className?: string;
+  mode?: "zozo" | "draco";
 }
 
-export const AlienIcon = ({ className = "" }: AlienIconProps) => {
+export const AlienIcon = ({ className = "", mode }: AlienIconProps) => {
+  // Infer mode from className if not explicitly set (backwards compat)
+  const resolved: "zozo" | "draco" =
+    mode ?? (className.includes("text-red") ? "draco" : "zozo");
+  const src = resolved === "draco" ? dracoPortrait : zozoPortrait;
+  const ring =
+    resolved === "draco"
+      ? "ring-red-500/70 shadow-[0_0_16px_rgba(239,68,68,0.7)]"
+      : "ring-cyan-400/70 shadow-[0_0_16px_rgba(34,211,238,0.7)]";
+
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
+    <span
+      className={`inline-block overflow-hidden rounded-full ring-2 ${ring} ${className}`}
+      aria-label={resolved === "draco" ? "Draco alien AI" : "Zozo alien AI"}
     >
-      {/* Alien head outline */}
-      <path d="M12 2C8 2 5 5 4 8c-1 3 0 6 2 8l1 2h10l1-2c2-2 3-5 2-8-1-3-4-6-8-6z" />
-      
-      {/* Left eye */}
-      <ellipse cx="9" cy="10" rx="2" ry="3" fill="currentColor" />
-      
-      {/* Right eye */}
-      <ellipse cx="15" cy="10" rx="2" ry="3" fill="currentColor" />
-      
-      {/* Mouth - small line */}
-      <path d="M10 15h4" strokeWidth="1.5" />
-    </svg>
+      <img
+        src={src}
+        alt={resolved === "draco" ? "Draco alien portrait" : "Zozo alien portrait"}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        width={64}
+        height={64}
+        draggable={false}
+      />
+    </span>
   );
 };
