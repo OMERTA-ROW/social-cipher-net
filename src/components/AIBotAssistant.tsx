@@ -18,6 +18,8 @@ import { useNavigate } from "react-router-dom";
 import { useZozoSubscription, ZOZO_TIERS } from "@/hooks/useZozoSubscription";
 import { useDracoSubscription, DRACO_TIERS } from "@/hooks/useDracoSubscription";
 import { DracoSubscriptionDialog } from "./DracoSubscriptionDialog";
+import { BotProfileModal } from "./BotProfileModal";
+import { Info } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -52,6 +54,7 @@ const AIBotAssistant = () => {
   const [hyperSpeedDestination, setHyperSpeedDestination] = useState("/");
   const [botTapCount, setBotTapCount] = useState(0);
   const [botTapTimer, setBotTapTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -610,10 +613,15 @@ const AIBotAssistant = () => {
               : 'border-primary/20'
           }`}>
             <div className="flex items-center gap-3">
-              <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowProfile(true)}
+                title={`View ${currentChar.name} profile`}
+                className="relative group"
+              >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   isSpeaking ? "animate-pulse" : ""
-                } bg-gradient-to-br ${currentChar.gradient}`}>
+                } bg-gradient-to-br ${currentChar.gradient} group-hover:ring-2 group-hover:ring-accent transition`}>
                   <Bot className={`w-6 h-6 text-primary-foreground ${isSpeaking ? "animate-bounce" : ""}`} />
                 </div>
                 {isSpeaking && (
@@ -630,9 +638,13 @@ const AIBotAssistant = () => {
                     }`} style={{ animationDelay: "0.2s" }} />
                   </>
                 )}
-              </div>
-              <div>
-                <h3 className={`font-bold ${
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowProfile(true)}
+                className="text-left"
+              >
+                <h3 className={`font-bold hover:underline ${
                   aiMode === "draco" 
                     ? 'text-red-400' 
                     : 'text-foreground'
@@ -640,9 +652,17 @@ const AIBotAssistant = () => {
                 <p className="text-xs text-muted-foreground">
                   {isSpeaking ? "Speaking..." : isRecording ? "Listening..." : currentChar.description}
                 </p>
-              </div>
+              </button>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowProfile(true)}
+                title={`${currentChar.name} profile`}
+              >
+                <Info className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -948,6 +968,11 @@ const AIBotAssistant = () => {
           setShowDracoUpgrade(false);
         }}
         onManageSubscription={openDracoPortal}
+      />
+      <BotProfileModal
+        open={showProfile}
+        onOpenChange={setShowProfile}
+        mode={aiMode}
       />
     </>
   );
