@@ -298,8 +298,52 @@ const SolarSystemVoyage = () => {
   const [autoIntensity, setAutoIntensity] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
+  // Quality tier — overrides individual controls when not "auto"
+  const [quality, setQuality] = useState<Quality>("auto");
+  const [autoTier, setAutoTier] = useState<Exclude<Quality, "auto">>("high");
+  const [fps, setFps] = useState(60);
+
+  // Real-time FPS sampler
+  useEffect(() => {
+    let raf = 0;
+    let frames = 0;
+    let last = performance.now();
+    const loop = (now: number) => {
+      frames++;
+      if (now - last >= 500) {
+        const measured = (frames * 1000) / (now - last);
+        setFps(Math.round(measured));
+        frames = 0;
+        last = now;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Auto quality: downgrade/upgrade with hysteresis based on FPS
+  useEffect(() => {
+    if (quality !== "auto") return;
+    setAutoTier((cur) => {
+      if (fps < 32 && cur !== "low") return cur === "high" ? "medium" : "low";
+      if (fps < 48 && cur === "high") return "medium";
+      if (fps > 56 && cur === "low") return "medium";
+      if (fps > 58 && cur === "medium") return "high";
+      return cur;
+    });
+  }, [fps, quality]);
+
+  const activeTier: Exclude<Quality, "auto"> = quality === "auto" ? autoTier : quality;
+  const preset = QUALITY_PRESETS[activeTier];
+
+  // Quality-overridden effective values (fall back to user controls if we ever add a "custom" tier)
+  const effStarDensity = preset.starDensity;
+  const effParallax = preset.parallax;
+  const effInteractive = preset.interactive;
   const effectiveIntensity: IntensityName =
-    autoIntensity ? (speed > 3 ? "hyper" : intensity) : intensity;
+    autoIntensity ? (speed > 3 ? "hyper" : preset.intensity) : preset.intensity;
+
 
   const tRef = useRef(0);
   const speedRef = useRef(1);
