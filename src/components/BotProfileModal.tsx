@@ -288,7 +288,13 @@ export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalPro
                 {p.abilities.map((ability) => (
                   <Tooltip key={ability.name}>
                     <TooltipTrigger asChild>
-                      <Badge variant="secondary" className="text-xs cursor-help transition-colors hover:bg-secondary/80">
+                      <Badge
+                        variant="secondary"
+                        tabIndex={0}
+                        role="button"
+                        aria-label={`${ability.name}: ${ability.description}`}
+                        className="text-xs cursor-help transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:bg-secondary/80"
+                      >
                         {ability.name}
                       </Badge>
                     </TooltipTrigger>
