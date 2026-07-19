@@ -174,6 +174,15 @@ const PROFILES: Record<BotMode, BotProfile> = {
   },
 };
 
+const handleButtonKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+  if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+    e.preventDefault();
+    // Tooltip is already shown on focus; this ensures Enter/Space are
+    // treated as activation and Space does not scroll the modal.
+    e.currentTarget.click();
+  }
+};
+
 export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalProps) => {
   const p = PROFILES[mode];
 
