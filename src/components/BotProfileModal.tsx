@@ -14,6 +14,7 @@ interface BotProfileModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: BotMode;
+  triggerRef?: React.RefObject<HTMLElement | null>;
 }
 
 interface BotProfile {
