@@ -7,6 +7,7 @@ import RealisticSpaceBackground from "./RealisticSpaceBackground";
 import SolarMatrixBackground from "./SolarMatrixBackground";
 import { DracoMiningBackground } from "./DracoMiningBackground";
 import MatrixOverlay from "./MatrixOverlay";
+import SolarSystemBackground from "./SolarSystemBackground";
 
 const backgrounds = [
   {
