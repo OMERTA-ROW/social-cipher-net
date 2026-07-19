@@ -553,9 +553,32 @@ const SolarSystemVoyage = () => {
             ))}
           </div>
           {focusedPlanet && (
-            <div className="text-[10px] text-muted-foreground mt-1.5 px-1 leading-tight">
-              Camera tracks {focusedPlanet}. Drag to orbit, scroll to zoom.
-            </div>
+            <>
+              <div className="text-[10px] text-muted-foreground mt-1.5 px-1 leading-tight">
+                Camera tracks {focusedPlanet}. Drag to orbit, scroll to zoom.
+              </div>
+              <div className="mt-2 px-1">
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                  <span>Orbit Speed</span>
+                  <span className="font-mono">{orbitSpeed.toFixed(2)}×</span>
+                </div>
+                <Slider
+                  value={[orbitSpeed]}
+                  min={-4}
+                  max={4}
+                  step={0.1}
+                  onValueChange={([v]) => setOrbitSpeed(v)}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="mt-1 w-full h-6 text-[10px]"
+                  onClick={() => setOrbitSpeed(0)}
+                >
+                  Stop rotation
+                </Button>
+              </div>
+            </>
           )}
         </div>
 
