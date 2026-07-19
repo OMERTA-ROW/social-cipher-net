@@ -613,10 +613,15 @@ const AIBotAssistant = () => {
               : 'border-primary/20'
           }`}>
             <div className="flex items-center gap-3">
-              <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowProfile(true)}
+                title={`View ${currentChar.name} profile`}
+                className="relative group"
+              >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   isSpeaking ? "animate-pulse" : ""
-                } bg-gradient-to-br ${currentChar.gradient}`}>
+                } bg-gradient-to-br ${currentChar.gradient} group-hover:ring-2 group-hover:ring-accent transition`}>
                   <Bot className={`w-6 h-6 text-primary-foreground ${isSpeaking ? "animate-bounce" : ""}`} />
                 </div>
                 {isSpeaking && (
@@ -633,9 +638,13 @@ const AIBotAssistant = () => {
                     }`} style={{ animationDelay: "0.2s" }} />
                   </>
                 )}
-              </div>
-              <div>
-                <h3 className={`font-bold ${
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowProfile(true)}
+                className="text-left"
+              >
+                <h3 className={`font-bold hover:underline ${
                   aiMode === "draco" 
                     ? 'text-red-400' 
                     : 'text-foreground'
@@ -643,7 +652,7 @@ const AIBotAssistant = () => {
                 <p className="text-xs text-muted-foreground">
                   {isSpeaking ? "Speaking..." : isRecording ? "Listening..." : currentChar.description}
                 </p>
-              </div>
+              </button>
             </div>
             <div className="flex items-center gap-2">
               <Button
