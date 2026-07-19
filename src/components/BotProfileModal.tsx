@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Cpu, Zap, Shield, Radio, Dna, Rocket } from "lucide-react";
+import { useCallback } from "react";
 import zozoPortrait from "@/assets/zozo-alien-portrait.jpg";
 import dracoPortrait from "@/assets/draco-alien-portrait.jpg";
 import zozoShip from "@/assets/zozo-alien-ship-scene.jpg";
