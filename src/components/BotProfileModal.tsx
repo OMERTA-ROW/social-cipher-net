@@ -177,83 +177,120 @@ export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalPro
   const p = PROFILES[mode];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden bg-card/95 backdrop-blur border-primary/20">
-        {/* Hero */}
-        <div className={`group/hero relative h-40 bg-gradient-to-br ${p.accent} overflow-hidden`}>
-          {p.scene && (
-            <img
-              src={p.scene}
-              alt={`${p.name} vessel`}
-              className="absolute inset-0 w-full h-full object-cover opacity-60 transition-all duration-700 ease-out group-hover/hero:opacity-90 group-hover/hero:scale-110 group-hover/hero:brightness-125 group-hover/hero:saturate-150"
-            />
-          )}
-          {/* Ship engine glow on hover */}
-          <div className="absolute inset-0 opacity-0 group-hover/hero:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_70%_60%,rgba(255,255,255,0.25),transparent_55%)] animate-[ship-thrust_2.4s_ease-in-out_infinite]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-          <div className="absolute bottom-3 left-4 right-4 flex items-end gap-3">
-            {p.portrait ? (
+    <TooltipProvider delayDuration={200}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden bg-card/95 backdrop-blur border-primary/20">
+          {/* Hero */}
+          <div className={`group/hero relative h-40 bg-gradient-to-br ${p.accent} overflow-hidden`}>
+            {p.scene && (
               <img
-                src={p.portrait}
-                alt={`${p.name} portrait`}
-                className={`w-20 h-20 rounded-full object-cover border-2 ${p.chassisAccent} transition-all duration-300 hover:scale-110 hover:rotate-3 hover:shadow-[0_0_28px_rgba(255,255,255,0.5)] hover:brightness-125 cursor-pointer`}
+                src={p.scene}
+                alt={`${p.name} vessel`}
+                className="absolute inset-0 w-full h-full object-cover opacity-60 transition-all duration-700 ease-out group-hover/hero:opacity-90 group-hover/hero:scale-110 group-hover/hero:brightness-125 group-hover/hero:saturate-150"
               />
-            ) : (
-              <div className={`w-20 h-20 rounded-full flex items-center justify-center border-2 ${p.chassisAccent} transition-transform duration-300 hover:scale-110`}>
-                <Cpu className="w-8 h-8" />
-              </div>
             )}
-            <div className="pb-1">
-              <Badge variant="outline" className={`mb-1 ${p.chassisAccent}`}>{p.codename}</Badge>
-              <h2 className="text-2xl font-bold text-foreground leading-tight">{p.name}</h2>
+            {/* Ship engine glow on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover/hero:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_70%_60%,rgba(255,255,255,0.25),transparent_55%)] animate-[ship-thrust_2.4s_ease-in-out_infinite]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+            <div className="absolute bottom-3 left-4 right-4 flex items-end gap-3">
+              {p.portrait ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <img
+                      src={p.portrait}
+                      alt={`${p.name} portrait`}
+                      className={`w-20 h-20 rounded-full object-cover border-2 ${p.chassisAccent} transition-all duration-300 hover:scale-110 hover:rotate-3 hover:shadow-[0_0_28px_rgba(255,255,255,0.5)] hover:brightness-125 cursor-pointer`}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+                    <p className="font-medium text-foreground">{p.name}</p>
+                    <p className="text-muted-foreground mt-0.5">{p.portraitTooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`w-20 h-20 rounded-full flex items-center justify-center border-2 ${p.chassisAccent} transition-transform duration-300 hover:scale-110 cursor-pointer`}>
+                      <Cpu className="w-8 h-8" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[220px] text-xs">
+                    <p className="font-medium text-foreground">{p.name}</p>
+                    <p className="text-muted-foreground mt-0.5">{p.portraitTooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <div className="pb-1">
+                <Badge variant="outline" className={`mb-1 ${p.chassisAccent}`}>{p.codename}</Badge>
+                <h2 className="text-2xl font-bold text-foreground leading-tight">{p.name}</h2>
+              </div>
+            </div>
+            <style>{`
+              @keyframes ship-thrust{0%,100%{transform:translateX(0);opacity:.6}50%{transform:translateX(-6%);opacity:1}}
+            `}</style>
+          </div>
+
+          <div className="px-6 pb-6 pt-3 space-y-4 max-h-[60vh] overflow-y-auto">
+            <DialogHeader className="space-y-1 text-left">
+              <DialogTitle className="text-sm font-medium text-muted-foreground">{p.role}</DialogTitle>
+              <DialogDescription className="text-xs">Origin: {p.origin}</DialogDescription>
+            </DialogHeader>
+
+            <p className="text-sm text-foreground/90 leading-relaxed">{p.bio}</p>
+
+            <Separator />
+
+            <div>
+              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Bio-Mechanical Details</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {p.bioMechanical.map((row) => (
+                  <Tooltip key={row.label}>
+                    <TooltipTrigger asChild>
+                      <div className={`rounded-md border p-2 ${p.chassisAccent} cursor-help transition-colors hover:bg-accent/10`}>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          {row.icon}
+                          <span>{row.label}</span>
+                        </div>
+                        <div className="text-sm text-foreground mt-0.5">{row.value}</div>
+                      </div>
+                    </TooltipTrigger>
+                    {row.tooltip && (
+                      <TooltipContent side="top" className="max-w-[200px] text-xs">
+                        <p className="text-muted-foreground">{row.tooltip}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Lore</h4>
+              <p className="text-sm text-foreground/80 leading-relaxed italic">{p.lore}</p>
+            </div>
+
+            <div>
+              <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Abilities</h4>
+              <div className="flex flex-wrap gap-1.5">
+                {p.abilities.map((ability) => (
+                  <Tooltip key={ability.name}>
+                    <TooltipTrigger asChild>
+                      <Badge variant="secondary" className="text-xs cursor-help transition-colors hover:bg-secondary/80">
+                        {ability.name}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px] text-xs">
+                      <p className="font-medium text-foreground">{ability.name}</p>
+                      <p className="text-muted-foreground mt-0.5">{ability.description}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
             </div>
           </div>
-          <style>{`
-            @keyframes ship-thrust{0%,100%{transform:translateX(0);opacity:.6}50%{transform:translateX(-6%);opacity:1}}
-          `}</style>
-        </div>
-
-        <div className="px-6 pb-6 pt-3 space-y-4 max-h-[60vh] overflow-y-auto">
-          <DialogHeader className="space-y-1 text-left">
-            <DialogTitle className="text-sm font-medium text-muted-foreground">{p.role}</DialogTitle>
-            <DialogDescription className="text-xs">Origin: {p.origin}</DialogDescription>
-          </DialogHeader>
-
-          <p className="text-sm text-foreground/90 leading-relaxed">{p.bio}</p>
-
-          <Separator />
-
-          <div>
-            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Bio-Mechanical Details</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {p.bioMechanical.map((row) => (
-                <div key={row.label} className={`rounded-md border p-2 ${p.chassisAccent}`}>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    {row.icon}
-                    <span>{row.label}</span>
-                  </div>
-                  <div className="text-sm text-foreground mt-0.5">{row.value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Lore</h4>
-            <p className="text-sm text-foreground/80 leading-relaxed italic">{p.lore}</p>
-          </div>
-
-          <div>
-            <h4 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Abilities</h4>
-            <div className="flex flex-wrap gap-1.5">
-              {p.abilities.map((a) => (
-                <Badge key={a} variant="secondary" className="text-xs">{a}</Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 };
 
