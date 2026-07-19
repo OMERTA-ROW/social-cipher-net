@@ -146,24 +146,26 @@ export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalPro
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg p-0 overflow-hidden bg-card/95 backdrop-blur border-primary/20">
         {/* Hero */}
-        <div className={`relative h-40 bg-gradient-to-br ${p.accent}`}>
+        <div className={`group/hero relative h-40 bg-gradient-to-br ${p.accent} overflow-hidden`}>
           {p.scene && (
             <img
               src={p.scene}
               alt={`${p.name} vessel`}
-              className="absolute inset-0 w-full h-full object-cover opacity-60"
+              className="absolute inset-0 w-full h-full object-cover opacity-60 transition-all duration-700 ease-out group-hover/hero:opacity-90 group-hover/hero:scale-110 group-hover/hero:brightness-125 group-hover/hero:saturate-150"
             />
           )}
+          {/* Ship engine glow on hover */}
+          <div className="absolute inset-0 opacity-0 group-hover/hero:opacity-100 transition-opacity duration-500 bg-[radial-gradient(circle_at_70%_60%,rgba(255,255,255,0.25),transparent_55%)] animate-[ship-thrust_2.4s_ease-in-out_infinite]" />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
           <div className="absolute bottom-3 left-4 right-4 flex items-end gap-3">
             {p.portrait ? (
               <img
                 src={p.portrait}
                 alt={`${p.name} portrait`}
-                className={`w-20 h-20 rounded-full object-cover border-2 ${p.chassisAccent}`}
+                className={`w-20 h-20 rounded-full object-cover border-2 ${p.chassisAccent} transition-all duration-300 hover:scale-110 hover:rotate-3 hover:shadow-[0_0_28px_rgba(255,255,255,0.5)] hover:brightness-125 cursor-pointer`}
               />
             ) : (
-              <div className={`w-20 h-20 rounded-full flex items-center justify-center border-2 ${p.chassisAccent}`}>
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center border-2 ${p.chassisAccent} transition-transform duration-300 hover:scale-110`}>
                 <Cpu className="w-8 h-8" />
               </div>
             )}
@@ -172,6 +174,9 @@ export const BotProfileModal = ({ open, onOpenChange, mode }: BotProfileModalPro
               <h2 className="text-2xl font-bold text-foreground leading-tight">{p.name}</h2>
             </div>
           </div>
+          <style>{`
+            @keyframes ship-thrust{0%,100%{transform:translateX(0);opacity:.6}50%{transform:translateX(-6%);opacity:1}}
+          `}</style>
         </div>
 
         <div className="px-6 pb-6 pt-3 space-y-4 max-h-[60vh] overflow-y-auto">
