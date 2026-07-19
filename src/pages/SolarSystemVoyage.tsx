@@ -6,6 +6,10 @@ import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Settings2, ChevronDown, ChevronUp } from "lucide-react";
+import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
 
 type ViewMode = "cockpit" | "chase" | "orbital" | "cinematic" | "closeup" | "harvest";
 
