@@ -96,7 +96,7 @@ const OrbitRing = ({ r }: { r: number }) => {
   );
 };
 
-const Planet = ({ def, onClick, focused }: { def: PlanetDef; onClick: () => void; focused: boolean }) => {
+const Planet = ({ def, onClick, focused, registerRef }: { def: PlanetDef; onClick: () => void; focused: boolean; registerRef?: (m: THREE.Mesh | null) => void }) => {
   const ref = useRef<THREE.Mesh>(null);
   const angleRef = useRef(Math.random() * Math.PI * 2);
   useFrame((_, dt) => {
@@ -108,7 +108,10 @@ const Planet = ({ def, onClick, focused }: { def: PlanetDef; onClick: () => void
     }
   });
   return (
-    <mesh ref={ref} onClick={onClick}>
+    <mesh
+      ref={(m) => { ref.current = m; registerRef?.(m); }}
+      onClick={onClick}
+    >
       <sphereGeometry args={[def.radius, 32, 32]} />
       <meshStandardMaterial
         color={def.color}
@@ -132,6 +135,31 @@ const Planet = ({ def, onClick, focused }: { def: PlanetDef; onClick: () => void
       )}
     </mesh>
   );
+};
+
+// Keeps OrbitControls target locked to the focused planet's world position each frame.
+const FocusFollower = ({
+  controlsRef,
+  planetRefs,
+  focusedPlanet,
+}: {
+  controlsRef: React.MutableRefObject<any>;
+  planetRefs: React.MutableRefObject<Record<string, THREE.Mesh | null>>;
+  focusedPlanet: string | null;
+}) => {
+  const tmp = useMemo(() => new THREE.Vector3(), []);
+  useFrame(() => {
+    const controls = controlsRef.current;
+    if (!controls) return;
+    if (focusedPlanet && planetRefs.current[focusedPlanet]) {
+      planetRefs.current[focusedPlanet]!.getWorldPosition(tmp);
+      controls.target.lerp(tmp, 0.2);
+    } else {
+      controls.target.lerp(tmp.set(0, 0, 0), 0.1);
+    }
+    controls.update();
+  });
+  return null;
 };
 
 const AsteroidField = ({ count = 80 }: { count?: number }) => {
@@ -407,6 +435,13 @@ const SolarSystemVoyage = () => {
   }, []);
 
   const focusedDef = PLANETS.find((p) => p.name === focusedPlanet);
+  const planetRefs = useRef<Record<string, THREE.Mesh | null>>({});
+  const controlsRef = useRef<any>(null);
+
+  const selectFocus = (name: string | null) => {
+    setFocusedPlanet(name);
+    if (name) setMode((m) => (m === "orbital" || m === "closeup" ? m : "closeup"));
+  };
 
   return (
     <div className="fixed inset-0 overflow-hidden">
@@ -434,7 +469,8 @@ const SolarSystemVoyage = () => {
               key={p.name}
               def={p}
               focused={focusedPlanet === p.name}
-              onClick={() => { setFocusedPlanet(p.name); setMode("closeup"); }}
+              registerRef={(m) => { planetRefs.current[p.name] = m; }}
+              onClick={() => { selectFocus(p.name); }}
             />
           ))}
           <AsteroidField count={preset.asteroids} />
@@ -451,12 +487,15 @@ const SolarSystemVoyage = () => {
           <CameraRig mode={mode} shipRef={shipRef} cinematicIdx={cinematicIdx} />
 
           {(mode === "orbital" || mode === "closeup") && (
-            <OrbitControls
-              enablePan={mode === "orbital"}
-              target={focusedDef ? [focusedDef.distance, 0, 0] : [0, 0, 0]}
-              minDistance={2}
-              maxDistance={120}
-            />
+            <>
+              <OrbitControls
+                ref={controlsRef}
+                enablePan={mode === "orbital" && !focusedPlanet}
+                minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
+                maxDistance={120}
+              />
+              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} />
+            </>
           )}
         </Suspense>
       </Canvas>
@@ -478,6 +517,43 @@ const SolarSystemVoyage = () => {
               {v.label}
             </Button>
           ))}
+        </div>
+
+        {/* Planet focus selector */}
+        <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-2 min-w-[180px]">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground px-1 mb-1">Focus Planet</div>
+          <div className="grid grid-cols-2 gap-1">
+            <Button
+              size="sm"
+              variant={!focusedPlanet ? "default" : "outline"}
+              className="h-7 text-[11px] col-span-2"
+              onClick={() => { setFocusedPlanet(null); }}
+              title="Recenter on the Sun"
+            >
+              Sun / Center
+            </Button>
+            {PLANETS.map((p) => (
+              <Button
+                key={p.name}
+                size="sm"
+                variant={focusedPlanet === p.name ? "default" : "outline"}
+                className="h-7 text-[11px]"
+                onClick={() => selectFocus(p.name)}
+                title={`Orbit ${p.name}`}
+              >
+                <span
+                  className="inline-block h-2 w-2 rounded-full mr-1.5"
+                  style={{ background: p.color }}
+                />
+                {p.name}
+              </Button>
+            ))}
+          </div>
+          {focusedPlanet && (
+            <div className="text-[10px] text-muted-foreground mt-1.5 px-1 leading-tight">
+              Camera tracks {focusedPlanet}. Drag to orbit, scroll to zoom.
+            </div>
+          )}
         </div>
 
         {/* Background engagement controls */}
