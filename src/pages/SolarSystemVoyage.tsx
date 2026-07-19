@@ -108,9 +108,9 @@ const Planet = ({ def, onClick, focused }: { def: PlanetDef; onClick: () => void
   );
 };
 
-const AsteroidField = () => {
+const AsteroidField = ({ count = 80 }: { count?: number }) => {
   const rocks = useMemo(() => {
-    return Array.from({ length: 80 }, () => {
+    return Array.from({ length: count }, () => {
       const a = Math.random() * Math.PI * 2;
       const r = ASTEROID_BELT_R + (Math.random() - 0.5) * 3;
       return {
@@ -119,7 +119,7 @@ const AsteroidField = () => {
         rot: [Math.random(), Math.random(), Math.random()] as [number, number, number],
       };
     });
-  }, []);
+  }, [count]);
   const groupRef = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
     if (groupRef.current) groupRef.current.rotation.y += dt * 0.02;
