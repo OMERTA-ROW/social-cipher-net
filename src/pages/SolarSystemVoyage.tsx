@@ -382,18 +382,19 @@ const SolarSystemVoyage = () => {
       <RealisticSpaceBackground
         palette={palette}
         intensity={effectiveIntensity}
-        starDensity={starDensity}
-        parallax={parallax}
-        interactive={interactive}
+        starDensity={effStarDensity}
+        parallax={effParallax}
+        interactive={effInteractive}
       />
 
       <Canvas
         camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 500 }}
+        dpr={preset.dpr}
         className="!absolute inset-0"
       >
         <Suspense fallback={null}>
           <ambientLight intensity={0.25} />
-          <Stars radius={200} depth={60} count={3000} factor={4} fade speed={0.5} />
+          <Stars key={activeTier} radius={200} depth={60} count={preset.bgStars} factor={4} fade speed={activeTier === "low" ? 0.2 : 0.5} />
           <Sun />
           {PLANETS.map((p) => <OrbitRing key={p.name} r={p.distance} />)}
           <OrbitRing r={ASTEROID_BELT_R} />
@@ -405,7 +406,8 @@ const SolarSystemVoyage = () => {
               onClick={() => { setFocusedPlanet(p.name); setMode("closeup"); }}
             />
           ))}
-          <AsteroidField />
+          <AsteroidField count={preset.asteroids} />
+
           {/* Harvester fleet */}
           <HarvesterBot offset={0}     color="#8fb4c9" personaLabel="Zozo-01" />
           <HarvesterBot offset={2.1}   color="#8fb4c9" personaLabel="Zozo-02" />
