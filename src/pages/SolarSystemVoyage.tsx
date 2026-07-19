@@ -142,13 +142,16 @@ const FocusFollower = ({
   controlsRef,
   planetRefs,
   focusedPlanet,
+  targetOrbitSpeed,
 }: {
   controlsRef: React.MutableRefObject<any>;
   planetRefs: React.MutableRefObject<Record<string, THREE.Mesh | null>>;
   focusedPlanet: string | null;
+  targetOrbitSpeed: number;
 }) => {
   const tmp = useMemo(() => new THREE.Vector3(), []);
-  useFrame(() => {
+  const currentSpeed = useRef(0);
+  useFrame((_, dt) => {
     const controls = controlsRef.current;
     if (!controls) return;
     if (focusedPlanet && planetRefs.current[focusedPlanet]) {
@@ -157,6 +160,13 @@ const FocusFollower = ({
     } else {
       controls.target.lerp(tmp.set(0, 0, 0), 0.1);
     }
+    // Smoothly ramp orbit speed toward target (exponential smoothing, ~0.6s time constant)
+    const goal = focusedPlanet ? targetOrbitSpeed : 0;
+    const k = 1 - Math.exp(-dt / 0.6);
+    currentSpeed.current += (goal - currentSpeed.current) * k;
+    const applied = currentSpeed.current * 2;
+    controls.autoRotate = Math.abs(applied) > 0.01;
+    controls.autoRotateSpeed = applied;
     controls.update();
   });
   return null;
@@ -494,10 +504,8 @@ const SolarSystemVoyage = () => {
                 enablePan={mode === "orbital" && !focusedPlanet}
                 minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
                 maxDistance={120}
-                autoRotate={!!focusedPlanet && orbitSpeed !== 0}
-                autoRotateSpeed={orbitSpeed * 2}
               />
-              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} />
+              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} targetOrbitSpeed={orbitSpeed} />
             </>
           )}
         </Suspense>
