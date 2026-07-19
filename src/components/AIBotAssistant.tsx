@@ -622,7 +622,7 @@ const AIBotAssistant = () => {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setShowProfile(true)}
+                onClick={openProfile}
                 title={`View ${currentChar.name} profile`}
                 aria-label={`View ${currentChar.name} profile`}
                 className="relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-full"
