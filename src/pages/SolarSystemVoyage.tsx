@@ -6,6 +6,10 @@ import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Settings2, ChevronDown, ChevronUp } from "lucide-react";
+import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
 
 type ViewMode = "cockpit" | "chase" | "orbital" | "cinematic" | "closeup" | "harvest";
 
@@ -268,6 +272,18 @@ const SolarSystemVoyage = () => {
   const [cinematicIdx, setCinematicIdx] = useState(0);
   const [resources, setResources] = useState(0);
 
+  // Background engagement controls
+  const [palette, setPalette] = useState<PaletteName>("solar");
+  const [intensity, setIntensity] = useState<IntensityName>("vivid");
+  const [starDensity, setStarDensity] = useState(1.4);
+  const [parallax, setParallax] = useState(true);
+  const [interactive, setInteractive] = useState(true);
+  const [autoIntensity, setAutoIntensity] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+
+  const effectiveIntensity: IntensityName =
+    autoIntensity ? (speed > 3 ? "hyper" : intensity) : intensity;
+
   const tRef = useRef(0);
   const speedRef = useRef(1);
   const shipRef = useRef<THREE.Group | null>(null);
@@ -302,7 +318,13 @@ const SolarSystemVoyage = () => {
 
   return (
     <div className="fixed inset-0 overflow-hidden">
-      <RealisticSpaceBackground palette="solar" intensity={speed > 3 ? "hyper" : "vivid"} starDensity={1.4} />
+      <RealisticSpaceBackground
+        palette={palette}
+        intensity={effectiveIntensity}
+        starDensity={starDensity}
+        parallax={parallax}
+        interactive={interactive}
+      />
 
       <Canvas
         camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 500 }}
@@ -363,7 +385,81 @@ const SolarSystemVoyage = () => {
             </Button>
           ))}
         </div>
+
+        {/* Background engagement controls */}
+        <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-2 min-w-[220px]">
+          <button
+            className="w-full flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground px-1 mb-1 hover:text-foreground"
+            onClick={() => setShowControls((s) => !s)}
+          >
+            <span className="flex items-center gap-1.5"><Settings2 className="h-3 w-3" /> Background</span>
+            {showControls ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+          {showControls && (
+            <div className="space-y-3 p-1">
+              <div>
+                <Label className="text-[10px] uppercase text-muted-foreground">Palette</Label>
+                <div className="grid grid-cols-2 gap-1 mt-1">
+                  {(["cosmic", "draco", "brain", "solar"] as PaletteName[]).map((p) => (
+                    <Button
+                      key={p}
+                      size="sm"
+                      variant={palette === p ? "default" : "outline"}
+                      className="h-7 text-[11px] capitalize"
+                      onClick={() => setPalette(p)}
+                    >
+                      {p}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] uppercase text-muted-foreground">Intensity</Label>
+                  <div className="flex items-center gap-1">
+                    <Switch id="auto-intensity" checked={autoIntensity} onCheckedChange={setAutoIntensity} className="scale-75" />
+                    <Label htmlFor="auto-intensity" className="text-[10px]">Auto</Label>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-1 mt-1">
+                  {(["calm", "normal", "vivid", "hyper"] as IntensityName[]).map((i) => (
+                    <Button
+                      key={i}
+                      size="sm"
+                      variant={intensity === i ? "default" : "outline"}
+                      disabled={autoIntensity && speed > 3 && i !== "hyper"}
+                      className="h-7 text-[11px] capitalize"
+                      onClick={() => setIntensity(i)}
+                    >
+                      {i}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <Label className="text-[10px] uppercase text-muted-foreground">Star Density: {starDensity.toFixed(1)}×</Label>
+                <Slider
+                  value={[starDensity]}
+                  min={0.1}
+                  max={3}
+                  step={0.1}
+                  onValueChange={([v]) => setStarDensity(v)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="parallax" className="text-[11px]">Parallax</Label>
+                <Switch id="parallax" checked={parallax} onCheckedChange={setParallax} />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="interactive" className="text-[11px]">Interactive</Label>
+                <Switch id="interactive" checked={interactive} onCheckedChange={setInteractive} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
 
       {/* Bottom warp + HUD */}
       <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-3 items-end z-10 pointer-events-auto">
