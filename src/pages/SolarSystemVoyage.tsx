@@ -303,6 +303,31 @@ const SolarSystemVoyage = () => {
   const [autoIntensity, setAutoIntensity] = useState(true);
   const [showControls, setShowControls] = useState(true);
 
+  // Named presets (persisted)
+  const [presets, setPresets] = useState<VoyagePreset[]>(() => {
+    try { return JSON.parse(localStorage.getItem(PRESETS_KEY) || "[]"); } catch { return []; }
+  });
+  const [presetName, setPresetName] = useState("");
+  useEffect(() => {
+    localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+  }, [presets]);
+  const savePreset = () => {
+    const name = presetName.trim();
+    if (!name) return;
+    setPresets((prev) => {
+      const next = prev.filter((p) => p.name !== name);
+      next.push({ name, palette, quality, autoIntensity });
+      return next;
+    });
+    setPresetName("");
+  };
+  const loadPreset = (p: VoyagePreset) => {
+    setPalette(p.palette);
+    setQuality(p.quality);
+    setAutoIntensity(p.autoIntensity);
+  };
+  const deletePreset = (name: string) => setPresets((prev) => prev.filter((p) => p.name !== name));
+
 
   // Quality tier — overrides individual controls when not "auto"
   const [quality, setQuality] = useState<Quality>("auto");
