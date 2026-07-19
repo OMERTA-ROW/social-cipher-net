@@ -318,7 +318,13 @@ const SolarSystemVoyage = () => {
 
   return (
     <div className="fixed inset-0 overflow-hidden">
-      <RealisticSpaceBackground palette="solar" intensity={speed > 3 ? "hyper" : "vivid"} starDensity={1.4} />
+      <RealisticSpaceBackground
+        palette={palette}
+        intensity={effectiveIntensity}
+        starDensity={starDensity}
+        parallax={parallax}
+        interactive={interactive}
+      />
 
       <Canvas
         camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 500 }}
