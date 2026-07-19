@@ -586,7 +586,7 @@ const AIBotAssistant = () => {
           size="icon"
           title={`${currentChar.name} AI (Double-tap to cycle modes)`}
         >
-          <AlienIcon className={`w-8 h-8 transition-transform ${isSpeaking ? "animate-bounce" : ""} ${aiMode === "draco" ? "text-red-500" : ""}`} />
+          <AlienIcon mode={aiMode === "draco" ? "draco" : "zozo"} className={`w-10 h-10 transition-transform ${isSpeaking ? "animate-bounce" : ""}`} />
           <Badge className={`absolute -top-2 -right-2 text-white text-xs px-1 ${
             aiMode === "draco" 
               ? "bg-red-500" 
