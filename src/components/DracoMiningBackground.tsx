@@ -1,4 +1,4 @@
-import miningBg from "@/assets/realistic-mining-bg.jpg";
+import miningBg from "@/assets/draco-alien-ship-scene.jpg";
 
 interface DracoMiningBackgroundProps {
   isActive: boolean;
