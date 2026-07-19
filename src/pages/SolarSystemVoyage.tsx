@@ -8,8 +8,17 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Settings2, ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Settings2, ChevronDown, ChevronUp, Save, Trash2 } from "lucide-react";
 import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
+
+interface VoyagePreset {
+  name: string;
+  palette: PaletteName;
+  quality: Quality;
+  autoIntensity: boolean;
+}
+const PRESETS_KEY = "voyage.presets.v1";
 
 type ViewMode = "cockpit" | "chase" | "orbital" | "cinematic" | "closeup" | "harvest";
 type Quality = "low" | "medium" | "high" | "auto";
