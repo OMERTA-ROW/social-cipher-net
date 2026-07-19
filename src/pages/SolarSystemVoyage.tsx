@@ -272,6 +272,18 @@ const SolarSystemVoyage = () => {
   const [cinematicIdx, setCinematicIdx] = useState(0);
   const [resources, setResources] = useState(0);
 
+  // Background engagement controls
+  const [palette, setPalette] = useState<PaletteName>("solar");
+  const [intensity, setIntensity] = useState<IntensityName>("vivid");
+  const [starDensity, setStarDensity] = useState(1.4);
+  const [parallax, setParallax] = useState(true);
+  const [interactive, setInteractive] = useState(true);
+  const [autoIntensity, setAutoIntensity] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+
+  const effectiveIntensity: IntensityName =
+    autoIntensity ? (speed > 3 ? "hyper" : intensity) : intensity;
+
   const tRef = useRef(0);
   const speedRef = useRef(1);
   const shipRef = useRef<THREE.Group | null>(null);
