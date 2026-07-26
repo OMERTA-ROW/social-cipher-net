@@ -32,6 +32,7 @@ import SolarSystemVoyage from "./pages/SolarSystemVoyage";
 import Profile from "./pages/Profile";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
+import RealisticSpaceBackground from "./components/RealisticSpaceBackground";
 
 const AppContent = () => {
   const location = useLocation();
@@ -39,6 +40,7 @@ const AppContent = () => {
 
   return (
     <>
+      <RealisticSpaceBackground />
       <SecurityMonitor />
       <Routes>
         <Route path="/" element={<Index />} />
