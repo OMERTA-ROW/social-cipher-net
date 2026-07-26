@@ -40,6 +40,7 @@ const AppContent = () => {
 
   return (
     <>
+      <RealisticSpaceBackground />
       <SecurityMonitor />
       <Routes>
         <Route path="/" element={<Index />} />
