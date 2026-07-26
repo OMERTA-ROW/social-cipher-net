@@ -27,13 +27,16 @@ serve(async (req) => {
     logStep("Function started");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    const unauthed = () => new Response(
+      JSON.stringify({ qualifies: false, tier: "CyberFree", followerCount: 0, totalViews: 0, needsFollowers: 1000, needsViews: 10000, message: "Sign in to check qualifications" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
+    if (!authHeader) return unauthed();
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    if (userError || !userData?.user?.email) return unauthed();
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Check follower count
