@@ -29,6 +29,7 @@ import UserProfile from "./pages/UserProfile";
 import TokenPurchase from "./pages/TokenPurchase";
 import Backgrounds from "./pages/Backgrounds";
 import SolarSystemVoyage from "./pages/SolarSystemVoyage";
+import Profile from "./pages/Profile";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
 
