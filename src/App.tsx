@@ -60,6 +60,7 @@ const AppContent = () => {
         <Route path="/miners" element={<Miners />} />
         <Route path="/profile/:userId" element={<UserProfile />} />
         <Route path="/token-purchase" element={<TokenPurchase />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
