@@ -160,7 +160,8 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={() => navigate("/auth")}
+              onClick={() => navigate("/profile")}
+              title="My Profile"
               className="text-foreground hover:text-primary"
             >
               <User className="w-5 h-5" />
