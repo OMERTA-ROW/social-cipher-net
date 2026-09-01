@@ -187,7 +187,7 @@ const Studio = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       <Navigation onCreatePost={() => {}} />
       {currentStream && <OmegaChat streamId={currentStream.id} streamerId={currentStream.user_id} />}
       
