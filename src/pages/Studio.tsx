@@ -15,7 +15,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Navigation from "@/components/Navigation";
-import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
@@ -189,7 +188,6 @@ const Studio = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <RealisticSpaceBackground />
       <Navigation onCreatePost={() => {}} />
       {currentStream && <OmegaChat streamId={currentStream.id} streamerId={currentStream.user_id} />}
       

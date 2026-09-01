@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Gamepad2, Users, Radio, Trophy, Zap, Search, Save } from "lucide-react";
 import Navigation from "@/components/Navigation";
-import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { useNavigate } from "react-router-dom";
@@ -93,7 +92,6 @@ const CyberGamers = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <RealisticSpaceBackground />
       <Navigation onCreatePost={() => {}} />
       <PageTabManager />
       

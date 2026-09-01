@@ -1,5 +1,4 @@
 import { useState } from "react";
-import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import { Button } from "@/components/ui/button";
 import { X, Type } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +12,6 @@ const Backgrounds = () => {
     <div className="fixed inset-0 w-screen h-screen overflow-hidden">
       {/* Full-screen All Seeing Eye Background */}
       <div className="absolute inset-0 w-full h-full">
-        <RealisticSpaceBackground />
       </div>
 
       {/* Text Overlay */}

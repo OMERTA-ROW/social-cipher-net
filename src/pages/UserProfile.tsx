@@ -4,7 +4,6 @@ import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import CreatePostDialog from "@/components/CreatePostDialog";
-import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import MatrixOverlay from "@/components/MatrixOverlay";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -241,7 +240,6 @@ const UserProfile = () => {
 
   return (
     <div className="min-h-screen">
-      <RealisticSpaceBackground />
       <MatrixOverlay />
       <Navigation />
       

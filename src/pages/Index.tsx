@@ -248,7 +248,6 @@ const Index = () => {
 
   return (
     <AppShell onCreatePost={() => setIsCreateDialogOpen(true)}>
-      {showSpaceBackground && <RealisticSpaceBackground />}
       <StoriesBar />
       <div>
         <div>
