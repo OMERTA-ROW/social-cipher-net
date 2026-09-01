@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import PostCard from "@/components/PostCard";
 import FollowButton from "@/components/FollowButton";
@@ -22,6 +23,9 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const cursorRef = useRef<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
@@ -29,11 +33,14 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    cursorRef.current = null;
     try {
-      const data = tab === "following" && userId
+      const page = tab === "following" && userId
         ? await fetchFollowingFeed(userId)
         : await fetchDiscoverFeed();
-      setPosts(data);
+      setPosts(page.posts);
+      cursorRef.current = page.nextCursor;
+      setHasMore(page.hasMore);
     } catch (error: any) {
       toast.error(error.message || "Failed to load feed");
     } finally {
@@ -42,6 +49,26 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   }, [tab, userId]);
 
   useEffect(() => { load(); }, [load, refreshKey]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const page = tab === "following" && userId
+        ? await fetchFollowingFeed(userId, undefined, cursorRef.current)
+        : await fetchDiscoverFeed(undefined, cursorRef.current);
+      setPosts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...page.posts.filter((p) => !seen.has(p.id))];
+      });
+      cursorRef.current = page.nextCursor;
+      setHasMore(page.hasMore);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to load more posts");
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, tab, userId]);
 
   const handlePaymentRequired = async (post: SocialPost) => {
     try {
@@ -54,6 +81,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       toast.error(error.message || "Failed to start payment");
     }
   };
+
 
   const renderList = () => {
     if (loading) {
