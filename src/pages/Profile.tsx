@@ -1,8 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Navigation from "@/components/Navigation";
-import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
-import MatrixOverlay from "@/components/MatrixOverlay";
+import AppShell from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,12 +132,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen">
-      <RealisticSpaceBackground />
-      <MatrixOverlay />
-      <Navigation />
-
-      <div className="container mx-auto px-4 pt-20 pb-8 max-w-3xl">
+    <AppShell>
+      <div>
         <Card className="p-6 bg-background/80 backdrop-blur-sm border-border/50 mb-6">
           <div className="flex items-start gap-6 flex-col sm:flex-row">
             <div className="relative">
@@ -237,7 +231,7 @@ const Profile = () => {
           </div>
         </Card>
       </div>
-    </div>
+    </AppShell>
   );
 };
 

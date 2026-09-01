@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import Navigation from "@/components/Navigation";
+import AppShell from "@/components/layout/AppShell";
 import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
 import PostCard from "@/components/PostCard";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
@@ -83,28 +83,6 @@ const Index = () => {
       handlePaymentSuccess(postId);
     }
   }, [searchParams]);
-
-  // Auto-open All Seeing Eye 3D space on login
-  useEffect(() => {
-    const initializeMultiverse = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Wait a brief moment for UI to settle
-        setTimeout(() => {
-          setShowSpaceBackground(false);
-          openWindow(
-            "All Seeing Eye - Multiverse Explorer", 
-            <RealisticSpaceBackground />, 
-            900, 
-            700
-          );
-          toast.success("Welcome to the Multiverse - 360° exploration active");
-        }, 1000);
-      }
-    };
-
-    initializeMultiverse();
-  }, []);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -269,13 +247,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <AppShell onCreatePost={() => setIsCreateDialogOpen(true)}>
       {showSpaceBackground && <RealisticSpaceBackground />}
-      <Navigation onCreatePost={() => setIsCreateDialogOpen(true)} />
       <StoriesBar />
-      
-      <main className="container mx-auto px-4 pt-24 pb-8">
-        <div className="max-w-2xl mx-auto">
+      <div>
+        <div>
           {currentUserId && (
             <div className="mb-6 p-4 border rounded-lg bg-muted/30">
               <h3 className="text-sm font-semibold mb-3">Quick Access Windows</h3>
@@ -360,7 +336,7 @@ const Index = () => {
           <SocialFeed refreshKey={feedRefreshKey} />
 
         </div>
-      </main>
+      </div>
 
       <CreatePostDialog
         open={isCreateDialogOpen}
@@ -377,7 +353,7 @@ const Index = () => {
           initialVideoId={initialVideoId}
         />
       )}
-    </div>
+    </AppShell>
   );
 };
 
