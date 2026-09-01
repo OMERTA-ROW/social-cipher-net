@@ -25,6 +25,8 @@ interface PostCardProps {
   isLive?: boolean;
   media?: Array<{ url: string; type: 'image' | 'video' }>;
   replyCount?: number;
+  /** Seeded sample content marker */
+  isDemo?: boolean;
   /** Navigate to the thread view when the card / reply button is clicked */
   linkToThread?: boolean;
   onPaymentRequired?: () => void;
@@ -49,6 +51,7 @@ const PostCard = ({
   isLive = false,
   media = [],
   replyCount = 0,
+  isDemo = false,
   linkToThread = false,
   onPaymentRequired,
   onReply

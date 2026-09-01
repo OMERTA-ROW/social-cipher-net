@@ -127,6 +127,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
               price={post.price}
               isPaid={post.monetization_type === "free" || post.user_id === userId}
               media={post.media}
+              isDemo={post.is_demo}
               linkToThread
               onPaymentRequired={() => handlePaymentRequired(post)}
             />

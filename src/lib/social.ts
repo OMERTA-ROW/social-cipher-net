@@ -18,13 +18,14 @@ export interface SocialPost {
   reply_count: number;
   monetization_type: string;
   price: number;
+  is_demo: boolean;
   profile: SocialProfile | null;
   media: Array<{ url: string; type: "image" | "video" }>;
 }
 
 const POST_SELECT = `
   id, user_id, content, created_at, parent_post_id, like_count, reply_count,
-  monetization_type, price,
+  monetization_type, price, is_demo,
   profiles!posts_user_id_fkey(id, username, display_name, avatar_url, is_verified),
   post_media(media_url, media_type, display_order)
 `;
@@ -39,6 +40,7 @@ const mapPost = (row: any): SocialPost => ({
   reply_count: row.reply_count ?? 0,
   monetization_type: row.monetization_type ?? "free",
   price: Number(row.price ?? 0),
+  is_demo: !!row.is_demo,
   profile: row.profiles ?? null,
   media: (row.post_media ?? [])
     .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
