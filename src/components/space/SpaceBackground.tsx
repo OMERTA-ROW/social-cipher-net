@@ -59,6 +59,7 @@ const SpaceBackground = () => {
       {render3d && (
         <Canvas
           className="absolute inset-0"
+          shadows={full ? "soft" : false}
           gl={{ antialias: false, powerPreference: "low-power", alpha: false }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping;
