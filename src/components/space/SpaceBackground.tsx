@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
+import * as THREE from "three";
 import type { Region } from "./SolarSystemScene";
 import { isLowPowerDevice, prefersReducedMotion, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
 
@@ -59,6 +60,10 @@ const SpaceBackground = () => {
         <Canvas
           className="absolute inset-0"
           gl={{ antialias: false, powerPreference: "low-power", alpha: false }}
+          onCreated={({ gl }) => {
+            gl.toneMapping = THREE.ACESFilmicToneMapping;
+            gl.toneMappingExposure = 1.15;
+          }}
           dpr={full ? [1, 1.75] : 1}
           camera={{ position: [0, 14, 54], fov: 55, near: 0.5, far: 900 }}
           frameloop={visible && !reduced ? "always" : "demand"}
