@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { setSpaceBgSettings, useSpaceBgSettings, type SpaceBgMode } from "@/lib/spaceBackgroundSettings";
 
 const MODES: { value: SpaceBgMode; label: string; hint: string }[] = [
-  { value: "full", label: "Full", desc: "", hint: "Solar system, comets, belt" } as never,
+  { value: "full", label: "Full", hint: "Solar system, comets, belt" },
   { value: "lite", label: "Lite", hint: "Fewer bodies, lower cost" },
   { value: "off", label: "Off", hint: "Static gradient only" },
 ];
