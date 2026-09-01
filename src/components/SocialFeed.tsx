@@ -132,9 +132,17 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
             />
           </div>
         ))}
+        {hasMore && (
+          <div className="flex justify-center py-4">
+            <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? "Loading…" : "Load more"}
+            </Button>
+          </div>
+        )}
       </div>
     );
   };
+
 
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as "following" | "discover")}>
