@@ -538,7 +538,7 @@ const AlienCraft = ({ full }: SceneQuality) => {
       {/* saucer hull */}
       <mesh scale={[1.75, 0.16, 1.75]} castShadow={full} receiveShadow={full}>
         <sphereGeometry args={[1, full ? 44 : 20, full ? 20 : 10]} />
-        <meshStandardMaterial color="#8ea2b6" metalness={0.92} roughness={0.24} />
+        <meshStandardMaterial color="#8ea2b6" metalness={0.85} roughness={0.28} emissive="#16303f" emissiveIntensity={0.6} />
       </mesh>
       {/* lower hull taper */}
       <mesh position={[0, -0.14, 0]} scale={[1.05, 0.4, 1.05]} castShadow={full}>
@@ -654,7 +654,7 @@ const FlightRig = ({ region, full }: { region: Region; full: boolean }) => {
     while (dYaw > Math.PI) dYaw -= Math.PI * 2;
     while (dYaw < -Math.PI) dYaw += Math.PI * 2;
     s.prevYaw = yaw;
-    const targetBank = THREE.MathUtils.clamp((-dYaw / Math.max(dt, 0.001)) * 0.55, -0.7, 0.7);
+    const targetBank = THREE.MathUtils.clamp((-dYaw / Math.max(dt, 0.001)) * 0.4, -0.34, 0.34);
     s.bank += (targetBank - s.bank) * (1 - Math.exp(-2.4 * dt));
 
     const g = craft.current;
@@ -667,7 +667,7 @@ const FlightRig = ({ region, full }: { region: Region; full: boolean }) => {
     }
 
     // third-person chase camera: behind, above, rolled slightly with the bank
-    offset.set(Math.sin(s.bank) * 2.2, 2.5, 0).addScaledVector(tangent, -7.5);
+    offset.set(Math.sin(s.bank) * 1.4, 3.4, 0).addScaledVector(tangent, -8.5);
     desired.copy(pos).add(offset);
     lookAt.copy(pos).addScaledVector(tangent, 6);
 
@@ -679,7 +679,7 @@ const FlightRig = ({ region, full }: { region: Region; full: boolean }) => {
       camera.position.lerp(desired, 1 - Math.exp(-(full ? 3.2 : 2.4) * dt));
       smoothLook.lerp(lookAt, 1 - Math.exp(-3.6 * dt));
     }
-    camera.up.set(Math.sin(s.bank) * 0.35, 1, 0).normalize();
+    camera.up.set(Math.sin(s.bank) * 0.14, 1, 0).normalize();
     camera.lookAt(smoothLook);
   });
 
