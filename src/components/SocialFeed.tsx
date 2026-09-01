@@ -1,0 +1,123 @@
+import { useCallback, useEffect, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PostCardSkeleton } from "@/components/PostCardSkeleton";
+import PostCard from "@/components/PostCard";
+import FollowButton from "@/components/FollowButton";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  SocialPost,
+  displayNameOf,
+  fetchDiscoverFeed,
+  fetchFollowingFeed,
+  formatTimestamp,
+} from "@/lib/social";
+
+interface SocialFeedProps {
+  refreshKey?: number;
+}
+
+const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
+  const [tab, setTab] = useState<"following" | "discover">("following");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [posts, setPosts] = useState<SocialPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
+  }, []);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = tab === "following" && userId
+        ? await fetchFollowingFeed(userId)
+        : await fetchDiscoverFeed();
+      setPosts(data);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to load feed");
+    } finally {
+      setLoading(false);
+    }
+  }, [tab, userId]);
+
+  useEffect(() => { load(); }, [load, refreshKey]);
+
+  const handlePaymentRequired = async (post: SocialPost) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("create-post-payment", {
+        body: { postId: post.id, paymentType: post.monetization_type },
+      });
+      if (error) throw error;
+      if (data?.url) window.open(data.url, "_blank");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to start payment");
+    }
+  };
+
+  const renderList = () => {
+    if (loading) {
+      return (
+        <div className="space-y-4">
+          <PostCardSkeleton />
+          <PostCardSkeleton />
+          <PostCardSkeleton />
+        </div>
+      );
+    }
+    if (posts.length === 0) {
+      return (
+        <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-lg">
+          {tab === "following"
+            ? "Your signal is quiet. Follow creators from Discover to fill this feed."
+            : "No transmissions yet. Be the first to post."}
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-4">
+        {posts.map((post) => (
+          <div key={post.id} className="relative">
+            {tab === "discover" && post.user_id !== userId && (
+              <div className="absolute right-4 top-4 z-10">
+                <FollowButton targetUserId={post.user_id} />
+              </div>
+            )}
+            <PostCard
+              postId={post.id}
+              authorId={post.user_id}
+              author={displayNameOf(post.profile)}
+              handle={post.profile?.username}
+              avatar={post.profile?.avatar_url || undefined}
+              content={post.content}
+              timestamp={formatTimestamp(post.created_at)}
+              likes={post.like_count}
+              comments={post.reply_count}
+              replyCount={post.reply_count}
+              isVerified={!!post.profile?.is_verified}
+              monetizationType={post.monetization_type}
+              price={post.price}
+              isPaid={post.monetization_type === "free" || post.user_id === userId}
+              media={post.media}
+              linkToThread
+              onPaymentRequired={() => handlePaymentRequired(post)}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <Tabs value={tab} onValueChange={(v) => setTab(v as "following" | "discover")}>
+      <TabsList className="mb-4">
+        <TabsTrigger value="following">Following</TabsTrigger>
+        <TabsTrigger value="discover">Discover</TabsTrigger>
+      </TabsList>
+      <TabsContent value="following">{renderList()}</TabsContent>
+      <TabsContent value="discover">{renderList()}</TabsContent>
+    </Tabs>
+  );
+};
+
+export default SocialFeed;
