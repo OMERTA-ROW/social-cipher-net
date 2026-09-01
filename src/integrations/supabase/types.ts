@@ -766,6 +766,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_updates: boolean
+          id: string
+          notify_follows: boolean
+          notify_likes: boolean
+          notify_mentions: boolean
+          notify_replies: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_updates?: boolean
+          id?: string
+          notify_follows?: boolean
+          notify_likes?: boolean
+          notify_mentions?: boolean
+          notify_replies?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_updates?: boolean
+          id?: string
+          notify_follows?: boolean
+          notify_likes?: boolean
+          notify_mentions?: boolean
+          notify_replies?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       platform_connections: {
         Row: {
           access_token: string | null
