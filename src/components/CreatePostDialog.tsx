@@ -110,21 +110,8 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
           parentPostId = post.id;
         }
         
-        // Update reply count for parent
-        if (parentPostId && i > 0) {
-          const { data: parentPost } = await supabase
-            .from('posts')
-            .select('reply_count')
-            .eq('id', parentPostId)
-            .single();
-          
-          if (parentPost) {
-            await supabase
-              .from('posts')
-              .update({ reply_count: (parentPost.reply_count || 0) + 1 })
-              .eq('id', parentPostId);
-          }
-        }
+        // reply_count is maintained automatically by a database trigger
+
 
         // Save mentions for this post
         if (i === 0 && mentions.length > 0) {

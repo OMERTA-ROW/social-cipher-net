@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -1005,6 +1005,35 @@ export type Database = {
           },
         ]
       }
+      post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_media: {
         Row: {
           created_at: string
@@ -1133,6 +1162,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          like_count: number
           media_type: string | null
           media_url: string | null
           monetization_type: string | null
@@ -1148,6 +1178,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          like_count?: number
           media_type?: string | null
           media_url?: string | null
           monetization_type?: string | null
@@ -1163,6 +1194,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          like_count?: number
           media_type?: string | null
           media_url?: string | null
           monetization_type?: string | null

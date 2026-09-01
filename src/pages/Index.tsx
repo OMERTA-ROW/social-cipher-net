@@ -12,6 +12,7 @@ import { WalletCard } from "@/components/WalletCard";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
 import { InfinityScrollFeed } from "@/components/InfinityScrollFeed";
+import SocialFeed from "@/components/SocialFeed";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
 import { Wallet, TrendingUp, Award, DollarSign, Play, Eye } from "lucide-react";
@@ -47,6 +48,7 @@ const Index = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showInfinityScroll, setShowInfinityScroll] = useState(false);
   const [initialVideoId, setInitialVideoId] = useState<string | undefined>();
@@ -263,6 +265,7 @@ const Index = () => {
 
   const handleCreatePost = () => {
     fetchPosts();
+    setFeedRefreshKey((k) => k + 1);
   };
 
   return (
@@ -353,89 +356,9 @@ const Index = () => {
             <h2 className="text-3xl font-bold text-foreground mb-2">Feed</h2>
             <p className="text-muted-foreground">Stay connected with the cyber community</p>
           </div>
-          
-          <Carousel className="w-full">
-            <CarouselContent>
-              {isLoading ? (
-                <>
-                  <CarouselItem>
-                    <PostCardSkeleton />
-                  </CarouselItem>
-                  <CarouselItem>
-                    <PostCardSkeleton />
-                  </CarouselItem>
-                  <CarouselItem>
-                    <PostCardSkeleton />
-                  </CarouselItem>
-                </>
-              ) : posts.length === 0 ? (
-                <CarouselItem>
-                  <div className="text-center py-8 text-muted-foreground">
-                    No posts yet. Be the first to create one!
-                  </div>
-                </CarouselItem>
-              ) : (
-                posts.map((post) => (
-                  <CarouselItem key={post.id}>
-                    <div 
-                      className="cursor-pointer"
-                      onClick={() => {
-                        // Check if it's a video post
-                        const hasVideo = post.post_media && post.post_media.length > 0 && 
-                                        post.post_media.some(m => m.media_type === 'video');
-                        
-                        if (hasVideo) {
-                          setInitialVideoId(post.id);
-                          setShowInfinityScroll(true);
-                        } else {
-                          openWindow(
-                            `Post by ${post.profiles.display_name || post.profiles.username || "Anonymous"}`,
-                            <PostCard
-                              postId={post.id}
-                              author={post.profiles.display_name || post.profiles.username || "Anonymous"}
-                              content={post.content}
-                              timestamp={formatTimestamp(post.created_at)}
-                              likes={0}
-                              comments={0}
-                              isVerified={post.profiles.is_verified}
-                              monetizationType={post.monetization_type}
-                              price={post.price}
-                              isPaid={post.has_paid}
-                              hasStory={post.has_story}
-                              isLive={post.is_live}
-                              media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
-                              replyCount={post.reply_count}
-                              onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
-                            />
-                          );
-                        }
-                      }}
-                    >
-                      <PostCard
-                        postId={post.id}
-                        author={post.profiles.display_name || post.profiles.username || "Anonymous"}
-                        content={post.content}
-                        timestamp={formatTimestamp(post.created_at)}
-                        likes={0}
-                        comments={0}
-                        isVerified={post.profiles.is_verified}
-                        monetizationType={post.monetization_type}
-                        price={post.price}
-                        isPaid={post.has_paid}
-                        hasStory={post.has_story}
-                        isLive={post.is_live}
-                        media={post.post_media?.map(m => ({ url: m.media_url, type: m.media_type })) || []}
-                        replyCount={post.reply_count}
-                        onPaymentRequired={() => handlePaymentRequired(post.id, post.monetization_type)}
-                      />
-                    </div>
-                  </CarouselItem>
-                ))
-              )}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+
+          <SocialFeed refreshKey={feedRefreshKey} />
+
         </div>
       </main>
 
