@@ -30,6 +30,7 @@ import TokenPurchase from "./pages/TokenPurchase";
 import Backgrounds from "./pages/Backgrounds";
 import SolarSystemVoyage from "./pages/SolarSystemVoyage";
 import Profile from "./pages/Profile";
+import Thread from "./pages/Thread";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
 import RealisticSpaceBackground from "./components/RealisticSpaceBackground";
