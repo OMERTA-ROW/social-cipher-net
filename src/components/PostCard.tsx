@@ -25,6 +25,8 @@ interface PostCardProps {
   isLive?: boolean;
   media?: Array<{ url: string; type: 'image' | 'video' }>;
   replyCount?: number;
+  /** Seeded sample content marker */
+  isDemo?: boolean;
   /** Navigate to the thread view when the card / reply button is clicked */
   linkToThread?: boolean;
   onPaymentRequired?: () => void;
@@ -49,6 +51,7 @@ const PostCard = ({
   isLive = false,
   media = [],
   replyCount = 0,
+  isDemo = false,
   linkToThread = false,
   onPaymentRequired,
   onReply
@@ -155,6 +158,12 @@ const PostCard = ({
             )}
             {handle && <span className="text-sm text-muted-foreground">@{handle}</span>}
             <span className="text-sm text-muted-foreground">· {timestamp}</span>
+            {isDemo && (
+              <span className="ml-1 rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
+                Demo
+              </span>
+            )}
+
           </div>
 
           {monetizationType !== "free" && (

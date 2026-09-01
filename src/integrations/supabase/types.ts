@@ -1198,6 +1198,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          is_demo: boolean
           like_count: number
           media_type: string | null
           media_url: string | null
@@ -1214,6 +1215,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          is_demo?: boolean
           like_count?: number
           media_type?: string | null
           media_url?: string | null
@@ -1230,6 +1232,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          is_demo?: boolean
           like_count?: number
           media_type?: string | null
           media_url?: string | null
@@ -1396,6 +1399,7 @@ export type Database = {
           created_at: string | null
           display_name: string | null
           id: string
+          is_demo: boolean
           is_private: boolean | null
           is_verified: boolean | null
           two_factor_enabled: boolean | null
@@ -1411,6 +1415,7 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           id: string
+          is_demo?: boolean
           is_private?: boolean | null
           is_verified?: boolean | null
           two_factor_enabled?: boolean | null
@@ -1426,6 +1431,7 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           id?: string
+          is_demo?: boolean
           is_private?: boolean | null
           is_verified?: boolean | null
           two_factor_enabled?: boolean | null
@@ -2167,6 +2173,13 @@ export type Database = {
       detect_suspicious_activity: {
         Args: { _event_type: string; _time_window?: string; _user_id: string }
         Returns: boolean
+      }
+      get_follow_counts: {
+        Args: { target_user: string }
+        Returns: {
+          followers_count: number
+          following_count: number
+        }[]
       }
       get_follower_count: { Args: { user_uuid: string }; Returns: number }
       get_total_views: { Args: { user_uuid: string }; Returns: number }

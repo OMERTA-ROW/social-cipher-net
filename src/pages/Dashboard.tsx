@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import DemoDataPanel from "@/components/DemoDataPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -115,6 +116,7 @@ const Dashboard = () => {
       reply_count: row.reply_count ?? 0,
       monetization_type: row.monetization_type ?? "free",
       price: Number(row.price ?? 0),
+      is_demo: !!row.is_demo,
       profile: (profileRes.data as any) ?? null,
       media: (row.post_media ?? [])
         .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
@@ -353,6 +355,8 @@ const Dashboard = () => {
               ))}
             </div>
           </Card>
+
+          <DemoDataPanel />
         </TabsContent>
       </Tabs>
     </AppShell>
