@@ -31,6 +31,7 @@ import Backgrounds from "./pages/Backgrounds";
 import SolarSystemVoyage from "./pages/SolarSystemVoyage";
 import Profile from "./pages/Profile";
 import Thread from "./pages/Thread";
+import Dashboard from "./pages/Dashboard";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
 import RealisticSpaceBackground from "./components/RealisticSpaceBackground";
@@ -65,6 +66,7 @@ const AppContent = () => {
         <Route path="/token-purchase" element={<TokenPurchase />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/post/:postId" element={<Thread />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />

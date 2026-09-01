@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Navigation from "@/components/Navigation";
+import AppShell from "@/components/layout/AppShell";
 import PostCard from "@/components/PostCard";
 import FollowButton from "@/components/FollowButton";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
@@ -146,9 +146,8 @@ const Thread = () => {
   useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="min-h-screen">
-      <Navigation />
-      <main className="container mx-auto px-4 pt-24 pb-12 max-w-2xl">
+    <AppShell>
+      <div>
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4 gap-1">
           <ArrowLeft className="w-4 h-4" /> Back
         </Button>
@@ -194,8 +193,8 @@ const Thread = () => {
             </div>
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 };
 
