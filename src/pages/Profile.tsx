@@ -63,19 +63,34 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (!profile) return;
+    const handle = username.trim().toLowerCase();
+    if (handle && !/^[a-z0-9_]{3,20}$/.test(handle)) {
+      toast.error("Handle must be 3-20 characters: letters, numbers or underscores");
+      return;
+    }
+    if (displayName.length > 50) {
+      toast.error("Display name must be 50 characters or less");
+      return;
+    }
+    if (bio.length > 300) {
+      toast.error("Bio must be 300 characters or less");
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ username: username || null, display_name: displayName || null, bio: bio || null })
+      .update({ username: handle || null, display_name: displayName.trim() || null, bio: bio.trim() || null })
       .eq("id", profile.id);
     setSaving(false);
     if (error) {
-      toast.error(error.message);
+      toast.error(error.code === "23505" ? "That handle is already taken" : error.message);
     } else {
+      setUsername(handle);
       toast.success("Profile updated");
-      setProfile({ ...profile, username, display_name: displayName, bio });
+      setProfile({ ...profile, username: handle, display_name: displayName, bio });
     }
   };
+
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
