@@ -312,7 +312,7 @@ const CyberStreamer = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-transparent">
         <Navigation />
         <div className="container mx-auto px-4 pt-24 pb-12">
           <div className="text-center">Loading...</div>
@@ -322,7 +322,7 @@ const CyberStreamer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12 max-w-7xl">
         {/* Header */}

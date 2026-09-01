@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Lock } from "lucide-react";
-import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -252,7 +251,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <RealisticSpaceBackground />
       
       <Card className="w-full max-w-md relative z-10 bg-card/95 backdrop-blur-xl border-primary/20 shadow-2xl shadow-primary/10 animate-fade-in">
         <CardHeader className="text-center">

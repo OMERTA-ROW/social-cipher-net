@@ -34,7 +34,7 @@ import Thread from "./pages/Thread";
 import Dashboard from "./pages/Dashboard";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
-import RealisticSpaceBackground from "./components/RealisticSpaceBackground";
+import SpaceBackground from "./components/space/SpaceBackground";
 
 const AppContent = () => {
   const location = useLocation();
@@ -42,7 +42,7 @@ const AppContent = () => {
 
   return (
     <>
-      <RealisticSpaceBackground />
+      <SpaceBackground />
       <SecurityMonitor />
       <Routes>
         <Route path="/" element={<Index />} />

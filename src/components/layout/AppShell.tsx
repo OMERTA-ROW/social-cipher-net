@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import RightRail from "@/components/layout/RightRail";
+import BackgroundControl from "@/components/space/BackgroundControl";
 
 interface NavItem {
   title: string;
@@ -77,7 +78,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-transparent">
       {/* Fixed top header */}
-      <header className="h-16 shrink-0 z-40 border-b border-border bg-card/80 backdrop-blur-lg">
+      <header className="h-16 shrink-0 z-40 border-b border-border/60 bg-card/60 backdrop-blur-xl">
         <div className="mx-auto max-w-[1400px] h-full px-3 sm:px-4 flex items-center justify-between gap-3">
           <button
             onClick={() => navigate("/")}
@@ -89,6 +90,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
           </button>
 
           <div className="flex items-center gap-1 sm:gap-2">
+            <BackgroundControl />
             <Button
               variant="ghost"
               size="icon"
@@ -120,7 +122,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
       {/* Three column body */}
       <div className="flex-1 min-h-0 w-full mx-auto max-w-[1400px] flex gap-0 lg:gap-6 px-0 lg:px-4">
         {/* Left sidebar — fixed, own scroll if it overflows */}
-        <aside className="hidden md:flex md:w-[76px] xl:w-[248px] shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/50 [scrollbar-gutter:stable]">
+        <aside className="hidden md:flex md:w-[76px] xl:w-[248px] shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/40 bg-card/35 backdrop-blur-xl [scrollbar-gutter:stable]">
           <nav className="flex flex-col gap-1 px-2">
             {primaryNav.map((item) => (
               <NavLink
@@ -148,7 +150,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
         {/* Centre column — the only scrolling region on desktop */}
         <div className="flex-1 min-w-0 flex flex-col">
           {centerHeader && (
-            <div className="shrink-0 border-b border-border/50 bg-background/70 backdrop-blur-sm">
+            <div className="shrink-0 border-b border-border/40 bg-card/50 backdrop-blur-xl">
               {centerHeader}
             </div>
           )}
@@ -161,13 +163,13 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
         </div>
 
         {/* Right sidebar — fixed */}
-        <aside className="hidden lg:block w-[320px] shrink-0 overflow-y-auto overscroll-contain py-5 border-l border-border/50 px-3 [scrollbar-gutter:stable]">
+        <aside className="hidden lg:block w-[320px] shrink-0 overflow-y-auto overscroll-contain py-5 border-l border-border/40 bg-card/35 backdrop-blur-xl px-3 [scrollbar-gutter:stable]">
           {rightRail ?? <RightRail />}
         </aside>
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-border bg-card/95 backdrop-blur-lg flex items-center justify-around">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-border/60 bg-card/80 backdrop-blur-xl flex items-center justify-around">
         {mobileNav.map((item) => (
           <NavLink
             key={item.url}

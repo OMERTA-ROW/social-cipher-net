@@ -127,7 +127,7 @@ const PostCard = ({
 
   return (
     <Card
-      className="bg-card border-border hover:border-primary/50 transition-all duration-300 p-6"
+      className="bg-card/70 backdrop-blur-xl border-border/60 hover:border-primary/50 transition-all duration-300 p-6"
       onClick={linkToThread && !isLocked ? () => navigate(`/post/${postId}`) : undefined}
       role={linkToThread ? "link" : undefined}
     >
