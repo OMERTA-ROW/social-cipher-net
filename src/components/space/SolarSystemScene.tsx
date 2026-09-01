@@ -1,15 +1,21 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
 import * as THREE from "three";
-import { makeGlowTexture, makeNebulaTexture, makePlanetTexture } from "./textures";
+import {
+  makeCloudTexture,
+  makeGlowTexture,
+  makeNebulaTexture,
+  makePlanetSurface,
+  makeRingTexture,
+} from "./textures";
 
 export interface SceneQuality {
   /** false on phones / low-power devices: fewer bodies, no shadows, no belt */
   full: boolean;
 }
 
-/** Each route maps to a "region of space" — camera anchor + colour of the local nebula. */
+/** Each route maps to a "region of space" — flight offset + colour of the local nebula. */
 export interface Region {
   anchor: [number, number, number];
   nebulaHue: number;
@@ -23,6 +29,7 @@ const PLANETS = [
     distance: 7,
     speed: 0.085,
     tilt: 0.001,
+    craters: true,
     colors: ["#8d8073", "#6d6259", "#a3968a", "#5a514a"],
     seed: 11,
   },
@@ -34,6 +41,7 @@ const PLANETS = [
     tilt: 3.09,
     colors: ["#e6c88f", "#d9ab63", "#f0dcae", "#c99a55"],
     seed: 22,
+    clouds: { color: "255,236,190", coverage: 0.95, opacity: 0.85, speed: 0.05 },
   },
   {
     name: "Earth",
@@ -44,6 +52,8 @@ const PLANETS = [
     colors: ["#1d4f8c", "#2f6fa8", "#3a7d4a", "#1b3f6d"],
     speckle: "rgba(255,255,255,0.85)",
     seed: 33,
+    atmosphere: "#6fb4ff",
+    clouds: { color: "255,255,255", coverage: 0.55, opacity: 0.5, speed: 0.03 },
     moons: [{ radius: 0.18, distance: 1.5, speed: 0.5, color: "#b9b4ad" }],
   },
   {
@@ -52,9 +62,11 @@ const PLANETS = [
     distance: 15.8,
     speed: 0.04,
     tilt: 0.44,
+    craters: true,
     colors: ["#b4552d", "#c96a3b", "#8f4325", "#d78a5c"],
     speckle: "rgba(255,255,255,0.7)",
     seed: 44,
+    atmosphere: "#e08a5c",
   },
   {
     name: "Jupiter",
@@ -79,7 +91,7 @@ const PLANETS = [
     banded: true,
     colors: ["#d8c295", "#efe0bd", "#b99f74", "#e5d3aa"],
     seed: 66,
-    ring: { inner: 1.9, outer: 3.1, color: "#d9c6a0" },
+    ring: { inner: 1.9, outer: 3.2 },
   },
   {
     name: "Uranus",
@@ -90,6 +102,7 @@ const PLANETS = [
     banded: true,
     colors: ["#9fd8de", "#c3e9ec", "#7fbcc4", "#aadfe4"],
     seed: 77,
+    atmosphere: "#9fe6ef",
   },
   {
     name: "Neptune",
@@ -100,6 +113,7 @@ const PLANETS = [
     banded: true,
     colors: ["#2f52a8", "#4a74c9", "#20407f", "#6a91da"],
     seed: 88,
+    atmosphere: "#6f95ff",
   },
 ] as const;
 
@@ -109,6 +123,16 @@ const Sun = ({ full }: SceneQuality) => {
   const core = useMemo(() => makeGlowTexture("rgba(255,255,255,1)", "rgba(255,196,102,0.55)"), []);
   const flare = useMemo(() => makeGlowTexture("rgba(255,236,196,0.9)", "rgba(255,150,60,0.2)"), []);
   const halo = useRef<THREE.Sprite>(null);
+  const light = useRef<THREE.PointLight>(null);
+
+  useEffect(() => {
+    const l = light.current;
+    if (l && full) {
+      l.shadow.mapSize.set(1024, 1024);
+      l.shadow.bias = -0.0035;
+      l.shadow.camera.far = 90;
+    }
+  }, [full]);
 
   useFrame(({ clock }) => {
     if (halo.current) {
@@ -147,7 +171,14 @@ const Sun = ({ full }: SceneQuality) => {
             />
           </sprite>
         ))}
-      <pointLight color="#ffd9a0" intensity={full ? 850 : 500} distance={260} decay={2} />
+      <pointLight
+        ref={light}
+        color="#ffd9a0"
+        intensity={full ? 850 : 500}
+        distance={260}
+        decay={2}
+        castShadow={full}
+      />
     </group>
   );
 };
@@ -156,28 +187,70 @@ const Sun = ({ full }: SceneQuality) => {
 
 type PlanetDef = (typeof PLANETS)[number];
 
+/** ringGeometry with radial UVs so a 1D ring texture maps inner→outer. */
+const makeRingGeometry = (inner: number, outer: number, segments: number) => {
+  const geo = new THREE.RingGeometry(inner, outer, segments);
+  const pos = geo.attributes.position;
+  const uv = geo.attributes.uv;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const t = (v.length() - inner) / (outer - inner);
+    uv.setXY(i, t, 0.5);
+  }
+  uv.needsUpdate = true;
+  return geo;
+};
+
 const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
   const orbit = useRef<THREE.Group>(null);
   const spin = useRef<THREE.Mesh>(null);
+  const cloudRef = useRef<THREE.Mesh>(null);
   const moonRefs = useRef<THREE.Group[]>([]);
   const phase = useMemo(() => def.seed * 0.7, [def.seed]);
 
-  const map = useMemo(
+  const surface = useMemo(
     () =>
-      makePlanetTexture({
+      makePlanetSurface({
         colors: [...def.colors],
         banded: "banded" in def ? Boolean(def.banded) : false,
+        craters: "craters" in def ? Boolean(def.craters) : false,
         speckle: "speckle" in def ? (def.speckle as string) : undefined,
         seed: def.seed,
-        size: full ? 512 : 256,
+        size: full ? 1024 : 256,
       }),
     [def, full],
+  );
+
+  const clouds = (def as { clouds?: { color: string; coverage: number; opacity: number; speed: number } }).clouds;
+  const cloudTex = useMemo(
+    () => (full && clouds ? makeCloudTexture(def.seed + 3, 512, clouds.color, clouds.coverage) : null),
+    [full, clouds, def.seed],
+  );
+
+  const ring = (def as { ring?: { inner: number; outer: number } }).ring;
+  const ringTex = useMemo(() => (ring ? makeRingTexture(def.seed) : null), [ring, def.seed]);
+  const ringGeo = useMemo(
+    () => (ring ? makeRingGeometry(ring.inner, ring.outer, full ? 128 : 56) : null),
+    [ring, full],
+  );
+
+  useEffect(
+    () => () => {
+      surface.map.dispose();
+      surface.bump.dispose();
+      cloudTex?.dispose();
+      ringTex?.dispose();
+      ringGeo?.dispose();
+    },
+    [surface, cloudTex, ringTex, ringGeo],
   );
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
     if (orbit.current) orbit.current.rotation.y += dt * def.speed;
     if (spin.current) spin.current.rotation.y += dt * 0.25;
+    if (cloudRef.current && clouds) cloudRef.current.rotation.y += dt * (0.25 + clouds.speed);
     moonRefs.current.forEach((g, i) => {
       const moon = (def as { moons?: readonly { speed: number }[] }).moons?.[i];
       if (g && moon) g.rotation.y += dt * moon.speed;
@@ -186,7 +259,7 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
 
   const moons = (def as { moons?: readonly { radius: number; distance: number; speed: number; color: string }[] })
     .moons;
-  const ring = (def as { ring?: { inner: number; outer: number; color: string } }).ring;
+  const atmosphere = (def as { atmosphere?: string }).atmosphere;
 
   return (
     <>
@@ -204,18 +277,52 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
 
       <group ref={orbit} rotation-y={phase}>
         <group position={[def.distance, 0, 0]} rotation-z={def.tilt}>
-          <mesh ref={spin} castShadow={false} receiveShadow={false}>
-            <sphereGeometry args={[def.radius, full ? 40 : 20, full ? 40 : 20]} />
-            <meshStandardMaterial map={map} roughness={0.92} metalness={0.02} />
+          <mesh ref={spin} castShadow={full} receiveShadow={full}>
+            <sphereGeometry args={[def.radius, full ? 64 : 20, full ? 64 : 20]} />
+            <meshStandardMaterial
+              map={surface.map}
+              bumpMap={surface.bump}
+              bumpScale={full ? def.radius * 0.06 : 0}
+              roughness={0.9}
+              metalness={0.02}
+            />
           </mesh>
 
-          {ring && (
-            <mesh rotation-x={-Math.PI / 2}>
-              <ringGeometry args={[ring.inner, ring.outer, full ? 96 : 48]} />
-              <meshBasicMaterial
-                color={ring.color}
+          {cloudTex && clouds && (
+            <mesh ref={cloudRef}>
+              <sphereGeometry args={[def.radius * 1.02, 48, 48]} />
+              <meshStandardMaterial
+                map={cloudTex}
                 transparent
-                opacity={0.42}
+                opacity={clouds.opacity}
+                depthWrite={false}
+                roughness={1}
+              />
+            </mesh>
+          )}
+
+          {atmosphere && (
+            <mesh scale={1.08}>
+              <sphereGeometry args={[def.radius, 32, 32]} />
+              <meshBasicMaterial
+                color={atmosphere}
+                transparent
+                opacity={0.16}
+                side={THREE.BackSide}
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
+              />
+            </mesh>
+          )}
+
+          {ring && ringGeo && ringTex && (
+            <mesh rotation-x={-Math.PI / 2} geometry={ringGeo} receiveShadow={full}>
+              <meshStandardMaterial
+                map={ringTex}
+                alphaMap={ringTex}
+                transparent
+                opacity={0.95}
+                roughness={0.95}
                 side={THREE.DoubleSide}
                 depthWrite={false}
               />
@@ -230,8 +337,8 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
                   if (el) moonRefs.current[i] = el;
                 }}
               >
-                <mesh position={[m.distance, 0, 0]}>
-                  <sphereGeometry args={[m.radius, 16, 16]} />
+                <mesh position={[m.distance, 0, 0]} castShadow receiveShadow>
+                  <sphereGeometry args={[m.radius, 20, 20]} />
                   <meshStandardMaterial color={m.color} roughness={1} />
                 </mesh>
               </group>
@@ -320,7 +427,6 @@ const Comet = ({ seed }: { seed: number }) => {
           toneMapped={false}
         />
       </sprite>
-      {/* tail points away from the sun because the group looks at origin */}
       <mesh position={[0, 0, -3.2]} rotation-x={Math.PI / 2}>
         <coneGeometry args={[0.35, 6.4, 12, 1, true]} />
         <meshBasicMaterial
@@ -373,33 +479,240 @@ const DeepField = ({ hue, count }: { hue: number; count: number }) => {
   );
 };
 
+/* ------------------------------------------------------------- Flight path */
+
+/**
+ * Smooth closed tour of the system: outbound past the inner worlds, a dip
+ * toward Earth and Mars, a run through the asteroid belt, a pass by the gas
+ * giants, then out to the wormhole gate and back.
+ */
+const WORMHOLE_POS = new THREE.Vector3(-56, 14, -58);
+
+const FLIGHT_POINTS: THREE.Vector3[] = [
+  new THREE.Vector3(6, 2.2, 10),
+  new THREE.Vector3(10.2, 0.9, 5.4), // Venus lane
+  new THREE.Vector3(13.4, 0.5, -3.2), // Earth approach (low pass)
+  new THREE.Vector3(9.5, 1.6, -11.5),
+  new THREE.Vector3(-2.5, 0.7, -16.4), // Mars lane
+  new THREE.Vector3(-14.5, 0.4, -12.0), // into the belt
+  new THREE.Vector3(-18.6, 0.2, -1.0), // through the belt
+  new THREE.Vector3(-20.5, 1.8, 12.5),
+  new THREE.Vector3(-9.0, 3.4, 22.5), // Jupiter lane
+  new THREE.Vector3(8.0, 2.0, 28.0),
+  new THREE.Vector3(24.0, 3.2, 20.0), // Saturn lane / ring plane skim
+  new THREE.Vector3(33.0, 6.0, -6.0),
+  new THREE.Vector3(14.0, 9.0, -34.0),
+  new THREE.Vector3(-24.0, 12.0, -50.0),
+  WORMHOLE_POS.clone(), // the gate
+  new THREE.Vector3(-70, 9, -20),
+  new THREE.Vector3(-44, 4, 18),
+  new THREE.Vector3(-18, 2.6, 24),
+];
+
+const FLIGHT_CURVE = new THREE.CatmullRomCurve3(FLIGHT_POINTS, true, "catmullrom", 0.5);
+const CURVE_LENGTH = FLIGHT_CURVE.getLength();
+/** Normalised position of the wormhole gate along the curve. */
+const GATE_U = 14 / FLIGHT_POINTS.length;
+
+/* ------------------------------------------------------------ Alien craft */
+
+const AlienCraft = ({ full }: SceneQuality) => {
+  const glow = useMemo(() => makeGlowTexture("rgba(190,255,236,1)", "rgba(56,220,190,0.35)"), []);
+  const lamps = useMemo(
+    () => Array.from({ length: 8 }, (_, i) => (i / 8) * Math.PI * 2),
+    [],
+  );
+  const rim = useRef<THREE.Group>(null);
+  const domeMat = useRef<THREE.MeshStandardMaterial>(null);
+
+  useFrame(({ clock }, delta) => {
+    const dt = Math.min(delta, 0.05);
+    if (rim.current) rim.current.rotation.y += dt * 1.6;
+    if (domeMat.current) {
+      domeMat.current.emissiveIntensity = 0.7 + Math.sin(clock.elapsedTime * 2.1) * 0.25;
+    }
+  });
+
+  return (
+    <group scale={0.42}>
+      {/* saucer hull */}
+      <mesh castShadow={full} receiveShadow={full}>
+        <sphereGeometry args={[1, full ? 40 : 18, full ? 24 : 12]} />
+        <meshStandardMaterial color="#9fb2c4" metalness={0.95} roughness={0.22} />
+        {/* squashed into a disc via scale on the group below */}
+      </mesh>
+      <mesh scale={[1.75, 0.16, 1.75]} castShadow={full}>
+        <sphereGeometry args={[1, full ? 44 : 20, full ? 20 : 10]} />
+        <meshStandardMaterial color="#7f93a8" metalness={0.9} roughness={0.28} />
+      </mesh>
+      {/* cockpit dome */}
+      <mesh position={[0, 0.28, 0]} scale={[0.72, 0.55, 0.72]}>
+        <sphereGeometry args={[1, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial
+          ref={domeMat}
+          color="#0d2b33"
+          emissive="#4df0d0"
+          emissiveIntensity={0.8}
+          metalness={0.4}
+          roughness={0.1}
+          transparent
+          opacity={0.85}
+        />
+      </mesh>
+      {/* rotating rim lamps */}
+      <group ref={rim}>
+        {lamps.map((a, i) => (
+          <mesh key={i} position={[Math.cos(a) * 1.62, -0.02, Math.sin(a) * 1.62]}>
+            <sphereGeometry args={[0.1, 8, 8]} />
+            <meshBasicMaterial color={i % 2 ? "#7cf6ff" : "#c08bff"} toneMapped={false} />
+          </mesh>
+        ))}
+      </group>
+      {/* underside drive glow + engine trail */}
+      <sprite position={[0, -0.35, 0]} scale={3.4}>
+        <spriteMaterial
+          map={glow}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          opacity={0.55}
+          toneMapped={false}
+        />
+      </sprite>
+      <sprite position={[0, 0, 2.4]} scale={[1.6, 1.6, 1.6]}>
+        <spriteMaterial
+          map={glow}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          opacity={0.4}
+          toneMapped={false}
+        />
+      </sprite>
+      <pointLight color="#63f5d6" intensity={full ? 12 : 6} distance={14} decay={2} />
+    </group>
+  );
+};
+
+/* ------------------------------------------- Chase camera + flight driver */
+
+const FlightRig = ({ region, full }: { region: Region; full: boolean }) => {
+  const { camera } = useThree();
+  const craft = useRef<THREE.Group>(null);
+
+  const state = useRef({
+    u: 0,
+    bank: 0,
+    prevYaw: 0,
+    initialised: false,
+    jumpCooldown: 0,
+  });
+
+  const pos = useMemo(() => new THREE.Vector3(), []);
+  const ahead = useMemo(() => new THREE.Vector3(), []);
+  const tangent = useMemo(() => new THREE.Vector3(), []);
+  const desired = useMemo(() => new THREE.Vector3(), []);
+  const lookAt = useMemo(() => new THREE.Vector3(), []);
+  const smoothLook = useMemo(() => new THREE.Vector3(), []);
+  const offset = useMemo(() => new THREE.Vector3(), []);
+  const up = useMemo(() => new THREE.Vector3(0, 1, 0), []);
+  const quat = useMemo(() => new THREE.Quaternion(), []);
+  const matrix = useMemo(() => new THREE.Matrix4(), []);
+  const regionOffset = useMemo(() => new THREE.Vector3(), []);
+  const regionTarget = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame((_, delta) => {
+    const dt = Math.min(delta, 0.05);
+    const s = state.current;
+
+    // route → a gentle offset of the whole flight lane, eased in over ~2s
+    regionTarget.set(region.anchor[0] * 0.16, 4 + region.anchor[1] * 0.12, region.anchor[2] * 0.08);
+    regionOffset.lerp(regionTarget, 1 - Math.exp(-0.9 * dt));
+
+    // travel at a constant world speed along the curve
+    const speed = 2.6 * region.drift;
+    s.u = (s.u + (speed * dt) / CURVE_LENGTH) % 1;
+
+    FLIGHT_CURVE.getPointAt(s.u, pos).add(regionOffset);
+    FLIGHT_CURVE.getPointAt((s.u + 0.012) % 1, ahead).add(regionOffset);
+    FLIGHT_CURVE.getTangentAt(s.u, tangent);
+
+    // wormhole jump: crossing the gate teleports the craft to another region
+    s.jumpCooldown = Math.max(0, s.jumpCooldown - dt);
+    if (s.jumpCooldown === 0 && Math.abs(s.u - GATE_U) < 0.004) {
+      s.u = (s.u + 0.5) % 1;
+      s.jumpCooldown = 6;
+      FLIGHT_CURVE.getPointAt(s.u, pos).add(regionOffset);
+      FLIGHT_CURVE.getPointAt((s.u + 0.012) % 1, ahead).add(regionOffset);
+      FLIGHT_CURVE.getTangentAt(s.u, tangent);
+      s.initialised = false; // snap the camera through the jump
+    }
+
+    // craft orientation, with roll banked into the turn
+    const yaw = Math.atan2(tangent.x, tangent.z);
+    let dYaw = yaw - s.prevYaw;
+    while (dYaw > Math.PI) dYaw -= Math.PI * 2;
+    while (dYaw < -Math.PI) dYaw += Math.PI * 2;
+    s.prevYaw = yaw;
+    const targetBank = THREE.MathUtils.clamp((-dYaw / Math.max(dt, 0.001)) * 0.55, -0.7, 0.7);
+    s.bank += (targetBank - s.bank) * (1 - Math.exp(-2.4 * dt));
+
+    const g = craft.current;
+    if (g) {
+      g.position.copy(pos);
+      matrix.lookAt(pos, ahead, up);
+      quat.setFromRotationMatrix(matrix);
+      g.quaternion.slerp(quat, 1 - Math.exp(-6 * dt));
+      g.rotateZ(s.bank);
+    }
+
+    // third-person chase camera: behind, above, rolled slightly with the bank
+    offset.set(Math.sin(s.bank) * 2.2, 2.5, 0).addScaledVector(tangent, -7.5);
+    desired.copy(pos).add(offset);
+    lookAt.copy(pos).addScaledVector(tangent, 6);
+
+    if (!s.initialised) {
+      camera.position.copy(desired);
+      smoothLook.copy(lookAt);
+      s.initialised = true;
+    } else {
+      camera.position.lerp(desired, 1 - Math.exp(-(full ? 3.2 : 2.4) * dt));
+      smoothLook.lerp(lookAt, 1 - Math.exp(-3.6 * dt));
+    }
+    camera.up.set(Math.sin(s.bank) * 0.35, 1, 0).normalize();
+    camera.lookAt(smoothLook);
+  });
+
+  return (
+    <group ref={craft}>
+      <AlienCraft full={full} />
+    </group>
+  );
+};
+
 /* -------------------------------------------------------------- Wormhole */
 
-/** Fades a slowly spinning vortex in and out every ~70s. */
+/** Spinning vortex gate the craft flies through. */
 const Wormhole = () => {
   const group = useRef<THREE.Group>(null);
   const mats = useRef<THREE.MeshBasicMaterial[]>([]);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
-    const cycle = (t % 70) / 70;
-    // visible for ~18% of the cycle with a smooth ramp
-    const v = cycle < 0.18 ? Math.sin((cycle / 0.18) * Math.PI) : 0;
     const g = group.current;
     if (!g) return;
-    g.visible = v > 0.01;
-    g.rotation.z = t * 0.35;
-    g.rotation.x = 0.6 + Math.sin(t * 0.1) * 0.15;
+    g.rotation.z = t * 0.45;
+    const pulse = 0.55 + Math.sin(t * 0.9) * 0.2;
     mats.current.forEach((m, i) => {
-      if (m) m.opacity = v * (0.35 - i * 0.06);
+      if (m) m.opacity = pulse * (0.4 - i * 0.06);
     });
   });
 
   return (
-    <group ref={group} position={[-62, 16, -70]}>
+    <group ref={group} position={WORMHOLE_POS.toArray()} rotation={[0.5, 0.9, 0]}>
       {[0, 1, 2, 3].map((i) => (
         <mesh key={i} position={[0, 0, -i * 2.2]} scale={1 - i * 0.14}>
-          <torusGeometry args={[9, 1.4 - i * 0.22, 12, 64]} />
+          <torusGeometry args={[7.5, 1.2 - i * 0.2, 12, 64]} />
           <meshBasicMaterial
             ref={(m) => {
               if (m) mats.current[i] = m as THREE.MeshBasicMaterial;
@@ -417,31 +730,6 @@ const Wormhole = () => {
   );
 };
 
-/* ------------------------------------------------------- Camera drift rig */
-
-const CameraRig = ({ region }: { region: Region }) => {
-  const { camera } = useThree();
-  const target = useMemo(() => new THREE.Vector3(), []);
-  const look = useMemo(() => new THREE.Vector3(0, 0, 0), []);
-
-  useFrame(({ clock }, delta) => {
-    const dt = Math.min(delta, 0.05);
-    const t = clock.elapsedTime * region.drift;
-    target.set(
-      region.anchor[0] + Math.sin(t * 0.11) * 14,
-      region.anchor[1] + Math.sin(t * 0.07) * 6,
-      region.anchor[2] + Math.cos(t * 0.09) * 14,
-    );
-    // exponential smoothing → frame-rate independent, no jump on route change
-    const k = 1 - Math.exp(-0.7 * dt);
-    camera.position.lerp(target, k);
-    look.set(Math.sin(t * 0.05) * 3, Math.cos(t * 0.04) * 1.5, 0);
-    camera.lookAt(look);
-  });
-
-  return null;
-};
-
 /* ----------------------------------------------------------------- Scene */
 
 const SolarSystemScene = ({ full, region }: { full: boolean; region: Region }) => {
@@ -449,17 +737,10 @@ const SolarSystemScene = ({ full, region }: { full: boolean; region: Region }) =
     <>
       <color attach="background" args={["#05060f"]} />
       <fog attach="fog" args={["#05060f", 260, 780]} />
-      <ambientLight intensity={0.5} color="#9db4ff" />
-      <hemisphereLight args={["#4a5fb0", "#050510", 0.35]} />
+      <ambientLight intensity={0.42} color="#9db4ff" />
+      <hemisphereLight args={["#4a5fb0", "#050510", 0.3]} />
 
-      <Stars
-        radius={320}
-        depth={160}
-        count={full ? 6500 : 1800}
-        factor={4}
-        saturation={0}
-        speed={0.35}
-      />
+      <Stars radius={320} depth={160} count={full ? 6500 : 1800} factor={4} saturation={0} speed={0.35} />
       <DeepField hue={region.nebulaHue} count={full ? 7 : 3} />
 
       <Sun full={full} />
@@ -472,9 +753,9 @@ const SolarSystemScene = ({ full, region }: { full: boolean; region: Region }) =
       {full && <AsteroidBelt count={340} />}
       {full && <Comet seed={0} />}
       {full && <Comet seed={1} />}
-      {full && <Wormhole />}
+      <Wormhole />
 
-      <CameraRig region={region} />
+      <FlightRig region={region} full={full} />
     </>
   );
 };
