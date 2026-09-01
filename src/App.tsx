@@ -64,6 +64,7 @@ const AppContent = () => {
         <Route path="/profile/:userId" element={<UserProfile />} />
         <Route path="/token-purchase" element={<TokenPurchase />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/post/:postId" element={<Thread />} />
         <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
