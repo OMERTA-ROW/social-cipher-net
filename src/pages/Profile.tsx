@@ -202,12 +202,13 @@ const Profile = () => {
           <h2 className="text-lg font-semibold mb-4">Edit profile</h2>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">Handle</Label>
               <Input
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="username"
+                placeholder="cyber_handle"
+                maxLength={20}
               />
             </div>
             <div>
