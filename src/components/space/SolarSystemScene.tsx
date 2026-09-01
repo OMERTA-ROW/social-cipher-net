@@ -428,9 +428,9 @@ const CameraRig = ({ region }: { region: Region }) => {
     const dt = Math.min(delta, 0.05);
     const t = clock.elapsedTime * region.drift;
     target.set(
-      region.anchor[0] + Math.sin(t * 0.11) * 8,
-      region.anchor[1] + Math.sin(t * 0.07) * 3.5,
-      region.anchor[2] + Math.cos(t * 0.09) * 8,
+      region.anchor[0] + Math.sin(t * 0.11) * 14,
+      region.anchor[1] + Math.sin(t * 0.07) * 6,
+      region.anchor[2] + Math.cos(t * 0.09) * 14,
     );
     // exponential smoothing → frame-rate independent, no jump on route change
     const k = 1 - Math.exp(-0.7 * dt);
@@ -448,14 +448,14 @@ const SolarSystemScene = ({ full, region }: { full: boolean; region: Region }) =
   return (
     <>
       <color attach="background" args={["#05060f"]} />
-      <fog attach="fog" args={["#05060f", 120, 340]} />
+      <fog attach="fog" args={["#05060f", 260, 780]} />
       <ambientLight intensity={0.32} color="#9db4ff" />
       <hemisphereLight args={["#4a5fb0", "#050510", 0.35]} />
 
       <Stars
-        radius={220}
-        depth={110}
-        count={full ? 5200 : 1600}
+        radius={320}
+        depth={160}
+        count={full ? 6500 : 1800}
         factor={4}
         saturation={0}
         fade

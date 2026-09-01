@@ -9,11 +9,11 @@ const SolarSystemScene = lazy(() => import("./SolarSystemScene"));
 
 /** Different routes = different regions of space (camera anchor + local nebula colour). */
 const REGIONS: Region[] = [
-  { anchor: [0, 14, 54], nebulaHue: 215, drift: 1 },
-  { anchor: [26, 9, 44], nebulaHue: 285, drift: 0.85 },
-  { anchor: [-30, 18, 40], nebulaHue: 190, drift: 1.15 },
-  { anchor: [12, -10, 62], nebulaHue: 330, drift: 0.7 },
-  { anchor: [-18, 22, 66], nebulaHue: 45, drift: 0.9 },
+  { anchor: [0, 34, 104], nebulaHue: 215, drift: 1 },
+  { anchor: [46, 22, 96], nebulaHue: 285, drift: 0.85 },
+  { anchor: [-52, 40, 88], nebulaHue: 190, drift: 1.15 },
+  { anchor: [20, -26, 118], nebulaHue: 330, drift: 0.7 },
+  { anchor: [-30, 48, 126], nebulaHue: 45, drift: 0.9 },
 ];
 
 const regionFor = (pathname: string): Region => {
@@ -65,7 +65,7 @@ const SpaceBackground = () => {
             gl.toneMappingExposure = 1.15;
           }}
           dpr={full ? [1, 1.75] : 1}
-          camera={{ position: [0, 14, 54], fov: 55, near: 0.5, far: 900 }}
+          camera={{ position: [0, 34, 104], fov: 55, near: 0.5, far: 1200 }}
           frameloop={visible && !reduced ? "always" : "demand"}
         >
           <Suspense fallback={null}>
