@@ -265,6 +265,7 @@ const Index = () => {
 
   const handleCreatePost = () => {
     fetchPosts();
+    setFeedRefreshKey((k) => k + 1);
   };
 
   return (
