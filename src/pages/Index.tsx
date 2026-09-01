@@ -12,6 +12,7 @@ import { WalletCard } from "@/components/WalletCard";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
 import { InfinityScrollFeed } from "@/components/InfinityScrollFeed";
+import SocialFeed from "@/components/SocialFeed";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
 import { Wallet, TrendingUp, Award, DollarSign, Play, Eye } from "lucide-react";
@@ -47,6 +48,7 @@ const Index = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [showInfinityScroll, setShowInfinityScroll] = useState(false);
   const [initialVideoId, setInitialVideoId] = useState<string | undefined>();
