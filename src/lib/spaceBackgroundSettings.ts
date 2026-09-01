@@ -28,7 +28,7 @@ export const isLowPowerDevice = () => {
 
 const defaults = (): SpaceBgSettings => ({
   mode: prefersReducedMotion() ? "off" : isLowPowerDevice() ? "lite" : "full",
-  dim: 0.2,
+  dim: 0.12,
 });
 
 let state: SpaceBgSettings = (() => {

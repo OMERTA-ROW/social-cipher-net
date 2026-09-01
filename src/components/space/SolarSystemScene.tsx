@@ -113,7 +113,7 @@ const Sun = ({ full }: SceneQuality) => {
   useFrame(({ clock }) => {
     if (halo.current) {
       const p = 1 + Math.sin(clock.elapsedTime * 0.4) * 0.03;
-      halo.current.scale.setScalar(26 * p);
+      halo.current.scale.setScalar(34 * p);
     }
   });
 
@@ -123,7 +123,7 @@ const Sun = ({ full }: SceneQuality) => {
         <sphereGeometry args={[2.4, full ? 48 : 24, full ? 48 : 24]} />
         <meshBasicMaterial color="#fff0cf" toneMapped={false} />
       </mesh>
-      <sprite ref={halo} scale={26}>
+      <sprite ref={halo} scale={34}>
         <spriteMaterial
           map={core}
           transparent
@@ -364,7 +364,7 @@ const DeepField = ({ hue, count }: { hue: number; count: number }) => {
             transparent
             depthWrite={false}
             blending={THREE.AdditiveBlending}
-            opacity={0.5}
+            opacity={0.8}
             toneMapped={false}
           />
         </sprite>
@@ -449,7 +449,7 @@ const SolarSystemScene = ({ full, region }: { full: boolean; region: Region }) =
     <>
       <color attach="background" args={["#05060f"]} />
       <fog attach="fog" args={["#05060f", 260, 780]} />
-      <ambientLight intensity={0.32} color="#9db4ff" />
+      <ambientLight intensity={0.5} color="#9db4ff" />
       <hemisphereLight args={["#4a5fb0", "#050510", 0.35]} />
 
       <Stars
@@ -458,7 +458,6 @@ const SolarSystemScene = ({ full, region }: { full: boolean; region: Region }) =
         count={full ? 6500 : 1800}
         factor={4}
         saturation={0}
-        fade
         speed={0.35}
       />
       <DeepField hue={region.nebulaHue} count={full ? 7 : 3} />
