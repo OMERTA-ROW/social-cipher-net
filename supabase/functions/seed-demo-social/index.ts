@@ -98,7 +98,7 @@ const DEMO_USERS: DemoUser[] = [
     ],
   },
   {
-    handle: "echo_ваlen",
+    handle: "echo_valen",
     name: "Echo Valen",
     bio: "Signals analyst. I listen to static for a living and sometimes it listens back.",
     posts: [
