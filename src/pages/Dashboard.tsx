@@ -116,6 +116,7 @@ const Dashboard = () => {
       reply_count: row.reply_count ?? 0,
       monetization_type: row.monetization_type ?? "free",
       price: Number(row.price ?? 0),
+      is_demo: !!row.is_demo,
       profile: (profileRes.data as any) ?? null,
       media: (row.post_media ?? [])
         .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
