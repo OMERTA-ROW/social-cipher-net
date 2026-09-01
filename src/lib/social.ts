@@ -48,39 +48,117 @@ const mapPost = (row: any): SocialPost => ({
 export const displayNameOf = (p: SocialProfile | null) =>
   p?.display_name || p?.username || "Anonymous";
 
-export async function fetchDiscoverFeed(limit = 30): Promise<SocialPost[]> {
-  const { data, error } = await supabase
+export const FEED_PAGE_SIZE = 20;
+
+export interface FeedPage {
+  posts: SocialPost[];
+  /** created_at of the last row; pass back as `cursor` to fetch the next page. */
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+const toPage = (rows: any[], limit: number): FeedPage => {
+  const posts = rows.map(mapPost);
+  return {
+    posts,
+    nextCursor: posts.length ? posts[posts.length - 1].created_at : null,
+    hasMore: rows.length === limit,
+  };
+};
+
+/** Keyset-paginated public feed (uses idx_posts_root_created_at). */
+export async function fetchDiscoverFeed(
+  limit = FEED_PAGE_SIZE,
+  cursor?: string | null
+): Promise<FeedPage> {
+  let query = supabase
     .from("posts")
     .select(POST_SELECT)
     .is("parent_post_id", null)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (cursor) query = query.lt("created_at", cursor);
+  const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map(mapPost);
+  return toPage(data ?? [], limit);
 }
 
-export async function fetchFollowingIds(userId: string): Promise<string[]> {
+/** Paginated list of the accounts a user follows. */
+export async function fetchFollowingIds(
+  userId: string,
+  limit = 500,
+  offset = 0
+): Promise<string[]> {
   const { data, error } = await supabase
     .from("followers")
     .select("following_id")
-    .eq("follower_id", userId);
+    .eq("follower_id", userId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
   if (error) throw error;
   return (data ?? []).map((r) => r.following_id);
 }
 
-export async function fetchFollowingFeed(userId: string, limit = 30): Promise<SocialPost[]> {
-  const ids = await fetchFollowingIds(userId);
-  const authors = Array.from(new Set([...ids, userId]));
+/** Paginated list of a user's followers. */
+export async function fetchFollowerIds(
+  userId: string,
+  limit = 50,
+  offset = 0
+): Promise<string[]> {
   const { data, error } = await supabase
+    .from("followers")
+    .select("follower_id")
+    .eq("following_id", userId)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw error;
+  return (data ?? []).map((r) => r.follower_id);
+}
+
+/** Fetch profile rows for a set of ids in one query. */
+export async function fetchProfiles(ids: string[]): Promise<SocialProfile[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url, is_verified")
+    .in("id", ids);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Efficient follower/following counts via a single RPC. */
+export async function fetchFollowCounts(userId: string) {
+  const { data, error } = await supabase.rpc("get_follow_counts", { target_user: userId });
+  if (error) throw error;
+  const row: any = Array.isArray(data) ? data[0] : data;
+  return {
+    followers: row?.followers_count ?? 0,
+    following: row?.following_count ?? 0,
+  };
+}
+
+/** Keyset-paginated feed of posts from followed accounts. */
+export async function fetchFollowingFeed(
+  userId: string,
+  limit = FEED_PAGE_SIZE,
+  cursor?: string | null,
+  followingIds?: string[]
+): Promise<FeedPage> {
+  const ids = followingIds ?? (await fetchFollowingIds(userId));
+  const authors = Array.from(new Set([...ids, userId]));
+  let query = supabase
     .from("posts")
     .select(POST_SELECT)
     .is("parent_post_id", null)
     .in("user_id", authors)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (cursor) query = query.lt("created_at", cursor);
+  const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map(mapPost);
+  return toPage(data ?? [], limit);
 }
+
 
 export async function fetchPost(postId: string): Promise<SocialPost | null> {
   const { data, error } = await supabase
