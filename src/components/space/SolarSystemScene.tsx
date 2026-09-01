@@ -536,14 +536,14 @@ const AlienCraft = ({ full }: SceneQuality) => {
   return (
     <group scale={0.42}>
       {/* saucer hull */}
-      <mesh castShadow={full} receiveShadow={full}>
-        <sphereGeometry args={[1, full ? 40 : 18, full ? 24 : 12]} />
-        <meshStandardMaterial color="#9fb2c4" metalness={0.95} roughness={0.22} />
-        {/* squashed into a disc via scale on the group below */}
-      </mesh>
-      <mesh scale={[1.75, 0.16, 1.75]} castShadow={full}>
+      <mesh scale={[1.75, 0.16, 1.75]} castShadow={full} receiveShadow={full}>
         <sphereGeometry args={[1, full ? 44 : 20, full ? 20 : 10]} />
-        <meshStandardMaterial color="#7f93a8" metalness={0.9} roughness={0.28} />
+        <meshStandardMaterial color="#8ea2b6" metalness={0.92} roughness={0.24} />
+      </mesh>
+      {/* lower hull taper */}
+      <mesh position={[0, -0.14, 0]} scale={[1.05, 0.4, 1.05]} castShadow={full}>
+        <sphereGeometry args={[1, 24, 14, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
+        <meshStandardMaterial color="#66788c" metalness={0.85} roughness={0.35} />
       </mesh>
       {/* cockpit dome */}
       <mesh position={[0, 0.28, 0]} scale={[0.72, 0.55, 0.72]}>
