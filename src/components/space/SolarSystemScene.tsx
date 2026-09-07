@@ -910,6 +910,8 @@ const LENS_FRAG = /* glsl */ `
 const Wormhole = () => {
   const mesh = useRef<THREE.Mesh>(null);
   const sky = useLazyTexture(STARFIELD_LITE_URL, { delay: 900 });
+  const skyFallback = useMemo(() => makeStarSkyTexture(1024), []);
+  useEffect(() => () => skyFallback.dispose(), [skyFallback]);
 
   const material = useMemo(
     () =>
@@ -930,9 +932,9 @@ const Wormhole = () => {
   );
 
   useEffect(() => {
-    material.uniforms.sky.value = sky;
+    material.uniforms.sky.value = sky ?? skyFallback;
     material.needsUpdate = true;
-  }, [material, sky]);
+  }, [material, sky, skyFallback]);
   useEffect(() => () => material.dispose(), [material]);
 
   useFrame(({ clock, camera }) => {
@@ -940,8 +942,6 @@ const Wormhole = () => {
     material.uniforms.strength.value = 0.15 + Math.sin(clock.elapsedTime * 0.25) * 0.02;
     if (mesh.current) mesh.current.quaternion.copy(camera.quaternion);
   });
-
-  if (!sky) return null;
 
   return (
     <mesh ref={mesh} position={WORMHOLE_POS.toArray()} material={material} frustumCulled={false}>
