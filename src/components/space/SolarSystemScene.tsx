@@ -535,33 +535,92 @@ const Comet = ({ seed }: { seed: number }) => {
 
 /* ----------------------------------------------- Distant nebulae/galaxies */
 
+/** One real telescope photograph, billboarded at a fixed depth. */
+const NebulaPlate = ({
+  url,
+  position,
+  scale,
+  opacity,
+  fallback,
+}: {
+  url: string;
+  position: [number, number, number];
+  scale: number;
+  opacity: number;
+  fallback: THREE.Texture;
+}) => {
+  const real = useLazyTexture(url, { delay: 400 });
+  return (
+    <sprite position={position} scale={scale}>
+      <spriteMaterial
+        map={real ?? fallback}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        opacity={real ? opacity : opacity * 0.5}
+        toneMapped={false}
+      />
+    </sprite>
+  );
+};
+
+/**
+ * Layered deep-sky backdrop built from real Hubble / JWST photography
+ * (Orion, Carina, Eagle, Horsehead). Each layer sits at a different depth and
+ * the whole group counter-rotates slowly, so near clouds slide against the
+ * fixed sky and the drift reads as real parallax.
+ */
 const DeepField = ({ hue, count }: { hue: number; count: number }) => {
-  const tex = useMemo(() => makeNebulaTexture(hue, 7), [hue]);
-  const tex2 = useMemo(() => makeNebulaTexture((hue + 150) % 360, 13), [hue]);
-  const items = useMemo(
+  const fallback = useMemo(() => makeNebulaTexture(hue, 7), [hue]);
+  const fallback2 = useMemo(() => makeNebulaTexture((hue + 150) % 360, 13), [hue]);
+  useEffect(() => () => { fallback.dispose(); fallback2.dispose(); }, [fallback, fallback2]);
+
+  const group = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (group.current) group.current.rotation.y -= Math.min(delta, 0.05) * 0.0009;
+  });
+
+  const plates = useMemo(() => {
+    const n = Math.min(NEBULA_URLS.length, Math.max(2, count));
+    return Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2 + 1.1;
+      const r = 210 + ((i * 61) % 140);
+      return {
+        url: NEBULA_URLS[i % NEBULA_URLS.length].url,
+        position: [Math.cos(a) * r, ((i % 4) - 1.5) * 46, Math.sin(a) * r] as [number, number, number],
+        scale: 150 + ((i * 47) % 110),
+        opacity: 0.34 + (i % 3) * 0.07,
+      };
+    });
+  }, [count]);
+
+  const haze = useMemo(
     () =>
-      Array.from({ length: count }, (_, i) => {
-        const a = (i / count) * Math.PI * 2 + i;
-        const r = 150 + ((i * 37) % 90);
+      Array.from({ length: Math.max(0, count - plates.length + 2) }, (_, i) => {
+        const a = (i / 3) * Math.PI * 2 + 0.4;
+        const r = 320 + ((i * 53) % 90);
         return {
-          pos: [Math.cos(a) * r, ((i % 5) - 2) * 34, Math.sin(a) * r] as [number, number, number],
-          scale: 70 + ((i * 23) % 70),
+          pos: [Math.cos(a) * r, ((i % 3) - 1) * 60, Math.sin(a) * r] as [number, number, number],
+          scale: 220 + ((i * 31) % 90),
           alt: i % 2 === 0,
         };
       }),
-    [count],
+    [count, plates.length],
   );
 
   return (
-    <group>
-      {items.map((it, i) => (
-        <sprite key={i} position={it.pos} scale={it.scale}>
+    <group ref={group}>
+      {plates.map((p, i) => (
+        <NebulaPlate key={i} {...p} fallback={i % 2 ? fallback2 : fallback} />
+      ))}
+      {haze.map((h, i) => (
+        <sprite key={`h${i}`} position={h.pos} scale={h.scale}>
           <spriteMaterial
-            map={it.alt ? tex : tex2}
+            map={h.alt ? fallback : fallback2}
             transparent
             depthWrite={false}
             blending={THREE.AdditiveBlending}
-            opacity={0.45}
+            opacity={0.16}
             toneMapped={false}
           />
         </sprite>
