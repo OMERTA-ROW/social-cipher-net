@@ -16,6 +16,10 @@ import moon from "@/assets/space/moon.jpg.asset.json";
 import sun from "@/assets/space/sun.jpg.asset.json";
 import stars2k from "@/assets/space/stars_milky_way.jpg.asset.json";
 import stars8k from "@/assets/space/stars_8k.jpg.asset.json";
+import nebOrion from "@/assets/space/nebula_orion.jpg.asset.json";
+import nebCarina from "@/assets/space/nebula_carina.jpg.asset.json";
+import nebEagle from "@/assets/space/nebula_eagle.jpg.asset.json";
+import nebHorsehead from "@/assets/space/nebula_horsehead.jpg.asset.json";
 
 /**
  * Real NASA-derived public imagery (Solar System Scope, CC BY 4.0) served from
