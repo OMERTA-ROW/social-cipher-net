@@ -48,6 +48,18 @@ export const RING_TEXTURE_URL = saturnRing.url;
 export const STARFIELD_URL = stars8k.url;
 export const STARFIELD_LITE_URL = stars2k.url;
 
+/**
+ * Real deep-sky photography (Hubble / JWST, public domain) used for the
+ * layered nebula backdrop. Each is a wide-field colour image on a near-black
+ * sky, so additive blending drops the background cleanly.
+ */
+export const NEBULA_URLS = [
+  { url: nebOrion.url, name: "Orion Nebula (Hubble)" },
+  { url: nebCarina.url, name: "Carina Nebula (JWST)" },
+  { url: nebEagle.url, name: "Eagle Nebula (Hubble)" },
+  { url: nebHorsehead.url, name: "Horsehead Nebula (Hubble)" },
+] as const;
+
 const loader = new THREE.TextureLoader();
 loader.setCrossOrigin("anonymous");
 const cache = new Map<string, Promise<THREE.Texture>>();
