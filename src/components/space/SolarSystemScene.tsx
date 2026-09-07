@@ -843,41 +843,110 @@ const FlightRig = ({ region, full }: { region: Region; full: boolean }) => {
 
 /* -------------------------------------------------------------- Wormhole */
 
-/** Spinning vortex gate the craft flies through. */
-const Wormhole = () => {
-  const group = useRef<THREE.Group>(null);
-  const mats = useRef<THREE.MeshBasicMaterial[]>([]);
+const LENS_VERT = /* glsl */ `
+  varying vec2 vP;
+  varying vec3 vWorld;
+  void main() {
+    vP = uv * 2.0 - 1.0;
+    vec4 wp = modelMatrix * vec4(position, 1.0);
+    vWorld = wp.xyz;
+    gl_Position = projectionMatrix * viewMatrix * wp;
+  }
+`;
 
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    const g = group.current;
-    if (!g) return;
-    g.rotation.z = t * 0.14;
-    const pulse = 0.55 + Math.sin(t * 0.9) * 0.2;
-    mats.current.forEach((m, i) => {
-      if (m) m.opacity = pulse * (0.4 - i * 0.06);
-    });
+/**
+ * Gravitational lens: the sky behind the throat is re-sampled with a
+ * 1/r deflection, so the real star photograph smears into an Einstein ring
+ * instead of being drawn as sci-fi clip art. A thin accretion glow and a dark
+ * photon-sphere shadow complete the look.
+ */
+const LENS_FRAG = /* glsl */ `
+  uniform sampler2D sky;
+  uniform float time;
+  uniform float strength;
+  varying vec2 vP;
+  varying vec3 vWorld;
+
+  const float PI = 3.14159265359;
+
+  vec2 equirect(vec3 d) {
+    d = normalize(d);
+    return vec2(atan(d.z, d.x) / (2.0 * PI) + 0.5, acos(clamp(d.y, -1.0, 1.0)) / PI);
+  }
+
+  void main() {
+    float r = length(vP);
+    if (r > 1.0) discard;
+
+    vec3 viewDir = normalize(vWorld - cameraPosition);
+    // lateral direction away from the throat, in world space
+    vec3 up = normalize(vec3(0.0, 1.0, 0.0001));
+    vec3 right = normalize(cross(up, viewDir));
+    up = normalize(cross(viewDir, right));
+    vec3 lateral = normalize(right * vP.x + up * vP.y + vec3(0.0001));
+
+    float deflect = strength / max(r * r, 0.02);
+    vec3 bent = normalize(viewDir - lateral * deflect);
+    vec3 col = texture2D(sky, equirect(bent)).rgb * 1.25;
+
+    // photon sphere shadow
+    float shadow = smoothstep(0.30, 0.19, r);
+    col *= 1.0 - shadow;
+
+    // accretion glow ring, faint doppler asymmetry
+    float ring = exp(-pow((r - 0.345) / 0.045, 2.0));
+    float doppler = 0.75 + 0.25 * sin(atan(vP.y, vP.x) * 1.0 - time * 0.35);
+    col += vec3(1.0, 0.82, 0.58) * ring * 1.6 * doppler;
+
+    // secondary lensed halo
+    col += vec3(0.55, 0.72, 1.0) * exp(-pow((r - 0.52) / 0.16, 2.0)) * 0.22;
+
+    float edge = smoothstep(1.0, 0.72, r);
+    gl_FragColor = vec4(col, edge);
+  }
+`;
+
+/** Lensing gate the craft flies through. */
+const Wormhole = () => {
+  const mesh = useRef<THREE.Mesh>(null);
+  const sky = useLazyTexture(STARFIELD_LITE_URL, { delay: 900 });
+
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: LENS_VERT,
+        fragmentShader: LENS_FRAG,
+        uniforms: {
+          sky: { value: null as THREE.Texture | null },
+          time: { value: 0 },
+          strength: { value: 0.16 },
+        },
+        transparent: true,
+        depthWrite: false,
+        toneMapped: false,
+        blending: THREE.NormalBlending,
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    material.uniforms.sky.value = sky;
+    material.needsUpdate = true;
+  }, [material, sky]);
+  useEffect(() => () => material.dispose(), [material]);
+
+  useFrame(({ clock, camera }) => {
+    material.uniforms.time.value = clock.elapsedTime;
+    material.uniforms.strength.value = 0.15 + Math.sin(clock.elapsedTime * 0.25) * 0.02;
+    if (mesh.current) mesh.current.quaternion.copy(camera.quaternion);
   });
 
+  if (!sky) return null;
+
   return (
-    <group ref={group} position={WORMHOLE_POS.toArray()} rotation={[0.5, 0.9, 0]}>
-      {[0, 1, 2, 3].map((i) => (
-        <mesh key={i} position={[0, 0, -i * 2.2]} scale={1 - i * 0.14}>
-          <torusGeometry args={[7.5, 1.2 - i * 0.2, 12, 64]} />
-          <meshBasicMaterial
-            ref={(m) => {
-              if (m) mats.current[i] = m as THREE.MeshBasicMaterial;
-            }}
-            color={i % 2 ? "#7c5cff" : "#22d3ee"}
-            transparent
-            opacity={0}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-            toneMapped={false}
-          />
-        </mesh>
-      ))}
-    </group>
+    <mesh ref={mesh} position={WORMHOLE_POS.toArray()} material={material} frustumCulled={false}>
+      <planeGeometry args={[34, 34]} />
+    </mesh>
   );
 };
 
