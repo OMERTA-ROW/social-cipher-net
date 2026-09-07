@@ -811,7 +811,7 @@ const SolarSystemScene = ({ full, region }: { full: boolean; region: Region }) =
 
       <StarSky full={full} />
       {/* near star layer drifts slightly against the fixed sky for parallax */}
-      <Stars radius={200} depth={120} count={full ? 1400 : 400} factor={3} saturation={0} speed={0.08} />
+      <Stars radius={200} depth={120} count={full ? 900 : 300} factor={1.3} saturation={0} speed={0.05} />
       <DeepField hue={region.nebulaHue} count={full ? 7 : 3} />
 
       <Sun full={full} />
