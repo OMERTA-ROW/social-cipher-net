@@ -14,6 +14,7 @@ import {
 import {
   CLOUD_TEXTURE_URLS,
   MOON_TEXTURE_URL,
+  NEBULA_URLS,
   RING_TEXTURE_URL,
   SPACE_TEXTURE_URLS,
   STARFIELD_LITE_URL,
@@ -535,33 +536,92 @@ const Comet = ({ seed }: { seed: number }) => {
 
 /* ----------------------------------------------- Distant nebulae/galaxies */
 
+/** One real telescope photograph, billboarded at a fixed depth. */
+const NebulaPlate = ({
+  url,
+  position,
+  scale,
+  opacity,
+  fallback,
+}: {
+  url: string;
+  position: [number, number, number];
+  scale: number;
+  opacity: number;
+  fallback: THREE.Texture;
+}) => {
+  const real = useLazyTexture(url, { delay: 400 });
+  return (
+    <sprite position={position} scale={scale}>
+      <spriteMaterial
+        map={real ?? fallback}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        opacity={real ? opacity : opacity * 0.5}
+        toneMapped={false}
+      />
+    </sprite>
+  );
+};
+
+/**
+ * Layered deep-sky backdrop built from real Hubble / JWST photography
+ * (Orion, Carina, Eagle, Horsehead). Each layer sits at a different depth and
+ * the whole group counter-rotates slowly, so near clouds slide against the
+ * fixed sky and the drift reads as real parallax.
+ */
 const DeepField = ({ hue, count }: { hue: number; count: number }) => {
-  const tex = useMemo(() => makeNebulaTexture(hue, 7), [hue]);
-  const tex2 = useMemo(() => makeNebulaTexture((hue + 150) % 360, 13), [hue]);
-  const items = useMemo(
+  const fallback = useMemo(() => makeNebulaTexture(hue, 7), [hue]);
+  const fallback2 = useMemo(() => makeNebulaTexture((hue + 150) % 360, 13), [hue]);
+  useEffect(() => () => { fallback.dispose(); fallback2.dispose(); }, [fallback, fallback2]);
+
+  const group = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (group.current) group.current.rotation.y -= Math.min(delta, 0.05) * 0.0009;
+  });
+
+  const plates = useMemo(() => {
+    const n = Math.min(NEBULA_URLS.length, Math.max(2, count));
+    return Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2 + 1.1;
+      const r = 210 + ((i * 61) % 140);
+      return {
+        url: NEBULA_URLS[i % NEBULA_URLS.length].url,
+        position: [Math.cos(a) * r, ((i % 4) - 1.5) * 46, Math.sin(a) * r] as [number, number, number],
+        scale: 150 + ((i * 47) % 110),
+        opacity: 0.34 + (i % 3) * 0.07,
+      };
+    });
+  }, [count]);
+
+  const haze = useMemo(
     () =>
-      Array.from({ length: count }, (_, i) => {
-        const a = (i / count) * Math.PI * 2 + i;
-        const r = 150 + ((i * 37) % 90);
+      Array.from({ length: Math.max(0, count - plates.length + 2) }, (_, i) => {
+        const a = (i / 3) * Math.PI * 2 + 0.4;
+        const r = 320 + ((i * 53) % 90);
         return {
-          pos: [Math.cos(a) * r, ((i % 5) - 2) * 34, Math.sin(a) * r] as [number, number, number],
-          scale: 70 + ((i * 23) % 70),
+          pos: [Math.cos(a) * r, ((i % 3) - 1) * 60, Math.sin(a) * r] as [number, number, number],
+          scale: 220 + ((i * 31) % 90),
           alt: i % 2 === 0,
         };
       }),
-    [count],
+    [count, plates.length],
   );
 
   return (
-    <group>
-      {items.map((it, i) => (
-        <sprite key={i} position={it.pos} scale={it.scale}>
+    <group ref={group}>
+      {plates.map((p, i) => (
+        <NebulaPlate key={i} {...p} fallback={i % 2 ? fallback2 : fallback} />
+      ))}
+      {haze.map((h, i) => (
+        <sprite key={`h${i}`} position={h.pos} scale={h.scale}>
           <spriteMaterial
-            map={it.alt ? tex : tex2}
+            map={h.alt ? fallback : fallback2}
             transparent
             depthWrite={false}
             blending={THREE.AdditiveBlending}
-            opacity={0.45}
+            opacity={0.16}
             toneMapped={false}
           />
         </sprite>
@@ -783,41 +843,110 @@ const FlightRig = ({ region, full }: { region: Region; full: boolean }) => {
 
 /* -------------------------------------------------------------- Wormhole */
 
-/** Spinning vortex gate the craft flies through. */
-const Wormhole = () => {
-  const group = useRef<THREE.Group>(null);
-  const mats = useRef<THREE.MeshBasicMaterial[]>([]);
+const LENS_VERT = /* glsl */ `
+  varying vec2 vP;
+  varying vec3 vWorld;
+  void main() {
+    vP = uv * 2.0 - 1.0;
+    vec4 wp = modelMatrix * vec4(position, 1.0);
+    vWorld = wp.xyz;
+    gl_Position = projectionMatrix * viewMatrix * wp;
+  }
+`;
 
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    const g = group.current;
-    if (!g) return;
-    g.rotation.z = t * 0.14;
-    const pulse = 0.55 + Math.sin(t * 0.9) * 0.2;
-    mats.current.forEach((m, i) => {
-      if (m) m.opacity = pulse * (0.4 - i * 0.06);
-    });
+/**
+ * Gravitational lens: the sky behind the throat is re-sampled with a
+ * 1/r deflection, so the real star photograph smears into an Einstein ring
+ * instead of being drawn as sci-fi clip art. A thin accretion glow and a dark
+ * photon-sphere shadow complete the look.
+ */
+const LENS_FRAG = /* glsl */ `
+  uniform sampler2D sky;
+  uniform float time;
+  uniform float strength;
+  varying vec2 vP;
+  varying vec3 vWorld;
+
+  const float PI = 3.14159265359;
+
+  vec2 equirect(vec3 d) {
+    d = normalize(d);
+    return vec2(atan(d.z, d.x) / (2.0 * PI) + 0.5, acos(clamp(d.y, -1.0, 1.0)) / PI);
+  }
+
+  void main() {
+    float r = length(vP);
+    if (r > 1.0) discard;
+
+    vec3 viewDir = normalize(vWorld - cameraPosition);
+    // lateral direction away from the throat, in world space
+    vec3 up = normalize(vec3(0.0, 1.0, 0.0001));
+    vec3 right = normalize(cross(up, viewDir));
+    up = normalize(cross(viewDir, right));
+    vec3 lateral = normalize(right * vP.x + up * vP.y + vec3(0.0001));
+
+    float deflect = strength / max(r * r, 0.02);
+    vec3 bent = normalize(viewDir - lateral * deflect);
+    vec3 col = texture2D(sky, equirect(bent)).rgb * 1.25;
+
+    // photon sphere shadow
+    float shadow = smoothstep(0.30, 0.19, r);
+    col *= 1.0 - shadow;
+
+    // accretion glow ring, faint doppler asymmetry
+    float ring = exp(-pow((r - 0.345) / 0.045, 2.0));
+    float doppler = 0.75 + 0.25 * sin(atan(vP.y, vP.x) * 1.0 - time * 0.35);
+    col += vec3(1.0, 0.82, 0.58) * ring * 1.6 * doppler;
+
+    // secondary lensed halo
+    col += vec3(0.55, 0.72, 1.0) * exp(-pow((r - 0.52) / 0.16, 2.0)) * 0.22;
+
+    float edge = smoothstep(1.0, 0.72, r);
+    gl_FragColor = vec4(col, edge);
+  }
+`;
+
+/** Lensing gate the craft flies through. */
+const Wormhole = () => {
+  const mesh = useRef<THREE.Mesh>(null);
+  const sky = useLazyTexture(STARFIELD_LITE_URL, { delay: 900 });
+  const skyFallback = useMemo(() => makeStarSkyTexture(1024), []);
+  useEffect(() => () => skyFallback.dispose(), [skyFallback]);
+
+  const material = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: LENS_VERT,
+        fragmentShader: LENS_FRAG,
+        uniforms: {
+          sky: { value: null as THREE.Texture | null },
+          time: { value: 0 },
+          strength: { value: 0.16 },
+        },
+        transparent: true,
+        depthWrite: false,
+        toneMapped: false,
+        blending: THREE.NormalBlending,
+      }),
+    [],
+  );
+
+  useEffect(() => {
+    material.uniforms.sky.value = sky ?? skyFallback;
+    material.needsUpdate = true;
+  }, [material, sky, skyFallback]);
+  useEffect(() => () => material.dispose(), [material]);
+
+  useFrame(({ clock, camera }) => {
+    material.uniforms.time.value = clock.elapsedTime;
+    material.uniforms.strength.value = 0.15 + Math.sin(clock.elapsedTime * 0.25) * 0.02;
+    if (mesh.current) mesh.current.quaternion.copy(camera.quaternion);
   });
 
   return (
-    <group ref={group} position={WORMHOLE_POS.toArray()} rotation={[0.5, 0.9, 0]}>
-      {[0, 1, 2, 3].map((i) => (
-        <mesh key={i} position={[0, 0, -i * 2.2]} scale={1 - i * 0.14}>
-          <torusGeometry args={[7.5, 1.2 - i * 0.2, 12, 64]} />
-          <meshBasicMaterial
-            ref={(m) => {
-              if (m) mats.current[i] = m as THREE.MeshBasicMaterial;
-            }}
-            color={i % 2 ? "#7c5cff" : "#22d3ee"}
-            transparent
-            opacity={0}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-            toneMapped={false}
-          />
-        </mesh>
-      ))}
-    </group>
+    <mesh ref={mesh} position={WORMHOLE_POS.toArray()} material={material} frustumCulled={false}>
+      <planeGeometry args={[34, 34]} />
+    </mesh>
   );
 };
 
