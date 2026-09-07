@@ -8,6 +8,8 @@ import {
   makeNebulaTexture,
   makePlanetSurface,
   makeRingTexture,
+  makeRockGeometry,
+  makeStarSkyTexture,
 } from "./textures";
 
 export interface SceneQuality {
@@ -248,12 +250,12 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
-    if (orbit.current) orbit.current.rotation.y += dt * def.speed;
-    if (spin.current) spin.current.rotation.y += dt * 0.25;
-    if (cloudRef.current && clouds) cloudRef.current.rotation.y += dt * (0.25 + clouds.speed);
+    if (orbit.current) orbit.current.rotation.y += dt * def.speed * 0.3;
+    if (spin.current) spin.current.rotation.y += dt * 0.06;
+    if (cloudRef.current && clouds) cloudRef.current.rotation.y += dt * (0.07 + clouds.speed * 0.3);
     moonRefs.current.forEach((g, i) => {
       const moon = (def as { moons?: readonly { speed: number }[] }).moons?.[i];
-      if (g && moon) g.rotation.y += dt * moon.speed;
+      if (g && moon) g.rotation.y += dt * moon.speed * 0.3;
     });
   });
 
@@ -282,9 +284,9 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
             <meshStandardMaterial
               map={surface.map}
               bumpMap={surface.bump}
-              bumpScale={full ? def.radius * 0.06 : 0}
-              roughness={0.9}
-              metalness={0.02}
+              bumpScale={full ? def.radius * 0.12 : 0}
+              roughness={0.95}
+              metalness={0}
             />
           </mesh>
 
@@ -301,13 +303,26 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
             </mesh>
           )}
 
+          {/* thin rim light: sunlit limb scatter on every body */}
+          <mesh scale={1.035}>
+            <sphereGeometry args={[def.radius, 32, 32]} />
+            <meshBasicMaterial
+              color={atmosphere ?? "#cfe2ff"}
+              transparent
+              opacity={0.075}
+              side={THREE.BackSide}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
+
           {atmosphere && (
-            <mesh scale={1.08}>
+            <mesh scale={1.11}>
               <sphereGeometry args={[def.radius, 32, 32]} />
               <meshBasicMaterial
                 color={atmosphere}
                 transparent
-                opacity={0.16}
+                opacity={0.13}
                 side={THREE.BackSide}
                 depthWrite={false}
                 blending={THREE.AdditiveBlending}
@@ -351,19 +366,31 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
 
 /* ---------------------------------------------------------- Asteroid belt */
 
-const AsteroidBelt = ({ count }: { count: number }) => {
+const BeltShard = ({ count, geo, seed }: { count: number; geo: THREE.BufferGeometry; seed: number }) => {
   const ref = useRef<THREE.InstancedMesh>(null);
-  const data = useMemo(
-    () =>
-      Array.from({ length: count }, (_, i) => ({
-        r: 17.5 + Math.random() * 2.8,
-        a: (i / count) * Math.PI * 2 + Math.random(),
-        y: (Math.random() - 0.5) * 0.9,
-        s: 0.03 + Math.random() * 0.09,
-        speed: 0.03 + Math.random() * 0.012,
-      })),
-    [count],
-  );
+  const data = useMemo(() => {
+    let a0 = seed * 1234.567;
+    const rnd = () => {
+      a0 = (a0 * 16807) % 2147483647;
+      return a0 / 2147483647;
+    };
+    return Array.from({ length: count }, (_, i) => {
+      // gaussian-ish radial scatter with Kirkwood-style thinning
+      const gauss = (rnd() + rnd() + rnd() - 1.5) / 1.5;
+      return {
+        r: 18.4 + gauss * 2.6,
+        a: rnd() * Math.PI * 2,
+        y: ((rnd() + rnd() + rnd() - 1.5) / 1.5) * 0.95,
+        s: 0.018 + Math.pow(rnd(), 3) * 0.22,
+        sx: 0.6 + rnd() * 0.9,
+        sy: 0.5 + rnd() * 0.8,
+        rx: rnd() * Math.PI,
+        rz: rnd() * Math.PI,
+        tumble: (rnd() - 0.5) * 0.25,
+        speed: 0.0075 + rnd() * 0.004,
+      };
+    });
+  }, [count, seed]);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
   useFrame(({ clock }) => {
@@ -373,8 +400,8 @@ const AsteroidBelt = ({ count }: { count: number }) => {
     data.forEach((d, i) => {
       const a = d.a + t * d.speed;
       dummy.position.set(Math.cos(a) * d.r, d.y, Math.sin(a) * d.r);
-      dummy.rotation.set(a, a * 1.7, 0);
-      dummy.scale.setScalar(d.s);
+      dummy.rotation.set(d.rx + t * d.tumble, a, d.rz + t * d.tumble * 0.6);
+      dummy.scale.set(d.s * d.sx, d.s * d.sy, d.s);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     });
@@ -382,10 +409,34 @@ const AsteroidBelt = ({ count }: { count: number }) => {
   });
 
   return (
-    <instancedMesh ref={ref} args={[undefined as never, undefined as never, count]} frustumCulled={false}>
-      <icosahedronGeometry args={[1, 0]} />
-      <meshStandardMaterial color="#8b8177" roughness={1} />
+    <instancedMesh
+      ref={ref}
+      args={[geo, undefined as never, count]}
+      frustumCulled={false}
+      castShadow
+      receiveShadow
+    >
+      <meshStandardMaterial
+        color={seed % 2 ? "#7a6f65" : "#94897c"}
+        roughness={1}
+        metalness={0.03}
+        flatShading
+      />
     </instancedMesh>
+  );
+};
+
+/** Irregular rocks in several distinct shapes, sizes and depth scatter. */
+const AsteroidBelt = ({ count }: { count: number }) => {
+  const geos = useMemo(() => [1, 2, 3, 4, 5, 6].map((i) => makeRockGeometry(i * 17 + 3, 1)), []);
+  useEffect(() => () => geos.forEach((g) => g.dispose()), [geos]);
+  const per = Math.round(count / geos.length);
+  return (
+    <group>
+      {geos.map((g, i) => (
+        <BeltShard key={i} geo={g} count={per} seed={i + 1} />
+      ))}
+    </group>
   );
 };
 
@@ -399,7 +450,7 @@ const Comet = ({ seed }: { seed: number }) => {
       rx: 34 + seed * 6,
       rz: 22 + seed * 4,
       y: 4 + seed * 3,
-      speed: 0.045 + seed * 0.012,
+      speed: 0.014 + seed * 0.004,
       phase: seed * 2.1,
     }),
     [seed],
@@ -470,7 +521,7 @@ const DeepField = ({ hue, count }: { hue: number; count: number }) => {
             transparent
             depthWrite={false}
             blending={THREE.AdditiveBlending}
-            opacity={0.8}
+            opacity={0.45}
             toneMapped={false}
           />
         </sprite>
@@ -630,7 +681,7 @@ const FlightRig = ({ region, full }: { region: Region; full: boolean }) => {
     regionOffset.lerp(regionTarget, 1 - Math.exp(-0.9 * dt));
 
     // travel at a constant world speed along the curve
-    const speed = 2.6 * region.drift;
+    const speed = 0.85 * region.drift;
     s.u = (s.u + (speed * dt) / CURVE_LENGTH) % 1;
 
     FLIGHT_CURVE.getPointAt(s.u, pos).add(regionOffset);
@@ -701,7 +752,7 @@ const Wormhole = () => {
     const t = clock.elapsedTime;
     const g = group.current;
     if (!g) return;
-    g.rotation.z = t * 0.45;
+    g.rotation.z = t * 0.14;
     const pulse = 0.55 + Math.sin(t * 0.9) * 0.2;
     mats.current.forEach((m, i) => {
       if (m) m.opacity = pulse * (0.4 - i * 0.06);
@@ -730,17 +781,37 @@ const Wormhole = () => {
   );
 };
 
+/* ------------------------------------------------------------- Star sky */
+
+/** Deep-field sky sphere: real-looking star density plus the Milky Way band. */
+const StarSky = ({ full }: SceneQuality) => {
+  const tex = useMemo(() => makeStarSkyTexture(full ? 4096 : 2048), [full]);
+  const ref = useRef<THREE.Mesh>(null);
+  useEffect(() => () => tex.dispose(), [tex]);
+  useFrame((_, delta) => {
+    if (ref.current) ref.current.rotation.y += Math.min(delta, 0.05) * 0.0015;
+  });
+  return (
+    <mesh ref={ref} rotation={[0.32, 0, 0.42]} frustumCulled={false}>
+      <sphereGeometry args={[820, 48, 32]} />
+      <meshBasicMaterial map={tex} side={THREE.BackSide} depthWrite={false} fog={false} toneMapped={false} />
+    </mesh>
+  );
+};
+
 /* ----------------------------------------------------------------- Scene */
 
 const SolarSystemScene = ({ full, region }: { full: boolean; region: Region }) => {
   return (
     <>
-      <color attach="background" args={["#05060f"]} />
-      <fog attach="fog" args={["#05060f", 260, 780]} />
-      <ambientLight intensity={0.42} color="#9db4ff" />
-      <hemisphereLight args={["#4a5fb0", "#050510", 0.3]} />
+      <color attach="background" args={["#03040a"]} />
+      <fog attach="fog" args={["#03040a", 300, 900]} />
+      {/* no flat wash: one sun, plus a whisper of starlight fill */}
+      <ambientLight intensity={0.06} color="#8ea6ff" />
 
-      <Stars radius={320} depth={160} count={full ? 6500 : 1800} factor={4} saturation={0} speed={0.35} />
+      <StarSky full={full} />
+      {/* near star layer drifts slightly against the fixed sky for parallax */}
+      <Stars radius={200} depth={120} count={full ? 1400 : 400} factor={3} saturation={0} speed={0.08} />
       <DeepField hue={region.nebulaHue} count={full ? 7 : 3} />
 
       <Sun full={full} />
