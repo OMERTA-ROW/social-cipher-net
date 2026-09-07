@@ -75,11 +75,13 @@ const SpaceBackground = () => {
         </Canvas>
       )}
 
-      {/* Dim veil keeps text and feed content fully legible on top. */}
+      {/* Dim veil + vignette keep text and feed content fully legible on top. */}
       <div
         className="absolute inset-0 bg-background transition-opacity duration-500"
         style={{ opacity: Math.min(1, Math.max(0, dim)) }}
       />
+      <div className="absolute inset-0 [background:radial-gradient(ellipse_at_50%_45%,transparent_35%,hsl(var(--background)/0.55)_100%)]" />
+      <div className="absolute inset-0 [background:linear-gradient(90deg,hsl(var(--background)/0.45),transparent_22%,transparent_78%,hsl(var(--background)/0.45))]" />
     </div>
   );
 };
