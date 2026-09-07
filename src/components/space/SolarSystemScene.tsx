@@ -11,6 +11,16 @@ import {
   makeRockGeometry,
   makeStarSkyTexture,
 } from "./textures";
+import {
+  CLOUD_TEXTURE_URLS,
+  MOON_TEXTURE_URL,
+  RING_TEXTURE_URL,
+  SPACE_TEXTURE_URLS,
+  STARFIELD_LITE_URL,
+  STARFIELD_URL,
+  SUN_TEXTURE_URL,
+  useLazyTexture,
+} from "./realTextures";
 
 export interface SceneQuality {
   /** false on phones / low-power devices: fewer bodies, no shadows, no belt */
@@ -124,6 +134,7 @@ const PLANETS = [
 const Sun = ({ full }: SceneQuality) => {
   const core = useMemo(() => makeGlowTexture("rgba(255,255,255,1)", "rgba(255,196,102,0.55)"), []);
   const flare = useMemo(() => makeGlowTexture("rgba(255,236,196,0.9)", "rgba(255,150,60,0.2)"), []);
+  const photosphere = useLazyTexture(SUN_TEXTURE_URL, { delay: 80 });
   const halo = useRef<THREE.Sprite>(null);
   const light = useRef<THREE.PointLight>(null);
 
@@ -147,7 +158,7 @@ const Sun = ({ full }: SceneQuality) => {
     <group>
       <mesh>
         <sphereGeometry args={[2.4, full ? 48 : 24, full ? 48 : 24]} />
-        <meshBasicMaterial color="#fff0cf" toneMapped={false} />
+        <meshBasicMaterial map={photosphere ?? undefined} color={photosphere ? "#ffffff" : "#fff0cf"} toneMapped={false} />
       </mesh>
       <sprite ref={halo} scale={34}>
         <spriteMaterial
@@ -230,7 +241,19 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
     [full, clouds, def.seed],
   );
 
+  // Real NASA-derived imagery streams in over the procedural placeholder.
+  const realMap = useLazyTexture(
+    SPACE_TEXTURE_URLS[def.name as keyof typeof SPACE_TEXTURE_URLS],
+    { delay: 120 + (def.seed % 9) * 60 },
+  );
+  const realClouds = useLazyTexture(clouds ? CLOUD_TEXTURE_URLS[def.name] : undefined, { delay: 700 });
+  const realMoon = useLazyTexture(
+    full && (def as { moons?: readonly unknown[] }).moons ? MOON_TEXTURE_URL : undefined,
+    { delay: 900 },
+  );
+
   const ring = (def as { ring?: { inner: number; outer: number } }).ring;
+  const realRing = useLazyTexture(ring ? RING_TEXTURE_URL : undefined, { delay: 500 });
   const ringTex = useMemo(() => (ring ? makeRingTexture(def.seed) : null), [ring, def.seed]);
   const ringGeo = useMemo(
     () => (ring ? makeRingGeometry(ring.inner, ring.outer, full ? 128 : 56) : null),
@@ -282,24 +305,35 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
           <mesh ref={spin} castShadow={full} receiveShadow={full}>
             <sphereGeometry args={[def.radius, full ? 64 : 20, full ? 64 : 20]} />
             <meshStandardMaterial
-              map={surface.map}
-              bumpMap={surface.bump}
-              bumpScale={full ? def.radius * 0.12 : 0}
+              map={realMap ?? surface.map}
+              bumpMap={realMap ?? surface.bump}
+              bumpScale={full ? def.radius * (realMap ? 0.05 : 0.12) : 0}
               roughness={0.95}
               metalness={0}
             />
           </mesh>
 
-          {cloudTex && clouds && (
+          {(cloudTex || realClouds) && clouds && (
             <mesh ref={cloudRef}>
-              <sphereGeometry args={[def.radius * 1.02, 48, 48]} />
-              <meshStandardMaterial
-                map={cloudTex}
-                transparent
-                opacity={clouds.opacity}
-                depthWrite={false}
-                roughness={1}
-              />
+              <sphereGeometry args={[def.radius * 1.015, 48, 48]} />
+              {realClouds && def.name === "Earth" ? (
+                <meshStandardMaterial
+                  alphaMap={realClouds}
+                  color="#ffffff"
+                  transparent
+                  opacity={0.92}
+                  depthWrite={false}
+                  roughness={1}
+                />
+              ) : (
+                <meshStandardMaterial
+                  map={realClouds ?? cloudTex ?? undefined}
+                  transparent
+                  opacity={realClouds ? 0.96 : clouds.opacity}
+                  depthWrite={false}
+                  roughness={1}
+                />
+              )}
             </mesh>
           )}
 
@@ -333,8 +367,8 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
           {ring && ringGeo && ringTex && (
             <mesh rotation-x={-Math.PI / 2} geometry={ringGeo} receiveShadow={full}>
               <meshStandardMaterial
-                map={ringTex}
-                alphaMap={ringTex}
+                map={realRing ?? ringTex}
+                alphaMap={realRing ?? ringTex}
                 transparent
                 opacity={0.95}
                 roughness={0.95}
@@ -353,8 +387,14 @@ const Planet = ({ def, full }: { def: PlanetDef; full: boolean }) => {
                 }}
               >
                 <mesh position={[m.distance, 0, 0]} castShadow receiveShadow>
-                  <sphereGeometry args={[m.radius, 20, 20]} />
-                  <meshStandardMaterial color={m.color} roughness={1} />
+                  <sphereGeometry args={[m.radius, 24, 24]} />
+                  <meshStandardMaterial
+                    map={realMoon ?? undefined}
+                    color={realMoon ? "#ffffff" : m.color}
+                    bumpMap={realMoon ?? undefined}
+                    bumpScale={realMoon ? m.radius * 0.06 : 0}
+                    roughness={1}
+                  />
                 </mesh>
               </group>
             ))}
@@ -786,6 +826,7 @@ const Wormhole = () => {
 /** Deep-field sky sphere: real-looking star density plus the Milky Way band. */
 const StarSky = ({ full }: SceneQuality) => {
   const tex = useMemo(() => makeStarSkyTexture(full ? 4096 : 2048), [full]);
+  const real = useLazyTexture(full ? STARFIELD_URL : STARFIELD_LITE_URL, { delay: 200 });
   const ref = useRef<THREE.Mesh>(null);
   useEffect(() => () => tex.dispose(), [tex]);
   useFrame((_, delta) => {
@@ -794,7 +835,13 @@ const StarSky = ({ full }: SceneQuality) => {
   return (
     <mesh ref={ref} rotation={[0.32, 0, 0.42]} frustumCulled={false}>
       <sphereGeometry args={[820, 48, 32]} />
-      <meshBasicMaterial map={tex} side={THREE.BackSide} depthWrite={false} fog={false} toneMapped={false} />
+      <meshBasicMaterial
+        map={real ?? tex}
+        side={THREE.BackSide}
+        depthWrite={false}
+        fog={false}
+        toneMapped={false}
+      />
     </mesh>
   );
 };
