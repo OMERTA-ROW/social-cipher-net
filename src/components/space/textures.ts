@@ -364,3 +364,163 @@ export const makeRingTexture = (seed = 9, size = 512): THREE.CanvasTexture => {
   tex.wrapT = THREE.ClampToEdgeWrapping;
   return tex;
 };
+
+/* ------------------------------------------------- Deep-field star sky */
+
+/**
+ * Equirectangular deep-sky map: a dense, colour-varied star field with a
+ * realistic Milky Way galactic band (dust lanes, bulge, faint nebulosity).
+ * Mapped onto the inside of a large sphere so it reads as real sky, not dots.
+ */
+export const makeStarSkyTexture = (size = 4096, seed = 101): THREE.CanvasTexture => {
+  const w = size;
+  const h = size / 2;
+  const canvas = makeCanvas(w, h);
+  const ctx = canvas.getContext("2d")!;
+  const rand = mulberry(seed);
+
+  ctx.fillStyle = "#03040a";
+  ctx.fillRect(0, 0, w, h);
+
+  // --- galactic band: a great circle traced across the equirect projection
+  const bandY = (x: number) => h * 0.5 + Math.sin((x / w) * Math.PI * 2 + 0.6) * h * 0.26;
+
+  ctx.globalCompositeOperation = "lighter";
+  // diffuse glow of the band
+  for (let i = 0; i < 2600; i++) {
+    const x = rand() * w;
+    const cy = bandY(x);
+    const spread = h * (0.035 + rand() * 0.1);
+    const y = cy + (rand() + rand() + rand() - 1.5) * spread;
+    const r = h * (0.01 + rand() * 0.07);
+    const bulge = 1 - Math.min(1, Math.abs(((x / w) - 0.28) * 3));
+    const warm = rand() < 0.35 + bulge * 0.4;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    const a = (0.012 + rand() * 0.05) * (0.5 + bulge);
+    g.addColorStop(0, warm ? `rgba(255,226,182,${a})` : `rgba(168,192,255,${a * 0.9})`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * (1.4 + rand()), r * (0.5 + rand() * 0.5), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // faint coloured nebulosity inside the band
+  for (let i = 0; i < 140; i++) {
+    const x = rand() * w;
+    const y = bandY(x) + (rand() - 0.5) * h * 0.16;
+    const r = h * (0.02 + rand() * 0.06);
+    const hue = rand() < 0.5 ? 200 + rand() * 40 : 340 + rand() * 30;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `hsla(${hue % 360},70%,60%,${0.03 + rand() * 0.05})`);
+    g.addColorStop(1, "hsla(0,0%,0%,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // --- dark dust lanes cutting through the band
+  ctx.globalCompositeOperation = "source-over";
+  for (let i = 0; i < 420; i++) {
+    const x = rand() * w;
+    const y = bandY(x) + (rand() - 0.5) * h * 0.08;
+    const r = h * (0.006 + rand() * 0.045);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(3,4,10,${0.25 + rand() * 0.5})`);
+    g.addColorStop(1, "rgba(3,4,10,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * (1.8 + rand() * 2), r * (0.3 + rand() * 0.4), (rand() - 0.5) * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // --- stars: realistic magnitude distribution + spectral colours
+  ctx.globalCompositeOperation = "lighter";
+  const STAR_COLORS = [
+    [155, 176, 255], // O/B blue
+    [202, 215, 255],
+    [248, 247, 255], // A/F white
+    [255, 244, 234],
+    [255, 210, 161], // K orange
+    [255, 170, 120], // M red
+  ];
+  const total = Math.floor((w * h) / 210);
+  for (let i = 0; i < total; i++) {
+    let x = rand() * w;
+    let y = rand() * h;
+    // concentrate ~55% of stars toward the galactic band
+    if (rand() < 0.55) {
+      x = rand() * w;
+      y = bandY(x) + (rand() + rand() + rand() - 1.5) * h * 0.14;
+      if (y < 0 || y > h) continue;
+    }
+    const mag = Math.pow(rand(), 6); // few bright, many faint
+    const r = 0.35 + mag * 2.6;
+    const c = STAR_COLORS[Math.floor(Math.pow(rand(), 1.6) * STAR_COLORS.length) % STAR_COLORS.length];
+    const a = 0.25 + mag * 0.75;
+    ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    if (mag > 0.35) {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r * 7);
+      g.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},${0.22 * mag})`);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 7, 0, Math.PI * 2);
+      ctx.fill();
+      // subtle diffraction spikes on the brightest stars
+      if (mag > 0.72) {
+        ctx.strokeStyle = `rgba(${c[0]},${c[1]},${c[2]},${0.18 * mag})`;
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(x - r * 6, y);
+        ctx.lineTo(x + r * 6, y);
+        ctx.moveTo(x, y - r * 6);
+        ctx.lineTo(x, y + r * 6);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.globalCompositeOperation = "source-over";
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  return tex;
+};
+
+/** Irregular, cratered rock body for asteroid instancing variants. */
+export const makeRockGeometry = (seed = 1, detail = 1): THREE.BufferGeometry => {
+  const geo = new THREE.IcosahedronGeometry(1, detail);
+  const rand = mulberry(seed);
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  const v = new THREE.Vector3();
+  const offs = Array.from({ length: 9 }, () => ({
+    n: new THREE.Vector3(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize(),
+    amp: 0.12 + rand() * 0.35,
+    sharp: 1.5 + rand() * 4,
+  }));
+  const seen = new Map<string, number>();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const key = `${v.x.toFixed(4)}|${v.y.toFixed(4)}|${v.z.toFixed(4)}`;
+    let scale = seen.get(key);
+    if (scale === undefined) {
+      scale = 1;
+      for (const o of offs) {
+        const d = Math.max(0, v.dot(o.n));
+        scale -= Math.pow(d, o.sharp) * o.amp;
+      }
+      scale *= 0.85 + rand() * 0.3;
+      seen.set(key, scale);
+    }
+    v.multiplyScalar(scale);
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+};
