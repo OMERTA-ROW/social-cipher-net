@@ -77,7 +77,7 @@ const StarTrails = ({ count, animate }: { count: number; animate: boolean }) => 
       state.q.setFromRotationMatrix(state.m);
 
       const s = state.seeds[i];
-      state.scale.set(0.16 * s, visible ? stretch * s * 0.5 : 0.16 * s, 1);
+      state.scale.set(0.09 * s, visible ? stretch * s * 0.35 : 0.09 * s, 1);
 
       state.dummy.position.copy(p);
       state.dummy.quaternion.copy(state.q);
@@ -94,7 +94,7 @@ const StarTrails = ({ count, animate }: { count: number; animate: boolean }) => 
       <meshBasicMaterial
         color="#cfe4ff"
         transparent
-        opacity={0.5}
+        opacity={0.32}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
         toneMapped={false}
