@@ -90,9 +90,9 @@ const fragmentShader = /* glsl */ `
         float d = length(f - pos);
 
         float mag = hash11(present * 91.7 + seed);
-        float size = mix(0.010, 0.030, mag * mag);
+        float size = mix(0.004, 0.014, mag * mag);
         float core = smoothstep(size, 0.0, d);
-        float halo = smoothstep(size * 5.0, 0.0, d) * 0.16;
+        float halo = smoothstep(size * 4.0, 0.0, d) * 0.10;
 
         // subtle colour temperature: pale blue -> white -> warm amber
         float temp = hash11(present * 27.3 + seed * 3.1);
@@ -135,20 +135,21 @@ const fragmentShader = /* glsl */ `
 
   void main() {
     vec2 res = uResolution;
-    vec2 uv = (gl_FragCoord.xy - 0.5 * res) / res.y; // aspect-correct, centred
+    float m = min(res.x, res.y);
+    vec2 uv = (gl_FragCoord.xy - 0.5 * res) / m; // aspect-correct, centred
     float t = uTime;
 
     // Slow drift of the whole field (parallax speeds differ per layer below).
     float drift = uMotion > 0.5 ? t * 0.0055 : 0.0;
 
     // ----- black hole -----
-    vec2 hole = vec2(0.46, 0.16);
+    vec2 hole = vec2(0.27, 0.17);
     if (uMotion > 0.5) {
       hole += vec2(sin(t * 0.021) * 0.02, cos(t * 0.017) * 0.014);
     }
     vec2 rel = uv - hole;
     float r = length(rel);
-    float rs = 0.085;                 // event horizon radius
+    float rs = 0.055;                 // event horizon radius
 
     // Gravitational lensing: pull background samples inward near the horizon.
     float defl = rs * rs * 1.9 / max(r * r, 1e-4);
