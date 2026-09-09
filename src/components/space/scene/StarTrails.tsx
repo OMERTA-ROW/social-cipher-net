@@ -56,7 +56,7 @@ const StarTrails = ({ count, animate }: { count: number; animate: boolean }) => 
     const speed = state.vel.length();
     const dir = speed > 1e-5 ? state.z.copy(state.vel).multiplyScalar(1 / speed) : state.z.set(0, 1, 0);
 
-    const stretch = THREE.MathUtils.clamp(speed * 26, 0.6, 34);
+    const stretch = THREE.MathUtils.clamp(speed * 18, 0.3, 4.5);
     const visible = animate && speed > 1e-4;
 
     for (let i = 0; i < count; i++) {
