@@ -50,40 +50,67 @@ const SpaceBackground = () => {
   const render3d = mode !== "off";
   const full = mode === "full" && !lowPower && !reduced;
 
+  const featherMask =
+    "radial-gradient(ellipse 82% 78% at 50% 48%, #000 55%, rgba(0,0,0,0.55) 78%, rgba(0,0,0,0) 100%)";
+
   return (
-    <div aria-hidden className="fixed inset-0 -z-10 pointer-events-none select-none">
-      {/* Always-present static fallback: visible instantly, and the whole
-          background when 3D is disabled or WebGL is unavailable. */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_15%,hsl(265_60%_18%/0.9),transparent_55%),radial-gradient(ellipse_at_80%_70%,hsl(200_70%_16%/0.9),transparent_55%),linear-gradient(180deg,#05060f,#080a17)]" />
+    <div aria-hidden className="fixed inset-0 -z-10 pointer-events-none select-none overflow-hidden bg-black">
+      {/* Pure black base so every layer above can blend into it seamlessly. */}
+      <div className="absolute inset-0 bg-black" />
+
+      {/* Soft nebula haze, feathered into the black with a radial mask. */}
+      <div
+        className="absolute inset-0 opacity-60 [background:radial-gradient(ellipse_at_20%_15%,hsl(265_60%_18%/0.9),transparent_55%),radial-gradient(ellipse_at_80%_70%,hsl(200_70%_16%/0.85),transparent_55%)]"
+        style={{
+          mixBlendMode: "screen",
+          maskImage: featherMask,
+          WebkitMaskImage: featherMask,
+        }}
+      />
+
+      {/* Crisp point stars with gentle twinkle, layered above the haze. */}
+      <div className="absolute inset-0 star-layer star-layer-far" />
+      <div className="absolute inset-0 star-layer star-layer-near" />
 
       {render3d && (
-        <Canvas
+        <div
           className="absolute inset-0"
-          shadows={full ? "soft" : false}
-          gl={{ antialias: false, powerPreference: "low-power", alpha: false }}
-          onCreated={({ gl }) => {
-            gl.toneMapping = THREE.ACESFilmicToneMapping;
-            gl.toneMappingExposure = 1.15;
+          style={{
+            mixBlendMode: "screen",
+            maskImage: featherMask,
+            WebkitMaskImage: featherMask,
           }}
-          dpr={full ? [1, 1.75] : 1}
-          camera={{ position: [0, 34, 104], fov: 55, near: 0.5, far: 1200 }}
-          frameloop={visible && !reduced ? "always" : "demand"}
         >
-          <Suspense fallback={null}>
-            <SolarSystemScene full={full} region={region} />
-          </Suspense>
-        </Canvas>
+          <Canvas
+            className="absolute inset-0"
+            shadows={full ? "soft" : false}
+            gl={{ antialias: false, powerPreference: "low-power", alpha: false }}
+            onCreated={({ gl }) => {
+              gl.toneMapping = THREE.ACESFilmicToneMapping;
+              gl.toneMappingExposure = 1.15;
+            }}
+            dpr={full ? [1, 1.75] : 1}
+            camera={{ position: [0, 34, 104], fov: 55, near: 0.5, far: 1200 }}
+            frameloop={visible && !reduced ? "always" : "demand"}
+          >
+            <Suspense fallback={null}>
+              <SolarSystemScene full={full} region={region} />
+            </Suspense>
+          </Canvas>
+        </div>
       )}
 
       {/* Dim veil + vignette keep text and feed content fully legible on top. */}
       <div
-        className="absolute inset-0 bg-background transition-opacity duration-500"
+        className="absolute inset-0 bg-black transition-opacity duration-500"
         style={{ opacity: Math.min(1, Math.max(0, dim)) }}
       />
-      <div className="absolute inset-0 [background:radial-gradient(ellipse_at_50%_45%,transparent_35%,hsl(var(--background)/0.55)_100%)]" />
-      <div className="absolute inset-0 [background:linear-gradient(90deg,hsl(var(--background)/0.45),transparent_22%,transparent_78%,hsl(var(--background)/0.45))]" />
+      <div className="absolute inset-0 [background:radial-gradient(ellipse_at_50%_45%,transparent_30%,rgba(0,0,0,0.6)_78%,#000_100%)]" />
+      <div className="absolute inset-0 [background:linear-gradient(90deg,#000,transparent_20%,transparent_80%,#000)]" />
+      <div className="absolute inset-0 [background:linear-gradient(180deg,#000,transparent_16%,transparent_84%,#000)]" />
     </div>
   );
+
 };
 
 export default SpaceBackground;
