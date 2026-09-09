@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { isLowPowerDevice, prefersReducedMotion, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
 
-const ProceduralSpace = lazy(() => import("./ProceduralSpace"));
+const SpaceScene = lazy(() => import("./scene/SpaceScene"));
 
 /**
  * Fixed, full-screen procedural space background. Sits behind every route,
@@ -37,7 +37,7 @@ const SpaceBackground = () => {
 
       {render3d && (
         <Suspense fallback={null}>
-          <ProceduralSpace full={full} animate={visible && !reduced} />
+          <SpaceScene full={full} animate={visible && !reduced} />
         </Suspense>
       )}
 
