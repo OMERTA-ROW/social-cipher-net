@@ -1,59 +1,33 @@
-## Goal
-Make the realistic space background configurable, and layer a "Solar System Voyage" experience on top with multiple realistic camera views culminating in AI bots harvesting resources.
+# Real-time 3D space environment
 
-## 1. Configurable `RealisticSpaceBackground`
-Add typed props (all optional, with current values as defaults):
+Replace the current flat full-screen shader background with a true 3D scene: a perspective camera drifting on a slow orbital path through procedurally generated space, with live crypto market data driving comets and ambience. No image files anywhere in the space layer.
 
-- `intensity`: `"calm" | "normal" | "vivid" | "hyper"` — scales shooting-star frequency, ripple strength, aurora radius, dust reactivity.
-- `palette`: `"cosmic" | "draco" | "brain" | "solar" | { primary, secondary, accent }` — drives aurora glow, ripple color, nebula tint, shooting-star hue.
-- `starDensity`: `number` (0.1–3.0, default 1.0) — multiplies star / dust / shooting-star counts against current baselines.
-- `parallax`: `boolean` (default true) — disables mouse parallax for low-power.
-- `interactive`: `boolean` (default true) — disables click ripples / hover repulsion.
-- `backgroundImage?`: `string` — override the base nebula image.
+## What the visitor sees
 
-Internals: replace the current hardcoded constants with values derived from these props, memoized on prop change; existing call sites keep working (defaults reproduce today's look).
+- Depth that moves: near stars sweep past, far stars barely shift, so the drift feels like real travel.
+- Stars colored by temperature (blue-white, white, yellow, amber, red), varied brightness, gentle twinkle, soft glow on the brightest.
+- Fast near stars leave short trails in the direction of travel.
+- A soft Milky Way band and nebula clouds far behind everything, built from noise, drifting correctly against the near stars.
+- Planets on tilted elliptical orbits, spinning on their axes, each surface generated in code (terrain noise, cloud bands, day/night edge, atmospheric rim).
+- Live market pulse: when a tracked coin moves sharply, a comet fires — green rising, red falling, brighter and faster for bigger moves. Volatility gently lifts overall brightness and drift speed.
+- Everything falls off into pure black at the edges; UI colors, fonts and layout untouched.
 
-## 2. Solar System Voyage overlay
-New route `/voyage` + `SolarSystemVoyage.tsx` full-screen component sitting on top of `RealisticSpaceBackground` (palette=`solar`). Built with react-three-fiber (already present) using realistic textures for Sun + 8 planets, orbit rings, asteroid belt, and a player ship traveling along a spline path from the Sun outward toward a mining asteroid field.
+## Technical plan
 
-### Multi-view mode switcher (top-right HUD)
-1. **Cockpit** — first-person from ship, HUD reticle, warp streaks tied to speed.
-2. **Chase** — third-person follow cam behind the ship.
-3. **Orbital** — free orbit around currently-focused body (reuses POV 14 controls).
-4. **Cinematic** — auto-cutting cameras between planets on a timer.
-5. **Planet Close-up** — click any planet to zoom, showing realistic surface + atmosphere shader.
-6. **Harvest View** — snaps to the asteroid field where AI bots work (see §3).
+New folder `src/components/space/scene/`:
 
-Keyboard: `1–6` switches views; `Space` toggles auto-travel; scroll adjusts warp speed.
+- `SpaceScene.tsx` — `<Canvas>` with perspective camera (fov 60), `gl` alpha false, dpr capped, `frameloop` gated on tab visibility. Mounts all layers plus post-processing.
+- `CameraRig.tsx` — camera follows a slow Lissajous/orbital path with eased look-at and banking; speed scales with market volatility; frozen for `prefers-reduced-motion`.
+- `Starfield.tsx` — 4 depth shells (radii ~120/300/700/1600), total ~45k points on desktop / ~9k on low power. One `THREE.Points` per shell with a custom shader: per-star temperature color, size attenuation, twinkle from time+seed, soft radial falloff for glow. Shells counter-rotate at different rates for parallax.
+- `StarTrails.tsx` — nearest shell rendered a second time as instanced stretched quads oriented along camera velocity, additive, opacity scaled by speed.
+- `Galaxy.tsx` — large inward-facing sphere with a fragment shader: fbm-based Milky Way band along a tilted great circle plus multi-octave nebula clouds (deep blue/violet/faint magenta), rendered with `BackSide`, `depthWrite` false, tone-mapped to fade into black.
+- `Planets.tsx` — 5 bodies. Orbits: parametric ellipse with per-body semi-major axis, eccentricity, inclination and phase; period from a Kepler-style `a^1.5` so inner bodies move faster. Each planet is a sphere with a shader material: 3D fbm terrain/banding, cloud layer offset in time, Lambert term from the star's position for a true terminator, Fresnel rim glow. One `pointLight` + emissive star sphere as the single light source.
+- `MarketComets.tsx` — instanced comet heads + tapered tails spawned from market events, travelling across the frustum with a lifetime, tinted by direction, sized/sped by move magnitude.
+- `useMarketPulse.ts` — subscribes to Binance's public combined ticker websocket (`wss://stream.binance.com:9443/stream?streams=btcusdt@ticker/ethusdt@ticker/solusdt@ticker/bnbusdt@ticker`); no key needed. Falls back to polling the existing `get-crypto-prices` function if the socket fails. Exposes `{ events, volatility }` through a small external store so the scene reads it without re-rendering React each tick.
+- Post-processing via `@react-three/postprocessing@^2` (fiber 8 compatible): Bloom, subtle ChromaticAberration, Noise (film grain), Vignette. Disabled entirely on low-power devices.
 
-### Travel system
-- Ship follows a Catmull-Rom curve through waypoints (Sun → Mercury → … → Asteroid Belt).
-- Warp speed slider (0.25×–8×); at ≥4× enables light-streak post effect.
-- Distance / current target / ETA readout in HUD.
+`SpaceBackground.tsx` swaps `ProceduralSpace` for `SpaceScene`, keeping the existing black base, dim veil, vignette, `pointer-events-none`, visibility pause and Full/Lite/Off modes. `ProceduralSpace.tsx` is removed.
 
-## 3. AI bot harvesters
-- Small fleet of Zozo (grey) and Draco (red) alien ships modeled as low-poly GLTF-style meshes (procedural, no external assets) orbiting/latching onto asteroids.
-- Each bot emits a mining beam (animated shader line) to an asteroid; asteroid slowly shrinks and drops a glowing resource that flies to a central "CyberLink Hauler."
-- Live HUD panel: bot count, resources/min, active target, mode (Zozo=stealth, Draco=aggressive).
-- Clicking a bot opens the existing `BotProfileModal` for that persona.
+Performance: instanced/points geometry only, no per-frame allocation, particle counts and post-processing scaled by the existing `isLowPowerDevice` probe, DPR capped at 1.5 (1 on lite), reduced-motion renders a single static frame.
 
-## 4. Wiring & entry points
-- Add "Solar Voyage" tile on Space Voyage tab (POV 15) and a launcher button in main nav.
-- Global 4-click background close still exits the overlay.
-- Uses existing `useFloatingWindowsContext` so opening `/voyage` also works as a floating tab.
-
-## Technical notes
-- Files touched:
-  - `src/components/RealisticSpaceBackground.tsx` — add props, refactor constants.
-  - `src/types/spaceBackground.ts` — new palette/intensity types.
-  - `src/pages/SolarSystemVoyage.tsx` — new route.
-  - `src/components/voyage/` — `Ship.tsx`, `Planet.tsx`, `AsteroidField.tsx`, `HarvesterBot.tsx`, `ViewSwitcher.tsx`, `VoyageHUD.tsx`.
-  - `src/App.tsx` — register `/voyage` route.
-- Reuse `@react-three/fiber` + `@react-three/drei` if already installed; otherwise add.
-- Palette presets live in one `palettes.ts` map so future modes (e.g. Brain) can reuse.
-- No backend changes; harvesting is visual only (no DB writes) unless you want persistent resource tallies.
-
-## Out of scope (ask if wanted)
-- Persisting harvested resources to a `voyage_resources` table.
-- Multiplayer / other users' ships visible in the same system.
-- VR / gyroscope camera on mobile.
+Verified with a Playwright screenshot of the running app before finishing.
