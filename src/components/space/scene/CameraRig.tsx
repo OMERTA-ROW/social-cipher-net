@@ -15,6 +15,8 @@ const CameraRig = ({ animate }: { animate: boolean }) => {
   const prev = useRef(new THREE.Vector3());
   const vel = useRef(new THREE.Vector3());
   const tmp = useRef(new THREE.Vector3());
+  const target = useRef(new THREE.Vector3());
+  const upTarget = useRef(new THREE.Vector3(0, 1, 0));
   const up = useRef(new THREE.Vector3(0, 1, 0));
 
   useFrame((state, delta) => {
@@ -37,16 +39,17 @@ const CameraRig = ({ animate }: { animate: boolean }) => {
 
     // ease the aim point ahead of the travel direction, biased at the star
     const ahead = 0.9;
-    const target = new THREE.Vector3(
+    target.current.set(
       Math.cos(a + ahead) * r * 0.12,
       Math.sin(a * 0.53 + ahead) * 10,
       Math.sin(a + ahead) * r * 0.1,
     );
-    look.current.lerp(target, 1 - Math.exp(-1.2 * dt));
+    look.current.lerp(target.current, 1 - Math.exp(-1.2 * dt));
 
     // bank into the turn instead of snapping
     const bank = THREE.MathUtils.clamp(vel.current.x * 0.6, -0.22, 0.22);
-    up.current.lerp(new THREE.Vector3(Math.sin(bank), Math.cos(bank), 0), 1 - Math.exp(-1.5 * dt));
+    upTarget.current.set(Math.sin(bank), Math.cos(bank), 0);
+    up.current.lerp(upTarget.current, 1 - Math.exp(-1.5 * dt));
     camera.up.copy(up.current);
     camera.lookAt(look.current);
   });
