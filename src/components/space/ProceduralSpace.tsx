@@ -197,7 +197,7 @@ const fragmentShader = /* glsl */ `
     float ot = uMotion > 0.5 ? t : 0.0;
 
     // ----- black hole: small and far off to one side, clear of every planet -----
-    vec2 hole = vec2(-0.86, 0.40);
+    vec2 hole = vec2(-0.60, 0.34);
     if (uMotion > 0.5) {
       hole += vec2(sin(t * 0.013) * 0.008, cos(t * 0.011) * 0.006);
     }
@@ -247,7 +247,7 @@ const fragmentShader = /* glsl */ `
     col += diskCol * band * 1.25 * beam;
 
     // infalling dust drawn into the hole — subtle visible pull
-    float dustR = smoothstep(rs * 14.0, rs * 2.0, r);
+    float dustR = smoothstep(rs * 8.0, rs * 2.0, r);
     float spiral = fbm(vec2(atan(dp.y, dp.x) * 1.6 + r * 22.0 - (uMotion > 0.5 ? t * 0.22 : 0.0), r * 9.0), 3);
     col += vec3(0.55, 0.42, 0.60) * dustR * smoothstep(0.45, 0.95, spiral) * 0.32;
 
@@ -277,17 +277,17 @@ const fragmentShader = /* glsl */ `
     col = mix(col, sunSurf * 1.5, sunDisc);
 
     // Mercury
-    vec2 p1 = orbitPos(focus, 0.20, 0.20, 0.34, 0.9, ot);
+    vec2 p1 = orbitPos(focus, 0.20, 0.20, 0.16, 0.9, ot);
     bcol = body(uv, p1, 0.013 * orbitDepth(0.20, 0.20, 0.9, ot), vec3(0.44, 0.40, 0.37), vec3(0.62, 0.58, 0.54), 9.0, 3.1, 1.0, cover);
     col = mix(col, bcol, cover);
 
     // Venus
-    vec2 p2 = orbitPos(focus, 0.31, 0.06, 0.34, 2.4, ot);
+    vec2 p2 = orbitPos(focus, 0.31, 0.06, 0.16, 2.4, ot);
     bcol = body(uv, p2, 0.021 * orbitDepth(0.31, 0.06, 2.4, ot), vec3(0.78, 0.64, 0.40), vec3(0.95, 0.86, 0.66), 6.0, 8.7, 0.8, cover);
     col = mix(col, bcol, cover);
 
     // Earth + Moon
-    vec2 p3 = orbitPos(focus, 0.46, 0.05, 0.34, 4.1, ot);
+    vec2 p3 = orbitPos(focus, 0.46, 0.05, 0.16, 4.1, ot);
     float e3 = 0.024 * orbitDepth(0.46, 0.05, 4.1, ot);
     bcol = body(uv, p3, e3, vec3(0.07, 0.24, 0.55), vec3(0.20, 0.48, 0.26), 7.0, 12.3, 1.1, cover);
     col = mix(col, bcol, cover);
@@ -296,12 +296,12 @@ const fragmentShader = /* glsl */ `
     col = mix(col, bcol, cover);
 
     // Mars
-    vec2 p4 = orbitPos(focus, 0.62, 0.14, 0.34, 5.6, ot);
+    vec2 p4 = orbitPos(focus, 0.62, 0.14, 0.16, 5.6, ot);
     bcol = body(uv, p4, 0.018 * orbitDepth(0.62, 0.14, 5.6, ot), vec3(0.55, 0.24, 0.12), vec3(0.82, 0.46, 0.26), 6.0, 33.0, 1.1, cover);
     col = mix(col, bcol, cover);
 
     // Jupiter + a Galilean moon
-    vec2 p5 = orbitPos(focus, 0.86, 0.05, 0.34, 1.7, ot);
+    vec2 p5 = orbitPos(focus, 0.86, 0.05, 0.16, 1.7, ot);
     float e5 = 0.052 * orbitDepth(0.86, 0.05, 1.7, ot);
     bcol = body(uv, p5, e5, vec3(0.58, 0.42, 0.28), vec3(0.90, 0.80, 0.64), 22.0, 44.0, 0.5, cover);
     col = mix(col, bcol, cover);
@@ -310,7 +310,7 @@ const fragmentShader = /* glsl */ `
     col = mix(col, bcol, cover);
 
     // Saturn + rings
-    vec2 p6 = orbitPos(focus, 1.12, 0.06, 0.34, 3.4, ot);
+    vec2 p6 = orbitPos(focus, 1.12, 0.06, 0.16, 3.4, ot);
     float e6 = 0.044 * orbitDepth(1.12, 0.06, 3.4, ot);
     vec2 rd = uv - p6;
     float rell = length(vec2(rd.x, rd.y * 3.4));
@@ -323,12 +323,12 @@ const fragmentShader = /* glsl */ `
     col += ringCol * rings * 0.55 * step(0.0, rd.y);   // front half of the ring plane
 
     // Uranus
-    vec2 p7 = orbitPos(focus, 1.42, 0.05, 0.34, 0.4, ot);
+    vec2 p7 = orbitPos(focus, 1.42, 0.05, 0.16, 0.4, ot);
     bcol = body(uv, p7, 0.030 * orbitDepth(1.42, 0.05, 0.4, ot), vec3(0.36, 0.68, 0.72), vec3(0.62, 0.86, 0.88), 5.0, 77.0, 0.4, cover);
     col = mix(col, bcol, cover);
 
     // Neptune
-    vec2 p8 = orbitPos(focus, 1.72, 0.01, 0.34, 2.9, ot);
+    vec2 p8 = orbitPos(focus, 1.72, 0.01, 0.16, 2.9, ot);
     bcol = body(uv, p8, 0.029 * orbitDepth(1.72, 0.01, 2.9, ot), vec3(0.14, 0.28, 0.68), vec3(0.32, 0.52, 0.90), 6.0, 88.0, 0.5, cover);
     col = mix(col, bcol, cover);
 
