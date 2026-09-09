@@ -18,7 +18,7 @@ interface Props {
   animate: boolean;
 }
 
-const CHROMA = new THREE.Vector2(0.0006, 0.0009);
+const CHROMA = new THREE.Vector2(0.00025, 0.00035);
 
 const SceneContents = ({ full, animate, dpr }: Props & { dpr: number }) => {
   // ambient lift reacts gently to live market volatility

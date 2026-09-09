@@ -51,7 +51,7 @@ const frag = /* glsl */ `
     // dark dust lanes cutting through the core of the band
     bandAmt *= 1.0 - smoothstep(0.45, 0.85, dust) * bandCore * 0.85;
 
-    vec3 col = band * bandAmt * 0.16;
+    vec3 col = band * bandAmt * 0.105;
 
     // nebula complexes at a few fixed directions
     vec3 nebA = normalize(vec3(-0.7, 0.15, 0.62));
