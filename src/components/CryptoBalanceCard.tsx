@@ -118,8 +118,16 @@ export const CryptoBalanceCard = () => {
           <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
             <p className="text-xs text-muted-foreground mb-1">Total Value (USD)</p>
             <p className="text-3xl font-bold text-accent">
-              ${totalUsd.toFixed(2)}
+              {totalUsd != null ? `$${totalUsd.toFixed(2)}` : "Unavailable"}
             </p>
+            <MarketSourceBadge
+              className="mt-2"
+              source={meta?.source}
+              latency={meta?.latency}
+              asOf={meta?.asOf}
+              connected={!priceError && !!meta}
+              error={priceError}
+            />
           </div>
 
           {hasBalance ? (
@@ -138,11 +146,11 @@ export const CryptoBalanceCard = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium">
-                      ${balance.usdValue.toFixed(2)}
+                      {balance.usdValue != null ? `$${balance.usdValue.toFixed(2)}` : "Price unavailable"}
                     </p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <TrendingUp className="w-3 h-3" />
-                      Live price
+                      {balance.usdValue != null ? "Live price" : "No live feed"}
                     </p>
                   </div>
                 </div>

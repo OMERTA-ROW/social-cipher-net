@@ -26,20 +26,18 @@ export const CryptoToUsdConverter = ({ cryptoBalances, onConversionComplete }: C
   const handleEstimate = async () => {
     if (!selectedCrypto || !amount || parseFloat(amount) <= 0) return;
 
+    setPriceError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("get-crypto-prices");
-      
-      if (error) throw error;
-
-      const price = data.prices[selectedCrypto];
-      if (price) {
-        const baseValue = parseFloat(amount) * price;
-        const surcharge = baseValue * 0.02;
-        const finalValue = baseValue - surcharge;
-        setEstimatedUsd(finalValue);
-      }
+      const res = await getCryptoQuotes([selectedCrypto]);
+      const quote = res.quotes.find((q) => q.symbol.toUpperCase() === selectedCrypto.toUpperCase());
+      if (!quote) throw new Error(`No live price available for ${selectedCrypto}`);
+      const baseValue = parseFloat(amount) * quote.price;
+      setEstimatedUsd(baseValue - baseValue * 0.02);
+      setMeta({ source: res.source, latency: res.latency, asOf: res.asOf });
     } catch (error) {
-      console.error("Error estimating conversion:", error);
+      setEstimatedUsd(null);
+      setMeta(null);
+      setPriceError(messageOf(error));
     }
   };
 
