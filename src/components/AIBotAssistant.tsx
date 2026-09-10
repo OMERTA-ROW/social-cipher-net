@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { useZozoSubscription, ZOZO_TIERS } from "@/hooks/useZozoSubscription";
 import { useDracoSubscription, DRACO_TIERS } from "@/hooks/useDracoSubscription";
 import { DracoSubscriptionDialog } from "./DracoSubscriptionDialog";
+import { useIsCeo } from "@/hooks/useIsCeo";
 import { BotProfileModal } from "./BotProfileModal";
 import { Info } from "lucide-react";
 
@@ -38,6 +39,7 @@ const AIBotAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showDracoUpgrade, setShowDracoUpgrade] = useState(false);
+  const { isCeo } = useIsCeo();
   const [aiMode, setAiMode] = useState<"zozo" | "draco" | "quantum" | "autofix" | "pageload" | "brain">("zozo");
   const [infinityLoopActive, setInfinityLoopActive] = useState(true); // Always active
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true); // Always enabled
@@ -220,8 +222,9 @@ const AIBotAssistant = () => {
           toast.info(`${currentChar.name} Closed`);
         } else {
           // Double tap when closed - cycle through all AI modes
-          const modes: Array<"zozo" | "draco" | "quantum" | "autofix" | "pageload" | "brain"> = 
-            ["zozo", "draco", "quantum", "autofix", "pageload", "brain"];
+          const modes: Array<"zozo" | "draco" | "quantum" | "autofix" | "pageload" | "brain"> = isCeo
+            ? ["zozo", "draco", "quantum", "autofix", "pageload", "brain"]
+            : ["zozo", "draco", "quantum", "autofix", "pageload"];
           const currentIndex = modes.indexOf(aiMode);
           const nextMode = modes[(currentIndex + 1) % modes.length];
           setAiMode(nextMode);
