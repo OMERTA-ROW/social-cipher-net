@@ -9,7 +9,7 @@ export interface SavedTab {
   tab_url: string;
   tab_type: string;
   is_active: boolean;
-  login_credentials: Record<string, any>;
+  login_credentials?: Record<string, any>;
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
@@ -26,12 +26,12 @@ export const useSavedTabs = () => {
 
       const { data, error } = await supabase
         .from("user_saved_tabs")
-        .select("*")
+        .select("id, user_id, tab_name, tab_url, tab_type, is_active, metadata, created_at, updated_at")
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as SavedTab[];
+      return (data ?? []) as unknown as SavedTab[];
     },
   });
 
@@ -49,7 +49,7 @@ export const useSavedTabs = () => {
           tab_type: tab.tab_type || "trading_platform",
           metadata: tab.metadata || {},
         })
-        .select()
+        .select("id, user_id, tab_name, tab_url, tab_type, is_active, metadata, created_at, updated_at")
         .single();
 
       if (error) throw error;
