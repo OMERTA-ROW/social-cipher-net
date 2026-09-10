@@ -16,6 +16,8 @@ import SellerDashboard from "./pages/SellerDashboard";
 import Monetization from "./pages/Monetization";
 import CyberGamers from "./pages/CyberGamers";
 import CyberStreamer from "./pages/CyberStreamer";
+import Connectors from "./pages/Connectors";
+import Theater from "./pages/Theater";
 import NotFound from "./pages/NotFound";
 import Security from "./pages/Security";
 import CommunityGuidelines from "./pages/CommunityGuidelines";
@@ -56,6 +58,8 @@ const AppContent = () => {
         <Route path="/monetization" element={<Monetization />} />
         <Route path="/cyber-arena" element={<CyberGamers />} />
         <Route path="/cyber-streamer" element={<CyberStreamer />} />
+        <Route path="/connectors" element={<Connectors />} />
+        <Route path="/theater" element={<Theater />} />
         <Route path="/security" element={<Security />} />
         <Route path="/community-guidelines" element={<CommunityGuidelines />} />
         <Route path="/verification" element={<Verification />} />
