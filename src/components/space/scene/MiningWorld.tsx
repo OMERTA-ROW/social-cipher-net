@@ -1,5 +1,6 @@
-import { useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import * as THREE from "three";
 import MiningVessel from "./MiningVessel";
 import { Draco, Grey } from "./AlienCrew";
@@ -292,16 +293,16 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
   const posFor = (phase: string, p: number, time: number, out: THREE.Vector3) => {
     switch (phase) {
       case "travel":
-        return out.set(-420 + p * 520, 150 - p * 40, 260 - p * 180);
+        return out.set(-420 + p * 520, 96 - p * 26, 260 - p * 180);
       case "approach": {
         const a = p * Math.PI * 1.1;
-        return out.set(Math.cos(a) * 150 * (1 - p * 0.55), 110 - p * 70, Math.sin(a) * 150 * (1 - p * 0.55));
+        return out.set(Math.cos(a) * 150 * (1 - p * 0.55), 70 - p * 44, Math.sin(a) * 150 * (1 - p * 0.55));
       }
       case "landing": {
         const e = smooth(p);
         return out.set(
           THREE.MathUtils.lerp(-60, PAD.x, e),
-          THREE.MathUtils.lerp(40, PAD.y + 2.6, smooth(Math.min(1, p * 1.15))),
+          THREE.MathUtils.lerp(26, PAD.y + 2.6, smooth(Math.min(1, p * 1.15))),
           THREE.MathUtils.lerp(30, PAD.z, e),
         );
       }
@@ -317,14 +318,14 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
       }
       case "conquest": {
         const a = p * Math.PI * 2;
-        return out.set(Math.cos(a) * 60, 30 + Math.sin(a * 2) * 6, Math.sin(a) * 60);
+        return out.set(Math.cos(a) * 60, 22 + Math.sin(a * 2) * 5, Math.sin(a) * 60);
       }
       case "combat": {
         const a = p * Math.PI * 4;
-        return out.set(Math.cos(a) * 70, 34 + Math.sin(a * 3) * 14, Math.sin(a * 1.3) * 70);
+        return out.set(Math.cos(a) * 70, 26 + Math.sin(a * 3) * 10, Math.sin(a * 1.3) * 70);
       }
       default:
-        return out.set(p * 260, 30 + p * 220, -p * 320);
+        return out.set(p * 260, 22 + p * 200, -p * 320);
     }
   };
 
@@ -435,6 +436,23 @@ const AlienSky = () => {
   );
 };
 
+/** Local PMREM environment so the hull metal reflects something real. */
+const SceneEnvironment = () => {
+  const { gl, scene } = useThree();
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const env = pmrem.fromScene(new RoomEnvironment(), 0.04);
+    const prev = scene.environment;
+    scene.environment = env.texture;
+    return () => {
+      scene.environment = prev;
+      env.texture.dispose();
+      pmrem.dispose();
+    };
+  }, [gl, scene]);
+  return null;
+};
+
 const MiningWorld = ({ animate, full }: { animate: boolean; full: boolean }) => {
   const claimed = useRef(0);
   const combat = useRef(0);
@@ -452,6 +470,7 @@ const MiningWorld = ({ animate, full }: { animate: boolean; full: boolean }) => 
 
   return (
     <group>
+      <SceneEnvironment />
       <AlienSky />
       <hemisphereLight args={["#6e7f9c", "#3a2b1e", 1.15]} />
       <directionalLight position={[900, 420, -600]} intensity={2.6} color="#ffdcb4" castShadow={false} />
