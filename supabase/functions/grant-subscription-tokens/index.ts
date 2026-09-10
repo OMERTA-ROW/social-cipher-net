@@ -16,8 +16,8 @@ const json = (body: unknown, status = 200) =>
 // Server-side source of truth: how many bonus tokens each product grants.
 // Client-supplied token amounts are ignored entirely.
 const TOKEN_BONUS_BY_PRODUCT: Record<string, number> = {
-  prod_zozo_premium: 1000,
-  prod_draco_premium: 1000,
+  prod_RlNG0uIMPYZazH: 10000, // CyberPro (Zozo premium)
+  prod_TPJ37SP4f0iOHB: 5000, // Draco Pro
 };
 
 serve(async (req) => {
