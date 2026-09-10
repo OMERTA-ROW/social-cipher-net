@@ -28,6 +28,7 @@ import Miners from "./pages/Miners";
 import UserProfile from "./pages/UserProfile";
 import TokenPurchase from "./pages/TokenPurchase";
 import Backgrounds from "./pages/Backgrounds";
+import CeoPortal from "./pages/CeoPortal";
 import SolarSystemVoyage from "./pages/SolarSystemVoyage";
 import Profile from "./pages/Profile";
 import Thread from "./pages/Thread";
@@ -70,6 +71,7 @@ const AppContent = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
+        <Route path="/ceo" element={<CeoPortal />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<NotFound />} />
