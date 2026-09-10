@@ -1,0 +1,256 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import Navigation from "@/components/Navigation";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Plug,
+  Search,
+  Loader2,
+  CheckCircle2,
+  AlertTriangle,
+  Unplug,
+  RefreshCw,
+} from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  CONNECTOR_CATEGORIES,
+  CONNECTOR_SERVICES,
+  type ConnectorService,
+} from "@/lib/connectors/registry";
+import { useConnections } from "@/hooks/useConnections";
+import ConnectDialog from "@/components/connectors/ConnectDialog";
+import MulticastPanel from "@/components/connectors/MulticastPanel";
+import PlatformComposer from "@/components/connectors/PlatformComposer";
+
+const Connectors = () => {
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const { connections, loading, refresh, byService } = useConnections();
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState<ConnectorService | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+
+  // Auth guard
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) navigate("/auth");
+    });
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (!session) navigate("/auth");
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Finish an OAuth round trip when the provider sends us back here.
+  useEffect(() => {
+    const code = params.get("code");
+    const state = params.get("state");
+    if (!code || !state) return;
+
+    setFinishing(true);
+    supabase.functions
+      .invoke("connector-oauth", { body: { action: "callback", code, state } })
+      .then(({ data, error }) => {
+        if (error || data?.error) {
+          toast.error(data?.error ?? error?.message ?? "Authorization failed");
+        } else {
+          toast.success("Account connected");
+          refresh();
+        }
+      })
+      .finally(() => {
+        setFinishing(false);
+        params.delete("code");
+        params.delete("state");
+        setParams(params, { replace: true });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const disconnect = async (service: ConnectorService) => {
+    const { data, error } = await supabase.functions.invoke(
+      "connector-credentials",
+      { body: { action: "disconnect", service_id: service.id } },
+    );
+    if (error || data?.error) {
+      toast.error(data?.error ?? error?.message ?? "Could not disconnect");
+      return;
+    }
+    toast.success(`${service.name} disconnected`);
+    refresh();
+  };
+
+  const open = (service: ConnectorService) => {
+    setActive(service);
+    setDialogOpen(true);
+  };
+
+  const filtered = (categoryId: string) =>
+    CONNECTOR_SERVICES.filter(
+      (s) =>
+        s.category === categoryId &&
+        (query.trim() === "" ||
+          s.name.toLowerCase().includes(query.trim().toLowerCase())),
+    );
+
+  const connectedCount = connections.filter((c) => c.status === "connected").length;
+
+  return (
+    <div className="min-h-screen bg-transparent">
+      <Navigation onCreatePost={() => {}} />
+
+      <main className="container mx-auto px-4 pt-24 pb-16 max-w-5xl">
+        <header className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Plug className="w-9 h-9 text-primary text-glow" />
+            <h1 className="text-4xl font-bold text-primary text-glow">Connectors</h1>
+          </div>
+          <p className="text-muted-foreground">
+            One place to link every service you use — then post, comment, read your
+            feeds and stream out to all of them from inside Cyber Link.
+          </p>
+          <div className="flex items-center gap-2 mt-3">
+            <Badge variant="outline">{connectedCount} connected</Badge>
+            <Badge variant="outline">{CONNECTOR_SERVICES.length} available</Badge>
+            {finishing && (
+              <Badge className="gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Finishing sign-in
+              </Badge>
+            )}
+          </div>
+        </header>
+
+        <div className="relative mb-6 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Find a service..."
+            className="pl-9"
+          />
+        </div>
+
+        <div className="grid gap-6 mb-8">
+          <PlatformComposer />
+          <MulticastPanel />
+        </div>
+
+        {CONNECTOR_CATEGORIES.map((category) => {
+          const services = filtered(category.id);
+          if (services.length === 0) return null;
+          return (
+            <section key={category.id} className="mb-8">
+              <h2 className="text-xl font-bold text-foreground mb-1">
+                {category.label}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-3">
+                {category.description}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {services.map((service) => {
+                  const connection = byService(service.id);
+                  const connected = connection?.status === "connected";
+                  return (
+                    <Card
+                      key={service.id}
+                      className="p-4 bg-card/50 backdrop-blur border-primary/20 hover:border-primary/50 transition-colors flex flex-col"
+                    >
+                      <div className="flex items-start gap-3 mb-2">
+                        <span className="text-2xl" aria-hidden>
+                          {service.glyph}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-foreground truncate">
+                            {service.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {service.blurb}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 mb-3">
+                        {loading ? (
+                          <Badge variant="outline" className="text-[10px]">
+                            Checking
+                          </Badge>
+                        ) : connected ? (
+                          <Badge className="text-[10px] gap-1">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Connected
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px]">
+                            Not connected
+                          </Badge>
+                        )}
+                        {connection?.account_name && (
+                          <span className="text-[11px] text-muted-foreground truncate">
+                            {connection.account_name}
+                          </span>
+                        )}
+                      </div>
+
+                      {connection?.last_error && (
+                        <p className="text-[11px] text-destructive flex items-start gap-1 mb-2">
+                          <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+                          <span className="line-clamp-2">{connection.last_error}</span>
+                        </p>
+                      )}
+
+                      <div className="mt-auto flex gap-2">
+                        <Button
+                          size="sm"
+                          variant={connected ? "outline" : "default"}
+                          className="flex-1"
+                          onClick={() => open(service)}
+                        >
+                          {connected ? (
+                            <>
+                              <RefreshCw className="w-3 h-3 mr-1" />
+                              Reconnect
+                            </>
+                          ) : (
+                            "Connect"
+                          )}
+                        </Button>
+                        {connected && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => disconnect(service)}
+                            aria-label={`Disconnect ${service.name}`}
+                          >
+                            <Unplug className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </main>
+
+      <ConnectDialog
+        service={active}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onConnected={refresh}
+      />
+    </div>
+  );
+};
+
+export default Connectors;

@@ -49,6 +49,44 @@ export type Database = {
           },
         ]
       }
+      connection_secrets: {
+        Row: {
+          connection_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          secret_type: string
+          secret_value: string
+          user_id: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          secret_type: string
+          secret_value: string
+          user_id: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          secret_type?: string
+          secret_value?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connection_secrets_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_moderation: {
         Row: {
           content_id: string
@@ -1907,6 +1945,75 @@ export type Database = {
           },
         ]
       }
+      studio_assets: {
+        Row: {
+          asset_type: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          metadata: Json
+          name: string
+          source: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json
+          name: string
+          source?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          metadata?: Json
+          name?: string
+          source?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      studio_projects: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          kind: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          kind?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          kind?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_unlocks: {
         Row: {
           created_at: string | null
@@ -1936,6 +2043,115 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      theater_chat: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          message: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          message: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          message?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theater_chat_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "theater_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      theater_events: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          description: string | null
+          host_id: string
+          id: string
+          is_live: boolean
+          poster_url: string | null
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          host_id: string
+          id?: string
+          is_live?: boolean
+          poster_url?: string | null
+          starts_at: string
+          status?: string
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          host_id?: string
+          id?: string
+          is_live?: boolean
+          poster_url?: string | null
+          starts_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      theater_playback_state: {
+        Row: {
+          event_id: string
+          is_playing: boolean
+          position_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          event_id: string
+          is_playing?: boolean
+          position_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          event_id?: string
+          is_playing?: boolean
+          position_seconds?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theater_playback_state_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "theater_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       token_pools: {
         Row: {
@@ -2028,6 +2244,51 @@ export type Database = {
           metadata?: Json | null
           platform_name?: string
           platform_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_connections: {
+        Row: {
+          account_handle: string | null
+          account_name: string | null
+          connected_at: string
+          id: string
+          last_error: string | null
+          metadata: Json
+          method: string
+          scopes: string[] | null
+          service_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_handle?: string | null
+          account_name?: string | null
+          connected_at?: string
+          id?: string
+          last_error?: string | null
+          metadata?: Json
+          method?: string
+          scopes?: string[] | null
+          service_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_handle?: string | null
+          account_name?: string | null
+          connected_at?: string
+          id?: string
+          last_error?: string | null
+          metadata?: Json
+          method?: string
+          scopes?: string[] | null
+          service_id?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
