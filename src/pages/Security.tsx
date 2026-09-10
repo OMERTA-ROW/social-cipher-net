@@ -162,7 +162,7 @@ const Security = () => {
                     </p>
                   </div>
                   <Switch
-                    checked={profile?.two_factor_enabled || false}
+                    checked={twoFactorEnabled}
                     disabled
                   />
                 </div>
