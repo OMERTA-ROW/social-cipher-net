@@ -136,11 +136,10 @@ const Auth = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("User creation failed");
 
-      // Update profile with birthdate
+      // Store birthdate privately (never exposed on public profiles)
       const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ birthdate })
-        .eq('id', authData.user.id);
+        .from('profile_private')
+        .upsert({ user_id: authData.user.id, birthdate }, { onConflict: 'user_id' });
 
       if (profileError) console.error('Profile update error:', profileError);
 

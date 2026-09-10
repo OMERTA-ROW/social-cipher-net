@@ -32,10 +32,10 @@ export const useContentModeration = () => {
       }
 
       const { data: profile, error } = await supabase
-        .from('profiles')
+        .from('profile_private')
         .select('birthdate')
-        .eq('id', user.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (error) throw error;
 
