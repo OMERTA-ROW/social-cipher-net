@@ -71,6 +71,7 @@ const AppContent = () => {
         <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
+        <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showAIBot && <AIBotAssistant />}
