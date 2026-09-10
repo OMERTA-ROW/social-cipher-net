@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { putSecret } from "../_shared/connectorVault.ts";
+import { audit } from "../_shared/connectorEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
