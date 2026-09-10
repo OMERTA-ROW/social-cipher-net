@@ -1,141 +1,107 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
   Image,
-  Brain,
   Zap,
   Target,
   Loader2
 } from "lucide-react";
+import MarketSourceBadge from "@/components/market/MarketSourceBadge";
+import MarketUnavailable from "@/components/market/MarketUnavailable";
+import TradingDisclaimer from "@/components/market/TradingDisclaimer";
+import { getNftMarket, messageOf, type Latency, type NftCollection } from "@/services/marketData";
 
-interface AlgorithmSignal {
-  action: "BUY" | "SELL" | "HOLD";
-  confidence: number;
-  price: number;
-  timestamp: string;
-  indicators: {
-    floorPrice: number;
-    volume24h: string;
-    holders: number;
-    rarity: string;
-    liquidity: string;
-    trend: string;
-  };
-  onChain: {
-    mintActivity: string;
-    whaleTransfers: string;
-    uniqueBuyers: number;
-    gasPrice: string;
-  };
-  sentiment: {
-    social: number;
-    discord: string;
-    twitter: string;
-  };
-  risk: {
-    level: "LOW" | "MEDIUM" | "HIGH";
-    rugPullScore: number;
-    contractVerified: boolean;
-  };
+const usd = (n: number) =>
+  n >= 1e9 ? `$${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(1)}K` : `$${n.toFixed(2)}`;
+
+/** Action derived only from the live floor and volume series. */
+function derive(c: NftCollection) {
+  const reasons: string[] = [];
+  let score = 0;
+  let signals = 0;
+
+  signals++;
+  if (c.floorChange24h > 3) {
+    score += 1;
+    reasons.push(`Floor +${c.floorChange24h.toFixed(1)}% in 24h`);
+  } else if (c.floorChange24h < -3) {
+    score -= 1;
+    reasons.push(`Floor ${c.floorChange24h.toFixed(1)}% in 24h`);
+  } else reasons.push(`Floor flat (${c.floorChange24h.toFixed(1)}%)`);
+
+  signals++;
+  if (c.volumeChange24h > 10) {
+    score += 1;
+    reasons.push(`Volume +${c.volumeChange24h.toFixed(1)}%`);
+  } else if (c.volumeChange24h < -10) {
+    score -= 1;
+    reasons.push(`Volume ${c.volumeChange24h.toFixed(1)}%`);
+  } else reasons.push(`Volume ${c.volumeChange24h.toFixed(1)}%`);
+
+  const depth = c.marketCapUsd ? c.volume24hUsd / c.marketCapUsd : 0;
+  signals++;
+  if (depth > 0.02) {
+    score += 1;
+    reasons.push(`24h volume ${(depth * 100).toFixed(1)}% of market cap`);
+  } else reasons.push(`Thin turnover (${(depth * 100).toFixed(2)}% of market cap)`);
+
+  const normalized = signals ? score / signals : 0;
+  const action: "BUY" | "SELL" | "HOLD" = normalized >= 0.4 ? "BUY" : normalized <= -0.4 ? "SELL" : "HOLD";
+  const ownerRatio = c.supply ? c.owners / c.supply : 0;
+  const risk = c.volume24hUsd < 50_000 ? "HIGH" : c.volume24hUsd < 500_000 ? "MEDIUM" : "LOW";
+
+  return { action, confidence: Math.round(Math.min(95, Math.abs(normalized) * 100)), reasons, depth, ownerRatio, risk };
 }
 
 export const NFTAlgorithmEngine = () => {
-  const [signal, setSignal] = useState<AlgorithmSignal | null>(null);
+  const [collections, setCollections] = useState<NftCollection[]>([]);
+  const [meta, setMeta] = useState<{ source: string; latency: Latency; asOf: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [autoTrade, setAutoTrade] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [performance, setPerformance] = useState({
-    winRate: 68,
-    totalTrades: 89,
-    profitFactor: 2.1,
-    avgROI: 145
-  });
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning) {
-      runAlgorithm();
-      interval = setInterval(() => {
-        runAlgorithm();
-      }, 12000);
-    }
-    return () => clearInterval(interval);
-  }, [isRunning]);
-
-  const runAlgorithm = async () => {
+  const runAlgorithm = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-trading-signals', {
-        body: { 
-          platform: 'opensea',
-          symbol: 'NFT',
-          assetType: 'nft'
-        }
-      });
-
-      if (error) throw error;
-
-      const algorithmSignal: AlgorithmSignal = {
-        action: Math.random() > 0.5 ? "BUY" : (Math.random() > 0.6 ? "SELL" : "HOLD"),
-        confidence: Math.floor(Math.random() * 25) + 65,
-        price: Math.random() * 5 + 0.5,
-        timestamp: new Date().toISOString(),
-        indicators: {
-          floorPrice: Math.random() * 5 + 0.3,
-          volume24h: `${(Math.random() * 500).toFixed(1)} ETH`,
-          holders: Math.floor(Math.random() * 5000) + 1000,
-          rarity: Math.random() > 0.5 ? "Rare" : "Common",
-          liquidity: `${(Math.random() * 200).toFixed(1)} ETH`,
-          trend: Math.random() > 0.5 ? "Uptrend" : "Consolidating"
-        },
-        onChain: {
-          mintActivity: Math.random() > 0.5 ? "High" : "Moderate",
-          whaleTransfers: `${Math.floor(Math.random() * 50)}`,
-          uniqueBuyers: Math.floor(Math.random() * 2000) + 500,
-          gasPrice: `${Math.floor(Math.random() * 50) + 20} gwei`
-        },
-        sentiment: {
-          social: Math.floor(Math.random() * 40) + 60,
-          discord: Math.random() > 0.5 ? "Bullish" : "Neutral",
-          twitter: Math.random() > 0.5 ? "Trending" : "Stable"
-        },
-        risk: {
-          level: Math.random() > 0.7 ? "HIGH" : (Math.random() > 0.5 ? "MEDIUM" : "LOW"),
-          rugPullScore: Math.floor(Math.random() * 30) + 10,
-          contractVerified: Math.random() > 0.2
-        }
-      };
-
-      setSignal(algorithmSignal);
-
-      if (autoTrade && algorithmSignal.action !== "HOLD" && algorithmSignal.confidence > 70) {
-        toast.success(`🎨 NFT Auto-Trade: ${algorithmSignal.action}`, {
-          description: `Confidence: ${algorithmSignal.confidence}% | Floor: ${algorithmSignal.price.toFixed(3)} ETH`
-        });
-      }
-    } catch (error: any) {
-      console.error('NFT Algorithm error:', error);
-      toast.error("NFT Algorithm Error", { description: error.message });
+      const res = await getNftMarket();
+      if (!res.collections.length) throw new Error("No live NFT collections returned");
+      setCollections([...res.collections].sort((a, b) => b.volume24hUsd - a.volume24hUsd));
+      setMeta({ source: res.source, latency: res.latency, asOf: res.asOf });
+      setError(null);
+    } catch (e) {
+      setCollections([]);
+      setError(messageOf(e));
+      toast.error("Live NFT feed unavailable", { description: messageOf(e) });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let interval: number | undefined;
+    if (isRunning) {
+      runAlgorithm();
+      interval = window.setInterval(runAlgorithm, 120000);
+    }
+    return () => window.clearInterval(interval);
+  }, [isRunning, runAlgorithm]);
+
+  const top = collections[0] ?? null;
+  const signal = top ? derive(top) : null;
 
   const getActionColor = (action: string) => {
     if (action === "BUY") return "text-green-500";
     if (action === "SELL") return "text-red-500";
     return "text-yellow-500";
   };
-
   const getRiskColor = (level: string) => {
     if (level === "LOW") return "bg-green-500/20 text-green-500";
     if (level === "MEDIUM") return "bg-yellow-500/20 text-yellow-500";
@@ -152,7 +118,7 @@ export const NFTAlgorithmEngine = () => {
                 <Image className="h-5 w-5 text-purple-500" />
                 NFT Algorithm Engine
               </CardTitle>
-              <CardDescription>Advanced NFT Trading with Rarity & On-Chain Analysis</CardDescription>
+              <CardDescription>Floor and volume read from live collection data — no simulated values</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={isRunning ? "default" : "outline"} className="gap-1">
@@ -161,6 +127,13 @@ export const NFTAlgorithmEngine = () => {
               </Badge>
             </div>
           </div>
+          <MarketSourceBadge
+            className="mt-2"
+            source={meta?.source}
+            latency={meta?.latency}
+            asOf={meta?.asOf}
+            connected={!error && collections.length > 0}
+          />
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-3">
@@ -181,138 +154,151 @@ export const NFTAlgorithmEngine = () => {
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
               Manual Scan
             </Button>
-            <Button
-              onClick={() => setAutoTrade(!autoTrade)}
-              variant={autoTrade ? "default" : "outline"}
-              className="gap-2 ml-auto"
-            >
-              <Brain className="h-4 w-4" />
-              Auto-Trade: {autoTrade ? "ON" : "OFF"}
-            </Button>
           </div>
 
           <div className="grid grid-cols-4 gap-4">
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Win Rate</div>
-                <div className="text-2xl font-bold text-green-500">{performance.winRate}%</div>
+                <div className="text-sm text-muted-foreground">Collections</div>
+                <div className="text-2xl font-bold">{collections.length || "—"}</div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Total Trades</div>
-                <div className="text-2xl font-bold">{performance.totalTrades}</div>
+                <div className="text-sm text-muted-foreground">Top Floor</div>
+                <div className="text-2xl font-bold">{top ? `${top.floorPrice.toFixed(2)} ${top.nativeCurrency}` : "—"}</div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Profit Factor</div>
-                <div className="text-2xl font-bold text-green-500">{performance.profitFactor}x</div>
+                <div className="text-sm text-muted-foreground">24h Volume</div>
+                <div className="text-2xl font-bold text-green-500">{top ? usd(top.volume24hUsd) : "—"}</div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Avg ROI</div>
-                <div className="text-2xl font-bold">{performance.avgROI}%</div>
+                <div className="text-sm text-muted-foreground">Floor 24h</div>
+                <div className={`text-2xl font-bold ${(top?.floorChange24h ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  {top ? `${top.floorChange24h >= 0 ? "+" : ""}${top.floorChange24h.toFixed(1)}%` : "—"}
+                </div>
               </CardContent>
             </Card>
           </div>
 
-          {signal && (
+          {error && !top && <MarketUnavailable message={error} onRetry={runAlgorithm} />}
+
+          {top && signal && (
             <Tabs defaultValue="signal" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="signal">Signal</TabsTrigger>
                 <TabsTrigger value="indicators">Indicators</TabsTrigger>
-                <TabsTrigger value="onchain">On-Chain</TabsTrigger>
-                <TabsTrigger value="sentiment">Sentiment</TabsTrigger>
+                <TabsTrigger value="onchain">Holders</TabsTrigger>
+                <TabsTrigger value="sentiment">Leaderboard</TabsTrigger>
               </TabsList>
 
               <TabsContent value="signal" className="space-y-4">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className={`text-3xl font-bold flex items-center gap-2 ${getActionColor(signal.action)}`}>
-                      {signal.action === "BUY" ? <TrendingUp className="h-8 w-8" /> : 
-                       signal.action === "SELL" ? <TrendingDown className="h-8 w-8" /> : 
+                      {signal.action === "BUY" ? <TrendingUp className="h-8 w-8" /> :
+                       signal.action === "SELL" ? <TrendingDown className="h-8 w-8" /> :
                        <Activity className="h-8 w-8" />}
                       {signal.action}
                     </div>
-                    <Badge className={getRiskColor(signal.risk.level)}>
-                      {signal.risk.level} RISK
+                    <Badge className={getRiskColor(signal.risk)}>
+                      {signal.risk} LIQUIDITY RISK
                     </Badge>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Confidence</span>
+                      <span className="text-muted-foreground">Metric agreement</span>
                       <span className="font-bold">{signal.confidence}%</span>
                     </div>
                     <Progress value={signal.confidence} className="h-2" />
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
+                      <div className="text-muted-foreground">Collection</div>
+                      <div className="font-bold text-lg">{top.name}</div>
+                    </div>
+                    <div>
                       <div className="text-muted-foreground">Floor Price</div>
-                      <div className="font-bold text-lg">{signal.price.toFixed(3)} ETH</div>
+                      <div className="font-bold">{top.floorPrice.toFixed(3)} {top.nativeCurrency} ({usd(top.floorPriceUsd)})</div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Time</div>
-                      <div className="font-bold">{new Date(signal.timestamp).toLocaleTimeString()}</div>
+                      <div className="text-muted-foreground">Market cap</div>
+                      <div className="font-bold">{top.marketCapUsd ? usd(top.marketCapUsd) : "—"}</div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Rug Pull Risk</div>
-                      <div className="font-bold text-yellow-500">{signal.risk.rugPullScore}/100</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Contract</div>
-                      <div className={`font-bold ${signal.risk.contractVerified ? 'text-green-500' : 'text-red-500'}`}>
-                        {signal.risk.contractVerified ? 'Verified' : 'Unverified'}
-                      </div>
+                      <div className="text-muted-foreground">Turnover</div>
+                      <div className="font-bold">{(signal.depth * 100).toFixed(2)}%</div>
                     </div>
                   </div>
+                  <ul className="text-xs text-muted-foreground space-y-1 pt-1">
+                    {signal.reasons.map((r) => (
+                      <li key={r}>• {r}</li>
+                    ))}
+                  </ul>
                 </div>
               </TabsContent>
 
               <TabsContent value="indicators" className="space-y-3">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
-                  {Object.entries(signal.indicators).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                      <span className="font-bold">{value}</span>
-                    </div>
-                  ))}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Floor change 24h</span>
+                    <span className="font-bold">{top.floorChange24h.toFixed(2)}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Volume 24h</span>
+                    <span className="font-bold">{top.volume24h.toFixed(1)} {top.nativeCurrency} ({usd(top.volume24hUsd)})</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Volume change 24h</span>
+                    <span className="font-bold">{top.volumeChange24h.toFixed(2)}%</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Rarity and mint activity are not shown: no provider is connected for them.
+                  </p>
                 </div>
               </TabsContent>
 
               <TabsContent value="onchain" className="space-y-3">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
-                  {Object.entries(signal.onChain).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                      <span className="font-bold">{value}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Unique owners</span>
+                    <span className="font-bold">{top.owners.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Total supply</span>
+                    <span className="font-bold">{top.supply.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-muted-foreground">Owner / supply ratio</span>
+                      <span className="font-bold">{(signal.ownerRatio * 100).toFixed(1)}%</span>
                     </div>
-                  ))}
+                    <Progress value={Math.min(100, signal.ownerRatio * 100)} className="h-2" />
+                  </div>
                 </div>
               </TabsContent>
 
               <TabsContent value="sentiment" className="space-y-3">
-                <div className="rounded-lg bg-background/50 p-4 space-y-3">
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-muted-foreground">Social Sentiment</span>
-                      <span className="font-bold">{signal.sentiment.social}/100</span>
+                <div className="rounded-lg bg-background/50 p-4 space-y-2">
+                  {collections.map((c) => (
+                    <div key={c.id} className="flex justify-between items-center text-sm">
+                      <span className="font-bold truncate max-w-[45%]">{c.name}</span>
+                      <span className="text-muted-foreground">{c.floorPrice.toFixed(2)} {c.nativeCurrency}</span>
+                      <span className={c.floorChange24h >= 0 ? "text-green-500" : "text-red-500"}>
+                        {c.floorChange24h >= 0 ? "+" : ""}{c.floorChange24h.toFixed(1)}%
+                      </span>
                     </div>
-                    <Progress value={signal.sentiment.social} className="h-2" />
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Discord</span>
-                    <Badge>{signal.sentiment.discord}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Twitter</span>
-                    <Badge>{signal.sentiment.twitter}</Badge>
-                  </div>
+                  ))}
                 </div>
               </TabsContent>
             </Tabs>
           )}
+
+          <TradingDisclaimer />
         </CardContent>
       </Card>
     </div>

@@ -159,6 +159,35 @@ export async function getMarketStatus(): Promise<Sourced<{ market: MarketStatus 
   return call("get-stock-market", { action: "status" }, "mstatus", 30_000);
 }
 
+export type TokenPair = {
+  chain: string;
+  dex: string;
+  url: string;
+  pairAddress: string;
+  symbol: string;
+  name: string;
+  address: string;
+  priceUsd: number;
+  change5m: number;
+  change1h: number;
+  change6h: number;
+  change24h: number;
+  liquidityUsd: number;
+  volume24h: number;
+  volume1h: number;
+  fdv: number;
+  marketCap: number;
+  buys24h: number;
+  sells24h: number;
+  pairCreatedAt: number | null;
+};
+
+export async function getTokenMarket(query?: string): Promise<Sourced<{ pairs: TokenPair[] }>> {
+  return query
+    ? call("get-token-market", { action: "search", query }, `dx:s:${query}`, 30_000)
+    : call("get-token-market", { action: "trending" }, "dx:trending", 60_000);
+}
+
 export async function getNftMarket(collections?: string[]): Promise<Sourced<{ collections: NftCollection[] }>> {
   return call("get-nft-market", { collections }, `nft:${(collections ?? []).join(",")}`, 120_000);
 }
