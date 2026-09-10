@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Coins } from "lucide-react";
 import { GiftGallery } from "./GiftGallery";
 import { GiftOverlay } from "./GiftOverlay";
+import { SnipeLayer } from "./sniper/SnipeLayer";
 
 interface Gift {
   id: string;
@@ -142,6 +143,7 @@ export function OmegaChat({ streamId, streamerId }: OmegaChatProps) {
   return (
     <div className="relative">
       <GiftOverlay gifts={activeGifts} />
+      <SnipeLayer targetUserId={streamerId} />
       
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
         <Button
