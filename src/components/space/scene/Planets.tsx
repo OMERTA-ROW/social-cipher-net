@@ -5,9 +5,9 @@ import {
   CLOUD_TEXTURE_URLS,
   RING_TEXTURE_URL,
   SPACE_TEXTURE_URLS,
-  SUN_TEXTURE_URL,
   useLazyTexture,
 } from "../realTextures";
+import Sun from "./Sun";
 
 /**
  * Real 3D bodies on inclined elliptical orbits around a single local star.
@@ -216,25 +216,6 @@ const PlanetMesh = ({ body, full, segments, index }: { body: Body; full: boolean
   );
 };
 
-const Sun = ({ full }: { full: boolean }) => {
-  const mesh = useRef<THREE.Mesh>(null);
-  const map = useLazyTexture(full ? SUN_TEXTURE_URL : undefined, { delay: 160 });
-  useFrame((_, delta) => {
-    if (mesh.current) mesh.current.rotation.y += Math.min(delta, 0.05) * 0.012;
-  });
-  return (
-    <>
-      <mesh ref={mesh}>
-        <sphereGeometry args={[16, 64, 32]} />
-        <meshBasicMaterial map={map ?? undefined} color={map ? "#fff6e2" : "#fff0cf"} toneMapped={false} />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[22, 32, 16]} />
-        <meshBasicMaterial color="#ffb460" transparent opacity={0.16} depthWrite={false} toneMapped={false} />
-      </mesh>
-    </>
-  );
-};
 
 const Planets = ({ full }: { full: boolean }) => {
   const segments = full ? 96 : 40;
