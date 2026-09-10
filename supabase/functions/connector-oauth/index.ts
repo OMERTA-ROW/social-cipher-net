@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { putSecret } from "../_shared/connectorVault.ts";
+import { audit } from "../_shared/connectorEngine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -86,6 +88,51 @@ const PROVIDERS: Record<
     authorizeUrl: "https://www.canva.com/api/oauth/authorize",
     tokenUrl: "https://api.canva.com/rest/v1/oauth/token",
     scope: "design:meta:read asset:read folder:read",
+  },
+  reddit: {
+    authorizeUrl: "https://www.reddit.com/api/v1/authorize",
+    tokenUrl: "https://www.reddit.com/api/v1/access_token",
+    scope: "identity read submit history",
+  },
+  linkedin: {
+    authorizeUrl: "https://www.linkedin.com/oauth/v2/authorization",
+    tokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
+    scope: "openid profile w_member_social",
+  },
+  discord: {
+    authorizeUrl: "https://discord.com/oauth2/authorize",
+    tokenUrl: "https://discord.com/api/oauth2/token",
+    scope: "identify guilds messages.read",
+  },
+  spotify: {
+    authorizeUrl: "https://accounts.spotify.com/authorize",
+    tokenUrl: "https://accounts.spotify.com/api/token",
+    scope: "user-read-private user-read-email user-top-read",
+  },
+  soundcloud: {
+    authorizeUrl: "https://secure.soundcloud.com/authorize",
+    tokenUrl: "https://secure.soundcloud.com/oauth/token",
+    scope: "non-expiring",
+  },
+  figma: {
+    authorizeUrl: "https://www.figma.com/oauth",
+    tokenUrl: "https://api.figma.com/v1/oauth/token",
+    scope: "file_read",
+  },
+  google_drive: {
+    authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    scope: "https://www.googleapis.com/auth/drive.readonly",
+  },
+  dropbox: {
+    authorizeUrl: "https://www.dropbox.com/oauth2/authorize",
+    tokenUrl: "https://api.dropboxapi.com/oauth2/token",
+    scope: "files.content.read files.metadata.read",
+  },
+  etsy: {
+    authorizeUrl: "https://www.etsy.com/oauth/connect",
+    tokenUrl: "https://api.etsy.com/v3/public/oauth/token",
+    scope: "listings_r transactions_r shops_r",
   },
 };
 
@@ -194,28 +241,39 @@ Deno.serve(async (req) => {
         ? new Date(Date.now() + Number(tokenBody.expires_in) * 1000).toISOString()
         : null;
 
-      await admin.from("connection_secrets").upsert(
-        {
-          connection_id: connection.id,
-          user_id: state.user_id,
-          secret_type: "access_token",
-          secret_value: String(tokenBody.access_token),
-          expires_at: expiresAt,
-        },
-        { onConflict: "connection_id,secret_type" },
-      );
+      await putSecret(admin, {
+        connectionId: connection.id,
+        userId: state.user_id,
+        type: "access_token",
+        value: String(tokenBody.access_token),
+        expiresAt,
+      });
 
       if (tokenBody.refresh_token) {
-        await admin.from("connection_secrets").upsert(
-          {
-            connection_id: connection.id,
-            user_id: state.user_id,
-            secret_type: "refresh_token",
-            secret_value: String(tokenBody.refresh_token),
-          },
-          { onConflict: "connection_id,secret_type" },
-        );
+        await putSecret(admin, {
+          connectionId: connection.id,
+          userId: state.user_id,
+          type: "refresh_token",
+          value: String(tokenBody.refresh_token),
+        });
       }
+
+      await admin
+        .from("user_connections")
+        .update({
+          expires_at: expiresAt,
+          health: "healthy",
+          failure_count: 0,
+        })
+        .eq("id", connection.id);
+
+      await audit(admin, {
+        userId: state.user_id,
+        connectionId: connection.id,
+        serviceId: state.service_id,
+        action: "oauth_connect",
+        status: "ok",
+      });
 
       return json({ ok: true, service_id: state.service_id });
     }

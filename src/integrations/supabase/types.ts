@@ -53,6 +53,7 @@ export type Database = {
         Row: {
           connection_id: string
           created_at: string
+          encrypted: boolean
           expires_at: string | null
           id: string
           secret_type: string
@@ -62,6 +63,7 @@ export type Database = {
         Insert: {
           connection_id: string
           created_at?: string
+          encrypted?: boolean
           expires_at?: string | null
           id?: string
           secret_type: string
@@ -71,6 +73,7 @@ export type Database = {
         Update: {
           connection_id?: string
           created_at?: string
+          encrypted?: boolean
           expires_at?: string | null
           id?: string
           secret_type?: string
@@ -80,6 +83,145 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "connection_secrets_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connector_audit_log: {
+        Row: {
+          action: string
+          connection_id: string | null
+          created_at: string
+          detail: string | null
+          http_status: number | null
+          id: string
+          service_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          connection_id?: string | null
+          created_at?: string
+          detail?: string | null
+          http_status?: number | null
+          id?: string
+          service_id: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          connection_id?: string | null
+          created_at?: string
+          detail?: string | null
+          http_status?: number | null
+          id?: string
+          service_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_audit_log_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connector_definitions: {
+        Row: {
+          availability: string
+          blurb: string
+          capabilities: string[]
+          category: string
+          constraints: Json
+          created_at: string
+          docs_url: string | null
+          enabled: boolean
+          fields: Json
+          glyph: string
+          id: string
+          methods: string[]
+          name: string
+          oauth_provider: string | null
+          rate_policy: Json
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          availability?: string
+          blurb?: string
+          capabilities?: string[]
+          category: string
+          constraints?: Json
+          created_at?: string
+          docs_url?: string | null
+          enabled?: boolean
+          fields?: Json
+          glyph?: string
+          id: string
+          methods?: string[]
+          name: string
+          oauth_provider?: string | null
+          rate_policy?: Json
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          availability?: string
+          blurb?: string
+          capabilities?: string[]
+          category?: string
+          constraints?: Json
+          created_at?: string
+          docs_url?: string | null
+          enabled?: boolean
+          fields?: Json
+          glyph?: string
+          id?: string
+          methods?: string[]
+          name?: string
+          oauth_provider?: string | null
+          rate_policy?: Json
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      connector_rate_state: {
+        Row: {
+          blocked_until: string | null
+          bucket: string
+          connection_id: string
+          id: string
+          refilled_at: string
+          tokens: number
+        }
+        Insert: {
+          blocked_until?: string | null
+          bucket?: string
+          connection_id: string
+          id?: string
+          refilled_at?: string
+          tokens?: number
+        }
+        Update: {
+          blocked_until?: string | null
+          bucket?: string
+          connection_id?: string
+          id?: string
+          refilled_at?: string
+          tokens?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connector_rate_state_connection_id_fkey"
             columns: ["connection_id"]
             isOneToOne: false
             referencedRelation: "user_connections"
@@ -1506,6 +1648,108 @@ export type Database = {
         }
         Relationships: []
       }
+      publish_batches: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          media: Json
+          metadata: Json
+          scheduled_for: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          media?: Json
+          metadata?: Json
+          scheduled_for?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          media?: Json
+          metadata?: Json
+          scheduled_for?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      publish_targets: {
+        Row: {
+          attempts: number
+          batch_id: string
+          connection_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          overrides: Json
+          permalink: string | null
+          provider_item_id: string | null
+          service_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          batch_id: string
+          connection_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          overrides?: Json
+          permalink?: string | null
+          provider_item_id?: string | null
+          service_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          batch_id?: string
+          connection_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          overrides?: Json
+          permalink?: string | null
+          provider_item_id?: string | null
+          service_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publish_targets_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "publish_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publish_targets_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           affiliate_commission: number | null
@@ -2044,6 +2288,65 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_jobs: {
+        Row: {
+          attempts: number
+          connection_id: string | null
+          created_at: string
+          id: string
+          job_type: string
+          last_error: string | null
+          payload: Json
+          priority: number
+          result: Json | null
+          run_after: string
+          service_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          job_type: string
+          last_error?: string | null
+          payload?: Json
+          priority?: number
+          result?: Json | null
+          run_after?: string
+          service_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          connection_id?: string | null
+          created_at?: string
+          id?: string
+          job_type?: string
+          last_error?: string | null
+          payload?: Json
+          priority?: number
+          result?: Json | null
+          run_after?: string
+          service_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_jobs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "user_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       theater_chat: {
         Row: {
           created_at: string
@@ -2254,8 +2557,12 @@ export type Database = {
           account_handle: string | null
           account_name: string | null
           connected_at: string
+          expires_at: string | null
+          failure_count: number
+          health: string
           id: string
           last_error: string | null
+          last_synced_at: string | null
           metadata: Json
           method: string
           scopes: string[] | null
@@ -2268,8 +2575,12 @@ export type Database = {
           account_handle?: string | null
           account_name?: string | null
           connected_at?: string
+          expires_at?: string | null
+          failure_count?: number
+          health?: string
           id?: string
           last_error?: string | null
+          last_synced_at?: string | null
           metadata?: Json
           method?: string
           scopes?: string[] | null
@@ -2282,8 +2593,12 @@ export type Database = {
           account_handle?: string | null
           account_name?: string | null
           connected_at?: string
+          expires_at?: string | null
+          failure_count?: number
+          health?: string
           id?: string
           last_error?: string | null
+          last_synced_at?: string | null
           metadata?: Json
           method?: string
           scopes?: string[] | null

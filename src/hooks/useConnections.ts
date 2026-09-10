@@ -10,6 +10,11 @@ export interface UserConnection {
   account_handle: string | null;
   metadata: Record<string, unknown> | null;
   last_error: string | null;
+  health: string | null;
+  expires_at: string | null;
+  last_synced_at: string | null;
+  scopes: string[] | null;
+  failure_count: number | null;
   connected_at: string;
   updated_at: string;
 }
@@ -36,7 +41,7 @@ export const useConnections = () => {
     const { data } = await supabase
       .from("user_connections")
       .select(
-        "id, service_id, method, status, account_name, account_handle, metadata, last_error, connected_at, updated_at",
+        "id, service_id, method, status, account_name, account_handle, metadata, last_error, health, expires_at, last_synced_at, scopes, failure_count, connected_at, updated_at",
       )
       .eq("user_id", user.id);
     setConnections((data ?? []) as UserConnection[]);
