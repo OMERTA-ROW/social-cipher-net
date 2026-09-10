@@ -3,10 +3,12 @@ import {
   BINANCE_INTERVAL,
   COIN_IDS,
   binanceQuotes,
+  cached,
   coingeckoQuotes,
   corsHeaders,
   cryptoCandles,
   errorResponse,
+  getJson,
   json,
   type Quote,
 } from "../_shared/marketProviders.ts";

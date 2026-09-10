@@ -1,230 +1,164 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import MarketSourceBadge from "@/components/market/MarketSourceBadge";
+import MarketUnavailable from "@/components/market/MarketUnavailable";
+import TradingDisclaimer from "@/components/market/TradingDisclaimer";
+import { getCandles, messageOf, type AssetClass, type Timeframe } from "@/services/marketData";
+import { analyze, type TechnicalRead } from "@/lib/marketIndicators";
 
-interface Signal {
-  platform: string;
-  signal: string;
-  strength?: string;
-  price?: number;
-  timestamp: string;
-  indicators?: any;
-  volume?: string;
-  onChainMetrics?: any;
-  liquidations?: any;
-  openInterest?: string;
-  dayTradeScore?: number;
-  algorithmScore?: number;
-  backtestResults?: any;
-  institutionalFlow?: string;
-  darkPoolActivity?: string;
-  optionsFlow?: any;
-  technicalRating?: string;
-  dayTradeSetup?: string;
-  momentum?: any;
-  retailSentiment?: string;
-  popularityRank?: number;
+/**
+ * Multi-timeframe technical read-outs. Every number below is computed from
+ * live exchange candles; nothing is generated.
+ */
+
+interface SignalRow {
+  timeframe: Timeframe;
+  read: TechnicalRead;
+  source: string;
+  latency: "realtime" | "delayed";
+  asOf: number;
 }
 
 interface TradingSignalsPanelProps {
   symbol?: string;
+  stockSymbol?: string;
 }
 
-const TradingSignalsPanel = ({ symbol = "BTC" }: TradingSignalsPanelProps) => {
-  const [cryptoSignals, setCryptoSignals] = useState<Signal[]>([]);
-  const [stockSignals, setStockSignals] = useState<Signal[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+const CRYPTO_TFS: Timeframe[] = ["5m", "15m", "1h", "4h", "1D"];
+const STOCK_TFS: Timeframe[] = ["15m", "1h", "1D", "1W"];
 
-  const cryptoPlatforms = ["tradingview", "binance", "cryptoquant", "coinglass"];
-  const stockPlatforms = ["alpaca", "quantconnect", "interactivebrokers", "tradingview_stocks", "tdameritrade", "robinhood"];
+const TradingSignalsPanel = ({ symbol = "BTC", stockSymbol = "SPY" }: TradingSignalsPanelProps) => {
+  const [cryptoRows, setCryptoRows] = useState<SignalRow[]>([]);
+  const [stockRows, setStockRows] = useState<SignalRow[]>([]);
+  const [cryptoError, setCryptoError] = useState<string | null>(null);
+  const [stockError, setStockError] = useState<string | null>(null);
 
-  const fetchSignals = async (assetType: "crypto" | "stock", platforms: string[]) => {
-    try {
-      const signalPromises = platforms.map(platform =>
-        supabase.functions.invoke('fetch-trading-signals', {
-          body: { platform, symbol, assetType }
-        })
-      );
+  const loadRows = useCallback(async (assetClass: AssetClass, ticker: string, timeframes: Timeframe[]) => {
+    const results = await Promise.allSettled(timeframes.map((tf) => getCandles(assetClass, ticker, tf)));
+    const rows: SignalRow[] = [];
+    let lastError: string | null = null;
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") {
+        const read = analyze(r.value.candles);
+        if (read) {
+          rows.push({ timeframe: timeframes[i], read, source: r.value.source, latency: r.value.latency, asOf: r.value.asOf });
+        }
+      } else {
+        lastError = messageOf(r.reason);
+      }
+    });
+    return { rows, error: rows.length ? null : lastError ?? "No live candles returned" };
+  }, []);
 
-      const results = await Promise.all(signalPromises);
-      const newSignals = results
-        .filter(r => r.data)
-        .map(r => ({ ...r.data.data, platform: r.data.platform }));
-      
-      return newSignals;
-    } catch (error) {
-      console.error(`Error fetching ${assetType} signals:`, error);
-      return [];
-    }
-  };
-
-  const fetchAllSignals = async () => {
-    setIsLoading(true);
+  const fetchAll = useCallback(async () => {
     const [crypto, stocks] = await Promise.all([
-      fetchSignals("crypto", cryptoPlatforms),
-      fetchSignals("stock", stockPlatforms)
+      loadRows("crypto", symbol, CRYPTO_TFS),
+      loadRows("stock", stockSymbol, STOCK_TFS),
     ]);
-    setCryptoSignals(crypto);
-    setStockSignals(stocks);
-    setIsLoading(false);
-  };
+    setCryptoRows(crypto.rows);
+    setCryptoError(crypto.error);
+    setStockRows(stocks.rows);
+    setStockError(stocks.error);
+  }, [loadRows, symbol, stockSymbol]);
 
   useEffect(() => {
-    fetchAllSignals();
-    const interval = setInterval(fetchAllSignals, 30000); // Update every 30s
-    return () => clearInterval(interval);
-  }, [symbol]);
+    fetchAll();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") fetchAll();
+    }, 30000);
+    return () => window.clearInterval(interval);
+  }, [fetchAll]);
 
   const getSignalColor = (signal: string) => {
-    if (signal.includes("BUY") || signal.includes("ACCUMULATE")) return "text-green-500";
-    if (signal.includes("SELL")) return "text-red-500";
+    if (signal === "BUY") return "text-green-500";
+    if (signal === "SELL") return "text-red-500";
     return "text-yellow-500";
   };
 
   const getSignalIcon = (signal: string) => {
-    if (signal.includes("BUY") || signal.includes("ACCUMULATE")) return <TrendingUp className="h-4 w-4" />;
-    if (signal.includes("SELL")) return <TrendingDown className="h-4 w-4" />;
+    if (signal === "BUY") return <TrendingUp className="h-4 w-4" />;
+    if (signal === "SELL") return <TrendingDown className="h-4 w-4" />;
     return <AlertCircle className="h-4 w-4" />;
   };
 
-  const renderSignalCard = (signal: Signal, idx: number) => (
+  const renderSignalCard = (row: SignalRow, ticker: string) => (
     <div
-      key={`${signal.platform}-${idx}`}
+      key={`${ticker}-${row.timeframe}`}
       className="bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-600/30 rounded-lg p-3"
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className={`${getSignalColor(signal.signal)} flex items-center gap-1`}>
-            {getSignalIcon(signal.signal)}
-            <span className="font-bold text-sm">{signal.signal}</span>
+          <span className={`${getSignalColor(row.read.action)} flex items-center gap-1`}>
+            {getSignalIcon(row.read.action)}
+            <span className="font-bold text-sm">{row.read.action}</span>
           </span>
-          {signal.strength && (
-            <Badge variant="outline" className="text-xs border-red-600/30">
-              {signal.strength}
-            </Badge>
-          )}
+          <Badge variant="outline" className="text-xs border-red-600/30">
+            {row.read.confidence}% agreement
+          </Badge>
         </div>
-        <span className="text-xs text-red-400/70 uppercase">{signal.platform.replace('_', ' ')}</span>
+        <span className="text-xs text-red-400/70 uppercase">{row.timeframe}</span>
       </div>
 
-      {signal.price && (
-        <div className="text-xs text-red-100/70 mb-1">
-          Price: ${signal.price.toFixed(2)}
+      <div className="text-xs text-red-100/70 mb-1">
+        Price: ${row.read.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+      </div>
+
+      <div className="text-xs text-red-100/70 space-y-1">
+        <div>RSI: {row.read.rsi != null ? row.read.rsi.toFixed(1) : "—"}</div>
+        <div>MACD histogram: {row.read.macd ? row.read.macd.histogram.toFixed(4) : "—"}</div>
+        <div>Trend: {row.read.trend}</div>
+        <div>
+          Support / resistance:{" "}
+          {row.read.support != null && row.read.resistance != null
+            ? `${row.read.support.toFixed(2)} / ${row.read.resistance.toFixed(2)}`
+            : "—"}
         </div>
-      )}
-
-      {signal.indicators && (
-        <div className="text-xs text-red-100/70 space-y-1">
-          {signal.indicators.rsi && <div>RSI: {signal.indicators.rsi}</div>}
-          {signal.indicators.macd && <div>MACD: {signal.indicators.macd}</div>}
-          {signal.indicators.fibonacci && <div>Fib: {signal.indicators.fibonacci}</div>}
-          {signal.indicators.movingAverage && <div>MA: {signal.indicators.movingAverage}</div>}
-          {signal.indicators.bollingerBands && <div>BB: {signal.indicators.bollingerBands}</div>}
-          {signal.indicators.adx && <div>ADX: {signal.indicators.adx}</div>}
-        </div>
-      )}
-
-      {signal.volume && (
-        <div className="text-xs text-red-100/70">Volume: {signal.volume}</div>
-      )}
-
-      {signal.dayTradeScore && (
-        <div className="text-xs text-red-100/70">Day Trade Score: {signal.dayTradeScore}/100</div>
-      )}
-
-      {signal.algorithmScore && (
-        <div className="text-xs text-red-100/70">Algorithm Score: {signal.algorithmScore}/100</div>
-      )}
-
-      {signal.backtestResults && (
-        <div className="text-xs text-red-100/70 space-y-1">
-          <div>Sharpe Ratio: {signal.backtestResults.sharpeRatio}</div>
-          <div>Win Rate: {signal.backtestResults.winRate}</div>
-        </div>
-      )}
-
-      {signal.institutionalFlow && (
-        <div className="text-xs text-red-100/70">Institutional: {signal.institutionalFlow}</div>
-      )}
-
-      {signal.darkPoolActivity && (
-        <div className="text-xs text-red-100/70">Dark Pool: {signal.darkPoolActivity}</div>
-      )}
-
-      {signal.optionsFlow && (
-        <div className="text-xs text-red-100/70 space-y-1">
-          <div>Call Volume: {signal.optionsFlow.callVolume}</div>
-          <div>Put Volume: {signal.optionsFlow.putVolume}</div>
-        </div>
-      )}
-
-      {signal.technicalRating && (
-        <div className="text-xs text-red-100/70">Technical: {signal.technicalRating}</div>
-      )}
-
-      {signal.dayTradeSetup && (
-        <div className="text-xs text-red-100/70">Setup: {signal.dayTradeSetup}</div>
-      )}
-
-      {signal.momentum && (
-        <div className="text-xs text-red-100/70 space-y-1">
-          <div>Trend: {signal.momentum.trend}</div>
-          <div>Strength: {signal.momentum.strength}%</div>
-        </div>
-      )}
-
-      {signal.retailSentiment && (
-        <div className="text-xs text-red-100/70">Sentiment: {signal.retailSentiment}</div>
-      )}
-
-      {signal.popularityRank && (
-        <div className="text-xs text-red-100/70">Popularity Rank: #{signal.popularityRank}</div>
-      )}
-
-      {signal.onChainMetrics && (
-        <div className="text-xs text-red-100/70 space-y-1">
-          <div>Exchange Netflow: {signal.onChainMetrics.exchangeNetflow}</div>
-          <div>Whale Activity: {signal.onChainMetrics.whaleActivity}</div>
-        </div>
-      )}
-
-      {signal.liquidations && (
-        <div className="text-xs text-red-100/70 space-y-1">
-          <div>Long Liq: {signal.liquidations.long}</div>
-          <div>Short Liq: {signal.liquidations.short}</div>
-        </div>
-      )}
+        <div>Volume vs average: {row.read.volume ? `${row.read.volume.ratio.toFixed(2)}x` : "—"}</div>
+      </div>
 
       <div className="text-xs text-red-400/50 mt-2">
-        {new Date(signal.timestamp).toLocaleTimeString()}
+        {row.source} · {row.latency === "realtime" ? "real-time" : "delayed"} · {new Date(row.asOf).toLocaleTimeString()}
       </div>
     </div>
   );
 
+  const top = cryptoRows[0] ?? stockRows[0] ?? null;
+
   return (
     <Card className="bg-black/95 border-red-600/50 p-4">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-2">
         <Activity className="h-5 w-5 text-red-500 animate-pulse" />
         <h3 className="font-bold text-red-500">LIVE SIGNALS</h3>
         <Badge variant="outline" className="text-xs border-red-600/30 text-red-400">
           {symbol}
         </Badge>
       </div>
+      <MarketSourceBadge
+        className="mb-3"
+        source={top?.source}
+        latency={top?.latency}
+        asOf={top?.asOf}
+        connected={cryptoRows.length > 0 || stockRows.length > 0}
+      />
 
       <Tabs defaultValue="crypto" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-red-950/30">
           <TabsTrigger value="crypto" className="text-xs">Crypto</TabsTrigger>
           <TabsTrigger value="stocks" className="text-xs">Stocks</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="crypto" className="mt-4">
           <ScrollArea className="h-[300px]">
             <div className="space-y-3">
-              {cryptoSignals.map((signal, idx) => renderSignalCard(signal, idx))}
+              {cryptoError && !cryptoRows.length ? (
+                <MarketUnavailable message={cryptoError} onRetry={fetchAll} />
+              ) : (
+                cryptoRows.map((row) => renderSignalCard(row, symbol))
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
@@ -232,13 +166,17 @@ const TradingSignalsPanel = ({ symbol = "BTC" }: TradingSignalsPanelProps) => {
         <TabsContent value="stocks" className="mt-4">
           <ScrollArea className="h-[300px]">
             <div className="space-y-3">
-              {stockSignals.map((signal, idx) => (
-                renderSignalCard(signal, idx)
-              ))}
+              {stockError && !stockRows.length ? (
+                <MarketUnavailable message={stockError} onRetry={fetchAll} />
+              ) : (
+                stockRows.map((row) => renderSignalCard(row, stockSymbol))
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
       </Tabs>
+
+      <TradingDisclaimer className="mt-3" />
     </Card>
   );
 };
