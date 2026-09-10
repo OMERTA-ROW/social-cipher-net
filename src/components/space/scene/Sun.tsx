@@ -7,12 +7,11 @@ import { SUN_TEXTURE_URL, useLazyTexture } from "../realTextures";
 /**
  * Photorealistic star: a real 3D sphere with a shader-driven photosphere
  * (animated granulation, supergranule flow, sunspots, faculae, limb
- * darkening) plus an additive chromosphere/corona shell carrying streamers
+ * darkening).
  * and limb prominences. Radius, position and overall size are unchanged.
  */
 
 const PHOTO_RADIUS = 16;
-const CORONA_RADIUS = 22;
 
 const surfaceVert = /* glsl */ `
   varying vec3 vPos;
@@ -111,63 +110,9 @@ const surfaceFrag = /* glsl */ `
   }
 `;
 
-const coronaVert = /* glsl */ `
-  varying vec3 vDir;
-  varying vec3 vPosW;
-  varying vec3 vNormalW;
-  void main() {
-    vDir = normalize(position);
-    vec4 world = modelMatrix * vec4(position, 1.0);
-    vPosW = world.xyz;
-    vNormalW = normalize(mat3(modelMatrix) * normal);
-    gl_Position = projectionMatrix * viewMatrix * world;
-  }
-`;
-
-const coronaFrag = /* glsl */ `
-  precision highp float;
-  ${NOISE_GLSL}
-
-  varying vec3 vDir;
-  varying vec3 vPosW;
-  varying vec3 vNormalW;
-
-  uniform float uTime;
-  uniform float uInner;   // photosphere / corona radius ratio
-
-  void main() {
-    vec3 n = normalize(vNormalW);
-    vec3 V = normalize(cameraPosition - vPosW);
-    float rim = 1.0 - abs(dot(n, V));
-
-    // radial streamers: ridged noise stretched along the radial direction
-    vec3 d = vDir;
-    float streamer = ridge3(vec3(d.xy * 6.5, d.z * 2.2) + vec3(0.0, 0.0, uTime * 0.05), 4);
-    streamer = pow(clamp(streamer, 0.0, 1.0), 2.6);
-
-    // prominences: bright plasma arcs licking off the limb
-    float arcs = ridge3(d * 11.0 + vec3(uTime * 0.08, 0.0, 17.0), 3);
-    arcs = pow(smoothstep(0.62, 0.98, arcs), 2.0);
-
-    float limb = pow(rim, 2.1);
-    float glow = pow(rim, 4.5) * 0.55;
-
-    float a = (streamer * 0.42 + arcs * 0.55) * limb + glow;
-    a *= 0.9;
-
-    vec3 hot = vec3(1.0, 0.78, 0.42);
-    vec3 cool = vec3(0.95, 0.30, 0.10);
-    vec3 col = mix(cool, hot, clamp(streamer * 0.5 + arcs, 0.0, 1.0));
-    col += vec3(1.0, 0.42, 0.16) * arcs * 0.6;
-
-    gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
-  }
-`;
-
 const Sun = ({ full }: { full: boolean }) => {
   const mesh = useRef<THREE.Mesh>(null);
   const surfMat = useRef<THREE.ShaderMaterial>(null);
-  const coronaMat = useRef<THREE.ShaderMaterial>(null);
   const map = useLazyTexture(full ? SUN_TEXTURE_URL : undefined, { delay: 160 });
 
   const surfUniforms = useMemo(
@@ -176,10 +121,6 @@ const Sun = ({ full }: { full: boolean }) => {
       uMap: { value: null as THREE.Texture | null },
       uHasMap: { value: 0 },
     }),
-    [],
-  );
-  const coronaUniforms = useMemo(
-    () => ({ uTime: { value: 0 }, uInner: { value: PHOTO_RADIUS / CORONA_RADIUS } }),
     [],
   );
 
@@ -193,7 +134,6 @@ const Sun = ({ full }: { full: boolean }) => {
     if (mesh.current) mesh.current.rotation.y += dt * 0.012;
     const t = state.clock.elapsedTime;
     if (surfMat.current) surfMat.current.uniforms.uTime.value = t;
-    if (coronaMat.current) coronaMat.current.uniforms.uTime.value = t;
   });
 
   const segments = full ? 128 : 64;
@@ -207,21 +147,6 @@ const Sun = ({ full }: { full: boolean }) => {
           vertexShader={surfaceVert}
           fragmentShader={surfaceFrag}
           uniforms={surfUniforms}
-          toneMapped={false}
-        />
-      </mesh>
-
-      <mesh>
-        <sphereGeometry args={[CORONA_RADIUS, 64, 32]} />
-        <shaderMaterial
-          ref={coronaMat}
-          vertexShader={coronaVert}
-          fragmentShader={coronaFrag}
-          uniforms={coronaUniforms}
-          transparent
-          depthWrite={false}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
           toneMapped={false}
         />
       </mesh>
