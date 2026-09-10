@@ -39,6 +39,7 @@ const DescentCamera = ({
   const t = useRef(1.15); // start part-way down so the planet is on screen immediately
   const look = useRef(new THREE.Vector3(0, PLANET_RADIUS, 0));
   const target = useRef(new THREE.Vector3());
+  const frames = useRef(0);
   // ?bgalt=<units> pins the descent at one altitude — used when checking a band
   const pinned = useMemo(() => {
     if (typeof window === "undefined") return null;
@@ -88,7 +89,8 @@ const DescentCamera = ({
     camera.near = Math.max(0.02, alt * 0.01);
     camera.far = 20000;
     camera.updateProjectionMatrix();
-    if (pinned && Math.random() < 0.06) {
+    frames.current += 1;
+    if (pinned && frames.current % 30 === 1) {
       console.log("[descent]", alt.toFixed(2), camera.position.toArray().map((v) => +v.toFixed(2)), look.current.toArray().map((v) => +v.toFixed(2)));
     }
   });
