@@ -15,6 +15,7 @@ const Security = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [privacy, setPrivacy] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
@@ -33,12 +34,14 @@ const Security = () => {
 
   const loadData = async (userId: string) => {
     try {
-      const [profileRes, privacyRes, logsRes] = await Promise.all([
+      const [profileRes, privacyRes, logsRes, privateRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', userId).single(),
         supabase.from('privacy_settings').select('*').eq('user_id', userId).single(),
-        supabase.from('security_audit_log').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(10)
+        supabase.from('security_audit_log').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
+        supabase.from('profile_private').select('two_factor_enabled').eq('user_id', userId).maybeSingle()
       ]);
 
+      if (privateRes.data) setTwoFactorEnabled(!!privateRes.data.two_factor_enabled);
       if (profileRes.data) setProfile(profileRes.data);
       if (privacyRes.data) setPrivacy(privacyRes.data);
       if (logsRes.data) setAuditLogs(logsRes.data);
@@ -159,7 +162,7 @@ const Security = () => {
                     </p>
                   </div>
                   <Switch
-                    checked={profile?.two_factor_enabled || false}
+                    checked={twoFactorEnabled}
                     disabled
                   />
                 </div>
