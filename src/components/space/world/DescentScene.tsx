@@ -335,8 +335,9 @@ const Contents = ({ full, dpr }: { full: boolean; dpr: number }) => {
         <Starfield full={full} dpr={dpr} boost={1} />
       )}
       <Globe />
-      {resident("atmosphere") && <CityBlocks />}
-      {resident("street") && <GroundPatch />}
+      {(resident("atmosphere") || resident("rooftop") || resident("street")) && <CityBlocks />}
+      {(resident("rooftop") || resident("street")) && <GroundPatch />}
+
     </>
   );
 };
