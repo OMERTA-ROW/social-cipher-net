@@ -39,10 +39,24 @@ serve(async (req) => {
       throw new Error("Affiliate link not found");
     }
 
-    // Record the click
+    // Record the click with a salted, non-reversible IP hash (never the raw IP)
+    const rawIp = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
+    let ipHash: string | null = null;
+    if (rawIp) {
+      const salt = Deno.env.get("SUPABASE_JWKS") ?? "cyberlink-click-salt";
+      const digest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(`${salt}:${rawIp}`)
+      );
+      ipHash = Array.from(new Uint8Array(digest))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
     await supabaseClient.from("external_affiliate_clicks").insert({
       link_id: linkId,
       clicker_id: userId,
+      ip_hash: ipHash,
     });
 
     // Increment click count

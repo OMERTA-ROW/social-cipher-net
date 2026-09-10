@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
+// Columns safe to return to clients — never api_key / api_secret
+const SAFE_COLUMNS =
+  "id, user_id, account_name, account_type, platform, wallet_address, mining_type, is_active, optimization_level, metadata, created_at, updated_at";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -57,7 +61,7 @@ serve(async (req) => {
           optimization_level: accountData.optimization_level || "standard",
           metadata: accountData.metadata || {},
         })
-        .select()
+        .select(SAFE_COLUMNS)
         .single();
 
       if (error) throw error;
@@ -87,7 +91,7 @@ serve(async (req) => {
         })
         .eq("id", accountId)
         .eq("user_id", user.id)
-        .select()
+        .select(SAFE_COLUMNS)
         .single();
 
       if (error) throw error;
@@ -119,7 +123,7 @@ serve(async (req) => {
     } else if (action === "search") {
       const { data, error } = await supabaseClient
         .from("external_mining_accounts")
-        .select("*")
+        .select(SAFE_COLUMNS)
         .eq("user_id", user.id)
         .eq("mining_type", accountData.mining_type);
 

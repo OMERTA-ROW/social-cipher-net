@@ -216,18 +216,21 @@ export type Database = {
           clicker_id: string | null
           created_at: string | null
           id: string
+          ip_hash: string | null
           link_id: string
         }
         Insert: {
           clicker_id?: string | null
           created_at?: string | null
           id?: string
+          ip_hash?: string | null
           link_id: string
         }
         Update: {
           clicker_id?: string | null
           created_at?: string | null
           id?: string
+          ip_hash?: string | null
           link_id?: string
         }
         Relationships: [
