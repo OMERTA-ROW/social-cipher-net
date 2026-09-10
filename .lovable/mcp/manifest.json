@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://vovgmknghvohenvhsduw.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "cyber-link-social",
+      "version": "0.1.0",
+      "title": "Cyber Link Social"
+    },
+    "tools": [
+      {
+        "name": "get_my_profile",
+        "title": "Get my profile",
+        "description": "Get the signed-in user's Cyber Link Social profile plus follower and following counts.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_feed",
+        "title": "List feed posts",
+        "description": "List recent posts on Cyber Link Social. Use scope 'following' for posts from accounts the signed-in user follows, or 'discover' for recent public posts.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "scope": {
+              "default": "discover",
+              "description": "Which feed to read.",
+              "type": "string",
+              "enum": [
+                "discover",
+                "following",
+                "mine"
+              ]
+            },
+            "limit": {
+              "default": 20,
+              "description": "How many posts to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_post_thread",
+        "title": "Read a post thread",
+        "description": "Read a single post and its replies.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "post_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Id of the root post."
+            },
+            "reply_limit": {
+              "default": 30,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "post_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_post",
+        "title": "Create a post",
+        "description": "Publish a post as the signed-in user on Cyber Link Social. Pass parent_post_id to reply to an existing post.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+              "description": "The post text."
+            },
+            "parent_post_id": {
+              "description": "Optional id of the post being replied to.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
+            "content"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "like_post",
+        "title": "Like or unlike a post",
+        "description": "Like or remove a like from a post as the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "post_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Id of the post."
+            },
+            "action": {
+              "default": "like",
+              "type": "string",
+              "enum": [
+                "like",
+                "unlike"
+              ]
+            }
+          },
+          "required": [
+            "post_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "search_users",
+        "title": "Search people",
+        "description": "Find Cyber Link Social members by username or display name.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "description": "Name or handle to search for."
+            },
+            "limit": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 25
+            }
+          },
+          "required": [
+            "query"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "follow_user",
+        "title": "Follow or unfollow a member",
+        "description": "Follow or unfollow another Cyber Link Social member as the signed-in user.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Profile id of the member."
+            },
+            "action": {
+              "default": "follow",
+              "type": "string",
+              "enum": [
+                "follow",
+                "unfollow"
+              ]
+            }
+          },
+          "required": [
+            "user_id"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
