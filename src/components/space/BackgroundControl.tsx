@@ -7,6 +7,7 @@ import {
   setSpaceBgSettings,
   useSpaceBgSettings,
   type SpaceBgMode,
+  type SpaceBgQuality,
   type SpaceBgView,
 } from "@/lib/spaceBackgroundSettings";
 
@@ -19,10 +20,20 @@ const MODES: { value: SpaceBgMode; label: string; hint: string }[] = [
 const VIEWS: { value: SpaceBgView; label: string; hint: string }[] = [
   { value: "solar", label: "Solar system", hint: "Realistic star and planets" },
   { value: "mining", label: "Mining run", hint: "Alien world, ship and crew" },
+  { value: "descent", label: "Earth descent", hint: "Orbit down to the city" },
+];
+
+const QUALITIES: { value: SpaceBgQuality; label: string; hint: string }[] = [
+  { value: "auto", label: "Auto", hint: "Match this device" },
+  { value: "ultra", label: "Ultra", hint: "Highest detail" },
+  { value: "high", label: "High", hint: "Detailed, desktop friendly" },
+  { value: "balanced", label: "Balanced", hint: "Good detail, lower cost" },
+  { value: "battery", label: "Battery", hint: "Lowest cost" },
 ];
 
 const BackgroundControl = ({ className }: { className?: string }) => {
-  const { mode, dim, view } = useSpaceBgSettings();
+  const { mode, dim, view, quality } = useSpaceBgSettings();
+
 
   return (
     <Popover>
@@ -80,6 +91,28 @@ const BackgroundControl = ({ className }: { className?: string }) => {
             </button>
           ))}
         </div>
+
+        <p className="text-xs text-muted-foreground mb-2">Quality</p>
+        <div className="grid grid-cols-3 gap-1 mb-4">
+          {QUALITIES.map((q) => (
+            <button
+              key={q.value}
+              onClick={() => setSpaceBgSettings({ quality: q.value })}
+              title={q.hint}
+              disabled={mode === "off"}
+              className={cn(
+                "rounded-md px-2 py-1.5 text-xs font-medium border transition-colors disabled:opacity-40",
+                quality === q.value
+                  ? "border-primary/60 bg-primary/15 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {q.label}
+            </button>
+          ))}
+        </div>
+
+
 
         <label className="text-xs text-muted-foreground flex items-center justify-between mb-2">
           <span>Dim</span>

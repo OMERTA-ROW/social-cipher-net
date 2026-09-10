@@ -1,19 +1,27 @@
 import { useSyncExternalStore } from "react";
+import { detectTier, type QualityTier } from "@/components/space/world/qualityTiers";
 
 export type SpaceBgMode = "full" | "lite" | "off";
-/** solar = realistic solar system (default), mining = alien world mining run */
-export type SpaceBgView = "solar" | "mining";
+/** solar = realistic solar system (default), mining = alien world, descent = Earth approach */
+export type SpaceBgView = "solar" | "mining" | "descent";
+/** auto = pick from a device probe, otherwise an explicit tier */
+export type SpaceBgQuality = "auto" | QualityTier;
 
 export interface SpaceBgSettings {
   /** full = 3D solar system, lite = cheap starfield, off = static gradient only */
   mode: SpaceBgMode;
   /** which scene the background renders */
   view: SpaceBgView;
+  /** detail/performance tier for the world scenes */
+  quality: SpaceBgQuality;
   /** 0 = background at full brightness, 1 = fully dimmed to flat colour */
   dim: number;
 }
 
 const STORAGE_KEY = "cyberlink.space-bg";
+
+const VIEWS = ["solar", "mining", "descent"] as const;
+const QUALITIES = ["auto", "ultra", "high", "balanced", "battery"] as const;
 
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
@@ -30,14 +38,20 @@ export const isLowPowerDevice = () => {
   return (smallScreen && coarse) || fewCores || lowMem;
 };
 
+/** Resolve the stored preference into a concrete tier. */
+export const resolveQuality = (q: SpaceBgQuality): QualityTier =>
+  q === "auto" ? detectTier() : q;
+
 const defaults = (): SpaceBgSettings => ({
   mode: prefersReducedMotion() ? "off" : isLowPowerDevice() ? "lite" : "full",
   view: "solar",
+  quality: "auto",
   dim: 0.12,
 });
 
 let state: SpaceBgSettings = (() => {
-  if (typeof window === "undefined") return { mode: "off", view: "solar", dim: 0.35 };
+  if (typeof window === "undefined")
+    return { mode: "off", view: "solar", quality: "auto", dim: 0.35 } as SpaceBgSettings;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults();
@@ -47,13 +61,17 @@ let state: SpaceBgSettings = (() => {
       mode: (["full", "lite", "off"] as const).includes(parsed.mode as SpaceBgMode)
         ? (parsed.mode as SpaceBgMode)
         : base.mode,
-      view: parsed.view === "mining" ? "mining" : "solar",
+      view: VIEWS.includes(parsed.view as SpaceBgView) ? (parsed.view as SpaceBgView) : "solar",
+      quality: QUALITIES.includes(parsed.quality as SpaceBgQuality)
+        ? (parsed.quality as SpaceBgQuality)
+        : "auto",
       dim: typeof parsed.dim === "number" ? Math.min(1, Math.max(0, parsed.dim)) : base.dim,
     };
   } catch {
     return defaults();
   }
 })();
+
 
 const listeners = new Set<() => void>();
 
