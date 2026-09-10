@@ -216,21 +216,18 @@ export type Database = {
           clicker_id: string | null
           created_at: string | null
           id: string
-          ip_address: string | null
           link_id: string
         }
         Insert: {
           clicker_id?: string | null
           created_at?: string | null
           id?: string
-          ip_address?: string | null
           link_id: string
         }
         Update: {
           clicker_id?: string | null
           created_at?: string | null
           id?: string
-          ip_address?: string | null
           link_id?: string
         }
         Relationships: [
@@ -1983,7 +1980,6 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
-          login_credentials: Json | null
           metadata: Json | null
           tab_name: string
           tab_type: string
@@ -1995,7 +1991,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
-          login_credentials?: Json | null
           metadata?: Json | null
           tab_name: string
           tab_type?: string
@@ -2007,7 +2002,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
-          login_credentials?: Json | null
           metadata?: Json | null
           tab_name?: string
           tab_type?: string
