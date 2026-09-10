@@ -88,6 +88,9 @@ const DescentCamera = ({
     camera.near = Math.max(0.02, alt * 0.01);
     camera.far = 20000;
     camera.updateProjectionMatrix();
+    if (pinned && Math.random() < 0.004) {
+      console.log("[descent]", alt.toFixed(2), camera.position.toArray().map((v) => +v.toFixed(2)), look.current.toArray().map((v) => +v.toFixed(2)));
+    }
   });
 
   return null;
