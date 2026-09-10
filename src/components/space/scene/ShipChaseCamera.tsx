@@ -9,14 +9,14 @@ import { shipTelemetry } from "./shipTelemetry";
  * to a wider framing while the ship is stationary and mining.
  */
 const OFFSETS: Record<string, THREE.Vector3> = {
-  travel: new THREE.Vector3(0, 3.6, -16),
-  approach: new THREE.Vector3(5, 4.5, -14),
-  landing: new THREE.Vector3(7, 5, -11),
-  docked: new THREE.Vector3(9, 4, -9),
-  mining: new THREE.Vector3(11, 6.5, -10),
-  conquest: new THREE.Vector3(-10, 7, -12),
-  combat: new THREE.Vector3(8, 5.5, -15),
-  departure: new THREE.Vector3(-4, 4.5, -17),
+  travel: new THREE.Vector3(0, 6, -26),
+  approach: new THREE.Vector3(9, 7, -24),
+  landing: new THREE.Vector3(12, 8, -20),
+  docked: new THREE.Vector3(16, 7, -18),
+  mining: new THREE.Vector3(18, 10, -18),
+  conquest: new THREE.Vector3(-16, 12, -22),
+  combat: new THREE.Vector3(14, 9, -26),
+  departure: new THREE.Vector3(-8, 8, -28),
 };
 
 const ShipChaseCamera = ({ animate }: { animate: boolean }) => {
@@ -40,7 +40,7 @@ const ShipChaseCamera = ({ animate }: { animate: boolean }) => {
 
     camera.position.lerp(desired.current, 1 - Math.exp(-2.1 * dt));
 
-    target.current.copy(shipTelemetry.position).addScaledVector(shipTelemetry.velocity, 12);
+    target.current.copy(shipTelemetry.position).addScaledVector(shipTelemetry.velocity, 4);
     look.current.lerp(target.current, 1 - Math.exp(-2.6 * dt));
 
     camera.up.set(0, 1, 0);
