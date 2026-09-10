@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+
 
 interface UseFourClickCloseProps {
   onFourClicks: () => void;
@@ -17,15 +17,8 @@ export const useFourClickClose = ({
     const handleClick = () => {
       clickCountRef.current += 1;
       
-      // Show progress feedback
-      if (clickCountRef.current === 1) {
-        toast.info("Click 3 more times to close all windows", { duration: 1000 });
-      } else if (clickCountRef.current === 2) {
-        toast.info("Click 2 more times...", { duration: 1000 });
-      } else if (clickCountRef.current === 3) {
-        toast.info("Click 1 more time...", { duration: 1000 });
-      } else if (clickCountRef.current >= 4) {
-        toast.success("Closing all windows!");
+      // Silent gesture: no popups for regular users
+      if (clickCountRef.current >= 4) {
         onFourClicks();
         clickCountRef.current = 0;
         if (timeoutRef.current) {

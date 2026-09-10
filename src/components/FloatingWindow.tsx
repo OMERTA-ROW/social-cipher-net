@@ -49,9 +49,6 @@ export default function FloatingWindow({
       
       if (currentTapCount === 4) {
         setIsDraggable(prev => !prev);
-        toast(isDraggable ? "Movement locked" : "Movement unlocked - Drag anywhere!", {
-          icon: <Move className="h-4 w-4" />
-        });
       }
       
       setTapCount(0);
