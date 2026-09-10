@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import { setSpaceBgSettings, useSpaceBgSettings, type SpaceBgMode } from "@/lib/spaceBackgroundSettings";
+import {
+  setSpaceBgSettings,
+  useSpaceBgSettings,
+  type SpaceBgMode,
+  type SpaceBgView,
+} from "@/lib/spaceBackgroundSettings";
 
 const MODES: { value: SpaceBgMode; label: string; hint: string }[] = [
   { value: "full", label: "Full", hint: "Solar system, comets, belt" },
@@ -11,8 +16,13 @@ const MODES: { value: SpaceBgMode; label: string; hint: string }[] = [
   { value: "off", label: "Off", hint: "Static gradient only" },
 ];
 
+const VIEWS: { value: SpaceBgView; label: string; hint: string }[] = [
+  { value: "solar", label: "Solar system", hint: "Realistic star and planets" },
+  { value: "mining", label: "Mining run", hint: "Alien world, ship and crew" },
+];
+
 const BackgroundControl = ({ className }: { className?: string }) => {
-  const { mode, dim } = useSpaceBgSettings();
+  const { mode, dim, view } = useSpaceBgSettings();
 
   return (
     <Popover>
@@ -47,6 +57,26 @@ const BackgroundControl = ({ className }: { className?: string }) => {
               )}
             >
               {m.label}
+            </button>
+          ))}
+        </div>
+
+        <p className="text-xs text-muted-foreground mb-2">View</p>
+        <div className="grid grid-cols-2 gap-1 mb-4">
+          {VIEWS.map((v) => (
+            <button
+              key={v.value}
+              onClick={() => setSpaceBgSettings({ view: v.value })}
+              title={v.hint}
+              disabled={mode === "off"}
+              className={cn(
+                "rounded-md px-2 py-1.5 text-xs font-medium border transition-colors disabled:opacity-40",
+                view === v.value
+                  ? "border-primary/60 bg-primary/15 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {v.label}
             </button>
           ))}
         </div>

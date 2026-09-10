@@ -1,10 +1,14 @@
 import { useSyncExternalStore } from "react";
 
 export type SpaceBgMode = "full" | "lite" | "off";
+/** solar = realistic solar system (default), mining = alien world mining run */
+export type SpaceBgView = "solar" | "mining";
 
 export interface SpaceBgSettings {
   /** full = 3D solar system, lite = cheap starfield, off = static gradient only */
   mode: SpaceBgMode;
+  /** which scene the background renders */
+  view: SpaceBgView;
   /** 0 = background at full brightness, 1 = fully dimmed to flat colour */
   dim: number;
 }
@@ -28,11 +32,12 @@ export const isLowPowerDevice = () => {
 
 const defaults = (): SpaceBgSettings => ({
   mode: prefersReducedMotion() ? "off" : isLowPowerDevice() ? "lite" : "full",
+  view: "solar",
   dim: 0.12,
 });
 
 let state: SpaceBgSettings = (() => {
-  if (typeof window === "undefined") return { mode: "off", dim: 0.35 };
+  if (typeof window === "undefined") return { mode: "off", view: "solar", dim: 0.35 };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults();
@@ -42,6 +47,7 @@ let state: SpaceBgSettings = (() => {
       mode: (["full", "lite", "off"] as const).includes(parsed.mode as SpaceBgMode)
         ? (parsed.mode as SpaceBgMode)
         : base.mode,
+      view: parsed.view === "mining" ? "mining" : "solar",
       dim: typeof parsed.dim === "number" ? Math.min(1, Math.max(0, parsed.dim)) : base.dim,
     };
   } catch {

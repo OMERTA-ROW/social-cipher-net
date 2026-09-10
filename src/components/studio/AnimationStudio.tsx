@@ -23,7 +23,9 @@ import {
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 /* ---------------- model ---------------- */
 
@@ -55,6 +57,42 @@ interface Scene {
   backdrop: string;
   characters: Character[];
 }
+
+/* runtime shape check so nothing malformed reaches or leaves the database */
+const poseSchema = z.object({
+  x: z.number().finite(),
+  y: z.number().finite(),
+  scale: z.number().finite().min(0.05).max(10),
+  headTilt: z.number().finite(),
+  armLeft: z.number().finite(),
+  armRight: z.number().finite(),
+  legLeft: z.number().finite(),
+  legRight: z.number().finite(),
+});
+
+const sceneSchema = z.object({
+  duration: z.number().finite().min(0.5).max(600),
+  backdrop: z.string().min(1).max(80),
+  characters: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(64),
+        name: z.string().min(1).max(80),
+        color: z.string().min(1).max(32),
+        keyframes: z
+          .array(z.object({ time: z.number().finite().min(0).max(600), pose: poseSchema }))
+          .min(1)
+          .max(400),
+      }),
+    )
+    .min(1)
+    .max(24),
+});
+
+/** Validate and convert a scene into a plain Supabase JSON value. */
+const toJsonScene = (scene: Scene): Json =>
+  JSON.parse(JSON.stringify(sceneSchema.parse(scene))) as Json;
+
 
 const BACKDROPS: Record<string, [string, string]> = {
   "Neon city": ["#04121a", "#0b3b47"],
@@ -304,12 +342,19 @@ const AnimationStudio = ({ userId }: AnimationStudioProps) => {
       toast.error("Sign in to save your scene");
       return;
     }
+    let sceneJson: Json;
+    try {
+      sceneJson = toJsonScene(scene);
+    } catch {
+      toast.error("This scene has invalid values and can't be saved");
+      return;
+    }
     setSaving(true);
     const payload = {
       user_id: userId,
       title: title.slice(0, 120),
       kind: "animation",
-      data: JSON.parse(JSON.stringify(scene)),
+      data: sceneJson,
       updated_at: new Date().toISOString(),
     };
     const { data, error } = projectId
@@ -340,7 +385,12 @@ const AnimationStudio = ({ userId }: AnimationStudioProps) => {
     const record = data as { id: string; title: string; data: unknown };
     setProjectId(record.id);
     setTitle(record.title);
-    setScene(record.data as Scene);
+    const parsed = sceneSchema.safeParse(record.data);
+    if (!parsed.success) {
+      toast.error("That saved scene is damaged and can't be opened");
+      return;
+    }
+    setScene(parsed.data);
     setTime(0);
     setPlaying(false);
   };
