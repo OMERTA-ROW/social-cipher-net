@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRightLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import MarketSourceBadge from "@/components/market/MarketSourceBadge";
+import { getCryptoQuotes, messageOf, type Latency } from "@/services/marketData";
 
 interface CryptoToUsdConverterProps {
   cryptoBalances: { [key: string]: string };
@@ -18,6 +20,8 @@ export const CryptoToUsdConverter = ({ cryptoBalances, onConversionComplete }: C
   const [amount, setAmount] = useState<string>("");
   const [converting, setConverting] = useState(false);
   const [estimatedUsd, setEstimatedUsd] = useState<number | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [meta, setMeta] = useState<{ source: string; latency: Latency; asOf: number } | null>(null);
 
   const availableCryptos = Object.entries(cryptoBalances)
     .filter(([_, balance]) => parseFloat(balance) > 0)
@@ -26,20 +30,18 @@ export const CryptoToUsdConverter = ({ cryptoBalances, onConversionComplete }: C
   const handleEstimate = async () => {
     if (!selectedCrypto || !amount || parseFloat(amount) <= 0) return;
 
+    setPriceError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("get-crypto-prices");
-      
-      if (error) throw error;
-
-      const price = data.prices[selectedCrypto];
-      if (price) {
-        const baseValue = parseFloat(amount) * price;
-        const surcharge = baseValue * 0.02;
-        const finalValue = baseValue - surcharge;
-        setEstimatedUsd(finalValue);
-      }
+      const res = await getCryptoQuotes([selectedCrypto]);
+      const quote = res.quotes.find((q) => q.symbol.toUpperCase() === selectedCrypto.toUpperCase());
+      if (!quote) throw new Error(`No live price available for ${selectedCrypto}`);
+      const baseValue = parseFloat(amount) * quote.price;
+      setEstimatedUsd(baseValue - baseValue * 0.02);
+      setMeta({ source: res.source, latency: res.latency, asOf: res.asOf });
     } catch (error) {
-      console.error("Error estimating conversion:", error);
+      setEstimatedUsd(null);
+      setMeta(null);
+      setPriceError(messageOf(error));
     }
   };
 
@@ -150,7 +152,17 @@ export const CryptoToUsdConverter = ({ cryptoBalances, onConversionComplete }: C
           <div className="p-4 bg-muted rounded-lg space-y-1">
             <p className="text-sm text-muted-foreground">Estimated USD (after 2% fee)</p>
             <p className="text-2xl font-bold">${estimatedUsd.toFixed(2)}</p>
+            <MarketSourceBadge
+              source={meta?.source}
+              latency={meta?.latency}
+              asOf={meta?.asOf}
+              connected={!!meta}
+            />
           </div>
+        )}
+
+        {priceError && (
+          <p className="text-xs text-destructive">Live price unavailable: {priceError}</p>
         )}
 
         <Button
