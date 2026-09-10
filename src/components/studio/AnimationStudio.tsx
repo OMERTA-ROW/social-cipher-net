@@ -309,7 +309,7 @@ const AnimationStudio = ({ userId }: AnimationStudioProps) => {
       user_id: userId,
       title: title.slice(0, 120),
       kind: "animation",
-      data: scene as unknown as Record<string, unknown>,
+      data: JSON.parse(JSON.stringify(scene)),
       updated_at: new Date().toISOString(),
     };
     const { data, error } = projectId
