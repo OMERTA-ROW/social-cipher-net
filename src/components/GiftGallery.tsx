@@ -125,6 +125,28 @@ export function GiftGallery({ gifts, streamId, streamerId, onClose }: GiftGaller
 
       if (giftError) throw giftError;
 
+      // The $1000 Sniper gift leaves a shattered-glass scar on the recipient.
+      if (selectedGift.animation_type === "sniper" && selectedGift.price >= 1000) {
+        const { data: senderProfile } = await supabase
+          .from("profiles")
+          .select("display_name, username, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        await supabase.from("snipe_hits").insert({
+          target_user_id: streamerId,
+          sender_id: user.id,
+          sender_name:
+            senderProfile?.display_name || senderProfile?.username || "Anonymous",
+          sender_avatar: senderProfile?.avatar_url ?? null,
+          stream_id: streamId || null,
+          impact_x: 32 + Math.random() * 36,
+          impact_y: 30 + Math.random() * 32,
+          seed: Math.floor(Math.random() * 100000),
+        });
+      }
+
+
       // Record wallet transactions
       await supabase.from("wallet_transactions").insert([
         {
