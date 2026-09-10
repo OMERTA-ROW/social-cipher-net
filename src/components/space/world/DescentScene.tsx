@@ -70,7 +70,7 @@ const DescentCamera = ({
       PLANET_RADIUS + Math.max(alt, 1.6),
       Math.sin(a) * swing,
     );
-    camera.position.lerp(target.current, animate ? 1 - Math.exp(-3 * dt) : 1);
+    camera.position.lerp(target.current, animate && !pinned ? 1 - Math.exp(-3 * dt) : 1);
 
     // look ahead and down: straight at the planet from far out, along the
     // street once we are low
@@ -81,7 +81,7 @@ const DescentCamera = ({
         PLANET_RADIUS + alt * (1 - tilt) * 0.15 + tilt * 1.1,
         Math.sin(a + 1.1) * swing * (1 + tilt * 1.6),
       ),
-      animate ? 1 - Math.exp(-2.2 * dt) : 1,
+      animate && !pinned ? 1 - Math.exp(-2.2 * dt) : 1,
     );
 
     camera.up.copy(CITY_UP);
