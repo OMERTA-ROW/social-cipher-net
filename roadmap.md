@@ -14,9 +14,10 @@
 
 ## Current build
 - [ ] Arena: dedicated layout/environment
-- [ ] Studio: animation suite, asset libraries, creative account imports
+- [x] Studio: animation suite, asset libraries, creative account imports (wired into Studio tabs, Zod-validated saves)
 - [ ] Movie Theater: events, synced playback, live chat
 - [ ] Connectors: universal hub (OAuth + manual keys), actions, multicast
+- [ ] Space background: mining ship + alien crew, chase cam, selectable mining view
 
 ## Blocked / waiting on user
 - [ ] Shopify store: previous development store expired and cannot be claimed.

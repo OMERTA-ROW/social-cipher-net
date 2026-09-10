@@ -10,17 +10,23 @@ import Planets from "./Planets";
 import StarTrails from "./StarTrails";
 import Starfield from "./Starfield";
 import { marketPulse, useMarketPulse } from "./useMarketPulse";
+import MiningWorld from "./MiningWorld";
+import ShipChaseCamera from "./ShipChaseCamera";
+import VesselFlight from "./VesselFlight";
+import type { SpaceBgView } from "@/lib/spaceBackgroundSettings";
 
 interface Props {
   /** false = reduced particle counts / no post-processing (mobile, low power) */
   full: boolean;
   /** false = frozen frame (prefers-reduced-motion or hidden tab) */
   animate: boolean;
+  /** solar system (default) or the alien mining world */
+  view?: SpaceBgView;
 }
 
 const CHROMA = new THREE.Vector2(0.00008, 0.0001);
 
-const SceneContents = ({ full, animate, dpr }: Props & { dpr: number }) => {
+const SceneContents = ({ full, animate, dpr, view = "solar" }: Props & { dpr: number }) => {
   // ambient lift reacts gently to live market volatility
   const [boost, setBoost] = useState(1);
   useEffect(() => {
@@ -28,14 +34,25 @@ const SceneContents = ({ full, animate, dpr }: Props & { dpr: number }) => {
     return () => clearInterval(id);
   }, []);
 
+  const mining = view === "mining";
+
   return (
     <>
-      <CameraRig animate={animate} />
-      <Galaxy full={full} boost={boost} />
-      <Starfield full={full} dpr={dpr} boost={boost} />
-      <StarTrails count={full ? 420 : 120} animate={animate} />
-      <Planets full={full} />
-      <MarketComets animate={animate} />
+      {mining ? <ShipChaseCamera animate={animate} /> : <CameraRig animate={animate} />}
+
+      {mining ? (
+        <MiningWorld animate={animate} full={full} />
+      ) : (
+        <>
+          <Galaxy full={full} boost={boost} />
+          <Starfield full={full} dpr={dpr} boost={boost} />
+          <StarTrails count={full ? 420 : 120} animate={animate} />
+          <Planets full={full} />
+          <MarketComets animate={animate} />
+          <VesselFlight animate={animate} full={full} />
+        </>
+      )}
+
 
       {full && (
         <EffectComposer multisampling={0}>
@@ -49,7 +66,7 @@ const SceneContents = ({ full, animate, dpr }: Props & { dpr: number }) => {
   );
 };
 
-const SpaceScene = ({ full, animate }: Props) => {
+const SpaceScene = ({ full, animate, view = "solar" }: Props) => {
   useMarketPulse();
   const dpr = full ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
 
@@ -65,7 +82,7 @@ const SpaceScene = ({ full, animate }: Props) => {
         scene.background = new THREE.Color(0x000000);
       }}
     >
-      <SceneContents full={full} animate={animate} dpr={dpr} />
+      <SceneContents full={full} animate={animate} dpr={dpr} view={view} />
     </Canvas>
   );
 };

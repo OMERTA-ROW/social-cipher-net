@@ -33,6 +33,9 @@ import { InviteToStreamDialog } from "@/components/InviteToStreamDialog";
 import { MegaChat } from "@/components/MegaChat";
 import { OmegaChat } from "@/components/OmegaChat";
 import { supabase } from "@/integrations/supabase/client";
+import AnimationStudio from "@/components/studio/AnimationStudio";
+import AssetLibrary from "@/components/studio/AssetLibrary";
+import ConnectedAccountsPanel from "@/components/studio/ConnectedAccountsPanel";
 
 const Studio = () => {
   const navigate = useNavigate();
@@ -48,6 +51,8 @@ const Studio = () => {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [activeCategory, setActiveCategory] = useState<"social" | "affiliate">("social");
   const [activePlatformIndex, setActivePlatformIndex] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [assetRefresh, setAssetRefresh] = useState(0);
   const { windows, openWindow, closeWindow } = useFloatingWindowsContext();
   const { 
     currentStream, 
@@ -104,13 +109,17 @@ const Studio = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         navigate("/auth");
+        return;
       }
+      setUserId(session.user.id);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate("/auth");
+        return;
       }
+      setUserId(session.user.id);
     });
 
     return () => subscription.unsubscribe();
@@ -616,6 +625,30 @@ const Studio = () => {
               </Tabs>
             )}
           </Card>
+        </div>
+
+        {/* Creation suite */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-primary text-glow mb-4">Creation Suite</h2>
+          <Tabs defaultValue="animation" className="w-full">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="animation">Animation</TabsTrigger>
+              <TabsTrigger value="assets">Assets</TabsTrigger>
+              <TabsTrigger value="accounts">Creative Accounts</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="animation" className="mt-4">
+              <AnimationStudio userId={userId} />
+            </TabsContent>
+
+            <TabsContent value="assets" className="mt-4">
+              <AssetLibrary userId={userId} key={`assets-${assetRefresh}`} />
+            </TabsContent>
+
+            <TabsContent value="accounts" className="mt-4">
+              <ConnectedAccountsPanel onImported={() => setAssetRefresh((n) => n + 1)} />
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 
