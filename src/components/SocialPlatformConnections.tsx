@@ -247,11 +247,7 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
       }
 
       const { data, error } = await supabase.functions.invoke("withdraw-platform-earnings", {
-        body: { 
-          platform_connection_id: connectionId,
-          platform,
-          amount: balance 
-        },
+        body: { platform_connection_id: connectionId },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
@@ -259,7 +255,10 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
 
       if (error) throw error;
 
-      toast.success(`Withdrew $${balance.toFixed(2)} from ${PLATFORM_NAMES[platform]} to your wallet`);
+      toast.success(
+        data?.message ||
+          `Withdrew $${Number(data?.amount_withdrawn ?? 0).toFixed(2)} from ${PLATFORM_NAMES[platform]} to your wallet`
+      );
       fetchConnections();
     } catch (error: any) {
       console.error("Withdrawal error:", error);
