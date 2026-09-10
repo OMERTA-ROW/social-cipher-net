@@ -37,11 +37,6 @@ export const useSkyTechUpdates = () => {
 
           if (newUpdate.auto_apply) {
             autoApplyUpdate(newUpdate.id);
-          } else {
-            toast({
-              title: "New Update Available",
-              description: newUpdate.title,
-            });
           }
         }
       )
