@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DemoDataPanel from "@/components/DemoDataPanel";
+import { useIsCeo } from "@/hooks/useIsCeo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -59,6 +60,7 @@ const StatTile = ({ label, value, icon: Icon }: { label: string; value: number; 
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { isCeo } = useIsCeo();
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<SocialProfile & { bio?: string | null } | null>(null);
