@@ -59,12 +59,14 @@ const DescentCamera = ({
     const alt = pinned ?? Math.pow(10, lo + (hi - lo) * phase);
     altitudeRef.current = alt;
 
-    // gentle lateral drift over the city site at the north pole
-    const swing = Math.min(alt * 0.35, 260);
+    // gentle lateral drift over the city site at the north pole; at street
+    // level we hold a minimum offset so the camera sits in a canyon rather
+    // than in the empty road cross at the exact centre
+    const swing = THREE.MathUtils.clamp(alt * 0.35, 7, 260);
     const a = t.current * 0.6;
     target.current.set(
       Math.cos(a) * swing,
-      PLANET_RADIUS + alt,
+      PLANET_RADIUS + Math.max(alt, 1.6),
       Math.sin(a) * swing,
     );
     camera.position.lerp(target.current, animate ? 1 - Math.exp(-3 * dt) : 1);
@@ -74,12 +76,13 @@ const DescentCamera = ({
     const tilt = THREE.MathUtils.clamp(1 - Math.log10(alt + 1) / 3, 0, 1);
     look.current.lerp(
       new THREE.Vector3(
-        Math.cos(a + 1.2) * swing * tilt * 1.4,
-        PLANET_RADIUS + alt * (1 - tilt) * 0.15 + tilt * 1.2,
-        Math.sin(a + 1.2) * swing * tilt * 1.4,
+        Math.cos(a + 1.1) * swing * (1 + tilt * 1.6),
+        PLANET_RADIUS + alt * (1 - tilt) * 0.15 + tilt * 6,
+        Math.sin(a + 1.1) * swing * (1 + tilt * 1.6),
       ),
       1 - Math.exp(-2.2 * dt),
     );
+
     camera.up.copy(CITY_UP);
     camera.lookAt(look.current);
     camera.near = Math.max(0.02, alt * 0.01);
