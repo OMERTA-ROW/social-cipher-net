@@ -112,32 +112,11 @@ export default function TokenPurchase() {
       return;
     }
 
-    // In a real app, this would integrate with a payment processor
-    toast.info("Payment integration coming soon! Tokens added for demo.");
-    
+    // Wallet balances are credited server-side only, after a verified payment.
     const totalTokens = pkg.tokens + pkg.bonus;
-    const usdAmount = pkg.price;
-    
-    const { error } = await supabase.from("user_wallets").upsert({
-      user_id: user.id,
-      balance: balance + usdAmount,
-    });
-
-    if (error) {
-      toast.error("Failed to add tokens");
-      return;
-    }
-
-    await supabase.from("wallet_transactions").insert({
-      user_id: user.id,
-      amount: usdAmount,
-      transaction_type: "token_purchase",
-      description: `Purchased ${totalTokens.toLocaleString()} tokens`,
-      metadata: { package: pkg, tokens: totalTokens },
-    });
-
-    toast.success(`Added ${totalTokens.toLocaleString()} tokens to your wallet!`);
-    fetchWalletAndGifts();
+    toast.info(
+      `Checkout for ${totalTokens.toLocaleString()} tokens is not available yet. Tokens are only added after a confirmed payment.`
+    );
   };
 
   if (loading) {
