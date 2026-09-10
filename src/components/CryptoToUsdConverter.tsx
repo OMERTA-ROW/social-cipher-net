@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowRightLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import MarketSourceBadge from "@/components/market/MarketSourceBadge";
+import { getCryptoQuotes, messageOf, type Latency } from "@/services/marketData";
 
 interface CryptoToUsdConverterProps {
   cryptoBalances: { [key: string]: string };
@@ -18,6 +20,8 @@ export const CryptoToUsdConverter = ({ cryptoBalances, onConversionComplete }: C
   const [amount, setAmount] = useState<string>("");
   const [converting, setConverting] = useState(false);
   const [estimatedUsd, setEstimatedUsd] = useState<number | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [meta, setMeta] = useState<{ source: string; latency: Latency; asOf: number } | null>(null);
 
   const availableCryptos = Object.entries(cryptoBalances)
     .filter(([_, balance]) => parseFloat(balance) > 0)
