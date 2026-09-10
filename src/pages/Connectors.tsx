@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   CONNECTOR_CATEGORIES,
   CONNECTOR_SERVICES,
+  AVAILABILITY_LABELS,
   type ConnectorService,
 } from "@/lib/connectors/registry";
 import { useConnections } from "@/hooks/useConnections";
@@ -193,12 +194,35 @@ const Connectors = () => {
                             Not connected
                           </Badge>
                         )}
+                        {connected && connection?.health === "needs_reconnect" && (
+                          <Badge variant="destructive" className="text-[10px]">
+                            Needs reconnect
+                          </Badge>
+                        )}
+                        {!connected && service.availability !== "available" && (
+                          <Badge variant="outline" className="text-[10px]">
+                            {AVAILABILITY_LABELS[service.availability]}
+                          </Badge>
+                        )}
                         {connection?.account_name && (
                           <span className="text-[11px] text-muted-foreground truncate">
                             {connection.account_name}
                           </span>
                         )}
                       </div>
+
+                      {!connected && service.availabilityNote && (
+                        <p className="text-[11px] text-muted-foreground mb-2 line-clamp-2">
+                          {service.availabilityNote}
+                        </p>
+                      )}
+
+                      {connected && connection?.last_synced_at && (
+                        <p className="text-[11px] text-muted-foreground mb-2">
+                          Last updated{" "}
+                          {new Date(connection.last_synced_at).toLocaleString()}
+                        </p>
+                      )}
 
                       {connection?.last_error && (
                         <p className="text-[11px] text-destructive flex items-start gap-1 mb-2">
