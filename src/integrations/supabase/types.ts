@@ -1738,6 +1738,56 @@ export type Database = {
         }
         Relationships: []
       }
+      snipe_hits: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          impact_x: number
+          impact_y: number
+          seed: number
+          sender_avatar: string | null
+          sender_id: string
+          sender_name: string | null
+          stream_id: string | null
+          target_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          impact_x?: number
+          impact_y?: number
+          seed?: number
+          sender_avatar?: string | null
+          sender_id: string
+          sender_name?: string | null
+          stream_id?: string | null
+          target_user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          impact_x?: number
+          impact_y?: number
+          seed?: number
+          sender_avatar?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          stream_id?: string | null
+          target_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "snipe_hits_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stories: {
         Row: {
           created_at: string
