@@ -9,4 +9,17 @@
 - [x] Keep existing Stripe integration (no switch to built-in payments)
 - [x] Paid post media locked behind payment (private bucket + signed links)
 - [x] Birthdates moved out of public profiles into owner-only private record
-- [ ] Optional: hide two-factor status from public profiles (warning-level)
+- [x] Hide two-factor status from public profiles
+- [x] Sniper gift ($1000) with cinematic strike + persistent crack
+
+## Current build
+- [ ] Arena: dedicated layout/environment
+- [ ] Studio: animation suite, asset libraries, creative account imports
+- [ ] Movie Theater: events, synced playback, live chat
+- [ ] Connectors: universal hub (OAuth + manual keys), actions, multicast
+
+## Blocked / waiting on user
+- [ ] Shopify store: previous development store expired and cannot be claimed.
+      Waiting on user's go-ahead to create a fresh store to claim.
+- [ ] Provider OAuth apps: each social/streaming provider needs developer app
+      credentials before its OAuth button goes live.

@@ -122,3 +122,15 @@ verify_jwt = false
 
 [functions.infinity-ai]
 verify_jwt = false
+
+[functions.connector-credentials]
+verify_jwt = false
+
+[functions.connector-oauth]
+verify_jwt = false
+
+[functions.connector-action]
+verify_jwt = false
+
+[functions.creative-import]
+verify_jwt = false
