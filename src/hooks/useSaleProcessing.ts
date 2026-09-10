@@ -4,11 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface SaleData {
   product_id: string;
-  seller_id: string;
   affiliate_id?: string;
-  buyer_email: string;
-  amount: number;
-  shipping_cost?: number;
+  quantity?: number;
 }
 
 interface SaleResult {
@@ -26,7 +23,8 @@ export const useSaleProcessing = () => {
   const processSale = async (saleData: SaleData): Promise<SaleResult> => {
     setLoading(true);
     try {
-      console.log('Processing sale with 2% platform commission:', saleData);
+      // Pricing, seller and buyer identity are resolved server-side.
+      console.log('Processing sale:', saleData.product_id);
 
       const { data, error } = await supabase.functions.invoke('process-sale', {
         body: saleData

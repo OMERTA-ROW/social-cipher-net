@@ -7,6 +7,16 @@ const corsHeaders = {
 };
 
 const PLATFORM_COMMISSION_RATE = 0.02; // 2% platform commission
+const AFFILIATE_COMMISSION_RATE = 0.05;
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    status,
+  });
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,45 +26,66 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
     );
 
-    const { 
-      product_id, 
-      seller_id, 
-      affiliate_id,
-      buyer_email, 
-      amount,
-      shipping_cost = 0 
-    } = await req.json();
+    // --- Require an authenticated buyer ---
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const jwt = authHeader.replace('Bearer ', '').trim();
+    if (!jwt) return json({ error: 'Unauthorized' }, 401);
 
-    if (!product_id || !seller_id || !buyer_email || !amount) {
-      throw new Error('Missing required fields');
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(jwt);
+    const buyer = userData?.user;
+    if (userError || !buyer) return json({ error: 'Unauthorized' }, 401);
+
+    const body = await req.json().catch(() => ({}));
+    const product_id = typeof body.product_id === 'string' ? body.product_id.trim() : '';
+    const affiliate_id = typeof body.affiliate_id === 'string' ? body.affiliate_id.trim() : null;
+    const quantityRaw = Number(body.quantity ?? 1);
+
+    if (!UUID_RE.test(product_id)) return json({ error: 'Invalid product_id' }, 400);
+    if (affiliate_id && !UUID_RE.test(affiliate_id)) return json({ error: 'Invalid affiliate_id' }, 400);
+
+    const quantity = Number.isFinite(quantityRaw) ? Math.floor(quantityRaw) : 1;
+    if (quantity < 1 || quantity > 100) return json({ error: 'Invalid quantity' }, 400);
+
+    // Buyer email always comes from the verified session, never the client body
+    const buyer_email = buyer.email ?? '';
+    if (!EMAIL_RE.test(buyer_email)) return json({ error: 'Account has no verified email' }, 400);
+
+    // --- Pricing is derived server-side from the product record ---
+    const { data: product, error: productError } = await supabaseClient
+      .from('products')
+      .select('id, seller_id, price, shipping_cost, status, is_blocked, stock_quantity')
+      .eq('id', product_id)
+      .maybeSingle();
+
+    if (productError || !product) return json({ error: 'Product not found' }, 404);
+    if (product.is_blocked || (product.status && product.status !== 'active')) {
+      return json({ error: 'Product is not available for purchase' }, 400);
+    }
+    if (product.stock_quantity !== null && product.stock_quantity < quantity) {
+      return json({ error: 'Insufficient stock' }, 400);
     }
 
-    console.log('Processing sale:', { product_id, seller_id, amount });
+    const unitPrice = Number(product.price);
+    const shipping_cost = Number(product.shipping_cost ?? 0);
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      return json({ error: 'Product pricing is invalid' }, 400);
+    }
 
-    // Calculate commissions
-    const totalAmount = parseFloat(amount) + parseFloat(shipping_cost);
+    const amount = unitPrice * quantity;
+    const totalAmount = amount + shipping_cost;
     const platformCommission = totalAmount * PLATFORM_COMMISSION_RATE;
-    
-    // Affiliate gets 5% if present, seller gets the rest minus platform commission
-    const affiliateCommission = affiliate_id ? totalAmount * 0.05 : 0;
+    const affiliateCommission = affiliate_id ? totalAmount * AFFILIATE_COMMISSION_RATE : 0;
     const sellerCommission = totalAmount - platformCommission - affiliateCommission;
 
-    console.log('Commissions calculated:', {
-      total: totalAmount,
-      platform: platformCommission,
-      seller: sellerCommission,
-      affiliate: affiliateCommission
-    });
-
-    // Create sale record
     const { data: sale, error: saleError } = await supabaseClient
       .from('sales')
       .insert({
         product_id,
-        seller_id,
+        seller_id: product.seller_id,
         affiliate_id,
         buyer_email,
         amount,
@@ -63,53 +94,39 @@ serve(async (req) => {
         platform_commission_rate: PLATFORM_COMMISSION_RATE,
         seller_commission: sellerCommission,
         affiliate_commission: affiliateCommission,
-        status: 'completed'
+        status: 'completed',
       })
       .select()
       .single();
 
     if (saleError) {
       console.error('Failed to create sale:', saleError);
-      throw saleError;
+      return json({ error: 'Failed to create sale' }, 400);
     }
 
-    console.log('Sale created:', sale.id);
-
-    // Record platform earnings
     const { error: earningsError } = await supabaseClient
       .from('platform_earnings')
       .insert({
         sale_id: sale.id,
         amount: platformCommission,
-        commission_rate: PLATFORM_COMMISSION_RATE
+        commission_rate: PLATFORM_COMMISSION_RATE,
       });
 
     if (earningsError) {
       console.error('Failed to record platform earnings:', earningsError);
-      // Don't fail the sale, just log the error
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        sale_id: sale.id,
-        platform_commission: platformCommission,
-        seller_commission: sellerCommission,
-        affiliate_commission: affiliateCommission
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-
+    return json({
+      success: true,
+      sale_id: sale.id,
+      amount,
+      shipping_cost,
+      platform_commission: platformCommission,
+      seller_commission: sellerCommission,
+      affiliate_commission: affiliateCommission,
+    });
   } catch (error) {
     console.error('Sale processing error:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    return json({ error: 'Sale processing failed' }, 500);
   }
 });
