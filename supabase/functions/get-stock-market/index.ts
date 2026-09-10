@@ -34,7 +34,7 @@ serve(async (req) => {
 
     if (action === "candles") {
       const symbol = String(body.symbol ?? "").toUpperCase();
-      if (!/^[A-Z.\-^]{1,12}$/.test(symbol)) throw new Error("Invalid symbol");
+      if (!/^[A-Z.\-^=]{1,14}$/.test(symbol)) throw new Error("Invalid symbol");
       const timeframe = String(body.timeframe ?? "1D");
       const candles = await stockCandles(symbol, timeframe);
       if (!candles.length) throw new Error(`No candles returned for ${symbol}`);
@@ -52,7 +52,7 @@ serve(async (req) => {
     const symbols: string[] = (body.symbols ?? []).map((s: string) => String(s).toUpperCase());
     if (!symbols.length || symbols.length > 40) throw new Error("Provide 1-40 symbols");
     for (const s of symbols) {
-      if (!/^[A-Z.\-^]{1,12}$/.test(s)) throw new Error(`Invalid symbol: ${s}`);
+      if (!/^[A-Z.\-^=]{1,14}$/.test(s)) throw new Error(`Invalid symbol: ${s}`);
     }
     const quotes = await stockQuotes(symbols);
     if (!quotes.length) throw new Error("No live equity feed available right now");

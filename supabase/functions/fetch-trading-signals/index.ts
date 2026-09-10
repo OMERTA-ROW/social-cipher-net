@@ -25,7 +25,7 @@ serve(async (req) => {
     const symbol = String(body.symbol ?? "BTC").toUpperCase();
     const assetType = String(body.assetType ?? "crypto");
     const timeframe = String(body.timeframe ?? "1h");
-    if (!/^[A-Z.\-^]{1,12}$/.test(symbol)) throw new Error("Invalid symbol");
+    if (!/^[A-Z.\-^=]{1,14}$/.test(symbol)) throw new Error("Invalid symbol");
 
     const isStock = assetType === "stock";
     const candles = isStock
