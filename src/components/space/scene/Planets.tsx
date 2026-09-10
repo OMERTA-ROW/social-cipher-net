@@ -5,9 +5,9 @@ import {
   CLOUD_TEXTURE_URLS,
   RING_TEXTURE_URL,
   SPACE_TEXTURE_URLS,
-  SUN_TEXTURE_URL,
   useLazyTexture,
 } from "../realTextures";
+import Sun from "./Sun";
 
 /**
  * Real 3D bodies on inclined elliptical orbits around a single local star.
