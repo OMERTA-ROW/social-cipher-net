@@ -32,6 +32,7 @@ import SolarSystemVoyage from "./pages/SolarSystemVoyage";
 import Profile from "./pages/Profile";
 import Thread from "./pages/Thread";
 import Dashboard from "./pages/Dashboard";
+import OAuthConsent from "./pages/OAuthConsent";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
 import SpaceBackground from "./components/space/SpaceBackground";
@@ -70,6 +71,7 @@ const AppContent = () => {
         <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
+        <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {showAIBot && <AIBotAssistant />}
