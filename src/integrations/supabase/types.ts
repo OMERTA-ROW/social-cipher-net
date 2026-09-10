@@ -1395,18 +1395,21 @@ export type Database = {
         Row: {
           birthdate: string | null
           created_at: string
+          two_factor_enabled: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           birthdate?: string | null
           created_at?: string
+          two_factor_enabled?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
           birthdate?: string | null
           created_at?: string
+          two_factor_enabled?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -1430,7 +1433,6 @@ export type Database = {
           is_demo: boolean
           is_private: boolean | null
           is_verified: boolean | null
-          two_factor_enabled: boolean | null
           updated_at: string | null
           username: string | null
           verification_method: string | null
@@ -1445,7 +1447,6 @@ export type Database = {
           is_demo?: boolean
           is_private?: boolean | null
           is_verified?: boolean | null
-          two_factor_enabled?: boolean | null
           updated_at?: string | null
           username?: string | null
           verification_method?: string | null
@@ -1460,7 +1461,6 @@ export type Database = {
           is_demo?: boolean
           is_private?: boolean | null
           is_verified?: boolean | null
-          two_factor_enabled?: boolean | null
           updated_at?: string | null
           username?: string | null
           verification_method?: string | null
