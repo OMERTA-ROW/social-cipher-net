@@ -9,7 +9,6 @@ export interface SavedTab {
   tab_url: string;
   tab_type: string;
   is_active: boolean;
-  login_credentials?: Record<string, any>;
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
