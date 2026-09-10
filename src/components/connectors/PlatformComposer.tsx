@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Send, Rss } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { CONNECTOR_SERVICES } from "@/lib/connectors/registry";
+import { CONNECTOR_SERVICES, canPublish } from "@/lib/connectors/registry";
 import { useConnections } from "@/hooks/useConnections";
 
 /** Post out to, and read back from, the platforms already connected. */
@@ -18,10 +18,10 @@ const PlatformComposer = () => {
   const [feed, setFeed] = useState<{ service: string; items: unknown } | null>(null);
 
   const postable = CONNECTOR_SERVICES.filter(
-    (s) => s.capabilities.includes("post") && isConnected(s.id),
+    (s) => canPublish(s) && isConnected(s.id),
   );
   const readable = CONNECTOR_SERVICES.filter(
-    (s) => s.capabilities.includes("feed") && isConnected(s.id),
+    (s) => s.capabilities.includes("read_feed") && isConnected(s.id),
   );
 
   const toggle = (id: string) =>
