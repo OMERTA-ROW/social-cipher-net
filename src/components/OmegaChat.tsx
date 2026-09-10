@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Coins } from "lucide-react";
 import { GiftGallery } from "./GiftGallery";
 import { GiftOverlay } from "./GiftOverlay";
+import { SnipeLayer } from "./sniper/SnipeLayer";
 
 interface Gift {
   id: string;
