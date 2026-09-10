@@ -202,7 +202,7 @@ export function analyze(candles: Candle[]): TechnicalRead | null {
       reasons.push("Price above long-term EMA");
     } else {
       score -= 1;
-      reasons.push("Price above/below long-term EMA: below");
+      reasons.push("Price below long-term EMA");
     }
   }
 
