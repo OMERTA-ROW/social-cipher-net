@@ -1,7 +1,8 @@
-import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign, Gamepad2, Shield, Tv, FileText, BadgeCheck, CreditCard, ExternalLink, Globe, Brain, Pickaxe, Image } from "lucide-react";
+import { Home, PlusSquare, User, Link2, Radio, ShoppingBag, DollarSign, Gamepad2, Shield, Tv, FileText, BadgeCheck, CreditCard, ExternalLink, Globe, Brain, Pickaxe, Image, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useMiningFeatures } from "@/hooks/useMiningFeatures";
+import { useIsCeo } from "@/hooks/useIsCeo";
 
 interface NavigationProps {
   onCreatePost?: () => void;
@@ -10,6 +11,7 @@ interface NavigationProps {
 const Navigation = ({ onCreatePost }: NavigationProps) => {
   const navigate = useNavigate();
   const { draco, zozo } = useMiningFeatures();
+  const { isCeo } = useIsCeo();
   
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
@@ -110,6 +112,17 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
             >
               <Brain className="w-5 h-5" />
             </Button>
+            {isCeo && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/ceo")}
+                className="text-foreground hover:text-primary"
+                title="CEO Portal"
+              >
+                <Crown className="w-5 h-5" />
+              </Button>
+            )}
             {(draco || zozo) && (
               <Button 
                 variant="ghost" 
