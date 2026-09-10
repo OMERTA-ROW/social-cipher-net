@@ -81,29 +81,10 @@ export const useSavedTabs = () => {
     },
   });
 
-  const updateTabCredentials = useMutation({
-    mutationFn: async ({ tabId, credentials }: { tabId: string; credentials: Record<string, any> }) => {
-      const { error } = await supabase
-        .from("user_saved_tabs")
-        .update({ login_credentials: credentials })
-        .eq("id", tabId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saved-tabs"] });
-      toast.success("Login credentials saved");
-    },
-    onError: (error) => {
-      toast.error("Failed to save credentials: " + error.message);
-    },
-  });
-
   return {
     savedTabs: savedTabs || [],
     isLoading,
     saveTab: saveTab.mutate,
     deleteTab: deleteTab.mutate,
-    updateTabCredentials: updateTabCredentials.mutate,
   };
 };
