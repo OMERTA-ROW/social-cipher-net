@@ -77,7 +77,7 @@ const DescentCamera = ({
     look.current.lerp(
       new THREE.Vector3(
         Math.cos(a + 1.1) * swing * (1 + tilt * 1.6),
-        PLANET_RADIUS + alt * (1 - tilt) * 0.15 + tilt * 6,
+        PLANET_RADIUS + alt * (1 - tilt) * 0.15 + tilt * 1.1,
         Math.sin(a + 1.1) * swing * (1 + tilt * 1.6),
       ),
       1 - Math.exp(-2.2 * dt),
