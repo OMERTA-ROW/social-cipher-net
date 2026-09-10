@@ -1,21 +1,26 @@
 import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { NOISE_GLSL } from "./noise.glsl";
+import {
+  CLOUD_TEXTURE_URLS,
+  RING_TEXTURE_URL,
+  SPACE_TEXTURE_URLS,
+  SUN_TEXTURE_URL,
+  useLazyTexture,
+} from "../realTextures";
 
 /**
- * Procedural bodies on inclined elliptical orbits around a single local star.
- * Surfaces, clouds, terminator and rim glow are all shader-generated —
- * there are no texture maps in this scene.
+ * Real 3D bodies on inclined elliptical orbits around a single local star.
+ * Each planet is a textured sphere using NASA-derived surface maps, with the
+ * same map driving a bump channel for terrain relief, a separate cloud shell
+ * where appropriate, a fresnel atmosphere shell, and real ring geometry.
+ * Orbits, radii, tilts and speeds are unchanged.
  */
 
-const planetVert = /* glsl */ `
+const atmoVert = /* glsl */ `
   varying vec3 vNormalW;
   varying vec3 vPosW;
-  varying vec3 vObj;
-
   void main() {
-    vObj = normalize(position);
     vec4 world = modelMatrix * vec4(position, 1.0);
     vPosW = world.xyz;
     vNormalW = normalize(mat3(modelMatrix) * normal);
@@ -23,85 +28,31 @@ const planetVert = /* glsl */ `
   }
 `;
 
-const planetFrag = /* glsl */ `
+const atmoFrag = /* glsl */ `
   precision highp float;
   varying vec3 vNormalW;
   varying vec3 vPosW;
-  varying vec3 vObj;
-
+  uniform vec3 uColor;
   uniform vec3 uLightPos;
-  uniform vec3 uColorA;
-  uniform vec3 uColorB;
-  uniform vec3 uAtmo;
-  uniform float uBands;     // >0 = gas giant banding
-  uniform float uClouds;    // cloud layer strength
-  uniform float uRough;
-  uniform float uSeed;
-  uniform float uTime;
-  uniform float uDetail;
-
-  ${NOISE_GLSL}
+  uniform float uStrength;
 
   void main() {
     vec3 n = normalize(vNormalW);
-    vec3 p = vObj * 2.2 + uSeed;
-    int oct = uDetail > 0.5 ? 5 : 3;
-
-    float continents = fbm3(p * 1.35, oct);
-    float terrain = continents * 0.68 + fbm3(p * 3.8 + 7.0, oct) * 0.22
-      + fbm3(p * 11.0 - 5.0, oct) * 0.10;
-    float detail = ridge3(p * 6.5, oct) * uRough;
-    float micro = fbm3(p * 24.0 + uSeed * 2.0, oct);
-
-    float bandy = 0.5 + 0.5 * sin(vObj.y * uBands + terrain * 2.4);
-    float mixv = uBands > 0.5
-      ? clamp(bandy * 0.72 + terrain * 0.34 + micro * 0.08, 0.0, 1.0)
-      : clamp(terrain * 0.78 + detail * 0.28 + micro * 0.10, 0.0, 1.0);
-
-    vec3 surf = mix(uColorA, uColorB, smoothstep(0.18, 0.86, mixv));
-    surf *= 0.86 + micro * 0.24;
-
-    // polar caps for rocky worlds
-    if (uBands < 0.5) {
-      float cap = smoothstep(0.80, 0.95, abs(vObj.y)) * smoothstep(0.35, 0.7, terrain + 0.25);
-      surf = mix(surf, vec3(0.94, 0.96, 1.0), cap * 0.8);
-    }
-
-    // drifting cloud deck
-    if (uClouds > 0.01) {
-      float c = fbm3(vObj * 3.4 + vec3(uTime * 0.003, 0.0, uTime * 0.0015) + uSeed * 3.0, oct);
-      float wisps = ridge3(vObj * 9.5 - vec3(uTime * 0.001, 0.0, 0.0) + uSeed, oct);
-      float cover = smoothstep(0.54, 0.80, c + wisps * 0.12) * uClouds;
-      surf = mix(surf, vec3(0.92, 0.95, 1.0), cover * 0.82);
-    }
-
+    vec3 V = normalize(cameraPosition - vPosW);
     vec3 L = normalize(uLightPos - vPosW);
     float ndl = dot(n, L);
-    // real terminator: narrow soft edge, night side almost black
-    float lit = smoothstep(-0.08, 0.12, ndl) * max(ndl, 0.0);
-    float irradiance = lit * (1.18 + 0.22 * max(ndl, 0.0));
-    vec3 col = surf * (irradiance + 0.004);
-
-    // specular sheen on the lit hemisphere
-    vec3 V = normalize(cameraPosition - vPosW);
-    vec3 H = normalize(L + V);
-    float localRough = clamp(uRough * (0.72 + micro * 0.38), 0.08, 1.0);
-    float specPower = mix(110.0, 18.0, localRough);
-    col += vec3(1.0, 0.96, 0.88) * pow(max(dot(n, H), 0.0), specPower)
-      * lit * 0.22 * (1.0 - localRough);
-
-    // atmospheric rim, strongest where the limb faces the star
-    float fres = pow(1.0 - max(dot(n, V), 0.0), 4.2);
-    float forwardScatter = pow(max(dot(V, -L), 0.0), 3.0);
-    col += uAtmo * fres * smoothstep(-0.42, 0.72, ndl) * (0.72 + forwardScatter * 0.38);
-
-    col = col / (col + 1.0) * 1.6;
-    gl_FragColor = vec4(col, 1.0);
+    float fres = pow(1.0 - max(dot(n, V), 0.0), 3.2);
+    float forward = pow(max(dot(V, -L), 0.0), 3.0);
+    float a = fres * smoothstep(-0.35, 0.65, ndl) * (0.75 + forward * 0.4) * uStrength;
+    gl_FragColor = vec4(uColor * (0.9 + forward * 0.5), clamp(a, 0.0, 1.0));
   }
 `;
 
+type TextureKey = keyof typeof SPACE_TEXTURE_URLS;
+
 interface Body {
   name: string;
+  texture: TextureKey;
   radius: number;
   a: number;      // semi-major axis
   ecc: number;
@@ -109,29 +60,28 @@ interface Body {
   phase: number;
   tilt: number;
   spin: number;
-  colorA: [number, number, number];
-  colorB: [number, number, number];
+  base: [number, number, number];
   atmo: [number, number, number];
-  bands: number;
-  clouds: number;
+  atmoStrength: number;
+  bump: number;
   rough: number;
-  ring?: { inner: number; outer: number; color: [number, number, number] };
+  ring?: { inner: number; outer: number };
 }
 
 const BODIES: Body[] = [
-  { name: "inner", radius: 3.2, a: 46, ecc: 0.19, incl: 0.12, phase: 0.7, tilt: 0.03, spin: 0.10,
-    colorA: [0.34, 0.31, 0.29], colorB: [0.62, 0.58, 0.53], atmo: [0.25, 0.22, 0.20], bands: 0, clouds: 0, rough: 1.0 },
-  { name: "terra", radius: 5.0, a: 74, ecc: 0.05, incl: 0.05, phase: 2.3, tilt: 0.41, spin: 0.07,
-    colorA: [0.04, 0.16, 0.42], colorB: [0.16, 0.42, 0.20], atmo: [0.30, 0.55, 1.0], bands: 0, clouds: 0.55, rough: 0.7 },
-  { name: "rust", radius: 4.0, a: 108, ecc: 0.13, incl: 0.09, phase: 4.4, tilt: 0.44, spin: 0.065,
-    colorA: [0.45, 0.19, 0.10], colorB: [0.80, 0.46, 0.26], atmo: [0.75, 0.40, 0.28], bands: 0, clouds: 0.08, rough: 0.9 },
-  { name: "giant", radius: 11.0, a: 168, ecc: 0.06, incl: 0.03, phase: 1.1, tilt: 0.05, spin: 0.16,
-    colorA: [0.46, 0.33, 0.22], colorB: [0.92, 0.83, 0.66], atmo: [0.80, 0.66, 0.45], bands: 20, clouds: 0.12, rough: 0.35 },
-  { name: "ringed", radius: 9.0, a: 240, ecc: 0.05, incl: 0.16, phase: 3.6, tilt: 0.47, spin: 0.14,
-    colorA: [0.62, 0.53, 0.34], colorB: [0.95, 0.90, 0.72], atmo: [0.85, 0.78, 0.55], bands: 16, clouds: 0.08, rough: 0.35,
-    ring: { inner: 1.5, outer: 2.5, color: [0.85, 0.78, 0.62] } },
-  { name: "ice", radius: 6.4, a: 320, ecc: 0.04, incl: 0.2, phase: 5.2, tilt: 1.6, spin: 0.09,
-    colorA: [0.24, 0.55, 0.62], colorB: [0.58, 0.85, 0.90], atmo: [0.45, 0.80, 0.95], bands: 8, clouds: 0.1, rough: 0.4 },
+  { name: "inner", texture: "Mercury", radius: 3.2, a: 46, ecc: 0.19, incl: 0.12, phase: 0.7, tilt: 0.03, spin: 0.10,
+    base: [0.55, 0.51, 0.47], atmo: [0.25, 0.22, 0.20], atmoStrength: 0.12, bump: 0.06, rough: 1.0 },
+  { name: "terra", texture: "Earth", radius: 5.0, a: 74, ecc: 0.05, incl: 0.05, phase: 2.3, tilt: 0.41, spin: 0.07,
+    base: [0.12, 0.3, 0.5], atmo: [0.30, 0.55, 1.0], atmoStrength: 0.85, bump: 0.05, rough: 0.72 },
+  { name: "rust", texture: "Mars", radius: 4.0, a: 108, ecc: 0.13, incl: 0.09, phase: 4.4, tilt: 0.44, spin: 0.065,
+    base: [0.65, 0.35, 0.20], atmo: [0.75, 0.40, 0.28], atmoStrength: 0.3, bump: 0.07, rough: 0.92 },
+  { name: "giant", texture: "Jupiter", radius: 11.0, a: 168, ecc: 0.06, incl: 0.03, phase: 1.1, tilt: 0.05, spin: 0.16,
+    base: [0.78, 0.68, 0.53], atmo: [0.80, 0.66, 0.45], atmoStrength: 0.45, bump: 0.015, rough: 0.6 },
+  { name: "ringed", texture: "Saturn", radius: 9.0, a: 240, ecc: 0.05, incl: 0.16, phase: 3.6, tilt: 0.47, spin: 0.14,
+    base: [0.85, 0.78, 0.58], atmo: [0.85, 0.78, 0.55], atmoStrength: 0.4, bump: 0.012, rough: 0.6,
+    ring: { inner: 1.5, outer: 2.5 } },
+  { name: "ice", texture: "Uranus", radius: 6.4, a: 320, ecc: 0.04, incl: 0.2, phase: 5.2, tilt: 1.6, spin: 0.09,
+    base: [0.45, 0.75, 0.80], atmo: [0.45, 0.80, 0.95], atmoStrength: 0.5, bump: 0.008, rough: 0.55 },
 ];
 
 const ORBIT_SPEED = 0.24;
@@ -146,80 +96,158 @@ const orbitPoint = (b: Body, t: number, out: THREE.Vector3) => {
   return out;
 };
 
-const PlanetMesh = ({ body, detail, segments }: { body: Body; detail: number; segments: number }) => {
+/** ringGeometry with radial UVs so a real ring map bands correctly */
+const useRingGeometry = (inner: number, outer: number) =>
+  useMemo(() => {
+    const geo = new THREE.RingGeometry(inner, outer, 128, 1);
+    const pos = geo.attributes.position as THREE.BufferAttribute;
+    const uv = geo.attributes.uv as THREE.BufferAttribute;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const r = v.length();
+      uv.setXY(i, (r - inner) / (outer - inner), 0.5);
+    }
+    uv.needsUpdate = true;
+    return geo;
+  }, [inner, outer]);
+
+const Ring = ({ inner, outer, delay }: { inner: number; outer: number; delay: number }) => {
+  const geo = useRingGeometry(inner, outer);
+  const map = useLazyTexture(RING_TEXTURE_URL, { delay });
+  return (
+    <mesh rotation={[Math.PI / 2, 0, 0]} geometry={geo} receiveShadow>
+      <meshStandardMaterial
+        map={map ?? undefined}
+        alphaMap={map ?? undefined}
+        color={map ? "#ffffff" : "#d9c8a0"}
+        side={THREE.DoubleSide}
+        transparent
+        opacity={map ? 0.95 : 0.32}
+        roughness={0.9}
+        metalness={0}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+};
+
+const PlanetMesh = ({ body, full, segments, index }: { body: Body; full: boolean; segments: number; index: number }) => {
   const group = useRef<THREE.Group>(null);
   const mesh = useRef<THREE.Mesh>(null);
-  const mat = useRef<THREE.ShaderMaterial>(null);
+  const clouds = useRef<THREE.Mesh>(null);
+  const atmoMat = useRef<THREE.ShaderMaterial>(null);
   const tmp = useMemo(() => new THREE.Vector3(), []);
 
-  const uniforms = useMemo(
+  // progressive: stagger requests so the UI paints first
+  const delay = 220 + index * 160;
+  const map = useLazyTexture(SPACE_TEXTURE_URLS[body.texture], { delay });
+  const bump = useLazyTexture(full ? SPACE_TEXTURE_URLS[body.texture] : undefined, { srgb: false, delay: delay + 400 });
+  const cloudUrl = full ? CLOUD_TEXTURE_URLS[body.texture] : undefined;
+  const cloudMap = useLazyTexture(cloudUrl, { delay: delay + 600 });
+
+  const atmoUniforms = useMemo(
     () => ({
+      uColor: { value: new THREE.Color(...body.atmo) },
       uLightPos: { value: new THREE.Vector3(0, 0, 0) },
-      uColorA: { value: new THREE.Color(...body.colorA) },
-      uColorB: { value: new THREE.Color(...body.colorB) },
-      uAtmo: { value: new THREE.Color(...body.atmo) },
-      uBands: { value: body.bands },
-      uClouds: { value: body.clouds },
-      uRough: { value: body.rough },
-      uSeed: { value: body.a * 0.37 },
-      uTime: { value: 0 },
-      uDetail: { value: detail },
+      uStrength: { value: body.atmoStrength },
     }),
     [],
   );
-  uniforms.uDetail.value = detail;
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
+    const dt = Math.min(delta, 0.05);
     if (group.current) group.current.position.copy(orbitPoint(body, t, tmp));
-    if (mesh.current) mesh.current.rotation.y += Math.min(delta, 0.05) * body.spin * 0.28;
-    if (mat.current) mat.current.uniforms.uTime.value = t;
+    if (mesh.current) mesh.current.rotation.y += dt * body.spin * 0.28;
+    if (clouds.current) clouds.current.rotation.y += dt * body.spin * 0.36;
+    if (atmoMat.current) atmoMat.current.uniforms.uLightPos.value.set(0, 0, 0);
   });
 
   return (
     <group ref={group}>
       <group rotation={[body.tilt, 0, 0]}>
-        <mesh ref={mesh}>
+        <mesh ref={mesh} castShadow receiveShadow>
           <sphereGeometry args={[body.radius, segments, segments / 2]} />
-          <shaderMaterial ref={mat} vertexShader={planetVert} fragmentShader={planetFrag} uniforms={uniforms} toneMapped={false} />
+          <meshStandardMaterial
+            map={map ?? undefined}
+            color={map ? "#ffffff" : new THREE.Color(...body.base)}
+            bumpMap={bump ?? undefined}
+            bumpScale={bump ? body.bump * body.radius : 0}
+            roughness={body.rough}
+            metalness={0.02}
+          />
         </mesh>
-        {body.ring && (
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[body.radius * body.ring.inner, body.radius * body.ring.outer, 96]} />
-            <meshBasicMaterial
-              color={new THREE.Color(...body.ring.color)}
-              side={THREE.DoubleSide}
+
+        {cloudMap && (
+          <mesh ref={clouds}>
+            <sphereGeometry args={[body.radius * 1.015, segments, segments / 2]} />
+            <meshStandardMaterial
+              map={cloudMap}
+              alphaMap={cloudMap}
+              color="#ffffff"
               transparent
-              opacity={0.32}
+              opacity={0.85}
+              roughness={1}
               depthWrite={false}
             />
           </mesh>
+        )}
+
+        <mesh scale={1.06}>
+          <sphereGeometry args={[body.radius, 48, 24]} />
+          <shaderMaterial
+            ref={atmoMat}
+            vertexShader={atmoVert}
+            fragmentShader={atmoFrag}
+            uniforms={atmoUniforms}
+            transparent
+            depthWrite={false}
+            side={THREE.BackSide}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+
+        {body.ring && (
+          <Ring inner={body.radius * body.ring.inner} outer={body.radius * body.ring.outer} delay={delay + 800} />
         )}
       </group>
     </group>
   );
 };
 
+const Sun = ({ full }: { full: boolean }) => {
+  const mesh = useRef<THREE.Mesh>(null);
+  const map = useLazyTexture(full ? SUN_TEXTURE_URL : undefined, { delay: 160 });
+  useFrame((_, delta) => {
+    if (mesh.current) mesh.current.rotation.y += Math.min(delta, 0.05) * 0.012;
+  });
+  return (
+    <>
+      <mesh ref={mesh}>
+        <sphereGeometry args={[16, 64, 32]} />
+        <meshBasicMaterial map={map ?? undefined} color={map ? "#fff6e2" : "#fff0cf"} toneMapped={false} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[22, 32, 16]} />
+        <meshBasicMaterial color="#ffb460" transparent opacity={0.16} depthWrite={false} toneMapped={false} />
+      </mesh>
+    </>
+  );
+};
+
 const Planets = ({ full }: { full: boolean }) => {
-  const detail = full ? 1 : 0;
-  const segments = full ? 64 : 32;
+  const segments = full ? 96 : 40;
   const bodies = full ? BODIES : BODIES.slice(0, 4);
 
   return (
     <group>
       {/* local star: the single light source for every body */}
       <pointLight position={[0, 0, 0]} intensity={3} distance={0} decay={0} color="#fff3d8" />
-      <mesh>
-        <sphereGeometry args={[16, 48, 32]} />
-        <meshBasicMaterial color="#fff0cf" toneMapped={false} />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[22, 32, 16]} />
-        <meshBasicMaterial color="#ffb460" transparent opacity={0.16} depthWrite={false} toneMapped={false} />
-      </mesh>
+      <Sun full={full} />
 
-      {bodies.map((b) => (
-        <PlanetMesh key={b.name} body={b} detail={detail} segments={segments} />
+      {bodies.map((b, i) => (
+        <PlanetMesh key={b.name} body={b} full={full} segments={segments} index={i} />
       ))}
     </group>
   );
