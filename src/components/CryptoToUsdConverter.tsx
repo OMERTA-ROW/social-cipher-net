@@ -152,7 +152,17 @@ export const CryptoToUsdConverter = ({ cryptoBalances, onConversionComplete }: C
           <div className="p-4 bg-muted rounded-lg space-y-1">
             <p className="text-sm text-muted-foreground">Estimated USD (after 2% fee)</p>
             <p className="text-2xl font-bold">${estimatedUsd.toFixed(2)}</p>
+            <MarketSourceBadge
+              source={meta?.source}
+              latency={meta?.latency}
+              asOf={meta?.asOf}
+              connected={!!meta}
+            />
           </div>
+        )}
+
+        {priceError && (
+          <p className="text-xs text-destructive">Live price unavailable: {priceError}</p>
         )}
 
         <Button
