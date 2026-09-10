@@ -11,6 +11,7 @@ import { SocialPlatformConnections } from "./SocialPlatformConnections";
 import { CyberlinkSocialTransfer } from "./CyberlinkSocialTransfer";
 import { useWalletSecurity } from "@/hooks/useWalletSecurity";
 import { Badge } from "@/components/ui/badge";
+import { getCryptoQuotes, messageOf } from "@/services/marketData";
 
 const USD_TO_TOKENS = 1000;
 
@@ -46,6 +47,8 @@ function AnimatedTokenCount({ tokens }: { tokens: number }) {
 export const WalletCard = () => {
   const navigate = useNavigate();
   const [balance, setBalance] = useState<number>(0);
+  const [cryptoUsd, setCryptoUsd] = useState<number | null>(null);
+  const [cryptoError, setCryptoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -71,12 +74,37 @@ export const WalletCard = () => {
 
       const { data, error } = await supabase
         .from("user_wallets")
-        .select("balance")
+        .select("balance, crypto_balance")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) throw error;
       setBalance(data?.balance ? Number(data.balance) : 0);
+
+      // Value crypto holdings from live prices only — never a placeholder.
+      const holdings = (data?.crypto_balance || {}) as Record<string, unknown>;
+      const symbols = Object.keys(holdings);
+      if (!symbols.length) {
+        setCryptoUsd(0);
+        setCryptoError(null);
+      } else {
+        try {
+          const res = await getCryptoQuotes(symbols);
+          const priceMap = new Map(res.quotes.map((q) => [q.symbol.toUpperCase(), q.price]));
+          let total = 0;
+          let complete = true;
+          for (const [symbol, amount] of Object.entries(holdings)) {
+            const price = priceMap.get(symbol.toUpperCase());
+            if (price == null) complete = false;
+            else total += (parseFloat(String(amount ?? "0")) || 0) * price;
+          }
+          setCryptoUsd(complete ? total : null);
+          setCryptoError(complete ? null : "Live prices missing for some assets");
+        } catch (e) {
+          setCryptoUsd(null);
+          setCryptoError(messageOf(e));
+        }
+      }
     } catch (error) {
       console.error("Error fetching wallet:", error);
     } finally {
@@ -169,8 +197,7 @@ export const WalletCard = () => {
             <div className="p-6 rounded-lg bg-primary/10 border border-primary/20 space-y-2">
               <p className="text-sm text-muted-foreground mb-1">USD Balance</p>
               <p className="text-4xl font-bold text-primary animate-fade-in flex items-center gap-2">
-                <span className="text-5xl">∞</span>
-                <span className="text-2xl">Unlimited</span>
+                ${balance.toFixed(2)}
               </p>
             </div>
             
@@ -180,8 +207,7 @@ export const WalletCard = () => {
                 <p className="text-sm text-muted-foreground">Token Balance</p>
               </div>
               <p className="text-4xl font-bold text-primary flex items-center gap-2">
-                <span className="text-5xl">∞</span>
-                <span className="text-2xl">Unlimited</span>
+                <AnimatedTokenCount tokens={Math.floor(balance * USD_TO_TOKENS)} />
               </p>
               <p className="text-xs text-muted-foreground">
                 1,000 tokens = $1 | 1M tokens = $1,000
@@ -194,9 +220,11 @@ export const WalletCard = () => {
                 <p className="text-sm text-muted-foreground">Crypto Balance</p>
               </div>
               <p className="text-4xl font-bold text-primary flex items-center gap-2">
-                <span className="text-5xl">∞</span>
-                <span className="text-2xl">Unlimited</span>
+                {cryptoUsd != null ? `$${cryptoUsd.toFixed(2)}` : <span className="text-2xl">Unavailable</span>}
               </p>
+              {cryptoError && (
+                <p className="text-xs text-destructive break-words">{cryptoError}</p>
+              )}
             </div>
           </div>
 
