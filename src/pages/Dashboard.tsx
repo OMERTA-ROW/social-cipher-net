@@ -359,7 +359,7 @@ const Dashboard = () => {
             </div>
           </Card>
 
-          <DemoDataPanel />
+          {isCeo && <DemoDataPanel />}
         </TabsContent>
       </Tabs>
     </AppShell>
