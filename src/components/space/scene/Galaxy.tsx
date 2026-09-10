@@ -32,26 +32,29 @@ const frag = /* glsl */ `
     // galactic plane, tilted off the scene's horizontal
     vec3 galNormal = normalize(vec3(0.32, 0.86, -0.39));
     float lat = dot(d, galNormal);                 // -1..1, 0 = on the band
-    float bandCore = exp(-pow(lat / 0.085, 2.0));
-    float bandWide = exp(-pow(lat / 0.24, 2.0));
+    float bandCore = exp(-pow(lat / 0.072, 2.0));
+    float bandWide = exp(-pow(lat / 0.22, 2.0));
 
     int oct = uDetail > 0.5 ? 5 : 3;
-    float t = uTime * 0.006;
+    float t = uTime * 0.0018;
 
     // clumpy dust / star clouds along the band
     float clouds = fbm3(d * 5.5 + vec3(t, 0.0, -t), oct);
-    float fine = fbm3(d * 13.0 - vec3(0.0, t, 0.0), oct);
-    float dust = ridge3(d * 8.0 + 4.0, oct);
+    float medium = fbm3(d * 14.0 - vec3(0.0, t, 0.0), oct);
+    float fine = ridge3(d * 31.0 + vec3(7.0, -3.0, 11.0), oct);
+    float dust = ridge3(d * 9.0 + 4.0, oct);
+    float knots = pow(clamp(fbm3(d * 52.0 + 19.0, oct), 0.0, 1.0), 4.0);
 
-    vec3 bandWarm = vec3(1.0, 0.90, 0.74);
-    vec3 bandCool = vec3(0.58, 0.70, 1.0);
-    vec3 band = mix(bandCool, bandWarm, clamp(clouds * 1.3, 0.0, 1.0));
+    vec3 bandWarm = vec3(1.0, 0.88, 0.68);
+    vec3 bandCool = vec3(0.48, 0.62, 0.92);
+    vec3 band = mix(bandCool, bandWarm, clamp(clouds * 1.2 + medium * 0.25, 0.0, 1.0));
 
-    float bandAmt = bandWide * (0.35 + 0.65 * clouds) + bandCore * (0.5 + 0.5 * fine);
+    float bandAmt = bandWide * (0.22 + 0.55 * clouds + 0.20 * medium)
+      + bandCore * (0.38 + 0.28 * fine + knots * 0.65);
     // dark dust lanes cutting through the core of the band
-    bandAmt *= 1.0 - smoothstep(0.45, 0.85, dust) * bandCore * 0.85;
+    bandAmt *= 1.0 - smoothstep(0.48, 0.82, dust) * bandCore * 0.92;
 
-    vec3 col = band * bandAmt * 0.105;
+    vec3 col = band * bandAmt * 0.115;
 
     // nebula complexes at a few fixed directions
     vec3 nebA = normalize(vec3(-0.7, 0.15, 0.62));
@@ -63,12 +66,14 @@ const frag = /* glsl */ `
     float nB = smoothstep(0.90, 1.0, dot(d, nebB)) * smoothstep(0.40, 0.95, fbm3(d * 6.0 - 5.0, oct));
     float nC = smoothstep(0.92, 1.0, dot(d, nebC)) * smoothstep(0.45, 1.0, fbm3(d * 7.5 + 21.0, oct));
 
-    col += vec3(0.42, 0.13, 0.52) * nA * 0.5;   // violet complex
-    col += vec3(0.10, 0.30, 0.72) * nB * 0.45;  // deep blue
-    col += vec3(0.55, 0.14, 0.28) * nC * 0.4;   // faint magenta
+    float filamentA = ridge3(d * 18.0 + 31.0, oct);
+    float filamentB = ridge3(d * 24.0 - 13.0, oct);
+    col += vec3(0.34, 0.09, 0.42) * nA * (0.28 + filamentA * 0.32);
+    col += vec3(0.07, 0.22, 0.58) * nB * (0.30 + filamentB * 0.28);
+    col += vec3(0.46, 0.08, 0.20) * nC * (0.24 + fine * 0.20);
 
     // very faint ambient wash so the sphere never shows an edge
-    col += vec3(0.012, 0.016, 0.030) * (0.4 + 0.6 * clouds);
+    col += vec3(0.006, 0.009, 0.018) * (0.3 + 0.7 * clouds);
 
     col *= uBoost;
     col = max(col, vec3(0.0));

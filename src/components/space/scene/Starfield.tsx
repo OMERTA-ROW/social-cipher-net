@@ -24,10 +24,10 @@ const vert = /* glsl */ `
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mv;
 
-    float tw = 0.82 + 0.18 * sin(uTime * (0.6 + aSeed * 1.7) + aSeed * 40.0);
+    float tw = 0.90 + 0.10 * sin(uTime * (0.25 + aSeed * 0.65) + aSeed * 40.0);
     float dist = max(-mv.z, 1.0);
     gl_PointSize = aSize * uPixelRatio * (300.0 / dist) * tw * uBoost;
-    gl_PointSize = clamp(gl_PointSize, 0.6, 26.0);
+    gl_PointSize = clamp(gl_PointSize, 0.55, 18.0);
 
     vColor = aColor;
     vBright = tw;
@@ -41,12 +41,14 @@ const frag = /* glsl */ `
   void main() {
     vec2 uv = gl_PointCoord - 0.5;
     float d = length(uv);
-    // tight sharp core + faint halo so bright stars glow into the bloom pass
-    float core = smoothstep(0.5, 0.02, d);
-    float halo = smoothstep(0.5, 0.0, d) * 0.35;
-    float a = core * core + halo;
+    // diffraction-like pin core with a restrained halo on bright stars
+    float core = 1.0 - smoothstep(0.055, 0.20, d);
+    float halo = exp(-d * d * 18.0) * 0.20;
+    float spike = exp(-abs(uv.x) * 85.0) * exp(-abs(uv.y) * 8.0)
+      + exp(-abs(uv.y) * 85.0) * exp(-abs(uv.x) * 8.0);
+    float a = core + halo + spike * 0.08;
     if (a < 0.004) discard;
-    gl_FragColor = vec4(vColor * vBright * (1.0 + halo * 1.6), a);
+    gl_FragColor = vec4(vColor * vBright * (1.0 + core * 1.8), a);
   }
 `;
 
@@ -159,10 +161,10 @@ const Starfield = ({ full, dpr, boost }: { full: boolean; dpr: number; boost: nu
   const scale = full ? 1 : 0.2;
   return (
     <group>
-      <Shell count={Math.round(9000 * scale)} inner={90} outer={190} sizeScale={1.25} spin={0.0026} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(12000 * scale)} inner={260} outer={520} sizeScale={0.95} spin={0.0013} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(12000 * scale)} inner={700} outer={1200} sizeScale={0.8} spin={0.0006} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(12000 * scale)} inner={1600} outer={2400} sizeScale={0.7} spin={0.0002} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(9000 * scale)} inner={90} outer={190} sizeScale={1.18} spin={0.00065} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(12000 * scale)} inner={260} outer={520} sizeScale={0.9} spin={0.0003} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(12000 * scale)} inner={700} outer={1200} sizeScale={0.76} spin={0.00013} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(12000 * scale)} inner={1600} outer={2400} sizeScale={0.66} spin={0.00004} dpr={dpr} boost={boost} />
     </group>
   );
 };

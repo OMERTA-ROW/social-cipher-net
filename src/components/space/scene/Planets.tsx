@@ -47,15 +47,19 @@ const planetFrag = /* glsl */ `
     vec3 p = vObj * 2.2 + uSeed;
     int oct = uDetail > 0.5 ? 5 : 3;
 
-    float terrain = fbm3(p * 1.6, oct);
-    float detail = ridge3(p * 4.2, oct) * uRough;
+    float continents = fbm3(p * 1.35, oct);
+    float terrain = continents * 0.68 + fbm3(p * 3.8 + 7.0, oct) * 0.22
+      + fbm3(p * 11.0 - 5.0, oct) * 0.10;
+    float detail = ridge3(p * 6.5, oct) * uRough;
+    float micro = fbm3(p * 24.0 + uSeed * 2.0, oct);
 
     float bandy = 0.5 + 0.5 * sin(vObj.y * uBands + terrain * 2.4);
     float mixv = uBands > 0.5
-      ? clamp(bandy * 0.85 + terrain * 0.3, 0.0, 1.0)
-      : clamp(terrain * 0.9 + detail * 0.5, 0.0, 1.0);
+      ? clamp(bandy * 0.72 + terrain * 0.34 + micro * 0.08, 0.0, 1.0)
+      : clamp(terrain * 0.78 + detail * 0.28 + micro * 0.10, 0.0, 1.0);
 
-    vec3 surf = mix(uColorA, uColorB, mixv);
+    vec3 surf = mix(uColorA, uColorB, smoothstep(0.18, 0.86, mixv));
+    surf *= 0.86 + micro * 0.24;
 
     // polar caps for rocky worlds
     if (uBands < 0.5) {
@@ -65,25 +69,31 @@ const planetFrag = /* glsl */ `
 
     // drifting cloud deck
     if (uClouds > 0.01) {
-      float c = fbm3(vObj * 3.1 + vec3(uTime * 0.012, 0.0, uTime * 0.006) + uSeed * 3.0, oct);
-      float cover = smoothstep(0.52, 0.82, c) * uClouds;
-      surf = mix(surf, vec3(1.0, 0.98, 0.95), cover);
+      float c = fbm3(vObj * 3.4 + vec3(uTime * 0.003, 0.0, uTime * 0.0015) + uSeed * 3.0, oct);
+      float wisps = ridge3(vObj * 9.5 - vec3(uTime * 0.001, 0.0, 0.0) + uSeed, oct);
+      float cover = smoothstep(0.54, 0.80, c + wisps * 0.12) * uClouds;
+      surf = mix(surf, vec3(0.92, 0.95, 1.0), cover * 0.82);
     }
 
     vec3 L = normalize(uLightPos - vPosW);
     float ndl = dot(n, L);
     // real terminator: narrow soft edge, night side almost black
-    float lit = smoothstep(-0.06, 0.16, ndl) * max(ndl, 0.0);
-    vec3 col = surf * (lit * 1.55 + 0.012);
+    float lit = smoothstep(-0.08, 0.12, ndl) * max(ndl, 0.0);
+    float irradiance = lit * (1.18 + 0.22 * max(ndl, 0.0));
+    vec3 col = surf * (irradiance + 0.004);
 
     // specular sheen on the lit hemisphere
     vec3 V = normalize(cameraPosition - vPosW);
     vec3 H = normalize(L + V);
-    col += vec3(1.0) * pow(max(dot(n, H), 0.0), 40.0) * lit * 0.12 * (1.0 - uRough);
+    float localRough = clamp(uRough * (0.72 + micro * 0.38), 0.08, 1.0);
+    float specPower = mix(110.0, 18.0, localRough);
+    col += vec3(1.0, 0.96, 0.88) * pow(max(dot(n, H), 0.0), specPower)
+      * lit * 0.22 * (1.0 - localRough);
 
     // atmospheric rim, strongest where the limb faces the star
-    float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
-    col += uAtmo * fres * smoothstep(-0.35, 0.6, ndl) * 0.9;
+    float fres = pow(1.0 - max(dot(n, V), 0.0), 4.2);
+    float forwardScatter = pow(max(dot(V, -L), 0.0), 3.0);
+    col += uAtmo * fres * smoothstep(-0.42, 0.72, ndl) * (0.72 + forwardScatter * 0.38);
 
     col = col / (col + 1.0) * 1.6;
     gl_FragColor = vec4(col, 1.0);
@@ -124,7 +134,7 @@ const BODIES: Body[] = [
     colorA: [0.24, 0.55, 0.62], colorB: [0.58, 0.85, 0.90], atmo: [0.45, 0.80, 0.95], bands: 8, clouds: 0.1, rough: 0.4 },
 ];
 
-const ORBIT_SPEED = 0.9;
+const ORBIT_SPEED = 0.24;
 
 const orbitPoint = (b: Body, t: number, out: THREE.Vector3) => {
   const period = Math.pow(b.a / 46, 1.5) * 120;
@@ -162,7 +172,7 @@ const PlanetMesh = ({ body, detail, segments }: { body: Body; detail: number; se
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
     if (group.current) group.current.position.copy(orbitPoint(body, t, tmp));
-    if (mesh.current) mesh.current.rotation.y += delta * body.spin;
+    if (mesh.current) mesh.current.rotation.y += Math.min(delta, 0.05) * body.spin * 0.28;
     if (mat.current) mat.current.uniforms.uTime.value = t;
   });
 
