@@ -9,10 +9,19 @@ import { mainnet, polygon, arbitrum, optimism, base, bsc } from 'wagmi/chains';
  */
 const ENV_PROJECT_ID = (import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string | undefined)?.trim();
 
-export const projectId = ENV_PROJECT_ID || 'e4559d53201f9edfee6b623706d47138';
+// Fallback is intentional: this public identifier must survive builds where the
+// env var is not injected, otherwise Web3Modal initialises with an empty id and
+// renders an empty dialog.
+const FALLBACK_PROJECT_ID = 'e4559d53201f9edfee6b623706d47138';
 
-export const isWalletConnectConfigured =
-  !!projectId && projectId !== 'YOUR_WALLETCONNECT_PROJECT_ID';
+const PLACEHOLDER_IDS = ['YOUR_WALLETCONNECT_PROJECT_ID', ''];
+
+export const projectId =
+  ENV_PROJECT_ID && !PLACEHOLDER_IDS.includes(ENV_PROJECT_ID)
+    ? ENV_PROJECT_ID
+    : FALLBACK_PROJECT_ID;
+
+export const isWalletConnectConfigured = !PLACEHOLDER_IDS.includes(projectId);
 
 export const PRODUCTION_URL = 'https://cyberlink.social';
 
