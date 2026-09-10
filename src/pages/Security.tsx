@@ -15,6 +15,7 @@ const Security = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [privacy, setPrivacy] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
