@@ -61,7 +61,7 @@ serve(async (req) => {
           optimization_level: accountData.optimization_level || "standard",
           metadata: accountData.metadata || {},
         })
-        .select()
+        .select(SAFE_COLUMNS)
         .single();
 
       if (error) throw error;
@@ -91,7 +91,7 @@ serve(async (req) => {
         })
         .eq("id", accountId)
         .eq("user_id", user.id)
-        .select()
+        .select(SAFE_COLUMNS)
         .single();
 
       if (error) throw error;
@@ -123,7 +123,7 @@ serve(async (req) => {
     } else if (action === "search") {
       const { data, error } = await supabaseClient
         .from("external_mining_accounts")
-        .select("*")
+        .select(SAFE_COLUMNS)
         .eq("user_id", user.id)
         .eq("mining_type", accountData.mining_type);
 
