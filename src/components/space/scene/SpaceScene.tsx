@@ -14,19 +14,23 @@ import MiningWorld from "./MiningWorld";
 import ShipChaseCamera from "./ShipChaseCamera";
 import VesselFlight from "./VesselFlight";
 import type { SpaceBgView } from "@/lib/spaceBackgroundSettings";
+import DescentScene from "../world/DescentScene";
+import type { QualityTier } from "../world/qualityTiers";
 
 interface Props {
   /** false = reduced particle counts / no post-processing (mobile, low power) */
   full: boolean;
   /** false = frozen frame (prefers-reduced-motion or hidden tab) */
   animate: boolean;
-  /** solar system (default) or the alien mining world */
+  /** solar system (default), the alien mining world, or the Earth descent */
   view?: SpaceBgView;
+  /** resolved detail tier for the world scenes */
+  tier: QualityTier;
 }
 
 const CHROMA = new THREE.Vector2(0.00008, 0.0001);
 
-const SceneContents = ({ full, animate, dpr, view = "solar" }: Props & { dpr: number }) => {
+const SceneContents = ({ full, animate, dpr, view = "solar", tier }: Props & { dpr: number }) => {
   // ambient lift reacts gently to live market volatility
   const [boost, setBoost] = useState(1);
   useEffect(() => {
@@ -35,12 +39,15 @@ const SceneContents = ({ full, animate, dpr, view = "solar" }: Props & { dpr: nu
   }, []);
 
   const mining = view === "mining";
+  const descent = view === "descent";
 
   return (
     <>
-      {mining ? <ShipChaseCamera animate={animate} /> : <CameraRig animate={animate} />}
+      {descent ? null : mining ? <ShipChaseCamera animate={animate} /> : <CameraRig animate={animate} />}
 
-      {mining ? (
+      {descent ? (
+        <DescentScene full={full} animate={animate} tier={tier} dpr={dpr} />
+      ) : mining ? (
         <MiningWorld animate={animate} full={full} />
       ) : (
         <>
@@ -66,7 +73,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar" }: Props & { dpr: nu
   );
 };
 
-const SpaceScene = ({ full, animate, view = "solar" }: Props) => {
+const SpaceScene = ({ full, animate, view = "solar", tier }: Props) => {
   useMarketPulse();
   const dpr = full ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
 
@@ -82,7 +89,7 @@ const SpaceScene = ({ full, animate, view = "solar" }: Props) => {
         scene.background = new THREE.Color(0x000000);
       }}
     >
-      <SceneContents full={full} animate={animate} dpr={dpr} view={view} />
+      <SceneContents full={full} animate={animate} dpr={dpr} view={view} tier={tier} />
     </Canvas>
   );
 };

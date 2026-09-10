@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
-import { isLowPowerDevice, prefersReducedMotion, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
+import { isLowPowerDevice, prefersReducedMotion, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
 
 const SpaceScene = lazy(() => import("./scene/SpaceScene"));
 
@@ -9,10 +9,11 @@ const SpaceScene = lazy(() => import("./scene/SpaceScene"));
  * Everything is generated in code — no image assets, so there are no seams.
  */
 const SpaceBackground = () => {
-  const { mode, dim, view } = useSpaceBgSettings();
+  const { mode, dim, view, quality } = useSpaceBgSettings();
   const [visible, setVisible] = useState(() => typeof document === "undefined" || !document.hidden);
   const [reduced, setReduced] = useState(prefersReducedMotion);
   const lowPower = useMemo(isLowPowerDevice, []);
+  const tier = useMemo(() => resolveQuality(quality), [quality]);
 
   useEffect(() => {
     const onVis = () => setVisible(!document.hidden);
@@ -37,7 +38,7 @@ const SpaceBackground = () => {
 
       {render3d && (
         <Suspense fallback={null}>
-          <SpaceScene full={full} animate={visible && !reduced} view={view} />
+          <SpaceScene full={full} animate={visible && !reduced} view={view} tier={tier} />
         </Suspense>
       )}
 
