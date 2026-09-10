@@ -31,6 +31,29 @@ serve(async (req) => {
   }
 
   try {
+    if (body.action === "context") {
+      // Real Bitcoin network + market-sentiment context.
+      const [fngRes, hashRes, diffRes] = await Promise.allSettled([
+        cached("ctx:fng", 300_000, () => getJson("https://api.alternative.me/fng/?limit=1")),
+        cached("ctx:hash", 300_000, () => getJson("https://mempool.space/api/v1/mining/hashrate/3d")),
+        cached("ctx:diff", 300_000, () => getJson("https://mempool.space/api/v1/difficulty-adjustment")),
+      ]);
+      const fng = fngRes.status === "fulfilled" ? (fngRes.value as any)?.data?.[0] : null;
+      const hashes = hashRes.status === "fulfilled" ? (hashRes.value as any)?.hashrates ?? [] : [];
+      const latestHash = hashes.length ? Number(hashes[hashes.length - 1].avgHashrate) : null;
+      const diff = diffRes.status === "fulfilled" ? (diffRes.value as any) : null;
+      if (!fng && latestHash == null && !diff) throw new Error("No live network context available");
+      return json({
+        fearGreed: fng ? { value: Number(fng.value), label: fng.value_classification } : null,
+        hashRateEhs: latestHash != null ? latestHash / 1e18 : null,
+        difficultyChangePercent: diff?.difficultyChange ?? null,
+        blocksUntilRetarget: diff?.remainingBlocks ?? null,
+        source: "mempool.space + alternative.me",
+        latency: "delayed",
+        asOf: Date.now(),
+      });
+    }
+
     if (body.action === "candles") {
       const symbol = String(body.symbol ?? "BTC").toUpperCase();
       const timeframe = String(body.timeframe ?? "1h");
