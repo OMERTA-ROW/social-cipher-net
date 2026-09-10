@@ -39,6 +39,7 @@ import OAuthConsent from "./pages/OAuthConsent";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
 import SpaceBackground from "./components/space/SpaceBackground";
+import W3mTest from "./pages/__W3mTest";
 
 const AppContent = () => {
   const location = useLocation();
@@ -49,6 +50,7 @@ const AppContent = () => {
       <SpaceBackground />
       <SecurityMonitor />
       <Routes>
+        <Route path="/__w3mtest" element={<W3mTest />} />
         <Route path="/" element={<Index />} />
         <Route path="/studio" element={<Studio />} />
         <Route path="/auth" element={<Auth />} />
