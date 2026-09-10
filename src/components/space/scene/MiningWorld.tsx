@@ -382,24 +382,58 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
 
 /* ---------------- sky and lighting ---------------- */
 
-const AlienSky = () => (
-  <group>
-    <mesh>
-      <sphereGeometry args={[1400, 32, 24]} />
-      <meshBasicMaterial color="#07090f" side={THREE.BackSide} fog={false} />
-    </mesh>
-    {/* gas giant hanging over the horizon */}
-    <mesh position={[-520, 240, -900]}>
-      <sphereGeometry args={[190, 48, 32]} />
-      <meshStandardMaterial color="#5c3f2e" emissive="#2a170d" emissiveIntensity={0.5} roughness={1} />
-    </mesh>
-    {/* distant sun */}
-    <mesh position={[600, 320, -800]}>
-      <sphereGeometry args={[34, 24, 18]} />
-      <meshBasicMaterial color="#ffd9a0" toneMapped={false} />
-    </mesh>
-  </group>
-);
+const skyMaterial = () =>
+  new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+    uniforms: {},
+    vertexShader: `
+      varying vec3 vDir;
+      void main() {
+        vDir = normalize(position);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vDir;
+      float hash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+      void main() {
+        float h = clamp(vDir.y * 0.5 + 0.5, 0.0, 1.0);
+        vec3 zenith = vec3(0.016, 0.024, 0.055);
+        vec3 mid    = vec3(0.07, 0.06, 0.10);
+        vec3 horizon= vec3(0.33, 0.17, 0.10);
+        vec3 col = mix(horizon, mid, smoothstep(0.44, 0.56, h));
+        col = mix(col, zenith, smoothstep(0.55, 0.95, h));
+        // faint star dust above the horizon
+        vec3 q = floor(vDir * 420.0);
+        float s = hash(q);
+        if (s > 0.9985 && vDir.y > 0.02) col += vec3(0.7, 0.75, 0.9) * (s - 0.9985) * 500.0;
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `,
+  });
+
+const AlienSky = () => {
+  const mat = useMemo(skyMaterial, []);
+  return (
+    <group>
+      <mesh material={mat} renderOrder={-1}>
+        <sphereGeometry args={[2600, 40, 28]} />
+      </mesh>
+      {/* gas giant hanging over the horizon */}
+      <mesh position={[-900, 300, -1500]}>
+        <sphereGeometry args={[300, 48, 32]} />
+        <meshStandardMaterial color="#7a5238" emissive="#40230f" emissiveIntensity={0.7} roughness={1} fog={false} />
+      </mesh>
+      {/* distant sun */}
+      <mesh position={[1000, 420, -1400]}>
+        <sphereGeometry args={[60, 24, 18]} />
+        <meshBasicMaterial color="#ffe3b4" toneMapped={false} fog={false} />
+      </mesh>
+    </group>
+  );
+};
 
 const MiningWorld = ({ animate, full }: { animate: boolean; full: boolean }) => {
   const claimed = useRef(0);
