@@ -194,28 +194,39 @@ Deno.serve(async (req) => {
         ? new Date(Date.now() + Number(tokenBody.expires_in) * 1000).toISOString()
         : null;
 
-      await admin.from("connection_secrets").upsert(
-        {
-          connection_id: connection.id,
-          user_id: state.user_id,
-          secret_type: "access_token",
-          secret_value: String(tokenBody.access_token),
-          expires_at: expiresAt,
-        },
-        { onConflict: "connection_id,secret_type" },
-      );
+      await putSecret(admin, {
+        connectionId: connection.id,
+        userId: state.user_id,
+        type: "access_token",
+        value: String(tokenBody.access_token),
+        expiresAt,
+      });
 
       if (tokenBody.refresh_token) {
-        await admin.from("connection_secrets").upsert(
-          {
-            connection_id: connection.id,
-            user_id: state.user_id,
-            secret_type: "refresh_token",
-            secret_value: String(tokenBody.refresh_token),
-          },
-          { onConflict: "connection_id,secret_type" },
-        );
+        await putSecret(admin, {
+          connectionId: connection.id,
+          userId: state.user_id,
+          type: "refresh_token",
+          value: String(tokenBody.refresh_token),
+        });
       }
+
+      await admin
+        .from("user_connections")
+        .update({
+          expires_at: expiresAt,
+          health: "healthy",
+          failure_count: 0,
+        })
+        .eq("id", connection.id);
+
+      await audit(admin, {
+        userId: state.user_id,
+        connectionId: connection.id,
+        serviceId: state.service_id,
+        action: "oauth_connect",
+        status: "ok",
+      });
 
       return json({ ok: true, service_id: state.service_id });
     }
