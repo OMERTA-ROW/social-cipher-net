@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MINIMUM_WITHDRAWAL = 10;
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    status,
+  });
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -14,111 +22,100 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
     );
 
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) return json({ error: 'Unauthorized' }, 401);
 
-    if (userError || !user) {
-      throw new Error('Unauthorized');
-    }
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    const user = userData?.user;
+    if (userError || !user) return json({ error: 'Unauthorized' }, 401);
 
-    const { platform_connection_id, platform, amount } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const platform_connection_id =
+      typeof body.platform_connection_id === 'string' ? body.platform_connection_id.trim() : '';
+    if (!platform_connection_id) return json({ error: 'Invalid platform_connection_id' }, 400);
 
-    console.log(`Withdrawing $${amount} from ${platform} to wallet for user ${user.id}`);
-
-    // Verify platform connection belongs to user
+    // Verify platform connection belongs to the caller
     const { data: connection, error: connError } = await supabaseClient
       .from('platform_connections')
-      .select('*')
+      .select('id, platform, metadata')
       .eq('id', platform_connection_id)
-      .eq('user_id', user.id)
-      .single();
-
-    if (connError || !connection) {
-      throw new Error('Platform connection not found');
-    }
-
-    if (amount < 10) {
-      throw new Error('Minimum withdrawal amount is $10');
-    }
-
-    // Create or update user wallet
-    const { data: wallet, error: walletError } = await supabaseClient
-      .from('user_wallets')
-      .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
 
-    const currentBalance = wallet ? parseFloat(wallet.balance.toString()) : 0;
-    const newBalance = currentBalance + amount;
+    if (connError || !connection) return json({ error: 'Platform connection not found' }, 404);
 
-    if (wallet) {
-      const { error: updateError } = await supabaseClient
-        .from('user_wallets')
-        .update({ 
-          balance: newBalance,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
+    // --- The withdrawable amount is determined server-side, never by the client ---
+    const metadata = (connection.metadata ?? {}) as Record<string, unknown>;
+    const available = Number(metadata.available_earnings ?? 0);
 
-      if (updateError) throw updateError;
-    } else {
-      const { error: insertError } = await supabaseClient
-        .from('user_wallets')
-        .insert({ 
-          user_id: user.id,
-          balance: newBalance
-        });
-
-      if (insertError) throw insertError;
+    if (!Number.isFinite(available) || available <= 0) {
+      return json({ error: 'No verified earnings are available to withdraw' }, 400);
+    }
+    if (available < MINIMUM_WITHDRAWAL) {
+      return json({ error: `Minimum withdrawal amount is $${MINIMUM_WITHDRAWAL}` }, 400);
     }
 
-    // Record wallet transaction
+    const amount = Math.round(available * 100) / 100;
+
+    // Debit the verified earnings first so a retry cannot double-credit
+    const { error: debitError } = await supabaseClient
+      .from('platform_connections')
+      .update({
+        metadata: { ...metadata, available_earnings: 0, last_withdrawal_at: new Date().toISOString() },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', connection.id)
+      .eq('user_id', user.id);
+
+    if (debitError) throw debitError;
+
+    const { data: wallet } = await supabaseClient
+      .from('user_wallets')
+      .select('balance')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const newBalance = Number(wallet?.balance ?? 0) + amount;
+
+    const { error: walletError } = await supabaseClient
+      .from('user_wallets')
+      .upsert(
+        { user_id: user.id, balance: newBalance, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      );
+
+    if (walletError) throw walletError;
+
     const { error: txError } = await supabaseClient
       .from('wallet_transactions')
       .insert({
         user_id: user.id,
-        amount: amount,
+        amount,
         transaction_type: 'earning',
-        description: `Withdrawal from ${platform}`,
+        description: `Withdrawal from ${connection.platform}`,
         status: 'completed',
         metadata: {
-          platform_connection_id,
-          platform,
-          source: 'social_platform_withdrawal'
-        }
+          platform_connection_id: connection.id,
+          platform: connection.platform,
+          source: 'social_platform_withdrawal',
+        },
       });
 
     if (txError) throw txError;
 
-    console.log(`Successfully withdrew $${amount} from ${platform} to wallet`);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        new_balance: newBalance,
-        amount_withdrawn: amount,
-        message: `Successfully withdrew $${amount.toFixed(2)} from ${platform}`
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
-
-  } catch (error: any) {
+    return json({
+      success: true,
+      new_balance: newBalance,
+      amount_withdrawn: amount,
+      message: `Successfully withdrew $${amount.toFixed(2)} from ${connection.platform}`,
+    });
+  } catch (error) {
     console.error('Error in withdraw-platform-earnings:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message || 'Failed to withdraw platform earnings' 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    );
+    return json({ error: 'Failed to withdraw platform earnings' }, 400);
   }
 });
