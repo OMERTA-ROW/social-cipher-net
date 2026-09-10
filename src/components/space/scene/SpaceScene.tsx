@@ -18,7 +18,7 @@ interface Props {
   animate: boolean;
 }
 
-const CHROMA = new THREE.Vector2(0.00025, 0.00035);
+const CHROMA = new THREE.Vector2(0.00008, 0.0001);
 
 const SceneContents = ({ full, animate, dpr }: Props & { dpr: number }) => {
   // ambient lift reacts gently to live market volatility
@@ -39,10 +39,10 @@ const SceneContents = ({ full, animate, dpr }: Props & { dpr: number }) => {
 
       {full && (
         <EffectComposer multisampling={0}>
-          <Bloom intensity={0.9} luminanceThreshold={0.22} luminanceSmoothing={0.5} mipmapBlur />
+          <Bloom intensity={0.62} luminanceThreshold={0.48} luminanceSmoothing={0.32} mipmapBlur />
           <ChromaticAberration offset={CHROMA} blendFunction={BlendFunction.NORMAL} radialModulation={false} modulationOffset={0} />
-          <Noise premultiply opacity={0.045} blendFunction={BlendFunction.OVERLAY} />
-          <Vignette eskil={false} offset={0.25} darkness={0.85} />
+          <Noise premultiply opacity={0.025} blendFunction={BlendFunction.OVERLAY} />
+          <Vignette eskil={false} offset={0.28} darkness={0.82} />
         </EffectComposer>
       )}
     </>
