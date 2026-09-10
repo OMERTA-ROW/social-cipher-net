@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,13 @@ const Auth = () => {
   const [lockoutEndTime, setLockoutEndTime] = useState<Date | null>(null);
   const [remainingAttempts, setRemainingAttempts] = useState(6);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  // Same-origin relative path to return to after auth (used by the OAuth consent flow).
+  const rawNext = searchParams.get("next") ?? "";
+  const nextPath =
+    rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
