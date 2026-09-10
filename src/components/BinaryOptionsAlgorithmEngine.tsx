@@ -1,151 +1,82 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
   Timer,
-  Brain,
   Zap,
   Target,
   Loader2
 } from "lucide-react";
+import MarketSourceBadge from "@/components/market/MarketSourceBadge";
+import MarketUnavailable from "@/components/market/MarketUnavailable";
+import TradingDisclaimer from "@/components/market/TradingDisclaimer";
+import { getStockCandles, messageOf, type Candle, type MarketStatus } from "@/services/marketData";
+import { analyze, changeOver, type TechnicalRead } from "@/lib/marketIndicators";
 
-interface AlgorithmSignal {
-  action: "CALL" | "PUT" | "HOLD";
-  confidence: number;
-  price: number;
-  timestamp: string;
-  expiry: string;
-  indicators: {
-    priceDirection: string;
-    strength: number;
-    momentum: string;
-    timeframe: string;
-    strikePrice: number;
-    expectedReturn: string;
-  };
-  technical: {
-    rsi: number;
-    macd: string;
-    bollingerBands: string;
-    supportResistance: string;
-  };
-  timing: {
-    optimalEntry: string;
-    expiryTime: string;
-    marketSession: string;
-  };
-  risk: {
-    level: "LOW" | "MEDIUM" | "HIGH";
-    winProbability: number;
-    riskReward: string;
-  };
-}
+/** EUR/USD spot from the live FX feed. */
+const PAIR = "EURUSD=X";
+const TIMEFRAME = "5m" as const;
 
 export const BinaryOptionsAlgorithmEngine = () => {
-  const [signal, setSignal] = useState<AlgorithmSignal | null>(null);
+  const [read, setRead] = useState<TechnicalRead | null>(null);
+  const [candles, setCandles] = useState<Candle[]>([]);
+  const [meta, setMeta] = useState<{ source: string; latency: "realtime" | "delayed"; asOf: number; market?: MarketStatus } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [autoTrade, setAutoTrade] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [performance, setPerformance] = useState({
-    winRate: 76,
-    totalTrades: 412,
-    profitFactor: 2.8,
-    avgPayout: 85
-  });
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning) {
-      runAlgorithm();
-      interval = setInterval(() => {
-        runAlgorithm();
-      }, 5000);
-    }
-    return () => clearInterval(interval);
-  }, [isRunning]);
-
-  const runAlgorithm = async () => {
+  const runAlgorithm = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-trading-signals', {
-        body: { 
-          platform: 'iqoption',
-          symbol: 'EURUSD',
-          assetType: 'binary'
-        }
-      });
-
-      if (error) throw error;
-
-      const expiryMinutes = [1, 5, 15, 30, 60][Math.floor(Math.random() * 5)];
-      const expiryTime = new Date(Date.now() + expiryMinutes * 60000);
-
-      const algorithmSignal: AlgorithmSignal = {
-        action: Math.random() > 0.5 ? "CALL" : (Math.random() > 0.5 ? "PUT" : "HOLD"),
-        confidence: Math.floor(Math.random() * 30) + 70,
-        price: Math.random() * 2 + 1.08,
-        timestamp: new Date().toISOString(),
-        expiry: expiryTime.toISOString(),
-        indicators: {
-          priceDirection: Math.random() > 0.5 ? "Bullish" : "Bearish",
-          strength: Math.floor(Math.random() * 40) + 60,
-          momentum: Math.random() > 0.5 ? "Strong" : "Moderate",
-          timeframe: `${expiryMinutes}m`,
-          strikePrice: Math.random() * 2 + 1.08,
-          expectedReturn: `${Math.floor(Math.random() * 30) + 75}%`
-        },
-        technical: {
-          rsi: Math.floor(Math.random() * 60) + 20,
-          macd: Math.random() > 0.5 ? "Bullish Crossover" : "Bearish Crossover",
-          bollingerBands: Math.random() > 0.5 ? "Upper Band Touch" : "Lower Band Touch",
-          supportResistance: Math.random() > 0.5 ? "Near Support" : "Near Resistance"
-        },
-        timing: {
-          optimalEntry: "Now",
-          expiryTime: expiryTime.toLocaleTimeString(),
-          marketSession: Math.random() > 0.5 ? "High Volatility" : "Standard"
-        },
-        risk: {
-          level: Math.random() > 0.7 ? "HIGH" : (Math.random() > 0.5 ? "MEDIUM" : "LOW"),
-          winProbability: Math.floor(Math.random() * 30) + 65,
-          riskReward: `1:${(Math.random() * 1.5 + 0.5).toFixed(2)}`
-        }
-      };
-
-      setSignal(algorithmSignal);
-
-      if (autoTrade && algorithmSignal.action !== "HOLD" && algorithmSignal.confidence > 75) {
-        toast.success(`⏱️ Binary Auto-Trade: ${algorithmSignal.action}`, {
-          description: `Confidence: ${algorithmSignal.confidence}% | Expiry: ${expiryMinutes}m`
-        });
-      }
-    } catch (error: any) {
-      console.error('Binary Options Algorithm error:', error);
-      toast.error("Binary Options Algorithm Error", { description: error.message });
+      const res = await getStockCandles(PAIR, TIMEFRAME);
+      const analysis = analyze(res.candles);
+      if (!analysis) throw new Error("Not enough real price history to compute a signal");
+      setCandles(res.candles);
+      setRead(analysis);
+      setMeta({ source: res.source, latency: res.latency, asOf: res.asOf, market: res.market });
+      setError(null);
+    } catch (e) {
+      setRead(null);
+      setError(messageOf(e));
+      toast.error("Live FX feed unavailable", { description: messageOf(e) });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  useEffect(() => {
+    let interval: number | undefined;
+    if (isRunning) {
+      runAlgorithm();
+      interval = window.setInterval(runAlgorithm, 20000);
+    }
+    return () => window.clearInterval(interval);
+  }, [isRunning, runAlgorithm]);
+
+  const direction = read ? (read.action === "BUY" ? "CALL" : read.action === "SELL" ? "PUT" : "HOLD") : "HOLD";
   const getActionColor = (action: string) => {
     if (action === "CALL") return "text-green-500";
     if (action === "PUT") return "text-red-500";
     return "text-yellow-500";
   };
-
+  const volatility = read?.atrPercent ?? null;
+  const riskLevel = volatility == null ? "UNKNOWN" : volatility > 0.25 ? "HIGH" : volatility > 0.1 ? "MEDIUM" : "LOW";
   const getRiskColor = (level: string) => {
     if (level === "LOW") return "bg-green-500/20 text-green-500";
     if (level === "MEDIUM") return "bg-yellow-500/20 text-yellow-500";
-    return "bg-red-500/20 text-red-500";
+    if (level === "HIGH") return "bg-red-500/20 text-red-500";
+    return "bg-muted text-muted-foreground";
   };
+
+  const change1 = changeOver(candles, 1);
+  const change12 = changeOver(candles, 12);
 
   return (
     <div className="space-y-4">
@@ -157,7 +88,7 @@ export const BinaryOptionsAlgorithmEngine = () => {
                 <Timer className="h-5 w-5 text-blue-500" />
                 Binary Options Algorithm Engine
               </CardTitle>
-              <CardDescription>High-Frequency Short-Term Trading Signals</CardDescription>
+              <CardDescription>EUR/USD read computed from live {TIMEFRAME} candles — no simulated values</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={isRunning ? "default" : "outline"} className="gap-1">
@@ -166,6 +97,13 @@ export const BinaryOptionsAlgorithmEngine = () => {
               </Badge>
             </div>
           </div>
+          <MarketSourceBadge
+            className="mt-2"
+            source={meta?.source}
+            latency={meta?.latency}
+            asOf={meta?.asOf}
+            connected={!error && !!read}
+          />
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-3">
@@ -186,44 +124,42 @@ export const BinaryOptionsAlgorithmEngine = () => {
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
               Manual Scan
             </Button>
-            <Button
-              onClick={() => setAutoTrade(!autoTrade)}
-              variant={autoTrade ? "default" : "outline"}
-              className="gap-2 ml-auto"
-            >
-              <Brain className="h-4 w-4" />
-              Auto-Trade: {autoTrade ? "ON" : "OFF"}
-            </Button>
           </div>
 
           <div className="grid grid-cols-4 gap-4">
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Win Rate</div>
-                <div className="text-2xl font-bold text-green-500">{performance.winRate}%</div>
+                <div className="text-sm text-muted-foreground">Spot</div>
+                <div className="text-2xl font-bold">{read ? read.price.toFixed(5) : "—"}</div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Total Trades</div>
-                <div className="text-2xl font-bold">{performance.totalTrades}</div>
+                <div className="text-sm text-muted-foreground">Last Bar</div>
+                <div className={`text-2xl font-bold ${(change1 ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  {change1 == null ? "—" : `${change1 >= 0 ? "+" : ""}${change1.toFixed(3)}%`}
+                </div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Profit Factor</div>
-                <div className="text-2xl font-bold text-green-500">{performance.profitFactor}x</div>
+                <div className="text-sm text-muted-foreground">Last Hour</div>
+                <div className={`text-2xl font-bold ${(change12 ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  {change12 == null ? "—" : `${change12 >= 0 ? "+" : ""}${change12.toFixed(3)}%`}
+                </div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Avg Payout</div>
-                <div className="text-2xl font-bold">{performance.avgPayout}%</div>
+                <div className="text-sm text-muted-foreground">ATR (volatility)</div>
+                <div className="text-2xl font-bold">{volatility != null ? `${volatility.toFixed(3)}%` : "—"}</div>
               </CardContent>
             </Card>
           </div>
 
-          {signal && (
+          {error && !read && <MarketUnavailable message={error} onRetry={runAlgorithm} />}
+
+          {read && (
             <Tabs defaultValue="signal" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="signal">Signal</TabsTrigger>
@@ -234,73 +170,105 @@ export const BinaryOptionsAlgorithmEngine = () => {
               <TabsContent value="signal" className="space-y-4">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className={`text-3xl font-bold flex items-center gap-2 ${getActionColor(signal.action)}`}>
-                      {signal.action === "CALL" ? <TrendingUp className="h-8 w-8" /> : 
-                       signal.action === "PUT" ? <TrendingDown className="h-8 w-8" /> : 
+                    <div className={`text-3xl font-bold flex items-center gap-2 ${getActionColor(direction)}`}>
+                      {direction === "CALL" ? <TrendingUp className="h-8 w-8" /> :
+                       direction === "PUT" ? <TrendingDown className="h-8 w-8" /> :
                        <Activity className="h-8 w-8" />}
-                      {signal.action}
+                      {direction}
                     </div>
-                    <Badge className={getRiskColor(signal.risk.level)}>
-                      {signal.risk.level} RISK
+                    <Badge className={getRiskColor(riskLevel)}>
+                      {riskLevel} VOLATILITY
                     </Badge>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Confidence</span>
-                      <span className="font-bold">{signal.confidence}%</span>
+                      <span className="text-muted-foreground">Indicator agreement</span>
+                      <span className="font-bold">{read.confidence}%</span>
                     </div>
-                    <Progress value={signal.confidence} className="h-2" />
+                    <Progress value={read.confidence} className="h-2" />
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <div className="text-muted-foreground">Current Price</div>
-                      <div className="font-bold text-lg">${signal.price.toFixed(5)}</div>
+                      <div className="font-bold text-lg">{read.price.toFixed(5)}</div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Expiry</div>
-                      <div className="font-bold">{new Date(signal.expiry).toLocaleTimeString()}</div>
+                      <div className="text-muted-foreground">Trend</div>
+                      <div className="font-bold capitalize">{read.trend}</div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Win Probability</div>
-                      <div className="font-bold text-green-500">{signal.risk.winProbability}%</div>
+                      <div className="text-muted-foreground">Support</div>
+                      <div className="font-bold">{read.support != null ? read.support.toFixed(5) : "—"}</div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Expected Return</div>
-                      <div className="font-bold text-green-500">{signal.indicators.expectedReturn}</div>
+                      <div className="text-muted-foreground">Resistance</div>
+                      <div className="font-bold">{read.resistance != null ? read.resistance.toFixed(5) : "—"}</div>
                     </div>
                   </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Payout and win-rate figures are not shown: no broker feed is connected to supply them.
+                  </p>
                 </div>
               </TabsContent>
 
               <TabsContent value="technical" className="space-y-3">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
-                  {Object.entries(signal.technical).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                      <span className="font-bold">{value}</span>
-                    </div>
-                  ))}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">RSI (14)</span>
+                    <span className="font-bold">{read.rsi != null ? read.rsi.toFixed(1) : "—"}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">MACD histogram</span>
+                    <span className="font-bold">{read.macd ? read.macd.histogram.toFixed(5) : "—"}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Bollinger upper / lower</span>
+                    <span className="font-bold">
+                      {read.bollinger ? `${read.bollinger.upper.toFixed(5)} / ${read.bollinger.lower.toFixed(5)}` : "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">20 / 50 MA</span>
+                    <span className="font-bold">
+                      {read.sma20 != null && read.sma50 != null ? `${read.sma20.toFixed(5)} / ${read.sma50.toFixed(5)}` : "—"}
+                    </span>
+                  </div>
+                  <ul className="text-xs text-muted-foreground space-y-1 pt-1">
+                    {read.reasons.map((r) => (
+                      <li key={r}>• {r}</li>
+                    ))}
+                  </ul>
                 </div>
               </TabsContent>
 
               <TabsContent value="timing" className="space-y-3">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
-                  {Object.entries(signal.timing).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                      <span className="font-bold">{value}</span>
-                    </div>
-                  ))}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Latest candle</span>
+                    <span className="font-bold">
+                      {candles.length ? new Date(candles[candles.length - 1].time).toLocaleTimeString() : "—"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Bars analysed</span>
+                    <span className="font-bold">{read.candleCount}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Feed latency</span>
+                    <span className="font-bold">{meta?.latency === "realtime" ? "real-time" : "delayed"}</span>
+                  </div>
                   <div className="pt-2 border-t">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Timeframe</span>
-                      <Badge variant="outline">{signal.indicators.timeframe}</Badge>
+                      <Badge variant="outline">{TIMEFRAME}</Badge>
                     </div>
                   </div>
                 </div>
               </TabsContent>
             </Tabs>
           )}
+
+          <TradingDisclaimer />
         </CardContent>
       </Card>
     </div>
