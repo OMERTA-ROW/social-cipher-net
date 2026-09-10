@@ -1,117 +1,29 @@
+/**
+ * Connector action runner.
+ *
+ * Resolves the requested capability against the manifest and the service's
+ * adapter, then executes it through the engine (rate budget, retries, backoff,
+ * health, audit trail). Nothing here calls a provider directly.
+ */
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { getSecrets } from "../_shared/connectorVault.ts";
+import { audit, corsHeaders, json } from "../_shared/connectorEngine.ts";
+import { getDefinition, type Capability } from "../_shared/connectorManifest.ts";
+import { getAdapter } from "../_shared/connectorAdapters.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-
-interface SecretBag {
-  [key: string]: string;
-}
-
-/** Per-service request builders. Adding a service = adding a branch here. */
-const runAction = async (
-  serviceId: string,
-  action: string,
-  payload: Record<string, unknown>,
-  secrets: SecretBag,
-): Promise<{ ok: boolean; detail: string; data?: unknown }> => {
-  const token = secrets.access_token ?? secrets.api_key ?? secrets.api_token;
-
-  if (!token && action !== "multicast") {
-    return { ok: false, detail: "This connection has no usable token yet." };
-  }
-
-  const message = String(payload.message ?? "").slice(0, 5000);
-
-  switch (`${serviceId}:${action}`) {
-    case "x:post": {
-      const res = await fetch("https://api.twitter.com/2/tweets", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: message }),
-      });
-      const data = await res.json().catch(() => ({}));
-      return { ok: res.ok, detail: res.ok ? "Posted to X" : JSON.stringify(data), data };
-    }
-    case "x:feed": {
-      const res = await fetch(
-        "https://api.twitter.com/2/users/me/tweets?max_results=10",
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      const data = await res.json().catch(() => ({}));
-      return { ok: res.ok, detail: res.ok ? "Loaded timeline" : "Could not load", data };
-    }
-    case "facebook:post": {
-      const pageId = secrets.page_id ?? String(payload.page_id ?? "me");
-      const res = await fetch(
-        `https://graph.facebook.com/v21.0/${pageId}/feed`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, access_token: token }),
-        },
-      );
-      const data = await res.json().catch(() => ({}));
-      return { ok: res.ok, detail: res.ok ? "Posted to Facebook" : JSON.stringify(data), data };
-    }
-    case "facebook:feed": {
-      const pageId = secrets.page_id ?? "me";
-      const res = await fetch(
-        `https://graph.facebook.com/v21.0/${pageId}/feed?limit=10&access_token=${token}`,
-      );
-      const data = await res.json().catch(() => ({}));
-      return { ok: res.ok, detail: res.ok ? "Loaded feed" : "Could not load", data };
-    }
-    case "instagram:feed": {
-      const res = await fetch(
-        `https://graph.instagram.com/me/media?fields=id,caption,media_url,permalink&access_token=${token}`,
-      );
-      const data = await res.json().catch(() => ({}));
-      return { ok: res.ok, detail: res.ok ? "Loaded media" : "Could not load", data };
-    }
-    case "youtube:feed": {
-      const res = await fetch(
-        "https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true",
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      const data = await res.json().catch(() => ({}));
-      return { ok: res.ok, detail: res.ok ? "Loaded channel" : "Could not load", data };
-    }
-    case "twitch:comment": {
-      const res = await fetch("https://api.twitch.tv/helix/chat/messages", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Client-Id": Deno.env.get("TWITCH_CLIENT_ID") ?? "",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          broadcaster_id: payload.broadcaster_id,
-          sender_id: payload.sender_id,
-          message,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      return { ok: res.ok, detail: res.ok ? "Sent to Twitch chat" : JSON.stringify(data), data };
-    }
-    default:
-      return {
-        ok: false,
-        detail: `${serviceId} does not support ${action} yet.`,
-      };
-  }
+/** Friendly action names the app already uses, mapped onto capabilities. */
+const ACTION_CAPABILITIES: Record<string, Capability[]> = {
+  post: ["publish_text", "publish_image", "publish_video", "publish_audio"],
+  publish: ["publish_text", "publish_image", "publish_video", "publish_audio"],
+  feed: ["read_feed"],
+  profile: ["read_profile"],
+  comment: ["reply_comment"],
+  messages: ["read_messages"],
+  analytics: ["read_analytics"],
+  commerce: ["commerce"],
+  import: ["import_assets"],
+  multicast: ["live_ingest"],
 };
 
 Deno.serve(async (req) => {
@@ -138,7 +50,6 @@ Deno.serve(async (req) => {
     const action = String(body.action ?? "");
     const payload = (body.payload ?? {}) as Record<string, unknown>;
 
-    // Multicast: fan a broadcast out to every requested destination at once.
     const serviceIds: string[] =
       action === "multicast"
         ? (Array.isArray(body.service_ids) ? body.service_ids : []).map(String)
@@ -148,60 +59,108 @@ Deno.serve(async (req) => {
       return json({ error: "No destination selected" }, 400);
     }
 
+    const wanted = ACTION_CAPABILITIES[action];
+    if (!wanted) return json({ error: "Unknown action" }, 400);
+
     const { data: connections } = await admin
       .from("user_connections")
-      .select("id, service_id, status")
+      .select("id, service_id, status, health")
       .eq("user_id", user.id)
       .in("service_id", serviceIds);
 
-    const results: Array<{ service_id: string; ok: boolean; detail: string }> = [];
+    const results: Array<{
+      service_id: string;
+      ok: boolean;
+      detail: string;
+      status?: number;
+      data?: unknown;
+    }> = [];
 
     for (const serviceId of serviceIds) {
+      const definition = getDefinition(serviceId);
       const connection = connections?.find((c) => c.service_id === serviceId);
-      if (!connection || connection.status !== "connected") {
+
+      if (!connection) {
         results.push({ service_id: serviceId, ok: false, detail: "Not connected" });
         continue;
       }
-
-      const { data: secretRows } = await admin
-        .from("connection_secrets")
-        .select("secret_type, secret_value")
-        .eq("connection_id", connection.id);
-
-      const secrets: SecretBag = {};
-      for (const row of secretRows ?? []) {
-        secrets[row.secret_type as string] = row.secret_value as string;
-      }
-
-      if (action === "multicast") {
-        const hasIngest = Boolean(secrets.rtmp_url && secrets.stream_key);
+      if (connection.health === "needs_reconnect") {
         results.push({
           service_id: serviceId,
-          ok: hasIngest,
-          detail: hasIngest
-            ? "Ingest ready — broadcasting"
-            : "Add this destination's ingest URL and stream key",
+          ok: false,
+          detail: "This connection needs to be reconnected before it can be used.",
         });
         continue;
       }
 
-      const result = await runAction(serviceId, action, payload, secrets);
-      results.push({ service_id: serviceId, ok: result.ok, detail: result.detail });
+      // Which capability does this service actually support for the request?
+      const capability = wanted.find((c) => definition?.capabilities.includes(c));
+      const adapter = getAdapter(serviceId);
+      const handler = capability ? adapter?.[capability] : undefined;
 
-      if (!result.ok) {
-        await admin
-          .from("user_connections")
-          .update({ last_error: result.detail.slice(0, 500) })
-          .eq("id", connection.id);
-      } else {
-        await admin
-          .from("user_connections")
-          .update({ last_error: null })
-          .eq("id", connection.id);
+      if (!capability) {
+        const note = definition?.availabilityNote;
+        results.push({
+          service_id: serviceId,
+          ok: false,
+          detail: note
+            ? `${definition?.name ?? serviceId} cannot do this yet — ${note}`
+            : `${definition?.name ?? serviceId} does not support ${action}.`,
+        });
+        await audit(admin, {
+          userId: user.id,
+          connectionId: connection.id,
+          serviceId,
+          action,
+          status: "skipped",
+          detail: "Capability not supported",
+        });
+        continue;
       }
+
+      if (!handler) {
+        results.push({
+          service_id: serviceId,
+          ok: false,
+          detail:
+            `${definition?.name ?? serviceId} is connected, but this action is not wired up yet.`,
+        });
+        continue;
+      }
+
+      const secrets = await getSecrets(admin, connection.id);
+      const result = await handler({
+        admin,
+        connectionId: connection.id,
+        serviceId,
+        secrets,
+        payload,
+      });
+
+      results.push({
+        service_id: serviceId,
+        ok: result.ok,
+        detail: result.ok ? `${action} succeeded` : result.detail,
+        status: result.status,
+        data: result.data,
+      });
+
+      await audit(admin, {
+        userId: user.id,
+        connectionId: connection.id,
+        serviceId,
+        action,
+        status: result.ok ? "ok" : result.status === 429 ? "rate_limited" : "error",
+        httpStatus: result.status,
+        detail: result.ok ? null : result.detail,
+      });
     }
 
-    return json({ ok: results.some((r) => r.ok), results });
+    return json({
+      ok: results.some((r) => r.ok),
+      results,
+      data: results[0]?.data ?? null,
+    });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : "Unexpected error" }, 500);
   }
