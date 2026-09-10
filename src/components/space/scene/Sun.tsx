@@ -210,21 +210,6 @@ const Sun = ({ full }: { full: boolean }) => {
           toneMapped={false}
         />
       </mesh>
-
-      <mesh>
-        <sphereGeometry args={[CORONA_RADIUS, 64, 32]} />
-        <shaderMaterial
-          ref={coronaMat}
-          vertexShader={coronaVert}
-          fragmentShader={coronaFrag}
-          uniforms={coronaUniforms}
-          transparent
-          depthWrite={false}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-          toneMapped={false}
-        />
-      </mesh>
     </>
   );
 };
