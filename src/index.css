@@ -137,3 +137,11 @@ All colors MUST be HSL.
 }
 
 
+
+/* Keep the wallet picker above the full-screen 3D canvas and floating windows. */
+w3m-modal,
+wcm-modal,
+w3m-onramp-widget {
+  --w3m-z-index: 2147483000;
+  z-index: 2147483000;
+}
