@@ -18,11 +18,12 @@ const messageOfError = (error: unknown) => {
 
 export const CryptoWalletConnect = () => {
   const { open } = useWeb3Modal();
-  const { address, isConnected, isConnecting, isReconnecting, chain } = useAccount();
+  const { address, isConnected, chain } = useAccount();
   const { disconnect } = useDisconnect();
   const events = useWeb3ModalEvents();
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [opening, setOpening] = useState(false);
 
   const { data: nativeBalance, isError: balanceError } = useBalance({
     address,
@@ -92,11 +93,14 @@ export const CryptoWalletConnect = () => {
       return;
     }
     setError(null);
+    setOpening(true);
     try {
       await open();
     } catch (e) {
       console.error("Wallet connect error:", e);
       setError(`Could not open the wallet picker: ${messageOfError(e)}`);
+    } finally {
+      setOpening(false);
     }
   };
 
@@ -112,7 +116,7 @@ export const CryptoWalletConnect = () => {
 
   // Only user-initiated connection attempts should block the button;
   // background reconnect must never leave it stuck on "Connecting…".
-  const busy = isConnecting || saving;
+  const busy = opening || saving;
 
   return (
     <Card className="bg-gradient-to-br from-primary/10 via-card/50 to-secondary/10 backdrop-blur-sm border-primary/20">
