@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { verifyOAuthState } from "../_shared/oauthState.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,7 +21,20 @@ serve(async (req) => {
       throw new Error('Missing code or state parameter');
     }
 
-    const { user_id, platform } = JSON.parse(atob(state));
+    // Verify the HMAC-signed state to prevent CSRF / account-linking forgery
+    let user_id: string;
+    let platform: string;
+    try {
+      const verified = await verifyOAuthState(state);
+      user_id = verified.user_id;
+      platform = verified.platform;
+    } catch (stateError) {
+      console.warn('Rejected OAuth callback with invalid state:', stateError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired state parameter' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
 
     console.log(`Processing OAuth callback for ${platform} and user ${user_id}`);
 
@@ -117,7 +131,8 @@ serve(async (req) => {
         },
       })
       .eq('user_id', user_id)
-      .eq('platform', platform);
+      .eq('platform', platform)
+      .eq('is_active', false);
 
     if (updateError) throw updateError;
 

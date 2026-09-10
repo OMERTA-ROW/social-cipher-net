@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { signOAuthState } from "../_shared/oauthState.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -118,9 +119,9 @@ serve(async (req) => {
 
     // Build OAuth URL
     const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/social-oauth-callback`;
-    const state = btoa(JSON.stringify({ user_id: user.id, platform }));
+    const state = await signOAuthState(user.id, platform);
     
-    const authUrl = `${config.auth_url}?client_id=${config.client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(config.scope)}&state=${state}&response_type=code`;
+    const authUrl = `${config.auth_url}?client_id=${config.client_id}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(config.scope)}&state=${encodeURIComponent(state)}&response_type=code`;
 
     return new Response(
       JSON.stringify({ 
