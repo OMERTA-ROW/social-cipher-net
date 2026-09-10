@@ -110,7 +110,9 @@ export const CryptoWalletConnect = () => {
     }
   };
 
-  const busy = isConnecting || isReconnecting || saving;
+  // Only user-initiated connection attempts should block the button;
+  // background reconnect must never leave it stuck on "Connecting…".
+  const busy = isConnecting || saving;
 
   return (
     <Card className="bg-gradient-to-br from-primary/10 via-card/50 to-secondary/10 backdrop-blur-sm border-primary/20">
