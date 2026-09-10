@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { resolvePostsMedia } from "@/lib/media";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
@@ -157,7 +158,18 @@ const Index = () => {
             };
           })
         );
-        setPosts(postsWithPaymentStatus);
+        const withSignedMedia = await Promise.all(
+          postsWithPaymentStatus.map(async (post: any) => {
+            const [resolved] = await resolvePostsMedia([
+              { media: (post.post_media ?? []).map((m: any) => ({ url: m.media_url, type: m.media_type })) },
+            ]);
+            return {
+              ...post,
+              post_media: resolved.media.map((m: any) => ({ media_url: m.url, media_type: m.type })),
+            };
+          })
+        );
+        setPosts(withSignedMedia);
       } else {
         // For non-authenticated users, still check live status
         const postsWithStatus = await Promise.all(
