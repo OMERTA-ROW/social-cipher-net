@@ -111,7 +111,7 @@ export function volumeProfile(candles: Candle[], period = 20) {
 }
 
 export function changeOver(candles: Candle[], bars: number): number | null {
-  if (candles.length < bars + 1) return null;
+  if (bars <= 0 || candles.length < bars + 1) return null;
   const then = candles[candles.length - 1 - bars].close;
   const now = candles[candles.length - 1].close;
   return then ? ((now - then) / then) * 100 : null;
