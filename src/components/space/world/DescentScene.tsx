@@ -80,7 +80,7 @@ const DescentCamera = ({
         PLANET_RADIUS + alt * (1 - tilt) * 0.15 + tilt * 1.1,
         Math.sin(a + 1.1) * swing * (1 + tilt * 1.6),
       ),
-      1 - Math.exp(-2.2 * dt),
+      animate ? 1 - Math.exp(-2.2 * dt) : 1,
     );
 
     camera.up.copy(CITY_UP);
