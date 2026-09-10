@@ -7,7 +7,7 @@ import { SUN_TEXTURE_URL, useLazyTexture } from "../realTextures";
 /**
  * Photorealistic star: a real 3D sphere with a shader-driven photosphere
  * (animated granulation, supergranule flow, sunspots, faculae, limb
- * darkening) plus an additive chromosphere/corona shell carrying streamers
+ * darkening).
  * and limb prominences. Radius, position and overall size are unchanged.
  */
 
