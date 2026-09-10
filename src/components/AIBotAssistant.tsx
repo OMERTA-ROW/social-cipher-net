@@ -260,8 +260,7 @@ const AIBotAssistant = () => {
         }
       });
       
-      // Silent background monitoring
-      toast.info("♾️ System optimized", { duration: 1000 });
+      // Silent background monitoring — no user-facing popup
     }, 30000); // Every 30 seconds
     
     return () => clearInterval(infinityInterval);

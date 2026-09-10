@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Minus, Maximize2, Move } from "lucide-react";
-import { toast } from "sonner";
+
 
 interface FloatingWindowProps {
   id: string;
@@ -49,9 +49,6 @@ export default function FloatingWindow({
       
       if (currentTapCount === 4) {
         setIsDraggable(prev => !prev);
-        toast(isDraggable ? "Movement locked" : "Movement unlocked - Drag anywhere!", {
-          icon: <Move className="h-4 w-4" />
-        });
       }
       
       setTapCount(0);

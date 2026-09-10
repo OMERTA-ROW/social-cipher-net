@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+
 
 interface AppUpdate {
   id: string;
@@ -15,7 +15,7 @@ interface AppUpdate {
 export const useSkyTechUpdates = () => {
   const [updates, setUpdates] = useState<AppUpdate[]>([]);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
-  const { toast } = useToast();
+  
 
   useEffect(() => {
     checkForUpdates();
@@ -37,11 +37,6 @@ export const useSkyTechUpdates = () => {
 
           if (newUpdate.auto_apply) {
             autoApplyUpdate(newUpdate.id);
-          } else {
-            toast({
-              title: "New Update Available",
-              description: newUpdate.title,
-            });
           }
         }
       )
@@ -74,11 +69,6 @@ export const useSkyTechUpdates = () => {
       });
 
       if (error) throw error;
-
-      toast({
-        title: "Auto-Update Applied",
-        description: "The app has been updated automatically",
-      });
 
       checkForUpdates();
     } catch (error: any) {

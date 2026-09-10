@@ -137,10 +137,7 @@ export const AIEcosystemDashboard = () => {
       };
       setCriticalUpdates(prev => [newAlert, ...prev].slice(0, 8));
       
-      toast.error(newAlert.type, {
-        description: newAlert.message,
-        duration: 3000
-      });
+      // status shown in-panel only — no public popup
     }
   };
 
