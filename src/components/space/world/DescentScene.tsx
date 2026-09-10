@@ -39,6 +39,13 @@ const DescentCamera = ({
   const t = useRef(1.15); // start part-way down so the planet is on screen immediately
   const look = useRef(new THREE.Vector3(0, PLANET_RADIUS, 0));
   const target = useRef(new THREE.Vector3());
+  // ?bgalt=<units> pins the descent at one altitude — used when checking a band
+  const pinned = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const raw = new URLSearchParams(window.location.search).get("bgalt");
+    const v = raw ? Number(raw) : NaN;
+    return Number.isFinite(v) && v > 0 ? v : null;
+  }, []);
 
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -49,7 +56,7 @@ const DescentCamera = ({
     const phase = (Math.cos(t.current) + 1) / 2; // 1 = high, 0 = low
     const hi = Math.log10(MAX_ALTITUDE);
     const lo = Math.log10(MIN_ALTITUDE * 12);
-    const alt = Math.pow(10, lo + (hi - lo) * phase);
+    const alt = pinned ?? Math.pow(10, lo + (hi - lo) * phase);
     altitudeRef.current = alt;
 
     // gentle lateral drift over the city site at the north pole
