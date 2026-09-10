@@ -1,165 +1,81 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
-  BarChart3, 
-  Brain,
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  BarChart3,
   Zap,
   Target,
   Loader2,
   Search
 } from "lucide-react";
+import MarketSourceBadge from "@/components/market/MarketSourceBadge";
+import MarketUnavailable from "@/components/market/MarketUnavailable";
+import TradingDisclaimer from "@/components/market/TradingDisclaimer";
+import { getStockCandles, messageOf, type Candle, type MarketStatus } from "@/services/marketData";
+import { analyze, changeOver, type TechnicalRead } from "@/lib/marketIndicators";
 
-interface StockSignal {
-  symbol: string;
-  action: "BUY" | "SELL" | "HOLD";
-  confidence: number;
-  price: number;
-  timestamp: string;
-  dayTrade: {
-    setup: string;
-    entryZone: [number, number];
-    stopLoss: number;
-    target1: number;
-    target2: number;
-    timeframe: string;
-  };
-  momentum: {
-    strength: number;
-    trend: string;
-    acceleration: string;
-  };
-  patterns: {
-    detected: string[];
-    formation: string;
-    reliability: number;
-  };
-  volume: {
-    current: string;
-    avgVolume: string;
-    volumeRatio: number;
-    institucional: string;
-  };
-  options: {
-    callVolume: string;
-    putVolume: string;
-    pcRatio: number;
-    unusualActivity: boolean;
-  };
-}
+const TIMEFRAME = "5m" as const;
+
+const compact = (n: number) =>
+  n >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}K` : n.toFixed(0);
 
 export const StockAlgorithmEngine = () => {
   const [symbol, setSymbol] = useState("SPY");
-  const [signal, setSignal] = useState<StockSignal | null>(null);
+  const [read, setRead] = useState<TechnicalRead | null>(null);
+  const [candles, setCandles] = useState<Candle[]>([]);
+  const [meta, setMeta] = useState<{ source: string; latency: "realtime" | "delayed"; asOf: number; market?: MarketStatus } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [autoTrade, setAutoTrade] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [performance, setPerformance] = useState({
-    winRate: 68,
-    totalTrades: 203,
-    avgReturn: 2.4,
-    maxDrawdown: 8.5
-  });
+  const symbolRef = useRef(symbol);
+  symbolRef.current = symbol;
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRunning) {
-      runAlgorithm();
-      interval = setInterval(() => {
-        runAlgorithm();
-      }, 5000); // Run every 5 seconds for day trading
-    }
-    return () => clearInterval(interval);
-  }, [isRunning, symbol]);
-
-  const runAlgorithm = async () => {
+  const runAlgorithm = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-trading-signals', {
-        body: { 
-          platform: 'alpaca',
-          symbol: symbol,
-          assetType: 'stock'
-        }
-      });
-
-      if (error) throw error;
-
-      // Simulate comprehensive day trading algorithm
-      const patterns = ["Bull Flag", "Cup & Handle", "Ascending Triangle", "Double Bottom", "VWAP Bounce"];
-      const setups = ["Momentum Breakout", "Pullback Entry", "Gap Fill", "Support Bounce", "Resistance Break"];
-      
-      const stockSignal: StockSignal = {
-        symbol: symbol,
-        action: Math.random() > 0.4 ? "BUY" : (Math.random() > 0.5 ? "SELL" : "HOLD"),
-        confidence: Math.floor(Math.random() * 30) + 65,
-        price: data?.data?.price || Math.random() * 500 + 100,
-        timestamp: new Date().toISOString(),
-        dayTrade: {
-          setup: setups[Math.floor(Math.random() * setups.length)],
-          entryZone: [
-            Math.random() * 450 + 100,
-            Math.random() * 480 + 100
-          ],
-          stopLoss: Math.random() * 420 + 95,
-          target1: Math.random() * 520 + 110,
-          target2: Math.random() * 550 + 120,
-          timeframe: "5min"
-        },
-        momentum: {
-          strength: Math.floor(Math.random() * 40) + 60,
-          trend: Math.random() > 0.5 ? "Uptrend" : "Downtrend",
-          acceleration: Math.random() > 0.5 ? "Increasing" : "Stable"
-        },
-        patterns: {
-          detected: [patterns[Math.floor(Math.random() * patterns.length)], 
-                     patterns[Math.floor(Math.random() * patterns.length)]],
-          formation: Math.random() > 0.5 ? "Bullish" : "Bearish",
-          reliability: Math.floor(Math.random() * 30) + 70
-        },
-        volume: {
-          current: `${(Math.random() * 50 + 10).toFixed(1)}M`,
-          avgVolume: `${(Math.random() * 40 + 8).toFixed(1)}M`,
-          volumeRatio: +(Math.random() * 2 + 0.5).toFixed(2),
-          institucional: Math.random() > 0.5 ? "Buying" : "Selling"
-        },
-        options: {
-          callVolume: `${Math.floor(Math.random() * 10000 + 1000)}`,
-          putVolume: `${Math.floor(Math.random() * 10000 + 1000)}`,
-          pcRatio: +(Math.random() * 1.5 + 0.5).toFixed(2),
-          unusualActivity: Math.random() > 0.7
-        }
-      };
-
-      setSignal(stockSignal);
-
-      if (autoTrade && stockSignal.action !== "HOLD" && stockSignal.confidence > 70) {
-        toast.success(`🚀 Day Trade Executed: ${stockSignal.action} ${stockSignal.symbol}`, {
-          description: `Setup: ${stockSignal.dayTrade.setup} | Confidence: ${stockSignal.confidence}%`
-        });
-      }
-    } catch (error: any) {
-      console.error('Algorithm error:', error);
-      toast.error("Algorithm Error", { description: error.message });
+      const res = await getStockCandles(symbolRef.current, TIMEFRAME);
+      const analysis = analyze(res.candles);
+      if (!analysis) throw new Error("Not enough real price history to compute a signal");
+      setCandles(res.candles);
+      setRead(analysis);
+      setMeta({ source: res.source, latency: res.latency, asOf: res.asOf, market: res.market });
+      setError(null);
+    } catch (e) {
+      setRead(null);
+      setError(messageOf(e));
+      toast.error("Live equity feed unavailable", { description: messageOf(e) });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let interval: number | undefined;
+    if (isRunning) {
+      runAlgorithm();
+      interval = window.setInterval(runAlgorithm, 20000);
+    }
+    return () => window.clearInterval(interval);
+  }, [isRunning, symbol, runAlgorithm]);
 
   const getActionColor = (action: string) => {
     if (action === "BUY") return "text-green-500";
     if (action === "SELL") return "text-red-500";
     return "text-yellow-500";
   };
+
+  const atr = read?.atr ?? 0;
+  const price = read?.price ?? 0;
+  const change1 = changeOver(candles, 1);
+  const changeSession = changeOver(candles, Math.min(78, candles.length - 1));
 
   return (
     <div className="space-y-4">
@@ -171,7 +87,7 @@ export const StockAlgorithmEngine = () => {
                 <BarChart3 className="h-5 w-5 text-blue-500" />
                 Stock & Day Trading Algorithm
               </CardTitle>
-              <CardDescription>Advanced Stock Market Algorithm with Pattern Recognition</CardDescription>
+              <CardDescription>Signals computed from live {TIMEFRAME} candles — no simulated values</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={isRunning ? "default" : "outline"} className="gap-1">
@@ -180,6 +96,14 @@ export const StockAlgorithmEngine = () => {
               </Badge>
             </div>
           </div>
+          <MarketSourceBadge
+            className="mt-2"
+            source={meta?.source}
+            latency={meta?.latency}
+            asOf={meta?.asOf}
+            connected={!error && !!read}
+            extra={meta?.market ? `market ${meta.market.state}` : null}
+          />
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Control Panel */}
@@ -210,51 +134,48 @@ export const StockAlgorithmEngine = () => {
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
               Scan
             </Button>
-            <Button
-              onClick={() => setAutoTrade(!autoTrade)}
-              variant={autoTrade ? "default" : "outline"}
-              className="gap-2 ml-auto"
-            >
-              <Brain className="h-4 w-4" />
-              Auto-Trade: {autoTrade ? "ON" : "OFF"}
-            </Button>
           </div>
 
-          {/* Performance Metrics */}
+          {/* Live market stats derived from the real series */}
           <div className="grid grid-cols-4 gap-4">
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Win Rate</div>
-                <div className="text-2xl font-bold text-green-500">{performance.winRate}%</div>
+                <div className="text-sm text-muted-foreground">Last Price</div>
+                <div className="text-2xl font-bold">{read ? `$${price.toFixed(2)}` : "—"}</div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Total Trades</div>
-                <div className="text-2xl font-bold">{performance.totalTrades}</div>
+                <div className="text-sm text-muted-foreground">Last Bar</div>
+                <div className={`text-2xl font-bold ${(change1 ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  {change1 == null ? "—" : `${change1 >= 0 ? "+" : ""}${change1.toFixed(2)}%`}
+                </div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Avg Return</div>
-                <div className="text-2xl font-bold text-green-500">+{performance.avgReturn}%</div>
+                <div className="text-sm text-muted-foreground">Session Move</div>
+                <div className={`text-2xl font-bold ${(changeSession ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  {changeSession == null ? "—" : `${changeSession >= 0 ? "+" : ""}${changeSession.toFixed(2)}%`}
+                </div>
               </CardContent>
             </Card>
             <Card className="bg-background/50">
               <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Max Drawdown</div>
-                <div className="text-2xl font-bold text-red-500">-{performance.maxDrawdown}%</div>
+                <div className="text-sm text-muted-foreground">ATR (volatility)</div>
+                <div className="text-2xl font-bold">{read?.atrPercent != null ? `${read.atrPercent.toFixed(2)}%` : "—"}</div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Current Signal */}
-          {signal && (
+          {error && !read && <MarketUnavailable message={error} onRetry={runAlgorithm} />}
+
+          {read && (
             <Tabs defaultValue="signal" className="w-full">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="signal">Signal</TabsTrigger>
                 <TabsTrigger value="daytrade">Day Trade</TabsTrigger>
-                <TabsTrigger value="patterns">Patterns</TabsTrigger>
+                <TabsTrigger value="patterns">Levels</TabsTrigger>
                 <TabsTrigger value="volume">Volume</TabsTrigger>
                 <TabsTrigger value="options">Options</TabsTrigger>
               </TabsList>
@@ -262,142 +183,126 @@ export const StockAlgorithmEngine = () => {
               <TabsContent value="signal" className="space-y-4">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className={`text-3xl font-bold flex items-center gap-2 ${getActionColor(signal.action)}`}>
-                      {signal.action === "BUY" ? <TrendingUp className="h-8 w-8" /> : 
-                       signal.action === "SELL" ? <TrendingDown className="h-8 w-8" /> : 
+                    <div className={`text-3xl font-bold flex items-center gap-2 ${getActionColor(read.action)}`}>
+                      {read.action === "BUY" ? <TrendingUp className="h-8 w-8" /> :
+                       read.action === "SELL" ? <TrendingDown className="h-8 w-8" /> :
                        <Activity className="h-8 w-8" />}
-                      {signal.action} {signal.symbol}
+                      {read.action} {symbol}
                     </div>
                     <Badge variant="outline" className="text-lg">
-                      ${signal.price.toFixed(2)}
+                      ${price.toFixed(2)}
                     </Badge>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Confidence</span>
-                      <span className="font-bold">{signal.confidence}%</span>
+                      <span className="text-muted-foreground">Indicator agreement</span>
+                      <span className="font-bold">{read.confidence}%</span>
                     </div>
-                    <Progress value={signal.confidence} className="h-2" />
+                    <Progress value={read.confidence} className="h-2" />
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-sm">
                     <div>
-                      <div className="text-muted-foreground">Momentum</div>
-                      <div className="font-bold">{signal.momentum.strength}</div>
+                      <div className="text-muted-foreground">RSI (14)</div>
+                      <div className="font-bold">{read.rsi != null ? read.rsi.toFixed(1) : "—"}</div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Trend</div>
-                      <div className="font-bold">{signal.momentum.trend}</div>
+                      <div className="font-bold capitalize">{read.trend}</div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Timeframe</div>
-                      <div className="font-bold">{signal.dayTrade.timeframe}</div>
+                      <div className="font-bold">{TIMEFRAME}</div>
                     </div>
                   </div>
+                  <ul className="text-xs text-muted-foreground space-y-1 pt-1">
+                    {read.reasons.map((r) => (
+                      <li key={r}>• {r}</li>
+                    ))}
+                  </ul>
                 </div>
               </TabsContent>
 
               <TabsContent value="daytrade" className="space-y-3">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-lg">{signal.dayTrade.setup}</span>
-                    {signal.options.unusualActivity && (
-                      <Badge variant="destructive">Unusual Activity</Badge>
-                    )}
+                    <span className="font-bold text-lg">ATR-based levels</span>
+                    <Badge variant="outline">{read.candleCount} real bars</Badge>
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Entry Zone</span>
-                      <span className="font-bold">${signal.dayTrade.entryZone[0].toFixed(2)} - ${signal.dayTrade.entryZone[1].toFixed(2)}</span>
+                      <span className="font-bold">${(price - atr * 0.25).toFixed(2)} - ${(price + atr * 0.25).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Stop Loss</span>
-                      <span className="font-bold text-red-500">${signal.dayTrade.stopLoss.toFixed(2)}</span>
+                      <span className="text-sm text-muted-foreground">Stop Loss (1.5 ATR)</span>
+                      <span className="font-bold text-red-500">${(price - atr * 1.5).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Target 1</span>
-                      <span className="font-bold text-green-500">${signal.dayTrade.target1.toFixed(2)}</span>
+                      <span className="text-sm text-muted-foreground">Target 1 (1.5 ATR)</span>
+                      <span className="font-bold text-green-500">${(price + atr * 1.5).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Target 2</span>
-                      <span className="font-bold text-green-500">${signal.dayTrade.target2.toFixed(2)}</span>
+                      <span className="text-sm text-muted-foreground">Target 2 (3 ATR)</span>
+                      <span className="font-bold text-green-500">${(price + atr * 3).toFixed(2)}</span>
                     </div>
                   </div>
+                  <p className="text-[10px] text-muted-foreground">Levels are arithmetic projections from the live ATR, not predictions.</p>
                 </div>
               </TabsContent>
 
               <TabsContent value="patterns" className="space-y-3">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Formation</span>
-                    <Badge>{signal.patterns.formation}</Badge>
+                    <span className="text-sm text-muted-foreground">Support (60 bars)</span>
+                    <span className="font-bold">{read.support != null ? `$${read.support.toFixed(2)}` : "—"}</span>
                   </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-muted-foreground">Reliability</span>
-                      <span className="font-bold">{signal.patterns.reliability}%</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Resistance (60 bars)</span>
+                    <span className="font-bold">{read.resistance != null ? `$${read.resistance.toFixed(2)}` : "—"}</span>
+                  </div>
+                  {read.fibonacci && (
+                    <div className="space-y-1 pt-2 border-t">
+                      <span className="text-sm text-muted-foreground">Fibonacci retracement</span>
+                      {Object.entries(read.fibonacci.levels).map(([label, value]) => (
+                        <div key={label} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{label}</span>
+                          <span className="font-bold">${value.toFixed(2)}</span>
+                        </div>
+                      ))}
                     </div>
-                    <Progress value={signal.patterns.reliability} className="h-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">Detected Patterns</span>
-                    {signal.patterns.detected.map((pattern, idx) => (
-                      <Badge key={idx} variant="outline" className="mr-2">
-                        {pattern}
-                      </Badge>
-                    ))}
-                  </div>
+                  )}
                 </div>
               </TabsContent>
 
               <TabsContent value="volume" className="space-y-3">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Current Volume</span>
-                    <span className="font-bold">{signal.volume.current}</span>
+                    <span className="text-sm text-muted-foreground">Latest Bar Volume</span>
+                    <span className="font-bold">{read.volume ? compact(read.volume.latest) : "—"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Avg Volume</span>
-                    <span className="font-bold">{signal.volume.avgVolume}</span>
+                    <span className="text-sm text-muted-foreground">20-bar Average</span>
+                    <span className="font-bold">{read.volume ? compact(read.volume.average) : "—"}</span>
                   </div>
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-muted-foreground">Volume Ratio</span>
-                      <span className="font-bold">{signal.volume.volumeRatio}x</span>
+                      <span className="font-bold">{read.volume ? `${read.volume.ratio.toFixed(2)}x` : "—"}</span>
                     </div>
-                    <Progress value={signal.volume.volumeRatio * 50} className="h-2" />
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Institutional Flow</span>
-                    <Badge variant={signal.volume.institucional === "Buying" ? "default" : "destructive"}>
-                      {signal.volume.institucional}
-                    </Badge>
+                    <Progress value={Math.min(100, (read.volume?.ratio ?? 0) * 50)} className="h-2" />
                   </div>
                 </div>
               </TabsContent>
 
               <TabsContent value="options" className="space-y-3">
                 <div className="rounded-lg bg-background/50 p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Call Volume</span>
-                    <span className="font-bold text-green-500">{signal.options.callVolume}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Put Volume</span>
-                    <span className="font-bold text-red-500">{signal.options.putVolume}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">P/C Ratio</span>
-                    <span className="font-bold">{signal.options.pcRatio}</span>
-                  </div>
-                  {signal.options.unusualActivity && (
-                    <Badge variant="destructive" className="w-full justify-center">
-                      ⚠️ Unusual Options Activity Detected
-                    </Badge>
-                  )}
+                  <MarketUnavailable message="No live options-flow provider is connected, so call/put volume is not shown." />
                 </div>
               </TabsContent>
             </Tabs>
           )}
+
+          <TradingDisclaimer />
         </CardContent>
       </Card>
     </div>

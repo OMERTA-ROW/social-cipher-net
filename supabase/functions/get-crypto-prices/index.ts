@@ -1,105 +1,85 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import {
+  BINANCE_INTERVAL,
+  COIN_IDS,
+  binanceQuotes,
+  coingeckoQuotes,
+  corsHeaders,
+  cryptoCandles,
+  errorResponse,
+  json,
+  type Quote,
+} from "../_shared/marketProviders.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
-  console.log(`[GET-CRYPTO-PRICES] ${step}${detailsStr}`);
-};
-
-// CoinGecko IDs for major cryptocurrencies
-const COIN_IDS = {
-  'BTC': 'bitcoin',
-  'ETH': 'ethereum',
-  'USDC': 'usd-coin',
-  'USDT': 'tether',
-  'MATIC': 'matic-network',
-  'BNB': 'binancecoin',
-  'AVAX': 'avalanche-2',
-  'SOL': 'solana',
-  'ADA': 'cardano',
-  'DOT': 'polkadot',
-};
-
+/**
+ * Live crypto market data.
+ *
+ *  { action: "quotes",  symbols: ["BTC", ...] }
+ *  { action: "candles", symbol: "BTC", timeframe: "1h", limit: 200 }
+ *
+ * Legacy callers that post { currencies: [...] } (or nothing) still receive
+ * the original `{ prices: { BTC: { usd, change24h } } }` shape.
+ */
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
   }
 
   try {
-    logStep("Function started");
+    if (body.action === "candles") {
+      const symbol = String(body.symbol ?? "BTC").toUpperCase();
+      const timeframe = String(body.timeframe ?? "1h");
+      if (!BINANCE_INTERVAL[timeframe]) throw new Error(`Unsupported timeframe: ${timeframe}`);
+      const limit = Math.min(Math.max(Number(body.limit ?? 200), 20), 500);
+      const candles = await cryptoCandles(symbol, timeframe, limit);
+      return json({
+        symbol,
+        timeframe,
+        candles,
+        source: "Binance spot klines",
+        latency: "realtime",
+        asOf: Date.now(),
+      });
+    }
 
-    let currencies;
+    const symbols: string[] = (body.symbols ?? body.currencies ?? Object.keys(COIN_IDS)).map(
+      (s: string) => String(s).toUpperCase(),
+    );
+    if (!symbols.length) throw new Error("No currencies provided");
+
+    let quotes: Quote[] = [];
+    let source = "Binance spot";
+    let latency: "realtime" | "delayed" = "realtime";
     try {
-      const body = await req.json();
-      currencies = body.currencies;
+      quotes = await binanceQuotes(symbols);
     } catch (e) {
-      // No body or invalid JSON, use default
-      currencies = undefined;
-    }
-    
-    const currencyList = currencies || Object.keys(COIN_IDS);
-    
-    logStep("Fetching prices for", { currencies: currencyList });
-
-    // Get CoinGecko IDs for requested currencies
-    const coinIds = currencyList
-      .map((symbol: string) => COIN_IDS[symbol.toUpperCase() as keyof typeof COIN_IDS])
-      .filter(Boolean)
-      .join(',');
-
-    if (!coinIds) {
-      throw new Error("No valid currencies provided");
+      console.error("[get-crypto-prices] binance failed", e);
     }
 
-    // Fetch from CoinGecko API (free tier, no API key required)
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd&include_24hr_change=true`,
-      {
-        headers: {
-          'Accept': 'application/json',
-        },
+    const missing = symbols.filter((s) => !quotes.some((q) => q.symbol === s));
+    if (missing.length) {
+      const fallback = await coingeckoQuotes(missing);
+      if (fallback.length) {
+        quotes = [...quotes, ...fallback];
+        source = quotes.length === fallback.length ? "CoinGecko" : "Binance spot + CoinGecko";
+        if (quotes.length === fallback.length) latency = "delayed";
       }
-    );
-
-    if (!response.ok) {
-      throw new Error(`CoinGecko API error: ${response.status}`);
     }
 
-    const data = await response.json();
-    logStep("Prices fetched", { data });
+    if (!quotes.length) throw new Error("No live crypto feed available right now");
 
-    // Transform response to match our format
+    // legacy shape kept alongside the richer quote list
     const prices: Record<string, { usd: number; change24h: number }> = {};
-    
-    for (const [symbol, coinId] of Object.entries(COIN_IDS)) {
-      if (data[coinId]) {
-        prices[symbol] = {
-          usd: data[coinId].usd,
-          change24h: data[coinId].usd_24h_change || 0,
-        };
-      }
-    }
+    for (const q of quotes) prices[q.symbol] = { usd: q.price, change24h: q.change24h };
 
-    return new Response(
-      JSON.stringify({ prices }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
-    );
+    return json({ quotes, prices, source, latency, asOf: Date.now() });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+    console.error("[get-crypto-prices] ERROR", error);
+    return errorResponse(error);
   }
 });
