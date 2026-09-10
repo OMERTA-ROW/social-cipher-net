@@ -28,14 +28,14 @@ const ORE_FIELD = new THREE.Vector3(46, 9, -34);
 const Terrain = ({ full }: { full: boolean }) => {
   const maps = useMemo(() => rockMaps(), []);
   const geo = useMemo(() => {
-    const g = new THREE.PlaneGeometry(900, 900, full ? 200 : 90, full ? 200 : 90);
+    const g = new THREE.PlaneGeometry(2400, 2400, full ? 220 : 100, full ? 220 : 100);
     const pos = g.attributes.position as THREE.BufferAttribute;
     const r = rnd(9);
-    const peaks = Array.from({ length: 26 }, () => ({
-      x: (r() - 0.5) * 800,
-      y: (r() - 0.5) * 800,
-      h: 10 + r() * 70,
-      s: 40 + r() * 130,
+    const peaks = Array.from({ length: 40 }, () => ({
+      x: (r() - 0.5) * 2100,
+      y: (r() - 0.5) * 2100,
+      h: 18 + r() * 130,
+      s: 70 + r() * 260,
     }));
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
@@ -58,7 +58,7 @@ const Terrain = ({ full }: { full: boolean }) => {
     () =>
       new THREE.MeshStandardMaterial({
         ...maps,
-        color: new THREE.Color("#6d5f55"),
+        color: new THREE.Color("#8b7867"),
         roughness: 0.96,
         metalness: 0.05,
         normalScale: new THREE.Vector2(1.6, 1.6),
@@ -67,7 +67,7 @@ const Terrain = ({ full }: { full: boolean }) => {
   );
 
   useMemo(() => {
-    [mat.map, mat.normalMap, mat.roughnessMap].forEach((t) => t && t.repeat.set(60, 60));
+    [mat.map, mat.normalMap, mat.roughnessMap].forEach((t) => t && t.repeat.set(140, 140));
   }, [mat]);
 
   return <mesh geometry={geo} material={mat} rotation={[-Math.PI / 2, 0, 0]} receiveShadow />;
@@ -453,10 +453,10 @@ const MiningWorld = ({ animate, full }: { animate: boolean; full: boolean }) => 
   return (
     <group>
       <AlienSky />
-      <hemisphereLight args={["#4a5a72", "#221a14", 0.65]} />
-      <directionalLight position={[300, 260, -220]} intensity={2.1} color="#ffd8b0" castShadow={false} />
-      <ambientLight intensity={0.16} />
-      <fogExp2 attach="fog" args={[0x0a0d14, 0.0016]} />
+      <hemisphereLight args={["#6e7f9c", "#3a2b1e", 1.15]} />
+      <directionalLight position={[900, 420, -600]} intensity={2.6} color="#ffdcb4" castShadow={false} />
+      <ambientLight intensity={0.35} />
+      
 
       <Terrain full={full} />
       <OreField full={full} />
