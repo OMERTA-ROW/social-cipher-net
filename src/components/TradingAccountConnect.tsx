@@ -55,7 +55,7 @@ export const TradingAccountConnect = () => {
 
       const { data, error } = await supabase
         .from('trading_accounts')
-        .select('*')
+        .select('id, user_id, platform_name, platform_type, account_username, is_active, metadata, created_at, updated_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
