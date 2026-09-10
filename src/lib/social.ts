@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { resolvePostsMedia } from "@/lib/media";
 
 export interface SocialProfile {
   id: string;
@@ -59,8 +60,8 @@ export interface FeedPage {
   hasMore: boolean;
 }
 
-const toPage = (rows: any[], limit: number): FeedPage => {
-  const posts = rows.map(mapPost);
+const toPage = async (rows: any[], limit: number): Promise<FeedPage> => {
+  const posts = await resolvePostsMedia(rows.map(mapPost));
   return {
     posts,
     nextCursor: posts.length ? posts[posts.length - 1].created_at : null,
@@ -82,7 +83,7 @@ export async function fetchDiscoverFeed(
   if (cursor) query = query.lt("created_at", cursor);
   const { data, error } = await query;
   if (error) throw error;
-  return toPage(data ?? [], limit);
+  return await toPage(data ?? [], limit);
 }
 
 /** Paginated list of the accounts a user follows. */
@@ -158,7 +159,7 @@ export async function fetchFollowingFeed(
   if (cursor) query = query.lt("created_at", cursor);
   const { data, error } = await query;
   if (error) throw error;
-  return toPage(data ?? [], limit);
+  return await toPage(data ?? [], limit);
 }
 
 
@@ -169,7 +170,9 @@ export async function fetchPost(postId: string): Promise<SocialPost | null> {
     .eq("id", postId)
     .maybeSingle();
   if (error) throw error;
-  return data ? mapPost(data) : null;
+  if (!data) return null;
+  const [post] = await resolvePostsMedia([mapPost(data)]);
+  return post ?? null;
 }
 
 /** Fetches all descendants of a root post and nests them. */
@@ -188,7 +191,9 @@ export async function fetchThread(rootId: string): Promise<ThreadNode[]> {
       .in("parent_post_id", frontier)
       .order("created_at", { ascending: true });
     if (error) throw error;
-    const level = (data ?? []).map((r) => ({ ...mapPost(r), children: [] as ThreadNode[] }));
+    const level = await resolvePostsMedia(
+      (data ?? []).map((r) => ({ ...mapPost(r), children: [] as ThreadNode[] }))
+    );
     nodes.push(...level);
     frontier = level.map((n) => n.id);
   }

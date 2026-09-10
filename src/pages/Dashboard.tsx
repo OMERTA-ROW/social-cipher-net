@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { resolvePostsMedia } from "@/lib/media";
 import { Link, useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import PostCard from "@/components/PostCard";
@@ -123,7 +124,7 @@ const Dashboard = () => {
         .map((m: any) => ({ url: m.media_url, type: (m.media_type === "video" ? "video" : "image") as "image" | "video" })),
     }));
 
-    const roots = mapped.filter((p) => !p.parent_post_id);
+    const roots = await resolvePostsMedia(mapped.filter((p) => !p.parent_post_id));
     setPosts(roots);
     setStats({
       posts: roots.length,

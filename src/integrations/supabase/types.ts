@@ -1391,11 +1391,39 @@ export type Database = {
           },
         ]
       }
+      profile_private: {
+        Row: {
+          birthdate: string | null
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birthdate?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birthdate?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_private_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           bio: string | null
-          birthdate: string | null
           created_at: string | null
           display_name: string | null
           id: string
@@ -1411,7 +1439,6 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
-          birthdate?: string | null
           created_at?: string | null
           display_name?: string | null
           id: string
@@ -1427,7 +1454,6 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
-          birthdate?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string

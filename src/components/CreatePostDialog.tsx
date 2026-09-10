@@ -51,18 +51,27 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
       // Upload media files if any
       let mediaUrls: Array<{ url: string; type: 'image' | 'video' }> = [];
       if (mediaFiles.length > 0) {
+        const isPaid = monetizationType !== "free";
+        const bucket = isPaid ? 'paid-media' : 'post-media';
+
         const uploadPromises = mediaFiles.map(async (media) => {
           const fileName = `${user.id}/${Date.now()}-${media.file.name}`;
           const { data, error } = await supabase.storage
-            .from('post-media')
+            .from(bucket)
             .upload(fileName, media.file);
-          
+
           if (error) throw error;
-          
+
+          // Paid media stays in a private bucket: store the path and hand out
+          // short-lived signed links only to the creator and paying viewers.
+          if (isPaid) {
+            return { url: data.path, type: media.type };
+          }
+
           const { data: { publicUrl } } = supabase.storage
-            .from('post-media')
+            .from(bucket)
             .getPublicUrl(data.path);
-          
+
           return { url: publicUrl, type: media.type };
         });
         
