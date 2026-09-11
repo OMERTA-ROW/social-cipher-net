@@ -128,7 +128,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       <div className="space-y-4">
         {posts.map((post) => (
           <div key={post.id} className="relative">
-            {tab === "discover" && post.user_id !== userId && (
+            {tab !== "following" && post.user_id !== userId && (
               <div className="absolute right-4 top-4 z-10">
                 <FollowButton targetUserId={post.user_id} />
               </div>
