@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import StoryRing from "./StoryRing";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
+import { cached } from "@/lib/queryCache";
+import { reportIssue } from "@/lib/monitoring";
 
 interface StoryUser {
   id: string;
@@ -84,7 +86,7 @@ const StoriesBar = () => {
 
       setUsers(sortedUsers);
     } catch (error) {
-      console.error("Error fetching stories and live:", error);
+      reportIssue("stories_load_failed", error, { surface: "stories_bar" });
     } finally {
       setLoading(false);
     }
