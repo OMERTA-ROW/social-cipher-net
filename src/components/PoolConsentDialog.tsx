@@ -22,11 +22,42 @@ export const PoolConsentDialog = ({ open, onOpenChange, poolId, onConsentComplet
     setVerificationStatus('scanning');
     setVerifying(true);
 
-    // Simulate biometric verification
-    await new Promise(resolve => setTimeout(resolve, 2500));
-
-    // 95% success rate simulation
-    const success = Math.random() > 0.05;
+    // Real device biometric check: the browser asks the built-in authenticator
+    // (Face ID / Touch ID / Windows Hello) to confirm the person is present.
+    let success = false;
+    try {
+      const { data: { session: current } } = await supabase.auth.getSession();
+      if (!current) throw new Error("Please sign in first.");
+      if (!window.PublicKeyCredential || !navigator.credentials?.create) {
+        throw new Error("This device or browser cannot do biometric verification.");
+      }
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const credential = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: "Cyber Link", id: window.location.hostname },
+          user: {
+            id: new TextEncoder().encode(current.user.id),
+            name: current.user.email ?? current.user.id,
+            displayName: current.user.email ?? "Cyber Link member",
+          },
+          pubKeyCredParams: [
+            { type: "public-key", alg: -7 },
+            { type: "public-key", alg: -257 },
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: "platform",
+            userVerification: "required",
+          },
+          timeout: 60_000,
+        },
+      });
+      success = Boolean(credential);
+    } catch (error: unknown) {
+      success = false;
+      const message = error instanceof Error ? error.message : "Verification was not completed.";
+      toast.error(message);
+    }
 
     if (success) {
       setVerificationStatus('success');

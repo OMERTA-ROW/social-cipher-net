@@ -102,11 +102,9 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
 
       if (error) throw error;
       
-      // Mock earnings data for each platform (in real implementation, fetch from each platform's API)
-      const connectionsWithEarnings = data?.map(conn => ({
-        ...conn,
-        earnings_balance: Math.random() * 100 // Replace with real platform earnings API call
-      })) || [];
+      // Balances come only from each platform's own API, surfaced on the
+      // Monetization page. Nothing is estimated or invented here.
+      const connectionsWithEarnings = data ?? [];
 
       setConnections(connectionsWithEarnings);
       
@@ -373,9 +371,15 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <p className="text-lg font-semibold">
-                      ${(connection.earnings_balance || 0).toFixed(2)}
+                      {typeof connection.earnings_balance === "number"
+                        ? `$${connection.earnings_balance.toFixed(2)}`
+                        : "—"}
                     </p>
-                    <p className="text-xs text-muted-foreground">Available</p>
+                    <p className="text-xs text-muted-foreground">
+                      {typeof connection.earnings_balance === "number"
+                        ? "Available"
+                        : "See Monetization"}
+                    </p>
                   </div>
                   <Button
                     size="sm"

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Minus, Maximize2, GripVertical, Orbit, MonitorSmartphone } from "lucide-react";
+import { X, Minus, Maximize2, GripVertical, Orbit, MonitorSmartphone, Pin, PinOff } from "lucide-react";
 import type { WindowWorkspace } from "@/hooks/useFloatingWindows";
 
 interface FloatingWindowProps {
@@ -51,6 +51,16 @@ const readPlacement = (title: string, workspace: WindowWorkspace): Placement | n
   }
 };
 
+const pinKey = (title: string, workspace: WindowWorkspace) => `${storageKey(title, workspace)}:pinned`;
+
+const readPinned = (title: string, workspace: WindowWorkspace): boolean => {
+  try {
+    return localStorage.getItem(pinKey(title, workspace)) === "1";
+  } catch {
+    return false;
+  }
+};
+
 const clampToViewport = (p: Placement): Placement => {
   const maxX = Math.max(0, window.innerWidth - 120);
   const maxY = Math.max(0, window.innerHeight - 60);
@@ -80,8 +90,26 @@ export default function FloatingWindow({
     ),
   );
   const [isMinimized, setIsMinimized] = useState(false);
+  const [pinned, setPinned] = useState(() => readPinned(title, workspace));
   const [mode, setMode] = useState<"idle" | "drag" | "resize">("idle");
   const gesture = useRef({ startX: 0, startY: 0, originX: 0, originY: 0, originW: 0, originH: 0 });
+
+  // A pinned window stays exactly where the user parked it.
+  useEffect(() => {
+    setPinned(readPinned(title, workspace));
+  }, [title, workspace]);
+
+  const togglePin = () => {
+    setPinned((current) => {
+      const next = !current;
+      try {
+        localStorage.setItem(pinKey(title, workspace), next ? "1" : "0");
+      } catch {
+        /* storage unavailable */
+      }
+      return next;
+    });
+  };
 
   // Remember where the user placed this window.
   useEffect(() => {
@@ -100,6 +128,7 @@ export default function FloatingWindow({
   }, [workspace]);
 
   const startGesture = (clientX: number, clientY: number, next: "drag" | "resize") => {
+    if (pinned) return;
     gesture.current = {
       startX: clientX,
       startY: clientY,
@@ -166,9 +195,13 @@ export default function FloatingWindow({
         userSelect: mode === "idle" ? undefined : "none",
       }}
     >
-      <Card className="h-full flex flex-col border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
+      <Card
+        className={`h-full flex flex-col border-2 bg-background/95 backdrop-blur-sm ${
+          pinned ? "border-accent/50" : "border-primary/20"
+        }`}
+      >
         <CardHeader
-          className="border-b bg-muted/30 py-2 px-4 cursor-move touch-none"
+          className={`border-b bg-muted/30 py-2 px-4 touch-none ${pinned ? "cursor-default" : "cursor-move"}`}
           onMouseDown={(e) => {
             if ((e.target as HTMLElement).closest("button")) return;
             startGesture(e.clientX, e.clientY, "drag");
@@ -185,6 +218,16 @@ export default function FloatingWindow({
               <CardTitle className="text-sm font-medium truncate">{title}</CardTitle>
             </div>
             <div className="flex items-center gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                className={`h-6 w-6 ${pinned ? "text-accent" : ""}`}
+                onClick={togglePin}
+                title={pinned ? "Unpin this window" : "Pin this window in place"}
+                aria-label={pinned ? "Unpin this window" : "Pin this window in place"}
+              >
+                {pinned ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+              </Button>
               {onToggleWorkspace && (
                 <Button
                   size="icon"
@@ -220,7 +263,10 @@ export default function FloatingWindow({
         </CardHeader>
         {!isMinimized && (
           <>
-            <CardContent className="flex-1 p-4 overflow-auto">{children}</CardContent>
+            <CardContent className="flex-1 p-4 overflow-y-auto overflow-x-hidden overscroll-contain">
+              {children}
+            </CardContent>
+            {!pinned && (
             <div
               role="presentation"
               aria-label="Resize"
@@ -239,6 +285,7 @@ export default function FloatingWindow({
                 if (t) startGesture(t.clientX, t.clientY, "resize");
               }}
             />
+            )}
           </>
         )}
       </Card>

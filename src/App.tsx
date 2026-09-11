@@ -40,7 +40,6 @@ import Trading from "./pages/Trading";
 import Terminal from "./pages/Terminal";
 import OAuthConsent from "./pages/OAuthConsent";
 import AIBotAssistant from "./components/AIBotAssistant";
-import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
 import SpaceBackground from "./components/space/SpaceBackground";
 
 const AppContent = () => {
@@ -79,7 +78,6 @@ const AppContent = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/trading" element={<Trading />} />
         <Route path="/terminal" element={<Terminal />} />
-        <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/ceo" element={<CeoPortal />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
