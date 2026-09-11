@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, BadgeCheck, Lock } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, Lock, Repeat2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import StoryRing from "@/components/StoryRing";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import LinkPreview from "@/components/post/LinkPreview";
+import { extractUrls } from "@/lib/links";
+import { toggleRepost } from "@/lib/social";
 
 interface PostCardProps {
   postId: string;
@@ -25,6 +28,8 @@ interface PostCardProps {
   isLive?: boolean;
   media?: Array<{ url: string; type: 'image' | 'video' }>;
   replyCount?: number;
+  reposts?: number;
+  isReposted?: boolean;
   /** Seeded sample content marker */
   isDemo?: boolean;
   /** Navigate to the thread view when the card / reply button is clicked */
@@ -51,6 +56,8 @@ const PostCard = ({
   isLive = false,
   media = [],
   replyCount = 0,
+  reposts = 0,
+  isReposted = false,
   isDemo = false,
   linkToThread = false,
   onPaymentRequired,
@@ -60,9 +67,14 @@ const PostCard = ({
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
   const [busy, setBusy] = useState(false);
+  const [reposted, setReposted] = useState(isReposted);
+  const [repostCount, setRepostCount] = useState(reposts);
+  const links = extractUrls(content).slice(0, 2);
   const isLocked = (monetizationType === "pay_per_view" || monetizationType === "pay_per_click") && !isPaid;
 
   useEffect(() => setLikeCount(likes), [likes]);
+  useEffect(() => setRepostCount(reposts), [reposts]);
+  useEffect(() => setReposted(isReposted), [isReposted]);
 
   useEffect(() => {
     let active = true;
@@ -110,6 +122,30 @@ const PostCard = ({
       toast.error("Could not update like");
     }
     setBusy(false);
+  };
+
+  const handleRepost = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isLocked) {
+      onPaymentRequired?.();
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Sign in to repost");
+      return;
+    }
+    const next = !reposted;
+    setReposted(next);
+    setRepostCount((c) => Math.max(0, c + (next ? 1 : -1)));
+    try {
+      await toggleRepost(postId, user.id, !next);
+      toast.success(next ? "Reposted" : "Repost removed");
+    } catch {
+      setReposted(!next);
+      setRepostCount((c) => Math.max(0, c + (next ? -1 : 1)));
+      toast.error("Could not update repost");
+    }
   };
 
   const goToThread = (e: React.MouseEvent) => {
@@ -201,26 +237,43 @@ const PostCard = ({
                   'grid-cols-2 md:grid-cols-3'
                 }`}>
                   {media.map((item, idx) => (
-                    <div key={idx} className="relative rounded-lg overflow-hidden bg-secondary aspect-square">
+                    <div
+                      key={idx}
+                      className={`relative rounded-lg overflow-hidden bg-secondary/60 flex items-center justify-center ${
+                        media.length === 1 ? '' : 'aspect-square'
+                      }`}
+                    >
                       {item.type === 'image' ? (
                         <img
                           src={item.url}
                           alt={`Post media ${idx + 1}`}
                           loading="lazy"
-                          className="w-full h-full object-cover"
+                          className={
+                            media.length === 1
+                              ? 'w-full max-h-[560px] object-contain'
+                              : 'w-full h-full object-cover'
+                          }
                         />
                       ) : (
                         <video
                           src={item.url}
                           controls
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full h-full object-cover"
+                          className={
+                            media.length === 1
+                              ? 'w-full max-h-[560px] object-contain'
+                              : 'w-full h-full object-cover'
+                          }
                         />
                       )}
                     </div>
                   ))}
                 </div>
               )}
+
+              {links.map((url) => (
+                <LinkPreview key={url} url={url} />
+              ))}
             </>
           )}
 
@@ -243,6 +296,17 @@ const PostCard = ({
             >
               <MessageCircle className="w-5 h-5" />
               <span>{replyCount || comments}</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRepost}
+              className={`gap-2 ${reposted ? 'text-accent' : 'text-muted-foreground'} hover:text-accent`}
+              title="Repost"
+            >
+              <Repeat2 className="w-5 h-5" />
+              <span>{repostCount}</span>
             </Button>
 
             <Button
