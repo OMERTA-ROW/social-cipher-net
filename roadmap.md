@@ -39,10 +39,17 @@
 - [x] Ranked feed (engagement + recency)
 - [x] Profile radio player (Spotify/Apple/SoundCloud/YouTube, stream routing)
 - [x] Direct messaging + unified inbox (block/report/tags/scam filter)
-- [ ] Sidebar restructure (lean basics + dropdown groups)
-- [ ] Subscription tiers + sandboxed Terminal with AI agent
+- [x] Sidebar restructure (lean basics + dropdown groups)
+- [x] Sandboxed Terminal (/terminal), tier-gated, with AI agent `ask`
+- [ ] Subscription checkout for the Terminal add-on
 - [ ] Moderation: no auto-suspension, review queue only
 - [ ] Social links/connectors live
+
+## Trading layer
+- [x] Multi-chart workspace (/trading), tier-gated panes/indicators
+- [x] Live-only data with source, latency and unavailable states
+- [x] Non-custodial wallets (EVM + Solana), human-only trade confirmation, audit log
+- [ ] Exchange/broker order routing (needs provider API keys per user)
 
 ## Universal connectors system
 - [x] One page for OAuth + API key + MCP connections
