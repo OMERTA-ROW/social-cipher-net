@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { cacheGet, cacheSet } from "@/lib/queryCache";
 
 /** Private bucket holding media that belongs to paid posts. */
 export const PAID_MEDIA_BUCKET = "paid-media";
@@ -8,14 +9,31 @@ export const isPaidMediaPath = (url: string) => !!url && !/^https?:\/\//i.test(u
 
 type MediaItem = { url: string; type: "image" | "video" };
 
+const SIGN_TTL_SECONDS = 60 * 60;
+/** Reuse signed links well inside their lifetime so re-renders don't re-sign. */
+const SIGN_CACHE_MS = 45 * 60 * 1000;
+const signKey = (path: string) => `paid-media:${path}`;
+
 async function signPaths(paths: string[]): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   if (paths.length === 0) return map;
+
+  const missing: string[] = [];
+  for (const path of paths) {
+    const hit = cacheGet<string>(signKey(path));
+    if (hit) map.set(path, hit);
+    else missing.push(path);
+  }
+  if (missing.length === 0) return map;
+
   const { data } = await supabase.storage
     .from(PAID_MEDIA_BUCKET)
-    .createSignedUrls(paths, 60 * 60);
+    .createSignedUrls(missing, SIGN_TTL_SECONDS);
   for (const row of data ?? []) {
-    if (row?.path && row.signedUrl) map.set(row.path, row.signedUrl);
+    if (row?.path && row.signedUrl) {
+      map.set(row.path, row.signedUrl);
+      cacheSet(signKey(row.path), row.signedUrl, SIGN_CACHE_MS);
+    }
   }
   return map;
 }

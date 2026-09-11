@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import StoryRing from "./StoryRing";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
+import { cached } from "@/lib/queryCache";
+import { reportIssue } from "@/lib/monitoring";
 
 interface StoryUser {
   id: string;
@@ -22,17 +24,24 @@ const StoriesBar = () => {
 
   const fetchStoriesAndLive = async () => {
     try {
-      // Fetch active stories (not expired)
-      const { data: stories } = await supabase
-        .from("stories")
-        .select("user_id, profiles(id, username, avatar_url)")
-        .gt("expires_at", new Date().toISOString());
+      // Stories + live streams are read on every feed render, so cache the pair
+      // briefly and fetch them in parallel instead of sequential roundtrips.
+      const { stories, liveStreams } = await cached("stories-and-live", 60_000, async () => {
+        const [storiesRes, liveRes] = await Promise.all([
+          supabase
+            .from("stories")
+            .select("user_id, profiles(id, username, avatar_url)")
+            .gt("expires_at", new Date().toISOString()),
+          supabase
+            .from("live_streams")
+            .select("user_id, profiles(id, username, avatar_url)")
+            .eq("is_live", true),
+        ]);
+        if (storiesRes.error) throw storiesRes.error;
+        if (liveRes.error) throw liveRes.error;
+        return { stories: storiesRes.data ?? [], liveStreams: liveRes.data ?? [] };
+      });
 
-      // Fetch active live streams
-      const { data: liveStreams } = await supabase
-        .from("live_streams")
-        .select("user_id, profiles(id, username, avatar_url)")
-        .eq("is_live", true);
 
       // Combine and deduplicate users
       const userMap = new Map<string, StoryUser>();
@@ -77,7 +86,7 @@ const StoriesBar = () => {
 
       setUsers(sortedUsers);
     } catch (error) {
-      console.error("Error fetching stories and live:", error);
+      reportIssue("stories_load_failed", error, { surface: "stories_bar" });
     } finally {
       setLoading(false);
     }

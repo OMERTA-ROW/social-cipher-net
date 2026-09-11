@@ -2985,6 +2985,15 @@ export type Database = {
         Returns: boolean
       }
       is_user_adult: { Args: { user_uuid: string }; Returns: boolean }
+      log_security_event: {
+        Args: {
+          _event_type: string
+          _metadata: Json
+          _severity: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       record_failed_login: {
         Args: { p_email: string }
         Returns: {
