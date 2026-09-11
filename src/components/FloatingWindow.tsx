@@ -263,7 +263,10 @@ export default function FloatingWindow({
         </CardHeader>
         {!isMinimized && (
           <>
-            <CardContent className="flex-1 p-4 overflow-auto">{children}</CardContent>
+            <CardContent className="flex-1 p-4 overflow-y-auto overflow-x-hidden overscroll-contain">
+              {children}
+            </CardContent>
+            {!pinned && (
             <div
               role="presentation"
               aria-label="Resize"
