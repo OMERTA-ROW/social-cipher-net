@@ -68,7 +68,7 @@ export interface Body {
   ring?: { inner: number; outer: number };
 }
 
-const BODIES: Body[] = [
+export const BODIES: Body[] = [
   { name: "inner", texture: "Mercury", radius: 3.2, a: 46, ecc: 0.19, incl: 0.12, phase: 0.7, tilt: 0.03, spin: 0.10,
     base: [0.55, 0.51, 0.47], atmo: [0.25, 0.22, 0.20], atmoStrength: 0.12, bump: 0.06, rough: 1.0 },
   { name: "terra", texture: "Earth", radius: 5.0, a: 74, ecc: 0.05, incl: 0.05, phase: 2.3, tilt: 0.41, spin: 0.07,
