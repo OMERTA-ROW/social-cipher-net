@@ -4,6 +4,8 @@ import { detectTier, type QualityTier } from "@/components/space/world/qualityTi
 export type SpaceBgMode = "full" | "lite" | "off";
 /** solar = realistic solar system (default), mining = alien world, descent = Earth approach */
 export type SpaceBgView = "solar" | "mining" | "descent";
+/** camera vantage point inside the solar view */
+export type SpaceBgCamera = "galaxy" | "chase" | "orbit";
 /** auto = pick from a device probe, otherwise an explicit tier */
 export type SpaceBgQuality = "auto" | QualityTier;
 
