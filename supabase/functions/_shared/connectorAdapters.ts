@@ -432,5 +432,79 @@ export const ADAPTERS: Record<string, Adapter> = {
   },
 };
 
+
+/* --------------------------- revenue adapters ---------------------------
+ * Each handler returns the provider's own payout/sales data. Nothing is
+ * estimated or invented here — a provider without a money endpoint simply has
+ * no handler, and the earnings surface says so plainly.
+ */
+
+const periodOf = (ctx: AdapterContext) => {
+  const end = String(ctx.payload.end_date ?? new Date().toISOString().slice(0, 10));
+  const start = String(
+    ctx.payload.start_date ??
+      new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+  );
+  return { start, end };
+};
+
+const REVENUE_ADAPTERS: Record<string, AdapterHandler> = {
+  youtube: async (ctx) => {
+    const token = bearerToken(ctx.secrets);
+    if (!token) return missingToken;
+    const { start, end } = periodOf(ctx);
+    return call(
+      ctx,
+      `https://youtubeanalytics.googleapis.com/v2/reports?ids=channel%3D%3DMINE&startDate=${start}&endDate=${end}&metrics=estimatedRevenue,estimatedAdRevenue,grossRevenue&currency=USD`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+  },
+
+  shopify: async (ctx) => {
+    const shop = String(ctx.secrets.shop_domain ?? "").replace(/^https?:\/\//, "");
+    const token = ctx.secrets.admin_token;
+    if (!shop || !token) return missingToken;
+    const { start } = periodOf(ctx);
+    return call(
+      ctx,
+      `https://${shop}/admin/api/2024-10/orders.json?status=any&financial_status=paid&created_at_min=${start}T00:00:00Z&limit=250&fields=id,total_price,currency,created_at`,
+      { headers: { "X-Shopify-Access-Token": token } },
+    );
+  },
+
+  etsy: async (ctx) => {
+    const token = bearerToken(ctx.secrets);
+    const shopId = ctx.secrets.shop_id ?? String(ctx.payload.shop_id ?? "");
+    const clientId = Deno.env.get("ETSY_CLIENT_ID") ?? "";
+    if (!token || !shopId || !clientId) {
+      return {
+        ok: false,
+        status: 400,
+        detail: "Etsy needs a shop ID and an approved app key before sales can be read.",
+      };
+    }
+    const { start } = periodOf(ctx);
+    const min = Math.floor(new Date(`${start}T00:00:00Z`).getTime() / 1000);
+    return call(
+      ctx,
+      `https://openapi.etsy.com/v3/application/shops/${shopId}/receipts?min_created=${min}&limit=100`,
+      { headers: { Authorization: `Bearer ${token}`, "x-api-key": clientId } },
+    );
+  },
+
+  streamlabs: async (ctx) => {
+    const token = ctx.secrets.access_token ?? ctx.secrets.api_token;
+    if (!token) return missingToken;
+    return call(
+      ctx,
+      `https://streamlabs.com/api/v2.0/donations?access_token=${token}&limit=100`,
+    );
+  },
+};
+
+for (const [serviceId, handler] of Object.entries(REVENUE_ADAPTERS)) {
+  ADAPTERS[serviceId] = { ...(ADAPTERS[serviceId] ?? {}), read_revenue: handler };
+}
+
 export const getAdapter = (serviceId: string): Adapter | undefined =>
   ADAPTERS[serviceId];
