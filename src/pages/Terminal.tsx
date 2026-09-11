@@ -60,7 +60,7 @@ const Terminal = () => {
       const { data: ent } = await supabase
         .from("user_entitlements")
         .select("tier_key")
-        .eq("is_active", true);
+        .eq("status", "active");
       const keys = (ent ?? []).map((e) => e.tier_key);
       setAllowed(keys.includes("terminal") || keys.includes("pro"));
     })();
@@ -152,7 +152,7 @@ const Terminal = () => {
           const { data: rows } = await supabase
             .from("creator_earnings")
             .select("amount, earning_type")
-            .eq("user_id", data.user!.id);
+            .eq("creator_id", data.user!.id);
           const total = (rows ?? []).reduce((a, r) => a + Number(r.amount ?? 0), 0);
           push("out", `recorded earnings: $${total.toFixed(2)} across ${rows?.length ?? 0} entries`);
           return;
@@ -160,12 +160,12 @@ const Terminal = () => {
         case "connections": {
           const { data: rows } = await supabase
             .from("user_connections")
-            .select("provider, status, display_name")
+            .select("service_id, status, health, account_name")
             .limit(50);
           push(
             "out",
             rows?.length
-              ? rows.map((r) => `${r.provider.padEnd(14)} ${r.status ?? "unknown"}  ${r.display_name ?? ""}`).join("\n")
+              ? rows.map((r) => `${r.service_id.padEnd(14)} ${r.status ?? "unknown"} / ${r.health ?? "—"}  ${r.account_name ?? ""}`).join("\n")
               : "No connected platforms yet. Open Connectors to add one.",
           );
           return;
