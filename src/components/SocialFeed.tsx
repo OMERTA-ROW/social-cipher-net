@@ -31,6 +31,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const cursorRef = useRef<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -39,6 +40,12 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   }, []);
 
   const isPostTab = tab === "for-you" || tab === "following" || tab === "discover";
+
+  /** One batched paid-access lookup per page of posts (no per-post queries). */
+  const applyAccess = useCallback(async (batch: SocialPost[]) => {
+    const { unlocked } = await resolvePaidAccess(batch, userId);
+    setUnlockedIds((prev) => new Set([...prev, ...unlocked]));
+  }, [userId]);
 
   const load = useCallback(async () => {
     if (tab === "shop" || tab === "market") return;
@@ -49,14 +56,18 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
         ? await fetchFollowingFeed(userId)
         : await fetchDiscoverFeed();
       setPosts(page.posts);
+      setUnlockedIds(new Set());
       cursorRef.current = page.nextCursor;
       setHasMore(page.hasMore);
+      await applyAccess(page.posts);
     } catch (error: any) {
+      reportIssue("feed_load_failed", error, { surface: "social_feed", tab });
       toast.error(error.message || "Failed to load feed");
     } finally {
       setLoading(false);
     }
-  }, [tab, userId]);
+  }, [applyAccess, tab, userId]);
+
 
   useEffect(() => { load(); }, [load, refreshKey]);
 
