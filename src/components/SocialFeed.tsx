@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import FeedShopTab from "@/components/feed/FeedShopTab";
+import FeedMarketTab from "@/components/feed/FeedMarketTab";
 
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import PostCard from "@/components/PostCard";
@@ -14,12 +16,14 @@ import {
   formatTimestamp,
 } from "@/lib/social";
 
+type FeedTab = "for-you" | "following" | "discover" | "shop" | "market";
+
 interface SocialFeedProps {
   refreshKey?: number;
 }
 
 const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
-  const [tab, setTab] = useState<"following" | "discover">("following");
+  const [tab, setTab] = useState<FeedTab>("for-you");
   const [userId, setUserId] = useState<string | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +36,10 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
   }, []);
 
+  const isPostTab = tab === "for-you" || tab === "following" || tab === "discover";
+
   const load = useCallback(async () => {
+    if (tab === "shop" || tab === "market") return;
     setLoading(true);
     cursorRef.current = null;
     try {
@@ -52,7 +59,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   useEffect(() => { load(); }, [load, refreshKey]);
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || !hasMore || !isPostTab) return;
     setLoadingMore(true);
     try {
       const page = tab === "following" && userId
@@ -69,7 +76,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
     } finally {
       setLoadingMore(false);
     }
-  }, [hasMore, loadingMore, tab, userId]);
+  }, [hasMore, isPostTab, loadingMore, tab, userId]);
 
   // Infinite scroll is the default behaviour everywhere — no toggle, no button.
   useEffect(() => {
@@ -121,7 +128,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       <div className="space-y-4">
         {posts.map((post) => (
           <div key={post.id} className="relative">
-            {tab === "discover" && post.user_id !== userId && (
+            {tab !== "following" && post.user_id !== userId && (
               <div className="absolute right-4 top-4 z-10">
                 <FollowButton targetUserId={post.user_id} />
               </div>
@@ -159,13 +166,19 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
 
 
   return (
-    <Tabs value={tab} onValueChange={(v) => setTab(v as "following" | "discover")}>
+    <Tabs value={tab} onValueChange={(v) => setTab(v as FeedTab)}>
       <TabsList className="mb-4">
+        <TabsTrigger value="for-you">For You</TabsTrigger>
         <TabsTrigger value="following">Following</TabsTrigger>
-        <TabsTrigger value="discover">Discover</TabsTrigger>
+        <TabsTrigger value="discover">Discovery</TabsTrigger>
+        <TabsTrigger value="shop">Shop</TabsTrigger>
+        <TabsTrigger value="market">Market</TabsTrigger>
       </TabsList>
+      <TabsContent value="for-you">{renderList()}</TabsContent>
       <TabsContent value="following">{renderList()}</TabsContent>
       <TabsContent value="discover">{renderList()}</TabsContent>
+      <TabsContent value="shop"><FeedShopTab /></TabsContent>
+      <TabsContent value="market"><FeedMarketTab /></TabsContent>
     </Tabs>
   );
 };
