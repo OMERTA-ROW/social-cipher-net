@@ -35,7 +35,7 @@ const AllSeeingEye = () => {
       onClick={() => setSpaceBgSettings({ view: next.view, camera: next.camera })}
       title={`Viewpoint: ${VANTAGES[index].label} — click for ${next.label.toLowerCase()}`}
       aria-label={`Change camera viewpoint. Current: ${VANTAGES[index].label}`}
-      className="fixed top-3 right-3 z-[60] p-2 text-foreground/70 hover:text-primary transition-colors"
+      className="p-2 text-foreground/70 hover:text-primary transition-colors"
     >
       <svg
         viewBox="0 0 24 24"

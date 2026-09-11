@@ -77,7 +77,6 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-transparent">
-      <AllSeeingEye />
       {/* Fixed top header */}
       <header className="h-16 shrink-0 z-40 border-b border-border/60 bg-card/60 backdrop-blur-xl">
         <div className="w-full h-full px-4 sm:px-5 lg:px-6 flex items-center justify-between gap-3">
@@ -115,6 +114,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
             >
               <User className="w-5 h-5" />
             </Button>
+            <AllSeeingEye />
           </div>
         </div>
       </header>
