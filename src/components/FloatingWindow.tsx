@@ -218,6 +218,16 @@ export default function FloatingWindow({
               <CardTitle className="text-sm font-medium truncate">{title}</CardTitle>
             </div>
             <div className="flex items-center gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                className={`h-6 w-6 ${pinned ? "text-accent" : ""}`}
+                onClick={togglePin}
+                title={pinned ? "Unpin this window" : "Pin this window in place"}
+                aria-label={pinned ? "Unpin this window" : "Pin this window in place"}
+              >
+                {pinned ? <Pin className="h-3 w-3" /> : <PinOff className="h-3 w-3" />}
+              </Button>
               {onToggleWorkspace && (
                 <Button
                   size="icon"
