@@ -122,7 +122,7 @@ const ChartPane = ({ pane, limits, height, pinned = false, onPin, onDragStart, o
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden border-border/60 bg-card/60">
+    <Card className="flex h-full flex-col overflow-hidden border-border/60 bg-card/60">
       <div className="flex flex-wrap items-center gap-2 border-b border-border/60 p-2">
         {onDragStart && (
           <Button size="icon" variant="ghost" className="h-8 w-8 cursor-grab touch-none active:cursor-grabbing" onPointerDown={onDragStart} aria-label="Move chart">

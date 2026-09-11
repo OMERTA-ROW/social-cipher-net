@@ -13,6 +13,7 @@ import {
   Users, 
   TrendingUp, 
   MessageCircle, 
+  Video,
   Calendar,
   Award,
   Zap,
