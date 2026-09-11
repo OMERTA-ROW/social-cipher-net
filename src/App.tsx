@@ -93,13 +93,13 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <FloatingWindowsProvider>
-          <FourClickCloseWrapper>
-            <BrowserRouter>
+        <BrowserRouter>
+          <FloatingWindowsProvider>
+            <FourClickCloseWrapper>
               <AppContent />
-            </BrowserRouter>
-          </FourClickCloseWrapper>
-        </FloatingWindowsProvider>
+            </FourClickCloseWrapper>
+          </FloatingWindowsProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </Web3Provider>
   </QueryClientProvider>
