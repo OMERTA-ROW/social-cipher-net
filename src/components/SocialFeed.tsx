@@ -8,6 +8,8 @@ import PostCard from "@/components/PostCard";
 import FollowButton from "@/components/FollowButton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { resolvePaidAccess } from "@/lib/paymentAccess";
+import { reportIssue } from "@/lib/monitoring";
 import {
   SocialPost,
   displayNameOf,
