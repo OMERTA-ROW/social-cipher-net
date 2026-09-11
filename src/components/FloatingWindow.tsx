@@ -90,8 +90,26 @@ export default function FloatingWindow({
     ),
   );
   const [isMinimized, setIsMinimized] = useState(false);
+  const [pinned, setPinned] = useState(() => readPinned(title, workspace));
   const [mode, setMode] = useState<"idle" | "drag" | "resize">("idle");
   const gesture = useRef({ startX: 0, startY: 0, originX: 0, originY: 0, originW: 0, originH: 0 });
+
+  // A pinned window stays exactly where the user parked it.
+  useEffect(() => {
+    setPinned(readPinned(title, workspace));
+  }, [title, workspace]);
+
+  const togglePin = () => {
+    setPinned((current) => {
+      const next = !current;
+      try {
+        localStorage.setItem(pinKey(title, workspace), next ? "1" : "0");
+      } catch {
+        /* storage unavailable */
+      }
+      return next;
+    });
+  };
 
   // Remember where the user placed this window.
   useEffect(() => {
