@@ -162,7 +162,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
               isVerified={!!post.profile?.is_verified}
               monetizationType={post.monetization_type}
               price={post.price}
-              isPaid={post.monetization_type === "free" || post.user_id === userId}
+              isPaid={post.monetization_type === "free" || post.user_id === userId || unlockedIds.has(post.id)}
               media={post.media}
               isDemo={post.is_demo}
               linkToThread
