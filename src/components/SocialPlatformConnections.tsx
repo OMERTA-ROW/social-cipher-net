@@ -373,9 +373,15 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <p className="text-lg font-semibold">
-                      ${(connection.earnings_balance || 0).toFixed(2)}
+                      {typeof connection.earnings_balance === "number"
+                        ? `$${connection.earnings_balance.toFixed(2)}`
+                        : "—"}
                     </p>
-                    <p className="text-xs text-muted-foreground">Available</p>
+                    <p className="text-xs text-muted-foreground">
+                      {typeof connection.earnings_balance === "number"
+                        ? "Available"
+                        : "See Monetization"}
+                    </p>
                   </div>
                   <Button
                     size="sm"
