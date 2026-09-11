@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
-import { resolvePostsMedia } from "@/lib/media";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
-import PostCard from "@/components/PostCard";
-import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import { QualificationProgress } from "@/components/QualificationProgress";
@@ -21,33 +18,9 @@ import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Card } from "@/components/ui/card";
 
-interface Post {
-  id: string;
-  user_id: string;
-  content: string;
-  created_at: string;
-  monetization_type: string;
-  price: number;
-  reply_count: number;
-  profiles: {
-    display_name: string | null;
-    username: string | null;
-    is_verified: boolean;
-  };
-  post_media: Array<{
-    media_url: string;
-    media_type: 'image' | 'video';
-  }>;
-  has_paid?: boolean;
-  has_story?: boolean;
-  is_live?: boolean;
-}
-
 const Index = () => {
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
@@ -89,7 +62,6 @@ const Index = () => {
   }, [navigate]);
 
   useEffect(() => {
-    fetchPosts();
     checkUser();
     
     const payment = searchParams.get("payment");
@@ -105,119 +77,6 @@ const Index = () => {
     setCurrentUserId(user?.id || null);
   };
 
-  const fetchPosts = async () => {
-    setIsLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      const { data, error } = await supabase
-        .from("posts")
-        .select(`
-          *,
-          profiles!posts_user_id_fkey(display_name, username, is_verified),
-          post_media(media_url, media_type)
-        `)
-        .is('parent_post_id', null)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      if (user) {
-        const postsWithPaymentStatus = await Promise.all(
-          (data || []).map(async (post) => {
-            // Check if user has active stories
-            const { data: stories } = await supabase
-              .from('stories')
-              .select('id')
-              .eq('user_id', post.user_id)
-              .gt('expires_at', new Date().toISOString())
-              .limit(1);
-            
-            // Check if user is currently live
-            const { data: liveStream } = await supabase
-              .from('live_streams')
-              .select('id')
-              .eq('user_id', post.user_id)
-              .eq('is_live', true)
-              .limit(1);
-            
-            if (post.monetization_type === "free" || post.user_id === user.id) {
-              return { 
-                ...post,
-                post_media: (post.post_media || []).map((m: any) => ({
-                  media_url: m.media_url,
-                  media_type: m.media_type as 'image' | 'video'
-                })),
-                has_paid: true,
-                has_story: (stories?.length || 0) > 0,
-                is_live: (liveStream?.length || 0) > 0
-              };
-            }
-
-            const { data: payment } = await supabase
-              .from("post_payments")
-              .select("id")
-              .eq("post_id", post.id)
-              .eq("payer_id", user.id)
-              .maybeSingle();
-
-            return { 
-              ...post,
-              post_media: (post.post_media || []).map((m: any) => ({
-                media_url: m.media_url,
-                media_type: m.media_type as 'image' | 'video'
-              })),
-              has_paid: !!payment,
-              has_story: (stories?.length || 0) > 0,
-              is_live: (liveStream?.length || 0) > 0
-            };
-          })
-        );
-        const withSignedMedia = await Promise.all(
-          postsWithPaymentStatus.map(async (post: any) => {
-            const [resolved] = await resolvePostsMedia([
-              { media: (post.post_media ?? []).map((m: any) => ({ url: m.media_url, type: m.media_type })) },
-            ]);
-            return {
-              ...post,
-              post_media: resolved.media.map((m: any) => ({ media_url: m.url, media_type: m.type })),
-            };
-          })
-        );
-        setPosts(withSignedMedia);
-      } else {
-        // For non-authenticated users, still check live status
-        const postsWithStatus = await Promise.all(
-          (data || []).map(async (post) => {
-            const { data: liveStream } = await supabase
-              .from('live_streams')
-              .select('id')
-              .eq('user_id', post.user_id)
-              .eq('is_live', true)
-              .limit(1);
-            
-            return {
-              ...post,
-              post_media: (post.post_media || []).map((m: any) => ({
-                media_url: m.media_url,
-                media_type: m.media_type as 'image' | 'video'
-              })),
-              has_paid: post.monetization_type === "free",
-              has_story: false,
-              is_live: (liveStream?.length || 0) > 0
-            };
-          })
-        );
-        setPosts(postsWithStatus);
-      }
-    } catch (error: any) {
-      console.error("Error fetching posts:", error);
-      toast.error(error.message || "Failed to load posts");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handlePaymentSuccess = async (postId: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -228,48 +87,14 @@ const Index = () => {
       });
 
       toast.success("Payment successful! Content unlocked.");
-      fetchPosts();
+      setFeedRefreshKey((key) => key + 1);
     } catch (error: any) {
       console.error("Payment error:", error);
       toast.error("Failed to process payment");
     }
   };
 
-  const handlePaymentRequired = async (postId: string, monetizationType: string) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Please sign in to access paid content");
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke("create-post-payment", {
-        body: { postId, paymentType: monetizationType },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, "_blank");
-      }
-    } catch (error: any) {
-      console.error("Payment initiation error:", error);
-      toast.error(error.message || "Failed to initiate payment");
-    }
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return "Just now";
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    return `${Math.floor(diffInHours / 24)}d ago`;
-  };
-
   const handleCreatePost = () => {
-    fetchPosts();
     setFeedRefreshKey((k) => k + 1);
   };
 

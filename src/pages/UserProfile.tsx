@@ -109,7 +109,8 @@ const UserProfile = () => {
   const fetchUserPosts = async () => {
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       
       const { data, error } = await supabase
         .from("posts")
@@ -131,12 +132,16 @@ const UserProfile = () => {
               return { ...post, has_paid: true };
             }
 
-            const { data: paymentData } = await supabase
+            const { data: paymentData, error: paymentError } = await supabase
               .from('post_payments')
               .select('id')
               .eq('post_id', post.id)
               .eq('payer_id', user.id)
-              .single();
+              .maybeSingle();
+
+            if (paymentError) {
+              throw new Error(`Unable to verify access to paid post ${post.id}: ${paymentError.message}`);
+            }
 
             return { ...post, has_paid: !!paymentData };
           })
@@ -144,7 +149,10 @@ const UserProfile = () => {
 
         setPosts(postsWithPaymentStatus);
       } else {
-        setPosts(data || []);
+        setPosts((data || []).map((post) => ({
+          ...post,
+          has_paid: post.monetization_type === 'free',
+        })));
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
