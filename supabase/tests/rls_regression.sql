@@ -6,22 +6,24 @@
 
 DO $$
 DECLARE
-  owner_id uuid := gen_random_uuid();
-  attacker_id uuid := gen_random_uuid();
+  owner_id uuid;
+  attacker_id uuid;
   stream_id uuid;
   participant_id uuid;
   flag boolean;
   audit_count integer;
-  failed boolean;
 BEGIN
-  -- Seed: two profiles and a live stream owned by owner_id.
-  INSERT INTO public.profiles (id, username, display_name)
-  VALUES (owner_id, 'rls_owner_' || left(owner_id::text, 8), 'RLS Owner'),
-         (attacker_id, 'rls_attacker_' || left(attacker_id::text, 8), 'RLS Attacker');
+  -- Use two existing accounts (profiles/streams are foreign-keyed to auth users).
+  SELECT id INTO owner_id FROM auth.users ORDER BY created_at LIMIT 1;
+  SELECT id INTO attacker_id FROM auth.users WHERE id <> owner_id ORDER BY created_at LIMIT 1;
+  IF owner_id IS NULL OR attacker_id IS NULL THEN
+    RAISE EXCEPTION 'SKIP: this suite needs at least two accounts';
+  END IF;
 
   INSERT INTO public.live_streams (user_id, title, is_live)
   VALUES (owner_id, 'RLS regression stream', true)
   RETURNING id INTO stream_id;
+
 
   -- 1. A normal viewer cannot join as admin/host.
   PERFORM set_config('request.jwt.claims', json_build_object('sub', attacker_id, 'role', 'authenticated')::text, true);
