@@ -631,10 +631,11 @@ const Studio = () => {
         <div className="mt-8">
           <h2 className="text-2xl font-bold text-primary text-glow mb-4">Creation Suite</h2>
           <Tabs defaultValue="animation" className="w-full">
-            <TabsList className="w-full grid grid-cols-3">
+            <TabsList className="w-full grid grid-cols-4">
               <TabsTrigger value="animation">Animation</TabsTrigger>
               <TabsTrigger value="assets">Assets</TabsTrigger>
               <TabsTrigger value="accounts">Creative Accounts</TabsTrigger>
+              <TabsTrigger value="broadcast">Broadcast</TabsTrigger>
             </TabsList>
 
             <TabsContent value="animation" className="mt-4">
@@ -648,7 +649,12 @@ const Studio = () => {
             <TabsContent value="accounts" className="mt-4">
               <ConnectedAccountsPanel onImported={() => setAssetRefresh((n) => n + 1)} />
             </TabsContent>
+
+            <TabsContent value="broadcast" className="mt-4">
+              <BroadcastPanel />
+            </TabsContent>
           </Tabs>
+
         </div>
       </main>
 
