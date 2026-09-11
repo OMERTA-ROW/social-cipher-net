@@ -4,6 +4,7 @@ const selectMock = vi.fn();
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
+    functions: { invoke: vi.fn(() => Promise.resolve({ data: null, error: null })) },
     from: () => ({
       select: () => ({
         eq: () => ({
