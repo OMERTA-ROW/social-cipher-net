@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef, useState, useCallback } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -8,9 +8,8 @@ import {
   Gamepad2,
   Globe,
   DollarSign,
-  Brain,
-  Shield,
-  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
   PlusSquare,
   Link2,
   BadgeCheck,
@@ -37,10 +36,27 @@ const primaryNav: NavItem[] = [
   { title: "Arena", url: "/cyber-arena", icon: Gamepad2 },
   { title: "CyberWorld", url: "/cyber-world", icon: Globe },
   { title: "Monetization", url: "/monetization", icon: DollarSign },
-  { title: "Backgrounds", url: "/backgrounds", icon: ImageIcon },
-  { title: "AI Ecosystem", url: "/ai-ecosystem", icon: Brain },
-  { title: "Security", url: "/security", icon: Shield },
 ];
+
+/** Small collapse toggle state persisted per panel, same treatment as Quick Access. */
+export const usePanelCollapse = (storageKey: string) => {
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(storageKey) === "true";
+  });
+  const toggle = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(storageKey, String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, [storageKey]);
+  return { collapsed, toggle };
+};
 
 const mobileNav: NavItem[] = [
   { title: "Home", url: "/", icon: Home },
@@ -66,6 +82,8 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
   const scrollRef = useRef<HTMLDivElement>(null);
   const { desktop, toggleDesktop } = useFloatingWindowsContext();
   const onSpaceDesktop = desktop === "space";
+  const leftPanel = usePanelCollapse("cyberlink:panel-left-collapsed");
+  const rightPanel = usePanelCollapse("cyberlink:panel-right-collapsed");
 
   // Restore the centre column scroll position per route, and remember it on leave.
   useEffect(() => {
@@ -143,8 +161,27 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
         )}
       >
         {/* Left sidebar — fluid, collapses to icons on smaller screens */}
-        <aside className="hidden md:flex md:w-[6%] md:min-w-[68px] xl:w-[18%] xl:min-w-[200px] xl:max-w-[280px] shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/40 bg-card/35 backdrop-blur-xl [scrollbar-gutter:stable]">
-          <nav className="flex flex-col gap-1 px-2">
+        <aside
+          className={cn(
+            "hidden md:flex shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/40 bg-card/35 backdrop-blur-xl [scrollbar-gutter:stable] transition-[width] duration-200",
+            leftPanel.collapsed
+              ? "md:w-[52px] md:min-w-[52px]"
+              : "md:w-[6%] md:min-w-[68px] xl:w-[18%] xl:min-w-[200px] xl:max-w-[280px]",
+          )}
+        >
+          <div className={cn("flex px-2 pb-2", leftPanel.collapsed ? "justify-center" : "justify-center xl:justify-end")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-primary"
+              onClick={leftPanel.toggle}
+              aria-expanded={!leftPanel.collapsed}
+              title={leftPanel.collapsed ? "Expand menu" : "Collapse menu"}
+            >
+              {leftPanel.collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
+          </div>
+          <nav className={cn("flex-col gap-1 px-2", leftPanel.collapsed ? "hidden" : "flex")}>
             {primaryNav.map((item) => (
               <NavLink
                 key={item.url}
@@ -184,8 +221,25 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
         </div>
 
         {/* Right sidebar — fluid */}
-        <aside className="hidden lg:block w-[24%] min-w-[260px] max-w-[380px] shrink-0 overflow-y-auto overscroll-contain py-6 border-l border-border/40 bg-card/35 backdrop-blur-xl px-4 [scrollbar-gutter:stable]">
-          {rightRail ?? <RightRail />}
+        <aside
+          className={cn(
+            "hidden lg:block shrink-0 overflow-y-auto overscroll-contain py-6 border-l border-border/40 bg-card/35 backdrop-blur-xl px-4 [scrollbar-gutter:stable] transition-[width] duration-200",
+            rightPanel.collapsed ? "w-[52px] min-w-[52px] px-1" : "w-[24%] min-w-[260px] max-w-[380px]",
+          )}
+        >
+          <div className={cn("flex pb-2", rightPanel.collapsed ? "justify-center" : "justify-start")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-primary"
+              onClick={rightPanel.toggle}
+              aria-expanded={!rightPanel.collapsed}
+              title={rightPanel.collapsed ? "Expand panel" : "Collapse panel"}
+            >
+              {rightPanel.collapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </Button>
+          </div>
+          {!rightPanel.collapsed && (rightRail ?? <RightRail />)}
         </aside>
       </div>
 

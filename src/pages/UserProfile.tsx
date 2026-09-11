@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CheckCircle2, UserPlus, UserMinus } from "lucide-react";
+import ProfileMedia from "@/components/profile/ProfileMedia";
 
 interface Post {
   id: string;
@@ -339,6 +340,13 @@ const UserProfile = () => {
                   </div>
                 </div>
               </Card>
+            )}
+
+            {/* Media */}
+            {userId && (
+              <div className="mb-6">
+                <ProfileMedia userId={userId} isOwner={currentUserId === userId} />
+              </div>
             )}
 
             {/* Posts */}
