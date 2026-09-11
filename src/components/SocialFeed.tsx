@@ -134,10 +134,8 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
           </div>
         ))}
         {hasMore && (
-          <div className="flex justify-center py-4">
-            <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-              {loadingMore ? "Loading…" : "Load more"}
-            </Button>
+          <div ref={sentinelRef} className="py-4 space-y-4">
+            <PostCardSkeleton />
           </div>
         )}
       </div>
