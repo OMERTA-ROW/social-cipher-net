@@ -117,7 +117,48 @@ interface AppShellProps {
   centerHeader?: ReactNode;
 }
 
+/** One collapsible group of secondary destinations; open state is remembered. */
+const NavGroupBlock = ({ group }: { group: NavGroup }) => {
+  const { collapsed, toggle } = usePanelCollapse(`cyberlink:nav-group-${group.title.toLowerCase()}`);
+  return (
+    <div className="pt-1">
+      <button
+        onClick={toggle}
+        aria-expanded={!collapsed}
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground justify-center xl:justify-start"
+        title={group.title}
+      >
+        <group.icon className="h-4 w-4 shrink-0 xl:hidden" />
+        <span className="hidden xl:inline">{group.title}</span>
+        <ChevronDown
+          className={cn("ml-auto hidden h-3.5 w-3.5 transition-transform xl:block", collapsed && "-rotate-90")}
+        />
+      </button>
+      {!collapsed &&
+        group.items.map((item) => (
+          <NavLink
+            key={item.url}
+            to={item.url}
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors justify-center xl:justify-start",
+                isActive
+                  ? "bg-primary/15 text-primary"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+              )
+            }
+            title={item.title}
+          >
+            <item.icon className="h-5 w-5 shrink-0" />
+            <span className="hidden xl:inline">{item.title}</span>
+          </NavLink>
+        ))}
+    </div>
+  );
+};
+
 const scrollPositions = new Map<string, number>();
+
 
 const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellProps) => {
   const { pathname } = useLocation();
