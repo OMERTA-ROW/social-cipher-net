@@ -103,15 +103,6 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
             >
               <Image className="w-5 h-5" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate("/ai-ecosystem")}
-              className="text-foreground hover:text-primary"
-              title="AI Ecosystem"
-            >
-              <Brain className="w-5 h-5" />
-            </Button>
             {isCeo && (
               <Button
                 variant="ghost"
