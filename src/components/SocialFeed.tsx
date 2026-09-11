@@ -70,6 +70,20 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
     }
   }, [hasMore, loadingMore, tab, userId]);
 
+  // Infinite scroll is the default behaviour everywhere — no toggle, no button.
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) loadMore();
+      },
+      { rootMargin: "800px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loadMore, hasMore, loading, posts.length, tab]);
+
   const handlePaymentRequired = async (post: SocialPost) => {
     try {
       const { data, error } = await supabase.functions.invoke("create-post-payment", {
