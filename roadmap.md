@@ -49,6 +49,7 @@
 - [x] Multi-chart workspace (/trading), tier-gated panes/indicators
 - [x] Live-only data with source, latency and unavailable states
 - [x] Non-custodial wallets (EVM + Solana), human-only trade confirmation, audit log
+- [ ] Chart workspace: draggable/resizable windows, session pins, feed snapshot posting, smooth overflow
 - [ ] Exchange/broker order routing (needs provider API keys per user)
 
 ## Universal connectors system
