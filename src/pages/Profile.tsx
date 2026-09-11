@@ -193,6 +193,12 @@ const Profile = () => {
           </div>
         </Card>
 
+        {profile && (
+          <div className="mb-6">
+            <ProfileMedia userId={profile.id} isOwner />
+          </div>
+        )}
+
         <Card className="p-6 bg-background/80 backdrop-blur-sm border-border/50">
           <h2 className="text-lg font-semibold mb-4">Edit profile</h2>
           <div className="space-y-4">
