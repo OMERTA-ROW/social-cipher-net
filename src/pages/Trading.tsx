@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import ChartPane, { type PaneConfig } from "@/components/trading/ChartPane";
+import type { PaneConfig } from "@/components/trading/ChartPane";
 import TradingChartWorkspace from "@/components/trading/TradingChartWorkspace";
 import TradeConfirmDialog, {
   logTradingAction,

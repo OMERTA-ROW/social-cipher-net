@@ -138,15 +138,12 @@ const TradingChartWorkspace = ({ panes, limits, onChange, onRemove, onUpgradeNee
               className={`absolute overflow-hidden ${item.pinned ? "ring-1 ring-primary/60" : "resize"}`}
               style={{ left: item.x, top: item.y, width: item.width, height: item.height, zIndex: item.z, minWidth: MIN_WIDTH, minHeight: MIN_HEIGHT }}
               onPointerDown={() => updateGeometry(pane.id, { z: Math.max(...Object.values(geometry).map((g) => g.z), 0) + 1 })}
-              ref={(element) => {
-                if (!element || item.pinned) return;
-                const observer = new ResizeObserver(([entry]) => {
-                  const width = Math.max(MIN_WIDTH, Math.round(entry.contentRect.width));
-                  const height = Math.max(MIN_HEIGHT, Math.round(entry.contentRect.height));
-                  if (width !== item.width || height !== item.height) updateGeometry(pane.id, { width, height });
-                });
-                observer.observe(element);
-                return () => observer.disconnect();
+              onPointerUp={(event) => {
+                if (item.pinned) return;
+                const rect = event.currentTarget.getBoundingClientRect();
+                const width = Math.max(MIN_WIDTH, Math.round(rect.width));
+                const height = Math.max(MIN_HEIGHT, Math.round(rect.height));
+                if (width !== item.width || height !== item.height) updateGeometry(pane.id, { width, height });
               }}
             >
               <ChartPane
