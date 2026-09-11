@@ -58,6 +58,7 @@ const makePane = (symbol = "BTC", timeframe: Timeframe = "1h", id = uid()): Pane
 
 const DEFAULT_WATCH = ["BTC", "ETH", "AAPL", "SPY", "EURUSD=X", "GC=F"];
 const PANE_SESSION_KEY = "cyberlink:trading-panes";
+const GRID_SESSION_KEY = "cyberlink:trading-grid";
 
 const initialPanes = (): PaneConfig[] => {
   if (typeof window === "undefined") return [makePane("BTC", "1h", "primary")];
@@ -69,6 +70,12 @@ const initialPanes = (): PaneConfig[] => {
   }
 };
 
+const initialGrid = () => {
+  if (typeof window === "undefined") return 1;
+  const saved = Number(sessionStorage.getItem(GRID_SESSION_KEY));
+  return [1, 2, 4, 6, 9].includes(saved) ? saved : 1;
+};
+
 interface AuditRow {
   id: string;
   action: string;
@@ -78,7 +85,7 @@ interface AuditRow {
 
 const Trading = () => {
   const { tier, limits, loading: tierLoading, signedIn } = useTradingTier();
-  const [grid, setGrid] = useState(1);
+  const [grid, setGrid] = useState(initialGrid);
   const [panes, setPanes] = useState<PaneConfig[]>(initialPanes);
   const [watchlist, setWatchlist] = useState<string[]>(DEFAULT_WATCH);
   const [watchDraft, setWatchDraft] = useState("");
@@ -119,6 +126,10 @@ const Trading = () => {
   useEffect(() => {
     sessionStorage.setItem(PANE_SESSION_KEY, JSON.stringify(panes));
   }, [panes]);
+
+  useEffect(() => {
+    sessionStorage.setItem(GRID_SESSION_KEY, String(grid));
+  }, [grid]);
 
   /* saved layouts + audit trail */
   const loadSaved = useCallback(async () => {
