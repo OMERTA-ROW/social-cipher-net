@@ -82,6 +82,8 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
   const scrollRef = useRef<HTMLDivElement>(null);
   const { desktop, toggleDesktop } = useFloatingWindowsContext();
   const onSpaceDesktop = desktop === "space";
+  const leftPanel = usePanelCollapse("cyberlink:panel-left-collapsed");
+  const rightPanel = usePanelCollapse("cyberlink:panel-right-collapsed");
 
   // Restore the centre column scroll position per route, and remember it on leave.
   useEffect(() => {
