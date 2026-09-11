@@ -102,11 +102,9 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
 
       if (error) throw error;
       
-      // Mock earnings data for each platform (in real implementation, fetch from each platform's API)
-      const connectionsWithEarnings = data?.map(conn => ({
-        ...conn,
-        earnings_balance: Math.random() * 100 // Replace with real platform earnings API call
-      })) || [];
+      // Balances come only from each platform's own API, surfaced on the
+      // Monetization page. Nothing is estimated or invented here.
+      const connectionsWithEarnings = data ?? [];
 
       setConnections(connectionsWithEarnings);
       
