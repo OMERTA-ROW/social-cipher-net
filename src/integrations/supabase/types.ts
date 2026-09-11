@@ -3226,6 +3226,93 @@ export type Database = {
         }
         Relationships: []
       }
+      trading_audit_log: {
+        Row: {
+          action: string
+          category: string
+          created_at: string
+          details: Json
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          category?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          category?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_layouts: {
+        Row: {
+          created_at: string
+          grid: number
+          id: string
+          is_default: boolean
+          name: string
+          panes: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grid?: number
+          id?: string
+          is_default?: boolean
+          name: string
+          panes?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grid?: number
+          id?: string
+          is_default?: boolean
+          name?: string
+          panes?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_watchlists: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          symbols: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          symbols?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          symbols?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_blocks: {
         Row: {
           blocked_id: string
