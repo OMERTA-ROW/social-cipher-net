@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import PostCard from "@/components/PostCard";
 import FollowButton from "@/components/FollowButton";
