@@ -84,12 +84,14 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       });
       cursorRef.current = page.nextCursor;
       setHasMore(page.hasMore);
+      await applyAccess(page.posts);
     } catch (error: any) {
+      reportIssue("feed_load_failed", error, { surface: "social_feed", tab, paging: true });
       toast.error(error.message || "Failed to load more posts");
     } finally {
       setLoadingMore(false);
     }
-  }, [hasMore, isPostTab, loadingMore, tab, userId]);
+  }, [applyAccess, hasMore, isPostTab, loadingMore, tab, userId]);
 
   // Infinite scroll is the default behaviour everywhere — no toggle, no button.
   useEffect(() => {
