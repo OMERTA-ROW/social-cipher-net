@@ -57,16 +57,31 @@ export function reportIssue(area: MonitoredArea, error: unknown, detail: Monitor
   if (now - previous < THROTTLE_MS) return;
   lastReportedAt.set(key, now);
 
+  const permissionError = isPermissionError(error);
+  const path = typeof window !== "undefined" ? window.location?.pathname : undefined;
+
   console.error(`${MONITOR_TAG} ${area}`, {
     area,
     message,
     occurrences: monitorCount(area),
-    permissionError: isPermissionError(error),
-    path: typeof window !== "undefined" ? window.location?.pathname : undefined,
+    permissionError,
+    path,
     at: new Date(now).toISOString(),
     ...detail,
   });
+
+  // Permission / RLS rejections raise a production alert via the audit log.
+  if (permissionError || area === "post_payments_permission_denied") {
+    void supabase.functions
+      .invoke("security-alerts", {
+        body: { action: "report", event_type: area, message, path, detail },
+      })
+      .catch(() => {
+        /* alerting must never break the UI */
+      });
+  }
 }
+
 
 /** Test/diagnostic helper. */
 export function resetMonitoring(): void {
