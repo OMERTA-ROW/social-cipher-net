@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Minus, Maximize2, GripVertical, Orbit, MonitorSmartphone } from "lucide-react";
+import { X, Minus, Maximize2, GripVertical, Orbit, MonitorSmartphone, Pin, PinOff } from "lucide-react";
 import type { WindowWorkspace } from "@/hooks/useFloatingWindows";
 
 interface FloatingWindowProps {
