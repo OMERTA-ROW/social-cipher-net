@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import FibonacciOverlay from "./FibonacciOverlay";
 import MarketSourceBadge from "@/components/market/MarketSourceBadge";
 import MarketUnavailable from "@/components/market/MarketUnavailable";
 import TradingDisclaimer from "@/components/market/TradingDisclaimer";
@@ -24,8 +23,6 @@ const CRYPTO_SYMBOLS = [
 const SYMBOLS = CRYPTO_SYMBOLS.map((c) => c.symbol);
 
 export default function CryptoMarketChart() {
-  const [showFibonacci, setShowFibonacci] = useState(false);
-  const [fibLevels, setFibLevels] = useState<number[]>([]);
   const [activeSymbol, setActiveSymbol] = useState(SYMBOLS[0]);
   const [timeframe, setTimeframe] = useState<Timeframe>("1h");
 
@@ -35,12 +32,6 @@ export default function CryptoMarketChart() {
   useEffect(() => {
     if (!activeSymbol) setActiveSymbol(SYMBOLS[0]);
   }, [activeSymbol]);
-
-  const handleFibonacciRequest = (levels: number[]) => {
-    setFibLevels(levels);
-    setShowFibonacci(true);
-    setTimeout(() => setShowFibonacci(false), 10000);
-  };
 
   const quoteFor = (symbol: string) => quotes.data?.find((q) => q.symbol === symbol);
 
@@ -111,9 +102,6 @@ export default function CryptoMarketChart() {
         </TabsList>
 
         {CRYPTO_SYMBOLS.map((crypto) => {
-          const swingHigh = chartData.length ? Math.max(...chartData.map((d) => d.price)) : 0;
-          const swingLow = chartData.length ? Math.min(...chartData.map((d) => d.price)) : 0;
-
           return (
             <TabsContent key={crypto.symbol} value={crypto.symbol}>
               <Card>
@@ -175,15 +163,6 @@ export default function CryptoMarketChart() {
                           />
                         </AreaChart>
                       </ResponsiveContainer>
-                      {activeSymbol === crypto.symbol && (
-                        <FibonacciOverlay
-                          levels={fibLevels}
-                          isActive={showFibonacci}
-                          chartHeight={300}
-                          swingHigh={swingHigh}
-                          swingLow={swingLow}
-                        />
-                      )}
                     </div>
                   )}
                   <TradingDisclaimer className="pt-3" />
