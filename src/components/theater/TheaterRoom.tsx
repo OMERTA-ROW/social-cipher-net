@@ -45,6 +45,17 @@ const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
       });
   }, [userId]);
 
+  // Register attendance so chat access is scoped to this event
+  useEffect(() => {
+    if (!userId) return;
+    void supabase
+      .from("theater_participants")
+      .upsert(
+        { event_id: event.id, user_id: userId, last_seen_at: new Date().toISOString() },
+        { onConflict: "event_id,user_id" },
+      );
+  }, [event.id, userId]);
+
   // Existing chat + live updates
   useEffect(() => {
     let cancelled = false;

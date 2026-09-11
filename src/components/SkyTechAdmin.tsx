@@ -42,7 +42,10 @@ export const SkyTechAdmin = () => {
   const loadData = async () => {
     try {
       const [platformsRes, updatesRes] = await Promise.all([
-        supabase.from('skytech_platform_configs' as any).select('*').order('created_at', { ascending: false }),
+        supabase
+          .from('skytech_platform_configs' as any)
+          .select('id, platform_name, platform_type, display_name, description, icon_url, required_scopes, is_active, auto_enabled, created_at, updated_at')
+          .order('created_at', { ascending: false }),
         supabase.from('skytech_app_updates' as any).select('*').order('created_at', { ascending: false })
       ]);
 
