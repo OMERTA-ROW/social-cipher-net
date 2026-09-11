@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import RightRail from "@/components/layout/RightRail";
-import BackgroundControl from "@/components/space/BackgroundControl";
+import AllSeeingEye from "@/components/space/AllSeeingEye";
 
 interface NavItem {
   title: string;
@@ -77,6 +77,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
 
   return (
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-transparent">
+      <AllSeeingEye />
       {/* Fixed top header */}
       <header className="h-16 shrink-0 z-40 border-b border-border/60 bg-card/60 backdrop-blur-xl">
         <div className="w-full h-full px-4 sm:px-5 lg:px-6 flex items-center justify-between gap-3">
@@ -90,7 +91,6 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
           </button>
 
           <div className="flex items-center gap-1 sm:gap-2">
-            <BackgroundControl />
             <Button
               variant="ghost"
               size="icon"
