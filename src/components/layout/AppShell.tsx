@@ -161,8 +161,27 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
         )}
       >
         {/* Left sidebar — fluid, collapses to icons on smaller screens */}
-        <aside className="hidden md:flex md:w-[6%] md:min-w-[68px] xl:w-[18%] xl:min-w-[200px] xl:max-w-[280px] shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/40 bg-card/35 backdrop-blur-xl [scrollbar-gutter:stable]">
-          <nav className="flex flex-col gap-1 px-2">
+        <aside
+          className={cn(
+            "hidden md:flex shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/40 bg-card/35 backdrop-blur-xl [scrollbar-gutter:stable] transition-[width] duration-200",
+            leftPanel.collapsed
+              ? "md:w-[52px] md:min-w-[52px]"
+              : "md:w-[6%] md:min-w-[68px] xl:w-[18%] xl:min-w-[200px] xl:max-w-[280px]",
+          )}
+        >
+          <div className={cn("flex px-2 pb-2", leftPanel.collapsed ? "justify-center" : "justify-center xl:justify-end")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-primary"
+              onClick={leftPanel.toggle}
+              aria-expanded={!leftPanel.collapsed}
+              title={leftPanel.collapsed ? "Expand menu" : "Collapse menu"}
+            >
+              {leftPanel.collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
+          </div>
+          <nav className={cn("flex-col gap-1 px-2", leftPanel.collapsed ? "hidden" : "flex")}>
             {primaryNav.map((item) => (
               <NavLink
                 key={item.url}
