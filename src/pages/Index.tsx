@@ -15,7 +15,7 @@ import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
 import SocialFeed from "@/components/SocialFeed";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Award, DollarSign, Eye } from "lucide-react";
+import { Wallet, TrendingUp, Award, DollarSign, Eye, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -53,6 +53,24 @@ const Index = () => {
   const [searchParams] = useSearchParams();
   const { openWindow } = useFloatingWindowsContext();
   const [showSpaceBackground, setShowSpaceBackground] = useState(true);
+  const [quickAccessOpen, setQuickAccessOpen] = useState(() => {
+    try {
+      return localStorage.getItem("cyberlink:quick-access-collapsed") !== "1";
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleQuickAccess = () => {
+    setQuickAccessOpen((open) => {
+      try {
+        localStorage.setItem("cyberlink:quick-access-collapsed", open ? "1" : "0");
+      } catch {
+        /* storage may be unavailable */
+      }
+      return !open;
+    });
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -262,7 +280,21 @@ const Index = () => {
         <div>
           {currentUserId && (
             <div className="mb-6 p-4 border rounded-lg bg-muted/30">
-              <h3 className="text-sm font-semibold mb-3">Quick Access Windows</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold">Quick Access Windows</h3>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  onClick={toggleQuickAccess}
+                  title={quickAccessOpen ? "Collapse quick access" : "Expand quick access"}
+                  aria-label={quickAccessOpen ? "Collapse quick access" : "Expand quick access"}
+                  aria-expanded={quickAccessOpen}
+                >
+                  {quickAccessOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </Button>
+              </div>
+              {quickAccessOpen && (
               <Carousel className="w-full">
                 <CarouselContent className="-ml-2 md:-ml-4">
                   <CarouselItem className="pl-2 md:pl-4 basis-auto">
@@ -322,6 +354,7 @@ const Index = () => {
                 <CarouselPrevious className="hidden md:flex" />
                 <CarouselNext className="hidden md:flex" />
               </Carousel>
+              )}
             </div>
           )}
           
