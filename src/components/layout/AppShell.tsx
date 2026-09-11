@@ -10,12 +10,20 @@ import {
   DollarSign,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   PlusSquare,
   Link2,
   BadgeCheck,
   Orbit,
   MonitorSmartphone,
+  MessageSquare,
+  Clapperboard,
+  Plug,
+  LineChart,
+  Pickaxe,
+  TerminalSquare,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import RightRail from "@/components/layout/RightRail";
