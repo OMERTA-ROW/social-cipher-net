@@ -16,6 +16,8 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
   const look = useRef(new THREE.Vector3());
   const m = useRef(new THREE.Matrix4());
   const up = useRef(new THREE.Vector3(0, 1, 0));
+  const projected = useRef(new THREE.Vector3());
+  const lastPublished = useRef(0);
 
   const curve = useMemo(
     () =>
@@ -56,6 +58,21 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
     shipTelemetry.quaternion.copy(group.current.quaternion);
     shipTelemetry.velocity.subVectors(pos, prev.current);
     shipTelemetry.throttle = 0.62;
+
+    if (state.clock.elapsedTime - lastPublished.current > 0.08) {
+      lastPublished.current = state.clock.elapsedTime;
+      projected.current.copy(pos).project(state.camera);
+      const visible = projected.current.z > -1 && projected.current.z < 1
+        && Math.abs(projected.current.x) < 1.08
+        && Math.abs(projected.current.y) < 1.08;
+      window.dispatchEvent(new CustomEvent("cyberlink:ship-position", {
+        detail: {
+          x: (projected.current.x * 0.5 + 0.5) * window.innerWidth,
+          y: (-projected.current.y * 0.5 + 0.5) * window.innerHeight,
+          visible,
+        },
+      }));
+    }
   });
 
   return (

@@ -5,14 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare, Crown, Lock, Rocket, Infinity, Sparkles, RefreshCw, Brain } from "lucide-react";
+import { Bot, Mic, Volume2, Send, Loader2, X, Radio, Zap, MessageSquare, Crown, Lock, Rocket, Infinity, Sparkles, RefreshCw, Brain, Pickaxe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlienIcon } from "./AlienIcon";
 import { toast } from "sonner";
 import VoiceWaveform from "./VoiceWaveform";
 import HyperspacePortal from "./HyperspacePortal";
 import ZozoUpgradeDialog from "./ZozoUpgradeDialog";
-import { ZozoSpaceshipEntrance } from "./ZozoSpaceshipEntrance";
 import { HyperSpeedSequence } from "./HyperSpeedSequence";
 import { useNavigate } from "react-router-dom";
 import { useZozoSubscription, ZOZO_TIERS } from "@/hooks/useZozoSubscription";
@@ -129,6 +127,12 @@ const AIBotAssistant = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    const openShipInterface = () => setIsOpen(true);
+    window.addEventListener("cyberlink:open-ship-interface", openShipInterface);
+    return () => window.removeEventListener("cyberlink:open-ship-interface", openShipInterface);
+  }, []);
 
   // Cleanup tap timer on unmount
   useEffect(() => {
@@ -575,43 +579,8 @@ const AIBotAssistant = () => {
         onComplete={() => setShowHyperSpeed(false)}
       />
 
-      <ZozoSpaceshipEntrance 
-        isActive={showSpaceship} 
-        onComplete={() => {
-          setShowSpaceship(false);
-          setIsOpen(true);
-        }} 
-      />
-
-      {/* Floating Bot Button - Zozo/Draco/Infinity */}
-      {!isOpen && !showSpaceship && !showHyperSpeed && (
-        <Button
-          onClick={handleBotButtonTap}
-          className={`fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full shadow-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background ${
-            isSpeaking 
-              ? "animate-pulse glow-accent scale-110" 
-              : aiMode === "draco" 
-                ? "glow-destructive" 
-                : "glow-primary"
-          }`}
-          size="icon"
-          aria-label={`Open ${currentChar.name} AI assistant. Double tap cycles modes, four taps opens subscription options.`}
-          title={`${currentChar.name} AI (Double-tap to cycle modes)`}
-        >
-          <AlienIcon mode={aiMode === "draco" ? "draco" : "zozo"} className={`w-10 h-10 transition-transform ${isSpeaking ? "animate-bounce" : ""}`} />
-          <Badge className={`absolute -top-2 -right-2 text-white text-xs px-1 ${
-            aiMode === "draco" 
-              ? "bg-red-500" 
-              : "bg-primary"
-          }`}>
-            {aiMode.toUpperCase()}
-          </Badge>
-        </Button>
-      )}
-
-      {/* Chat Window */}
       {isOpen && (
-        <Card className={`fixed bottom-28 right-8 z-50 w-96 h-[600px] backdrop-blur shadow-2xl flex flex-col ${
+        <Card className={`fixed bottom-4 right-4 z-50 w-[min(24rem,calc(100vw-2rem))] h-[min(680px,calc(100vh-2rem))] backdrop-blur shadow-2xl flex flex-col ${
           aiMode === "draco"
             ? 'bg-red-950/95 border-red-600/50' 
             : 'bg-card/95 border-primary/20'
@@ -666,6 +635,10 @@ const AIBotAssistant = () => {
               </button>
             </div>
             <div className="flex items-center gap-2">
+              <div className="flex rounded-md border border-border/60 p-0.5" aria-label="Spaceship crew selector">
+                <Button variant={aiMode === "zozo" ? "secondary" : "ghost"} size="sm" onClick={() => setAiMode("zozo")}>Zozo</Button>
+                <Button variant={aiMode === "draco" ? "secondary" : "ghost"} size="sm" onClick={() => setAiMode("draco")}>Draco</Button>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
@@ -704,6 +677,14 @@ const AIBotAssistant = () => {
               ? 'border-red-600/30' 
               : 'border-primary/10'
           }`}>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" onClick={() => aiMode === "draco" ? setShowDracoUpgrade(true) : setShowUpgrade(true)}>
+                <Pickaxe className="mr-2 h-4 w-4" /> Buy {currentChar.name} Miner
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setIsOpen(false); navigate("/miners"); }}>
+                Manage Miners
+              </Button>
+            </div>
             {aiMode === "draco" ? (
               // Draco Mode Settings
               !isDracoActive ? (

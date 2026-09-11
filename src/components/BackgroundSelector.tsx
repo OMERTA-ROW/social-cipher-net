@@ -5,7 +5,6 @@ import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import CyberSpaceBackground from "./CyberSpaceBackground";
 import RealisticSpaceBackground from "./RealisticSpaceBackground";
 import SolarMatrixBackground from "./SolarMatrixBackground";
-import { DracoMiningBackground } from "./DracoMiningBackground";
 import MatrixOverlay from "./MatrixOverlay";
 import SolarSystemBackground from "./SolarSystemBackground";
 
@@ -24,11 +23,6 @@ const backgrounds = [
     id: "solar",
     name: "Solar Matrix",
     component: <SolarMatrixBackground />,
-  },
-  {
-    id: "draco",
-    name: "Draco Mining",
-    component: <DracoMiningBackground isActive={true} />,
   },
   {
     id: "matrix",
