@@ -2531,6 +2531,35 @@ export type Database = {
         }
         Relationships: []
       }
+      theater_participants: {
+        Row: {
+          event_id: string
+          joined_at: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          joined_at?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          joined_at?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theater_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "theater_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       theater_playback_state: {
         Row: {
           event_id: string
@@ -2907,7 +2936,93 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      skytech_affiliate_programs_public: {
+        Row: {
+          auto_enabled: boolean | null
+          categories: string[] | null
+          commission_rate: number | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          is_active: boolean | null
+          logo_url: string | null
+          network_name: string | null
+          program_name: string | null
+          tracking_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_enabled?: boolean | null
+          categories?: string[] | null
+          commission_rate?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          logo_url?: string | null
+          network_name?: string | null
+          program_name?: string | null
+          tracking_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_enabled?: boolean | null
+          categories?: string[] | null
+          commission_rate?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          logo_url?: string | null
+          network_name?: string | null
+          program_name?: string | null
+          tracking_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      skytech_platform_configs_public: {
+        Row: {
+          auto_enabled: boolean | null
+          created_at: string | null
+          description: string | null
+          display_name: string | null
+          icon_url: string | null
+          id: string | null
+          is_active: boolean | null
+          platform_name: string | null
+          platform_type: string | null
+          required_scopes: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_enabled?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string | null
+          icon_url?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          platform_name?: string | null
+          platform_type?: string | null
+          required_scopes?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_enabled?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string | null
+          icon_url?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          platform_name?: string | null
+          platform_type?: string | null
+          required_scopes?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_mining_multiplier: {
@@ -2945,6 +3060,10 @@ export type Database = {
       }
       is_stream_admin: {
         Args: { _stream_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_theater_member: {
+        Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
       is_user_adult: { Args: { user_uuid: string }; Returns: boolean }
