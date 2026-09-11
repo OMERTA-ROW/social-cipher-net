@@ -36,10 +36,27 @@ const primaryNav: NavItem[] = [
   { title: "Arena", url: "/cyber-arena", icon: Gamepad2 },
   { title: "CyberWorld", url: "/cyber-world", icon: Globe },
   { title: "Monetization", url: "/monetization", icon: DollarSign },
-  { title: "Backgrounds", url: "/backgrounds", icon: ImageIcon },
-  { title: "AI Ecosystem", url: "/ai-ecosystem", icon: Brain },
-  { title: "Security", url: "/security", icon: Shield },
 ];
+
+/** Small collapse toggle state persisted per panel, same treatment as Quick Access. */
+export const usePanelCollapse = (storageKey: string) => {
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(storageKey) === "true";
+  });
+  const toggle = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(storageKey, String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, [storageKey]);
+  return { collapsed, toggle };
+};
 
 const mobileNav: NavItem[] = [
   { title: "Home", url: "/", icon: Home },
