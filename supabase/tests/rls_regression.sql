@@ -66,15 +66,11 @@ BEGIN
   END IF;
 
   -- 6. Ownership of a self-service record cannot be reassigned.
-  failed := false;
-  BEGIN
-    UPDATE public.live_streams SET user_id = attacker_id WHERE id = stream_id;
-  EXCEPTION WHEN others THEN
-    failed := true;
-  END;
-  IF NOT failed THEN
+  UPDATE public.live_streams SET user_id = attacker_id WHERE id = stream_id;
+  IF (SELECT user_id FROM public.live_streams WHERE id = stream_id) <> owner_id THEN
     RAISE EXCEPTION 'FAIL: live_streams ownership could be reassigned';
   END IF;
+
 
   SELECT count(*) INTO audit_count
   FROM public.security_audit_log
