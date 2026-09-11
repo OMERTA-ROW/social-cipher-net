@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, Users, CreditCard, Loader2 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
+import CrossPlatformEarnings from "@/components/CrossPlatformEarnings";
 
 const Monetization = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -21,6 +22,7 @@ const Monetization = () => {
     payPerView: 0,
     payPerClick: 0
   });
+  const [recent, setRecent] = useState<Array<{ id: string; amount: number; earning_type: string; created_at: string }>>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -79,8 +81,9 @@ const Monetization = () => {
     try {
       const { data, error } = await supabase
         .from("creator_earnings")
-        .select("amount, earning_type")
-        .eq("creator_id", user.id);
+        .select("id, amount, earning_type, created_at")
+        .eq("creator_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
@@ -93,6 +96,15 @@ const Monetization = () => {
         .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
       const total = payPerView + payPerClick;
+
+      setRecent(
+        (data ?? []).slice(0, 10).map((e: any) => ({
+          id: String(e.id),
+          amount: Number(e.amount),
+          earning_type: e.earning_type,
+          created_at: e.created_at,
+        })),
+      );
 
       setEarnings({
         total,
@@ -141,6 +153,10 @@ const Monetization = () => {
               Upgrade Tier
             </Button>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <CrossPlatformEarnings />
         </div>
 
         {loading ? (
@@ -195,36 +211,38 @@ const Monetization = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>Your latest earnings and transactions</CardDescription>
+                    <CardDescription>Your latest earnings on Cyber Link Social</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                            <DollarSign className="w-5 h-5 text-green-500" />
+                    {recent.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No earnings recorded yet on Cyber Link Social.
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {recent.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between p-4 border rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                                <DollarSign className="w-5 h-5 text-green-500" />
+                              </div>
+                              <div>
+                                <p className="font-medium capitalize">
+                                  {item.earning_type.replace(/_/g, " ")}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(item.created_at).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                            <Badge variant="outline">+${item.amount.toFixed(2)}</Badge>
                           </div>
-                          <div>
-                            <p className="font-medium">Tip from @supporter123</p>
-                            <p className="text-sm text-muted-foreground">2 hours ago</p>
-                          </div>
-                        </div>
-                        <Badge variant="outline">+$5.00</Badge>
+                        ))}
                       </div>
-
-                      <div className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-blue-500" />
-                          </div>
-                          <div>
-                            <p className="font-medium">New subscription</p>
-                            <p className="text-sm text-muted-foreground">1 day ago</p>
-                          </div>
-                        </div>
-                        <Badge variant="outline">+$9.99</Badge>
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
