@@ -251,7 +251,7 @@ const UserProfile = () => {
                       className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                     >
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={friend.avatar_url || ''} />
+                        <AvatarImage src={friend.avatar_url || ''} className="object-cover" />
                         <AvatarFallback>
                           {friend.display_name?.charAt(0) || friend.username?.charAt(0) || '?'}
                         </AvatarFallback>
@@ -278,7 +278,7 @@ const UserProfile = () => {
               <Card className="p-6 mb-6 bg-background/80 backdrop-blur-sm border-border/50">
                 <div className="flex items-start gap-4">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={profile.avatar_url || ''} />
+                    <AvatarImage src={profile.avatar_url || ''} className="object-cover" />
                     <AvatarFallback className="text-2xl">
                       {profile.display_name?.charAt(0) || profile.username?.charAt(0) || '?'}
                     </AvatarFallback>
@@ -333,6 +333,8 @@ const UserProfile = () => {
             {/* Media */}
             {userId && (
               <div className="mb-6">
+                <ProfileRadio userId={userId!} isOwner={currentUserId === userId} />
+                <div className="h-6" />
                 <ProfileMedia userId={userId} isOwner={currentUserId === userId} />
               </div>
             )}
