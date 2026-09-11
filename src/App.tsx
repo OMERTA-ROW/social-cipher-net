@@ -37,6 +37,7 @@ import Profile from "./pages/Profile";
 import Thread from "./pages/Thread";
 import Dashboard from "./pages/Dashboard";
 import Trading from "./pages/Trading";
+import Terminal from "./pages/Terminal";
 import OAuthConsent from "./pages/OAuthConsent";
 import AIBotAssistant from "./components/AIBotAssistant";
 import { AIEcosystemDashboard } from "./components/AIEcosystemDashboard";
@@ -77,6 +78,7 @@ const AppContent = () => {
         <Route path="/post/:postId" element={<Thread />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/trading" element={<Trading />} />
+        <Route path="/terminal" element={<Terminal />} />
         <Route path="/ai-ecosystem" element={<AIEcosystemDashboard />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/ceo" element={<CeoPortal />} />
