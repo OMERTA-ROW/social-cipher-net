@@ -1,6 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Rocket } from "lucide-react";
 import { isLowPowerDevice, prefersReducedMotion, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
 
 const SpaceScene = lazy(() => import("./scene/SpaceScene"));
@@ -67,13 +66,13 @@ const SpaceBackground = () => {
         type="button"
         variant="ghost"
         size="icon"
-        className="fixed z-30 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/30 bg-background/10 text-primary/70 backdrop-blur-[1px] hover:border-primary/70 hover:bg-primary/10 hover:text-primary"
+        className="fixed z-30 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border-0 bg-transparent p-0 text-transparent shadow-none hover:bg-primary/5 focus-visible:bg-primary/10"
         style={{ left: shipTarget.x, top: shipTarget.y }}
         onClick={() => window.dispatchEvent(new CustomEvent("cyberlink:open-ship-interface"))}
         aria-label="Open spaceship crew interface"
         title="Open Zozo, Draco, and miners"
       >
-        <Rocket className="h-4 w-4" />
+        <span className="sr-only">Open Zozo, Draco, and miners</span>
       </Button>
     )}
     </>

@@ -18,7 +18,7 @@
 - [ ] Movie Theater: events, synced playback, live chat
 - [ ] Connectors: universal hub (OAuth + manual keys), actions, multicast
 - [ ] Space background: mining ship + alien crew, chase cam, selectable mining view
-- [ ] Replace every standalone Zozo/Draco overlay with one clickable spaceship interface for AI switching and miner purchases
+- [x] Replace every standalone Zozo/Draco overlay with one clickable spaceship interface for AI switching and miner purchases
 
 ## Blocked / waiting on user
 - [ ] Shopify store: previous development store expired and cannot be claimed.
