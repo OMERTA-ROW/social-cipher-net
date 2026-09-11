@@ -178,11 +178,15 @@ const TradingChart = ({ candles, chartType, indicators, height = 260 }: TradingC
 
     chart.timeScale().fitContent();
 
-    const ro = new ResizeObserver(() => {
-      if (holder.current) chart.applyOptions({ width: holder.current.clientWidth });
-    });
+    const fit = () => {
+      if (!holder.current) return;
+      chart.resize(holder.current.clientWidth, height, true);
+    };
+    const ro = new ResizeObserver(fit);
     ro.observe(holder.current);
-    chart.applyOptions({ width: holder.current.clientWidth });
+    fit();
+    const raf = requestAnimationFrame(fit);
+
 
     return () => {
       ro.disconnect();
