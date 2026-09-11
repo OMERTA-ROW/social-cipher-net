@@ -105,7 +105,7 @@ const CreatorsPanel = () => {
               size="sm"
               variant="outline"
               className="mt-1"
-              onClick={() => navigate(`/user/${creator.id}`)}
+              onClick={() => navigate(`/profile/${creator.id}`)}
             >
               View
             </Button>
