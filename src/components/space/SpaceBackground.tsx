@@ -9,7 +9,7 @@ const SpaceScene = lazy(() => import("./scene/SpaceScene"));
  * Everything is generated in code — no image assets, so there are no seams.
  */
 const SpaceBackground = () => {
-  const { mode, dim, view, quality } = useSpaceBgSettings();
+  const { mode, dim, view, camera, quality } = useSpaceBgSettings();
   const [visible, setVisible] = useState(() => typeof document === "undefined" || !document.hidden);
   const [reduced, setReduced] = useState(prefersReducedMotion);
   const lowPower = useMemo(isLowPowerDevice, []);
@@ -38,7 +38,7 @@ const SpaceBackground = () => {
 
       {render3d && (
         <Suspense fallback={null}>
-          <SpaceScene full={full} animate={visible && !reduced} view={view} tier={tier} />
+          <SpaceScene full={full} animate={visible && !reduced} view={view} cameraMode={camera} tier={tier} />
         </Suspense>
       )}
 
