@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback, ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Minus, Maximize2, GripVertical } from "lucide-react";
+import { X, Minus, Maximize2, GripVertical, Orbit, MonitorSmartphone } from "lucide-react";
+import type { WindowWorkspace } from "@/hooks/useFloatingWindows";
 
 interface FloatingWindowProps {
   id: string;
@@ -12,6 +13,10 @@ interface FloatingWindowProps {
   initialY?: number;
   width?: number;
   height?: number;
+  /** Which desktop this window currently lives on. */
+  workspace?: WindowWorkspace;
+  /** Move the window between the main interface and the solar system desktop. */
+  onToggleWorkspace?: () => void;
 }
 
 interface Placement {
@@ -24,11 +29,12 @@ interface Placement {
 const MIN_WIDTH = 280;
 const MIN_HEIGHT = 180;
 
-const storageKey = (title: string) => `cyberlink:window:${title}`;
+const storageKey = (title: string, workspace: WindowWorkspace) =>
+  workspace === "space" ? `cyberlink:window:space:${title}` : `cyberlink:window:${title}`;
 
-const readPlacement = (title: string): Placement | null => {
+const readPlacement = (title: string, workspace: WindowWorkspace): Placement | null => {
   try {
-    const raw = localStorage.getItem(storageKey(title));
+    const raw = localStorage.getItem(storageKey(title, workspace));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<Placement>;
     if (
@@ -65,10 +71,12 @@ export default function FloatingWindow({
   initialY = 100,
   width = 600,
   height = 400,
+  workspace = "main",
+  onToggleWorkspace,
 }: FloatingWindowProps) {
   const [placement, setPlacement] = useState<Placement>(() =>
     clampToViewport(
-      readPlacement(title) ?? { x: initialX, y: initialY, width, height },
+      readPlacement(title, workspace) ?? { x: initialX, y: initialY, width, height },
     ),
   );
   const [isMinimized, setIsMinimized] = useState(false);
@@ -78,11 +86,18 @@ export default function FloatingWindow({
   // Remember where the user placed this window.
   useEffect(() => {
     try {
-      localStorage.setItem(storageKey(title), JSON.stringify(placement));
+      localStorage.setItem(storageKey(title, workspace), JSON.stringify(placement));
     } catch {
       /* storage unavailable — placement simply is not remembered */
     }
-  }, [title, placement]);
+  }, [title, workspace, placement]);
+
+  // When a window moves to another desktop, restore the spot it had there.
+  useEffect(() => {
+    const remembered = readPlacement(title, workspace);
+    if (remembered) setPlacement(clampToViewport(remembered));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace]);
 
   const startGesture = (clientX: number, clientY: number, next: "drag" | "resize") => {
     gesture.current = {
@@ -170,6 +185,18 @@ export default function FloatingWindow({
               <CardTitle className="text-sm font-medium truncate">{title}</CardTitle>
             </div>
             <div className="flex items-center gap-1">
+              {onToggleWorkspace && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 hover:text-accent"
+                  onClick={onToggleWorkspace}
+                  title={workspace === "space" ? "Bring back to main desktop" : "Send out to the solar system desktop"}
+                  aria-label={workspace === "space" ? "Bring back to main desktop" : "Send out to the solar system desktop"}
+                >
+                  {workspace === "space" ? <MonitorSmartphone className="h-3 w-3" /> : <Orbit className="h-3 w-3" />}
+                </Button>
+              )}
               <Button
                 size="icon"
                 variant="ghost"

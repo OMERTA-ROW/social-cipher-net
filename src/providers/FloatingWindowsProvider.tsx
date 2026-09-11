@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode } from "react";
-import { useFloatingWindows, FloatingWindowData } from "@/hooks/useFloatingWindows";
+import { useFloatingWindows, FloatingWindowData, WindowWorkspace } from "@/hooks/useFloatingWindows";
 import FloatingWindow from "@/components/FloatingWindow";
 
 interface FloatingWindowsContextType {
@@ -8,6 +8,10 @@ interface FloatingWindowsContextType {
   closeWindow: (id: string) => void;
   closeAllWindows: () => void;
   bringToFront: (id: string) => void;
+  desktop: WindowWorkspace;
+  setDesktop: (workspace: WindowWorkspace) => void;
+  toggleDesktop: () => void;
+  setWindowWorkspace: (id: string, workspace: WindowWorkspace) => void;
 }
 
 const FloatingWindowsContext = createContext<FloatingWindowsContextType | undefined>(undefined);
@@ -22,13 +26,16 @@ export const useFloatingWindowsContext = () => {
 
 export const FloatingWindowsProvider = ({ children }: { children: ReactNode }) => {
   const floatingWindows = useFloatingWindows();
+  const { desktop } = floatingWindows;
 
   return (
     <FloatingWindowsContext.Provider value={floatingWindows}>
       {children}
       
       <div className="fixed inset-0 pointer-events-none z-50" style={{ pointerEvents: 'none' }}>
-        {floatingWindows.windows.map((window) => (
+        {floatingWindows.windows
+          .filter((window) => window.workspace === desktop)
+          .map((window) => (
           <div 
             key={window.id} 
             style={{ pointerEvents: 'auto', zIndex: window.zIndex || 50 }}
@@ -42,6 +49,13 @@ export const FloatingWindowsProvider = ({ children }: { children: ReactNode }) =
               initialY={window.y}
               width={window.width}
               height={window.height}
+              workspace={window.workspace}
+              onToggleWorkspace={() =>
+                floatingWindows.setWindowWorkspace(
+                  window.id,
+                  window.workspace === "space" ? "main" : "space",
+                )
+              }
             >
               {window.content}
             </FloatingWindow>

@@ -32,7 +32,7 @@ All colors MUST be HSL.
     --destructive: 0 75% 60%;
     --destructive-foreground: 200 20% 98%;
 
-    --border: 220 15% 20%;
+    --border: 250 16% 21%;
     --input: 0 0% 0%;
     --ring: 190 95% 55%;
 
@@ -67,7 +67,9 @@ All colors MUST be HSL.
 
 @layer utilities {
   .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.3);
+    box-shadow:
+      0 0 20px hsl(var(--glow-primary) / 0.3),
+      0 0 34px hsl(var(--glow-purple) / 0.14);
   }
   
   .glow-accent {
@@ -83,7 +85,18 @@ All colors MUST be HSL.
   }
 
   .text-glow {
-    text-shadow: 0 0 10px hsl(var(--glow-primary) / 0.5);
+    text-shadow:
+      0 0 10px hsl(var(--glow-primary) / 0.5),
+      0 0 18px hsl(var(--glow-purple) / 0.22);
+  }
+
+  /* Subtle blue-to-purple edge used for accent lines and gradient borders. */
+  .accent-edge {
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--primary) / 0.55),
+      hsl(var(--accent) / 0.4)
+    );
   }
 
   /* Crisp point-like stars that blend into pure black */
