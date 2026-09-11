@@ -75,7 +75,6 @@ const TradingChart = ({ candles, chartType, indicators, height = 260 }: TradingC
 
     const chart = createChart(holder.current, {
       height,
-      autoSize: true,
       layout: { background: { color: "transparent" }, textColor: text, attributionLogo: false },
       grid: { vertLines: { color: grid }, horzLines: { color: grid } },
       rightPriceScale: { borderColor: grid },
@@ -194,7 +193,6 @@ const TradingChart = ({ candles, chartType, indicators, height = 260 }: TradingC
 
 
     return () => {
-      cancelAnimationFrame(raf);
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
