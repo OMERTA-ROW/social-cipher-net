@@ -51,6 +51,16 @@ const readPlacement = (title: string, workspace: WindowWorkspace): Placement | n
   }
 };
 
+const pinKey = (title: string, workspace: WindowWorkspace) => `${storageKey(title, workspace)}:pinned`;
+
+const readPinned = (title: string, workspace: WindowWorkspace): boolean => {
+  try {
+    return localStorage.getItem(pinKey(title, workspace)) === "1";
+  } catch {
+    return false;
+  }
+};
+
 const clampToViewport = (p: Placement): Placement => {
   const maxX = Math.max(0, window.innerWidth - 120);
   const maxY = Math.max(0, window.innerHeight - 60);
