@@ -6,7 +6,7 @@
  * caller renders an unavailable state instead of this component.
  */
 
-import { useEffect, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import {
   BarSeries,
   CandlestickSeries,
@@ -28,6 +28,10 @@ interface TradingChartProps {
   chartType: ChartType;
   indicators: IndicatorKey[];
   height?: number;
+}
+
+export interface TradingChartHandle {
+  takeScreenshot: () => HTMLCanvasElement | null;
 }
 
 const css = (name: string, fallback: string) => {
@@ -62,9 +66,13 @@ const toHeikin = (candles: Candle[]): Candle[] => {
   return out;
 };
 
-const TradingChart = ({ candles, chartType, indicators, height = 260 }: TradingChartProps) => {
+const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candles, chartType, indicators, height = 260 }, ref) => {
   const holder = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    takeScreenshot: () => chartRef.current?.takeScreenshot(true, false) ?? null,
+  }), []);
 
   useEffect(() => {
     if (!holder.current || !candles.length) return;
@@ -74,7 +82,7 @@ const TradingChart = ({ candles, chartType, indicators, height = 260 }: TradingC
     const down = css("--destructive", "#ef4444");
 
     const chart = createChart(holder.current, {
-      height,
+      height: holder.current.clientHeight || height,
       layout: { background: { color: "transparent" }, textColor: text, attributionLogo: false },
       grid: { vertLines: { color: grid }, horzLines: { color: grid } },
       rightPriceScale: { borderColor: grid },
@@ -179,11 +187,14 @@ const TradingChart = ({ candles, chartType, indicators, height = 260 }: TradingC
     chart.timeScale().fitContent();
 
     let lastWidth = 0;
+    let lastHeight = 0;
     const fit = () => {
       const w = holder.current?.clientWidth ?? 0;
-      if (!w || w === lastWidth) return;
+      const h = holder.current?.clientHeight ?? 0;
+      if (!w || !h || (w === lastWidth && h === lastHeight)) return;
       lastWidth = w;
-      chart.resize(w, height, true);
+      lastHeight = h;
+      chart.resize(w, h, true);
     };
     const ro = new ResizeObserver(fit);
     ro.observe(holder.current);
@@ -198,9 +209,11 @@ const TradingChart = ({ candles, chartType, indicators, height = 260 }: TradingC
       chartRef.current = null;
     };
 
-  }, [candles, chartType, indicators, height]);
+  }, [candles, chartType, indicators]);
 
   return <div ref={holder} className="w-full" style={{ height }} />;
-};
+});
+
+TradingChart.displayName = "TradingChart";
 
 export default TradingChart;

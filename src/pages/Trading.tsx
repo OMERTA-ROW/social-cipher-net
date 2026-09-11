@@ -31,7 +31,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import ChartPane, { type PaneConfig } from "@/components/trading/ChartPane";
+import type { PaneConfig } from "@/components/trading/ChartPane";
+import TradingChartWorkspace from "@/components/trading/TradingChartWorkspace";
 import TradeConfirmDialog, {
   logTradingAction,
   type TradeIntent,
@@ -47,8 +48,8 @@ import type { Timeframe } from "@/services/marketData";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
-const makePane = (symbol = "BTC", timeframe: Timeframe = "1h"): PaneConfig => ({
-  id: uid(),
+const makePane = (symbol = "BTC", timeframe: Timeframe = "1h", id = uid()): PaneConfig => ({
+  id,
   symbol,
   timeframe,
   chartType: "candles",
@@ -56,6 +57,24 @@ const makePane = (symbol = "BTC", timeframe: Timeframe = "1h"): PaneConfig => ({
 });
 
 const DEFAULT_WATCH = ["BTC", "ETH", "AAPL", "SPY", "EURUSD=X", "GC=F"];
+const PANE_SESSION_KEY = "cyberlink:trading-panes";
+const GRID_SESSION_KEY = "cyberlink:trading-grid";
+
+const initialPanes = (): PaneConfig[] => {
+  if (typeof window === "undefined") return [makePane("BTC", "1h", "primary")];
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(PANE_SESSION_KEY) ?? "[]") as PaneConfig[];
+    return saved.length ? saved : [makePane("BTC", "1h", "primary")];
+  } catch {
+    return [makePane("BTC", "1h", "primary")];
+  }
+};
+
+const initialGrid = () => {
+  if (typeof window === "undefined") return 1;
+  const saved = Number(sessionStorage.getItem(GRID_SESSION_KEY));
+  return [1, 2, 4, 6, 9].includes(saved) ? saved : 1;
+};
 
 interface AuditRow {
   id: string;
@@ -66,8 +85,8 @@ interface AuditRow {
 
 const Trading = () => {
   const { tier, limits, loading: tierLoading, signedIn } = useTradingTier();
-  const [grid, setGrid] = useState(1);
-  const [panes, setPanes] = useState<PaneConfig[]>([makePane()]);
+  const [grid, setGrid] = useState(initialGrid);
+  const [panes, setPanes] = useState<PaneConfig[]>(initialPanes);
   const [watchlist, setWatchlist] = useState<string[]>(DEFAULT_WATCH);
   const [watchDraft, setWatchDraft] = useState("");
   const [layoutName, setLayoutName] = useState("My layout");
@@ -103,6 +122,14 @@ const Trading = () => {
       return prev;
     });
   }, [grid, limits, tierLoading]);
+
+  useEffect(() => {
+    sessionStorage.setItem(PANE_SESSION_KEY, JSON.stringify(panes));
+  }, [panes]);
+
+  useEffect(() => {
+    sessionStorage.setItem(GRID_SESSION_KEY, String(grid));
+  }, [grid]);
 
   /* saved layouts + audit trail */
   const loadSaved = useCallback(async () => {
@@ -186,18 +213,6 @@ const Trading = () => {
     setGrid(limits.grids.includes(found.grid) ? found.grid : limits.grids[limits.grids.length - 1]);
     setPanes(found.panes.slice(0, cap).map((p) => ({ ...p, id: uid() })));
   };
-
-  const gridClass =
-    grid === 1
-      ? "grid-cols-1"
-      : grid === 2
-        ? "grid-cols-1 lg:grid-cols-2"
-        : grid === 4
-          ? "grid-cols-1 md:grid-cols-2"
-          : grid === 6
-            ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-            : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3";
-  const paneHeight = grid <= 2 ? 340 : grid <= 4 ? 260 : 200;
 
   const openPreview = () => {
     setIntent({
@@ -311,19 +326,13 @@ const Trading = () => {
               </div>
             )}
 
-            <div className={`grid gap-3 ${gridClass}`}>
-              {panes.slice(0, Math.min(grid, limits.maxPanes)).map((pane) => (
-                <ChartPane
-                  key={pane.id}
-                  pane={pane}
-                  limits={limits}
-                  height={paneHeight}
-                  onChange={(next) => setPanes((p) => p.map((x) => (x.id === pane.id ? next : x)))}
-                  onRemove={() => setPanes((p) => (p.length > 1 ? p.filter((x) => x.id !== pane.id) : p))}
-                  onUpgradeNeeded={upgrade}
-                />
-              ))}
-            </div>
+            <TradingChartWorkspace
+              panes={panes.slice(0, Math.min(grid, limits.maxPanes))}
+              limits={limits}
+              onChange={(next) => setPanes((current) => current.map((pane) => (pane.id === next.id ? next : pane)))}
+              onRemove={(id) => setPanes((current) => (current.length > 1 ? current.filter((pane) => pane.id !== id) : current))}
+              onUpgradeNeeded={upgrade}
+            />
 
             <Card className="border-border/60 bg-card/60">
               <CardContent className="space-y-2 p-3">

@@ -21,14 +21,11 @@ import {
   Crown,
   BarChart3,
   Radio,
-  Send,
-  MessageSquare,
   Trophy
 } from "lucide-react";
 import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
 import NFTMarketWidget from "@/components/NFTMarketWidget";
-import TradingPlatformsWidget from "@/components/TradingPlatformsWidget";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { User } from "@supabase/supabase-js";
 import CouponAI from "@/components/CouponAI";
@@ -414,15 +411,6 @@ const CyberWorld = () => {
                   <Button
                     variant="outline"
                     className="h-24 flex flex-col gap-2"
-                    onClick={() => openWindow("Trading Platforms", <TradingPlatformsWidget />)}
-                  >
-                    <BarChart3 className="w-6 h-6" />
-                    <span className="text-sm">Platforms</span>
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col gap-2"
                     onClick={() => openWindow("Cryptocurrency Markets", <CryptoMarketChart />)}
                   >
                     <TrendingUp className="w-6 h-6" />
@@ -507,43 +495,7 @@ const CyberWorld = () => {
                 <CardDescription>Access live streaming controls and features</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col gap-2"
-                    onClick={() => openWindow("Stream Preview", (
-                      <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
-                        <div className="text-center">
-                          <Video className="w-16 h-16 mx-auto mb-4 text-primary" />
-                          <p className="text-xl font-bold">Stream Preview</p>
-                          <p className="text-sm text-muted-foreground mt-2">Camera feed will appear here</p>
-                        </div>
-                      </div>
-                    ))}
-                  >
-                    <Video className="w-6 h-6" />
-                    <span className="text-sm">Stream Preview</span>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col gap-2"
-                    onClick={() => openWindow("Platform Chat", (
-                      <div className="space-y-4">
-                        <div className="h-[400px] bg-muted/10 rounded-lg p-4 overflow-y-auto">
-                          <p className="text-sm text-muted-foreground">Connect platforms to see live chat</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Input placeholder="Type message..." />
-                          <Button size="icon"><Send className="w-4 h-4" /></Button>
-                        </div>
-                      </div>
-                    ))}
-                  >
-                    <MessageSquare className="w-6 h-6" />
-                    <span className="text-sm">Live Chat</span>
-                  </Button>
-
+                <div className="grid grid-cols-1 gap-4">
                   <Button
                     variant="outline"
                     className="h-24 flex flex-col gap-2"
