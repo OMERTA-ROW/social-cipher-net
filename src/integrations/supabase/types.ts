@@ -49,6 +49,95 @@ export type Database = {
           },
         ]
       }
+      agent_secrets: {
+        Row: {
+          created_at: string
+          encrypted: boolean
+          id: string
+          owner_id: string
+          owner_type: string
+          secret_type: string
+          secret_value: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted?: boolean
+          id?: string
+          owner_id: string
+          owner_type: string
+          secret_type: string
+          secret_value: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted?: boolean
+          id?: string
+          owner_id?: string
+          owner_type?: string
+          secret_type?: string
+          secret_value?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_agents: {
+        Row: {
+          created_at: string
+          id: string
+          is_terminal_agent: boolean
+          key_hint: string | null
+          label: string
+          last_checked_at: string | null
+          last_error: string | null
+          mcp_server_id: string | null
+          model: string | null
+          provider: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_terminal_agent?: boolean
+          key_hint?: string | null
+          label: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          mcp_server_id?: string | null
+          model?: string | null
+          provider: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_terminal_agent?: boolean
+          key_hint?: string | null
+          label?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          mcp_server_id?: string | null
+          model?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agents_mcp_server_id_fkey"
+            columns: ["mcp_server_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       connection_secrets: {
         Row: {
           connection_id: string
@@ -999,6 +1088,98 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      mcp_servers: {
+        Row: {
+          auth_type: string
+          created_at: string
+          id: string
+          label: string
+          last_checked_at: string | null
+          last_error: string | null
+          status: string
+          tool_count: number
+          transport: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          auth_type?: string
+          created_at?: string
+          id?: string
+          label: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          status?: string
+          tool_count?: number
+          transport?: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          auth_type?: string
+          created_at?: string
+          id?: string
+          label?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          status?: string
+          tool_count?: number
+          transport?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mcp_tools: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          input_schema: Json
+          is_enabled: boolean
+          name: string
+          server_id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          input_schema?: Json
+          is_enabled?: boolean
+          name: string
+          server_id: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          input_schema?: Json
+          is_enabled?: boolean
+          name?: string
+          server_id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_tools_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_servers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mentions: {
         Row: {

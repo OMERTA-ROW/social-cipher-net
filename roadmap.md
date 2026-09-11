@@ -33,3 +33,22 @@
 - [x] Regression tests for stream-participant + self-service update RLS policies
 - [x] Audit logging for role self-assignment and protected-record updates
 - [x] Production alerting on permission-denied / RLS failures
+
+## Big functional build pass
+- [x] Profile composer + link previews + profile posts
+- [x] Ranked feed (engagement + recency)
+- [x] Profile radio player (Spotify/Apple/SoundCloud/YouTube, stream routing)
+- [x] Direct messaging + unified inbox (block/report/tags/scam filter)
+- [ ] Sidebar restructure (lean basics + dropdown groups)
+- [ ] Subscription tiers + sandboxed Terminal with AI agent
+- [ ] Moderation: no auto-suspension, review queue only
+- [ ] Social links/connectors live
+
+## Universal connectors system
+- [x] One page for OAuth + API key + MCP connections
+- [x] OAuth popup flow with clear connected/failed confirmation + account name
+- [ ] Encrypted server-side key storage, masked display, test-connection button
+- [x] MCP servers: add endpoint + credentials, list tools, enable/disable per tool
+- [x] AI agent connectors (OpenAI, Anthropic, Gemini, others); Terminal wiring pending Terminal build
+- [ ] Live status per connection: connected / expired / needs re-auth / error, auto refresh
+- [ ] Connected accounts feed inbox, earnings and aggregated feed
