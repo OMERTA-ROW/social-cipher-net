@@ -2260,6 +2260,39 @@ export type Database = {
           },
         ]
       }
+      stream_ingest: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string | null
+          last_source: string | null
+          status: string
+          stream_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          last_source?: string | null
+          status?: string
+          stream_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          last_source?: string | null
+          status?: string
+          stream_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       studio_assets: {
         Row: {
           asset_type: string
