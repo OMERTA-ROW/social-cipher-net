@@ -1,0 +1,1 @@
+GRANT SELECT ON public.post_payments TO authenticated;
