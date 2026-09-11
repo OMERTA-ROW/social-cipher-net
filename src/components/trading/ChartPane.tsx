@@ -3,8 +3,8 @@
  * indicators, fed by the shared live market-data service.
  */
 
-import { useMemo, useState } from "react";
-import { Settings2, X } from "lucide-react";
+import { type PointerEvent as ReactPointerEvent, useMemo, useRef, useState } from "react";
+import { GripVertical, Loader2, Pin, PinOff, Send, Settings2, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,13 +19,16 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 import MarketSourceBadge from "@/components/market/MarketSourceBadge";
 import MarketUnavailable from "@/components/market/MarketUnavailable";
-import TradingChart, { type ChartType, type IndicatorKey } from "./TradingChart";
+import TradingChart, { type ChartType, type IndicatorKey, type TradingChartHandle } from "./TradingChart";
 import { TIMEFRAMES, type Timeframe } from "@/services/marketData";
 import { useCandles, useQuotes } from "@/hooks/useMarketData";
 import { KIND_LABEL, resolveSymbol } from "@/lib/symbols";
 import type { TradingLimits } from "@/lib/tradingTiers";
+import { publishChartSnapshot } from "@/lib/chartPost";
 
 export interface PaneConfig {
   id: string;
@@ -55,13 +58,18 @@ interface Props {
   pane: PaneConfig;
   limits: TradingLimits;
   height: number;
+  pinned?: boolean;
+  onPin?: () => void;
+  onDragStart?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
   onChange: (pane: PaneConfig) => void;
   onRemove: () => void;
   onUpgradeNeeded: (reason: string) => void;
 }
 
-const ChartPane = ({ pane, limits, height, onChange, onRemove, onUpgradeNeeded }: Props) => {
+const ChartPane = ({ pane, limits, height, pinned = false, onPin, onDragStart, onChange, onRemove, onUpgradeNeeded }: Props) => {
   const [draft, setDraft] = useState(pane.symbol);
+  const [posting, setPosting] = useState(false);
+  const chartRef = useRef<TradingChartHandle | null>(null);
   const resolved = useMemo(() => resolveSymbol(pane.symbol), [pane.symbol]);
 
   const candles = useCandles(resolved.assetClass, resolved.symbol, pane.timeframe, limits.refreshMs);
@@ -89,9 +97,38 @@ const ChartPane = ({ pane, limits, height, onChange, onRemove, onUpgradeNeeded }
     if (next) onChange({ ...pane, symbol: next });
   };
 
+  const postChart = async () => {
+    const canvas = chartRef.current?.takeScreenshot();
+    if (!canvas || !candles.connected || !candles.source || !candles.asOf) {
+      toast.error("This chart needs a connected live data source before it can be posted.");
+      return;
+    }
+    setPosting(true);
+    try {
+      await publishChartSnapshot(canvas, {
+        symbol: resolved.symbol,
+        timeframe: pane.timeframe,
+        chartType: pane.chartType,
+        indicators: pane.indicators,
+        source: candles.source,
+        asOf: candles.asOf,
+      });
+      toast.success("Chart posted to your feed");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not post this chart.");
+    } finally {
+      setPosting(false);
+    }
+  };
+
   return (
     <Card className="flex flex-col overflow-hidden border-border/60 bg-card/60">
       <div className="flex flex-wrap items-center gap-2 border-b border-border/60 p-2">
+        {onDragStart && (
+          <Button size="icon" variant="ghost" className="h-8 w-8 cursor-grab touch-none active:cursor-grabbing" onPointerDown={onDragStart} aria-label="Move chart">
+            <GripVertical className="h-4 w-4" />
+          </Button>
+        )}
         <Input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -164,6 +201,26 @@ const ChartPane = ({ pane, limits, height, onChange, onRemove, onUpgradeNeeded }
               </span>
             </span>
           )}
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={postChart} disabled={posting || !candles.connected} aria-label="Post chart to feed">
+                  {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Post chart to feed</TooltipContent>
+            </Tooltip>
+            {onPin && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" variant={pinned ? "secondary" : "ghost"} className="h-8 w-8" onClick={onPin} aria-label={pinned ? "Unpin chart" : "Pin chart"}>
+                    {pinned ? <Pin className="h-4 w-4" /> : <PinOff className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{pinned ? "Unpin chart" : "Pin chart"}</TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider>
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onRemove} aria-label="Close chart">
             <X className="h-4 w-4" />
           </Button>
@@ -180,6 +237,7 @@ const ChartPane = ({ pane, limits, height, onChange, onRemove, onUpgradeNeeded }
           />
         ) : (
           <TradingChart
+            ref={chartRef}
             candles={candles.data}
             chartType={pane.chartType}
             indicators={pane.indicators}

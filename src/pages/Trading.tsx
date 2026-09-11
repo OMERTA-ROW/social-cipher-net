@@ -32,6 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import ChartPane, { type PaneConfig } from "@/components/trading/ChartPane";
+import TradingChartWorkspace from "@/components/trading/TradingChartWorkspace";
 import TradeConfirmDialog, {
   logTradingAction,
   type TradeIntent,
@@ -187,18 +188,6 @@ const Trading = () => {
     setPanes(found.panes.slice(0, cap).map((p) => ({ ...p, id: uid() })));
   };
 
-  const gridClass =
-    grid === 1
-      ? "grid-cols-1"
-      : grid === 2
-        ? "grid-cols-1 lg:grid-cols-2"
-        : grid === 4
-          ? "grid-cols-1 md:grid-cols-2"
-          : grid === 6
-            ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-            : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3";
-  const paneHeight = grid <= 2 ? 340 : grid <= 4 ? 260 : 200;
-
   const openPreview = () => {
     setIntent({
       kind: "trade",
@@ -311,19 +300,13 @@ const Trading = () => {
               </div>
             )}
 
-            <div className={`grid gap-3 ${gridClass}`}>
-              {panes.slice(0, Math.min(grid, limits.maxPanes)).map((pane) => (
-                <ChartPane
-                  key={pane.id}
-                  pane={pane}
-                  limits={limits}
-                  height={paneHeight}
-                  onChange={(next) => setPanes((p) => p.map((x) => (x.id === pane.id ? next : x)))}
-                  onRemove={() => setPanes((p) => (p.length > 1 ? p.filter((x) => x.id !== pane.id) : p))}
-                  onUpgradeNeeded={upgrade}
-                />
-              ))}
-            </div>
+            <TradingChartWorkspace
+              panes={panes.slice(0, Math.min(grid, limits.maxPanes))}
+              limits={limits}
+              onChange={(next) => setPanes((current) => current.map((pane) => (pane.id === next.id ? next : pane)))}
+              onRemove={(id) => setPanes((current) => (current.length > 1 ? current.filter((pane) => pane.id !== id) : current))}
+              onUpgradeNeeded={upgrade}
+            />
 
             <Card className="border-border/60 bg-card/60">
               <CardContent className="space-y-2 p-3">
