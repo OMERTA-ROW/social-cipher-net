@@ -7,8 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Pickaxe, TrendingUp, Clock, Coins } from "lucide-react";
-import { DracoMiningBackground } from "./DracoMiningBackground";
-import { ZozoMiningBackground } from "./ZozoMiningBackground";
 import { Badge } from "@/components/ui/badge";
 import { ExternalMiningAccounts } from "./ExternalMiningAccounts";
 
@@ -118,10 +116,6 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
   const multiplier = 1.0 + ((parseFloat(tokenAmount) - 1) / 99999.0) * 99.0;
   const dailyEarning = 10 * multiplier;
 
-  const activeSessions = sessions.filter(s => s.status === "active");
-  const hasDracoMining = activeSessions.some(s => s.mining_type === "draco");
-  const hasZozoMining = activeSessions.some(s => s.mining_type === "zozo");
-  
   const selectedCryptoInfo = CRYPTO_OPTIONS.find(c => c.symbol === selectedCrypto);
 
   if (!isUnlocked) {
@@ -146,12 +140,7 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
   }
 
   return (
-    <>
-      {/* Mining backgrounds */}
-      <DracoMiningBackground isActive={hasDracoMining} minedCrypto={selectedCrypto} />
-      <ZozoMiningBackground isActive={hasZozoMining} minedCrypto={selectedCrypto} />
-      
-      <div className="space-y-6 relative z-10">
+    <div className="space-y-6 relative z-10">
       <Card className="bg-gradient-to-br from-primary/5 to-secondary/10 border-primary/30 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -308,6 +297,5 @@ export const MiningDashboard = ({ miningType, isUnlocked }: MiningDashboardProps
 
       <ExternalMiningAccounts miningType={miningType} isUnlocked={isUnlocked} />
     </div>
-    </>
   );
 };

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Web3Provider } from "@/providers/Web3Provider";
 import { FloatingWindowsProvider } from "@/providers/FloatingWindowsProvider";
 import { FourClickCloseWrapper } from "@/components/FourClickCloseWrapper";
@@ -43,9 +43,6 @@ import AIBotAssistant from "./components/AIBotAssistant";
 import SpaceBackground from "./components/space/SpaceBackground";
 
 const AppContent = () => {
-  const location = useLocation();
-  const showAIBot = location.pathname !== "/cyber-arena";
-
   return (
     <>
       <SpaceBackground />
@@ -84,7 +81,7 @@ const AppContent = () => {
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {showAIBot && <AIBotAssistant />}
+      <AIBotAssistant />
     </>
   );
 };

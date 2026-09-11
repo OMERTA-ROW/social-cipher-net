@@ -10,7 +10,6 @@ import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { useNavigate } from "react-router-dom";
 import { TokenPoolManager } from "@/components/TokenPoolManager";
 import { PageTabManager } from "@/components/PageTabManager";
-import DracoAI from "@/components/DracoAI";
 import { useSavedTabs } from "@/hooks/useSavedTabs";
 import { SavedTabsManager } from "@/components/SavedTabsManager";
 import { supabase } from "@/integrations/supabase/client";
@@ -289,7 +288,6 @@ const CyberGamers = () => {
         )}
       </ArenaShell>
 
-      <DracoAI />
     </>
   );
 };

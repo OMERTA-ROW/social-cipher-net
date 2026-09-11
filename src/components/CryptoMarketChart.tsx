@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import DracoAI from "./DracoAI";
 import FibonacciOverlay from "./FibonacciOverlay";
 import MarketSourceBadge from "@/components/market/MarketSourceBadge";
 import MarketUnavailable from "@/components/market/MarketUnavailable";
@@ -195,7 +194,6 @@ export default function CryptoMarketChart() {
         })}
       </Tabs>
       </div>
-      <DracoAI onFibonacciRequest={handleFibonacciRequest} chartSymbol={activeSymbol} />
     </>
   );
 }
