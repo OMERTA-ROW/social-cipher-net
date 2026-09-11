@@ -50,13 +50,14 @@ export const resolveQuality = (q: SpaceBgQuality): QualityTier =>
 const defaults = (): SpaceBgSettings => ({
   mode: prefersReducedMotion() ? "off" : isLowPowerDevice() ? "lite" : "full",
   view: "solar",
+  camera: "galaxy",
   quality: "auto",
   dim: 0.12,
 });
 
 let state: SpaceBgSettings = (() => {
   if (typeof window === "undefined")
-    return { mode: "off", view: "solar", quality: "auto", dim: 0.35 } as SpaceBgSettings;
+    return { mode: "off", view: "solar", camera: "galaxy", quality: "auto", dim: 0.35 } as SpaceBgSettings;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults();
