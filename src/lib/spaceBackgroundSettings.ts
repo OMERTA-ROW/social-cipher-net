@@ -68,6 +68,9 @@ let state: SpaceBgSettings = (() => {
         ? (parsed.mode as SpaceBgMode)
         : base.mode,
       view: VIEWS.includes(parsed.view as SpaceBgView) ? (parsed.view as SpaceBgView) : "solar",
+      camera: CAMERAS.includes(parsed.camera as SpaceBgCamera)
+        ? (parsed.camera as SpaceBgCamera)
+        : "galaxy",
       quality: QUALITIES.includes(parsed.quality as SpaceBgQuality)
         ? (parsed.quality as SpaceBgQuality)
         : "auto",
