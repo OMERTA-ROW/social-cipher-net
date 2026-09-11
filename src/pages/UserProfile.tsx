@@ -342,6 +342,13 @@ const UserProfile = () => {
               </Card>
             )}
 
+            {/* Media */}
+            {userId && (
+              <div className="mb-6">
+                <ProfileMedia userId={userId} isOwner={currentUserId === userId} />
+              </div>
+            )}
+
             {/* Posts */}
             <div className="space-y-4">
               {isLoading ? (
