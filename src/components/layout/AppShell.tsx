@@ -14,11 +14,14 @@ import {
   PlusSquare,
   Link2,
   BadgeCheck,
+  Orbit,
+  MonitorSmartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import RightRail from "@/components/layout/RightRail";
 import AllSeeingEye from "@/components/space/AllSeeingEye";
+import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 
 interface NavItem {
   title: string;
@@ -61,6 +64,8 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { desktop, toggleDesktop } = useFloatingWindowsContext();
+  const onSpaceDesktop = desktop === "space";
 
   // Restore the centre column scroll position per route, and remember it on leave.
   useEffect(() => {
@@ -114,13 +119,29 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
             >
               <User className="w-5 h-5" />
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground hover:text-accent"
+              title={onSpaceDesktop ? "Back to main desktop" : "Solar system desktop"}
+              aria-label={onSpaceDesktop ? "Back to main desktop" : "Solar system desktop"}
+              aria-pressed={onSpaceDesktop}
+              onClick={toggleDesktop}
+            >
+              {onSpaceDesktop ? <MonitorSmartphone className="w-5 h-5" /> : <Orbit className="w-5 h-5" />}
+            </Button>
             <AllSeeingEye />
           </div>
         </div>
       </header>
 
       {/* Three column body */}
-      <div className="flex-1 min-h-0 w-full flex gap-0 lg:gap-6 px-0 md:px-4 lg:px-5 overflow-x-hidden">
+      <div
+        className={cn(
+          "flex-1 min-h-0 w-full flex gap-0 lg:gap-6 px-0 md:px-4 lg:px-5 overflow-x-hidden",
+          onSpaceDesktop && "hidden",
+        )}
+      >
         {/* Left sidebar — fluid, collapses to icons on smaller screens */}
         <aside className="hidden md:flex md:w-[6%] md:min-w-[68px] xl:w-[18%] xl:min-w-[200px] xl:max-w-[280px] shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/40 bg-card/35 backdrop-blur-xl [scrollbar-gutter:stable]">
           <nav className="flex flex-col gap-1 px-2">
@@ -169,7 +190,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-border/60 bg-card/80 backdrop-blur-xl flex items-center justify-around">
+      <nav className={cn(onSpaceDesktop && "hidden", "md:hidden fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-border/60 bg-card/80 backdrop-blur-xl flex items-center justify-around")}>
         {mobileNav.map((item) => (
           <NavLink
             key={item.url}
