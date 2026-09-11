@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
-import { TradingDisclaimer } from "@/components/market/TradingDisclaimer";
+import TradingDisclaimer from "@/components/market/TradingDisclaimer";
 import { Globe, Gamepad2, Clapperboard } from "lucide-react";
 
 const SECTIONS = [
