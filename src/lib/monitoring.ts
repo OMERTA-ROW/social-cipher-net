@@ -1,8 +1,13 @@
+import { supabase } from "@/integrations/supabase/client";
+
 /**
  * Lightweight client monitoring. Emits structured, greppable console entries so
  * regressions (paid-post permission denials, feed load failures) surface in the
  * project's error logs and alerting instead of being silently swallowed.
+ * Permission/RLS failures are additionally forwarded to the security audit log
+ * so they can raise a production alert.
  */
+
 
 export type MonitoredArea =
   | "post_payments_permission_denied"
