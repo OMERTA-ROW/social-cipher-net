@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CheckCircle2, UserPlus, UserMinus } from "lucide-react";
 import ProfileMedia from "@/components/profile/ProfileMedia";
+import { resolvePaidAccess } from "@/lib/paymentAccess";
+import { reportIssue } from "@/lib/monitoring";
 
 interface Post {
   id: string;
@@ -110,8 +112,8 @@ const UserProfile = () => {
     setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      
+      const viewerId = session?.user?.id ?? null;
+
       const { data, error } = await supabase
         .from("posts")
         .select(`
@@ -125,42 +127,19 @@ const UserProfile = () => {
 
       if (error) throw error;
 
-      if (user) {
-        const postsWithPaymentStatus = await Promise.all(
-          (data || []).map(async (post) => {
-            if (post.monetization_type === 'free' || post.user_id === user.id) {
-              return { ...post, has_paid: true };
-            }
+      const rows = data ?? [];
+      // Single batched access check instead of one query per post.
+      const { unlocked } = await resolvePaidAccess(rows, viewerId);
 
-            const { data: paymentData, error: paymentError } = await supabase
-              .from('post_payments')
-              .select('id')
-              .eq('post_id', post.id)
-              .eq('payer_id', user.id)
-              .maybeSingle();
-
-            if (paymentError) {
-              throw new Error(`Unable to verify access to paid post ${post.id}: ${paymentError.message}`);
-            }
-
-            return { ...post, has_paid: !!paymentData };
-          })
-        );
-
-        setPosts(postsWithPaymentStatus);
-      } else {
-        setPosts((data || []).map((post) => ({
-          ...post,
-          has_paid: post.monetization_type === 'free',
-        })));
-      }
+      setPosts(rows.map((post) => ({ ...post, has_paid: unlocked.has(post.id) })));
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      reportIssue('feed_load_failed', error, { surface: 'user_profile', profileId: userId });
       toast.error('Failed to load posts');
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const fetchFriends = async () => {
     const { data, error } = await supabase
