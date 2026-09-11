@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
@@ -6,22 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { 
-  Globe, 
-  Users, 
-  TrendingUp, 
-  MessageCircle, 
+import {
+  Globe,
+  Users,
+  TrendingUp,
   Video,
   Calendar,
   Award,
-  Zap,
   Star,
-  Crown,
   BarChart3,
   Radio,
-  Trophy
+  Trophy,
+  LineChart,
+  Clapperboard,
+  Compass,
 } from "lucide-react";
 import CryptoMarketChart from "@/components/CryptoMarketChart";
 import StockMarketWidget from "@/components/StockMarketWidget";
@@ -32,97 +30,85 @@ import CouponAI from "@/components/CouponAI";
 import { TokenPoolManager } from "@/components/TokenPoolManager";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { TradingAccountConnect } from "@/components/TradingAccountConnect";
-import { BTCAlgorithmEngine } from "@/components/BTCAlgorithmEngine";
-import { StockAlgorithmEngine } from "@/components/StockAlgorithmEngine";
-import { NFTAlgorithmEngine } from "@/components/NFTAlgorithmEngine";
-import { MoonshotAlgorithmEngine } from "@/components/MoonshotAlgorithmEngine";
-import { BinaryOptionsAlgorithmEngine } from "@/components/BinaryOptionsAlgorithmEngine";
-import { CyberLinkExchangeAgent } from "@/components/CyberLinkExchangeAgent";
-import { AIEcosystemDashboard } from "@/components/AIEcosystemDashboard";
+import BroadcastPanel from "@/components/studio/BroadcastPanel";
+import ChartWindow from "@/components/windows/ChartWindow";
+import LiveEventsPanel from "@/components/cyberworld/LiveEventsPanel";
+import TrendingPanel from "@/components/cyberworld/TrendingPanel";
+import CreatorsPanel from "@/components/cyberworld/CreatorsPanel";
+import CommunityPanel from "@/components/cyberworld/CommunityPanel";
+import TradingDisclaimer from "@/components/market/TradingDisclaimer";
+
+const CHART_TICKERS = ["BTC", "ETH", "SOL", "AAPL", "TSLA", "SPY"];
 
 const CyberWorld = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [followers, setFollowers] = useState(0);
-  const [following, setFollowing] = useState(0);
+  const [followers, setFollowers] = useState<number | null>(null);
+  const [following, setFollowing] = useState<number | null>(null);
+  const [liveNow, setLiveNow] = useState<number | null>(null);
+  const [myPosts, setMyPosts] = useState<number | null>(null);
   const navigate = useNavigate();
   const { openWindow, windows, closeAllWindows } = useFloatingWindowsContext();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-      }
+      if (!session) navigate("/auth");
+      else setUser(session.user);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) navigate("/auth");
+      else setUser(session.user);
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
   useEffect(() => {
-    if (user) {
-      fetchSocialStats();
-    }
+    if (!user) return;
+    let alive = true;
+
+    const load = async () => {
+      const [inbound, outbound, live, posts] = await Promise.all([
+        supabase.from("followers").select("id", { count: "exact", head: true }).eq("following_id", user.id),
+        supabase.from("followers").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
+        supabase.from("live_streams").select("id", { count: "exact", head: true }).eq("is_live", true),
+        supabase.from("posts").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      ]);
+      if (!alive) return;
+      setFollowers(inbound.count ?? 0);
+      setFollowing(outbound.count ?? 0);
+      setLiveNow(live.count ?? 0);
+      setMyPosts(posts.count ?? 0);
+    };
+
+    load();
+    const timer = window.setInterval(load, 60_000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
   }, [user]);
 
-  const fetchSocialStats = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      // Fetch followers
-      const { data: followersData } = await supabase
-        .from("followers")
-        .select("id", { count: "exact" })
-        .eq("following_id", user.id);
+  const open = (title: string, content: ReactNode, width = 620, height = 480) =>
+    openWindow(title, content, width, height);
 
-      // Fetch following
-      const { data: followingData } = await supabase
-        .from("followers")
-        .select("id", { count: "exact" })
-        .eq("follower_id", user.id);
+  const stat = (value: number | null) => (value === null ? "—" : value.toLocaleString());
 
-      setFollowers(followersData?.length || 0);
-      setFollowing(followingData?.length || 0);
-    } catch (error) {
-      console.error("Error fetching social stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const trendingCreators = [
-    { name: "CyberGamer Pro", handle: "@cybergamer", followers: "125K", avatar: "" },
-    { name: "Digital Artist", handle: "@digitalart", followers: "98K", avatar: "" },
-    { name: "Tech Streamer", handle: "@techstream", followers: "87K", avatar: "" },
-  ];
-
-  const liveEvents = [
-    { title: "Gaming Tournament Finals", time: "Live Now", viewers: "15.2K", category: "Gaming" },
-    { title: "Digital Art Showcase", time: "In 30 min", viewers: "8.5K", category: "Creative" },
-    { title: "Tech Talk: Web3 Future", time: "In 1 hour", viewers: "12.1K", category: "Tech" },
-  ];
-
-  const featuredCommunities = [
-    { name: "Cyber Gamers", members: "50K", icon: "🎮", active: "2.5K online" },
-    { name: "Digital Artists", members: "35K", icon: "🎨", active: "1.8K online" },
-    { name: "Tech Innovators", members: "42K", icon: "💻", active: "3.2K online" },
-    { name: "Content Creators", members: "28K", icon: "📹", active: "1.2K online" },
-  ];
+  const openWindowsBar = windows.length > 0 && (
+    <div className="mt-4 flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+      <span className="text-sm text-muted-foreground">
+        {windows.length} window{windows.length !== 1 ? "s" : ""} open · drag to arrange, pin to lock in place
+      </span>
+      <Button size="sm" variant="destructive" onClick={closeAllWindows}>
+        Close all windows
+      </Button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-transparent">
       <Navigation />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="mb-8">
@@ -142,7 +128,7 @@ const CyberWorld = () => {
           </div>
         </div>
 
-        {/* Stats Overview */}
+        {/* Stats Overview — all figures read live from your account */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -150,7 +136,7 @@ const CyberWorld = () => {
               <Users className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{followers.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{stat(followers)}</div>
               <p className="text-xs text-muted-foreground">Your community</p>
             </CardContent>
           </Card>
@@ -161,367 +147,306 @@ const CyberWorld = () => {
               <Star className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{following.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{stat(following)}</div>
               <p className="text-xs text-muted-foreground">Connections</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-secondary/10 to-secondary/5 border-secondary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <Zap className="h-4 w-4 text-secondary" />
+              <CardTitle className="text-sm font-medium">Your posts</CardTitle>
+              <Award className="h-4 w-4 text-secondary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">248K</div>
-              <p className="text-xs text-muted-foreground">Online now</p>
+              <div className="text-2xl font-bold">{stat(myPosts)}</div>
+              <p className="text-xs text-muted-foreground">Published here</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/10 border-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Live Events</CardTitle>
+              <CardTitle className="text-sm font-medium">Live now</CardTitle>
               <Video className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">127</div>
-              <p className="text-xs text-muted-foreground">Happening now</p>
+              <div className="text-2xl font-bold">{stat(liveNow)}</div>
+              <p className="text-xs text-muted-foreground">Broadcasts running</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="pools" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="pools">
-              <Trophy className="w-4 h-4 mr-2" />
-              Pools
-            </TabsTrigger>
-            <TabsTrigger value="discover">Discover</TabsTrigger>
-            <TabsTrigger value="communities">Communities</TabsTrigger>
-            <TabsTrigger value="events">Live Events</TabsTrigger>
-            <TabsTrigger value="trending">Trending</TabsTrigger>
+        <Tabs defaultValue="trading" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
             <TabsTrigger value="trading">
               <BarChart3 className="w-4 h-4 mr-2" />
               Trading
             </TabsTrigger>
+            <TabsTrigger value="studio">Studio</TabsTrigger>
             <TabsTrigger value="live">
               <Radio className="w-4 h-4 mr-2" />
               Live Studio
             </TabsTrigger>
+            <TabsTrigger value="trending">Trending</TabsTrigger>
+            <TabsTrigger value="events">Live Events</TabsTrigger>
+            <TabsTrigger value="communities">Community</TabsTrigger>
+            <TabsTrigger value="discover">Discovery</TabsTrigger>
+            <TabsTrigger value="pools">
+              <Trophy className="w-4 h-4 mr-2" />
+              Pool
+            </TabsTrigger>
           </TabsList>
 
-          {/* Token Pools Tab */}
-          <TabsContent value="pools" className="space-y-6">
-            <TokenPoolManager />
-          </TabsContent>
-
-          {/* Discover Tab */}
-          <TabsContent value="discover" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                    Trending Creators
-                  </CardTitle>
-                  <CardDescription>Top creators in CyberWorld right now</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {trendingCreators.map((creator, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarFallback>{creator.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{creator.name}</p>
-                          <p className="text-sm text-muted-foreground">{creator.handle}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">{creator.followers}</p>
-                        <Button size="sm" variant="outline" className="mt-1">
-                          Follow
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Award className="w-5 h-5 text-accent" />
-                    Your Achievements
-                  </CardTitle>
-                  <CardDescription>Milestones and rewards</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 border rounded-lg bg-primary/5">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Crown className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">Early Adopter</p>
-                      <p className="text-sm text-muted-foreground">Joined in 2024</p>
-                    </div>
-                    <Badge variant="secondary">Unlocked</Badge>
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 border rounded-lg">
-                    <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
-                      <Users className="w-6 h-6 text-accent" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">Community Builder</p>
-                      <p className="text-sm text-muted-foreground">Reach 100 followers</p>
-                    </div>
-                    <Badge variant="outline">In Progress</Badge>
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 border rounded-lg">
-                    <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
-                      <Star className="w-6 h-6 text-secondary" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">Content Creator</p>
-                      <p className="text-sm text-muted-foreground">Post 50 times</p>
-                    </div>
-                    <Badge variant="outline">Locked</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Communities Tab */}
-          <TabsContent value="communities" className="space-y-6">
-            <Card>
+          {/* Trading — the multi-window workspace */}
+          <TabsContent value="trading" className="space-y-6">
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  Featured Communities
+                  <LineChart className="w-5 h-5 text-primary" />
+                  Trading workspace
                 </CardTitle>
-                <CardDescription>Join communities that match your interests</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {featuredCommunities.map((community, index) => (
-                    <div key={index} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="text-3xl">{community.icon}</div>
-                          <div>
-                            <h3 className="font-semibold">{community.name}</h3>
-                            <p className="text-sm text-muted-foreground">{community.members} members</p>
-                          </div>
-                        </div>
-                        <Button size="sm">Join</Button>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span className="text-muted-foreground">{community.active}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Live Events Tab */}
-          <TabsContent value="events" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-accent" />
-                  Live & Upcoming Events
-                </CardTitle>
-                <CardDescription>Don't miss out on exciting events</CardDescription>
+                <CardDescription>
+                  Pop open as many live chart windows as you like, drag them where you want them and
+                  pin the ones you need to keep watching.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {liveEvents.map((event, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Video className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{event.title}</h3>
-                        <div className="flex items-center gap-3 mt-1">
-                          <Badge variant="outline" className="text-xs">{event.category}</Badge>
-                          <span className="text-sm text-muted-foreground">{event.time}</span>
-                          <span className="text-sm text-muted-foreground">👁 {event.viewers}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Button variant={index === 0 ? "default" : "outline"}>
-                      {index === 0 ? "Watch Now" : "Set Reminder"}
+                <div className="flex flex-wrap gap-2">
+                  {CHART_TICKERS.map((ticker) => (
+                    <Button
+                      key={ticker}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => open(`Chart · ${ticker}`, <ChartWindow symbol={ticker} />, 640, 520)}
+                    >
+                      <LineChart className="w-4 h-4 mr-2" />
+                      {ticker}
                     </Button>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Trending Tab */}
-          <TabsContent value="trending" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-secondary" />
-                  Trending Topics
-                </CardTitle>
-                <CardDescription>What's hot in CyberWorld</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {["#Web3Gaming", "#AIArt", "#MetaverseEvents", "#CryptoCreators", "#DigitalFashion"].map((tag, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-bold">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className="font-medium">{tag}</p>
-                          <p className="text-sm text-muted-foreground">{(Math.random() * 50 + 10).toFixed(1)}K posts</p>
-                        </div>
-                      </div>
-                      <MessageCircle className="w-5 h-5 text-muted-foreground" />
-                    </div>
                   ))}
+                  <Button size="sm" onClick={() => navigate("/trading")}>
+                    Full trading desk
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          {/* Trading Tab */}
-          <TabsContent value="trading" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-primary" />
-                  Trading Hub Control Center
-                </CardTitle>
-                <CardDescription>Open multiple trading windows simultaneously</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <Button
                     variant="outline"
                     className="h-24 flex flex-col gap-2"
-                    onClick={() => openWindow("Cryptocurrency Markets", <CryptoMarketChart />)}
+                    onClick={() => open("Cryptocurrency Markets", <CryptoMarketChart />)}
                   >
                     <TrendingUp className="w-6 h-6" />
                     <span className="text-sm">Crypto</span>
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     className="h-24 flex flex-col gap-2"
-                    onClick={() => openWindow("Stock Market", <StockMarketWidget />)}
+                    onClick={() => open("Stock Market", <StockMarketWidget />)}
                   >
                     <BarChart3 className="w-6 h-6" />
                     <span className="text-sm">Stocks</span>
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     className="h-24 flex flex-col gap-2"
-                    onClick={() => openWindow("NFT Marketplace", <NFTMarketWidget />)}
+                    onClick={() => open("NFT Marketplace", <NFTMarketWidget />)}
                   >
                     <Award className="w-6 h-6" />
                     <span className="text-sm">NFTs</span>
                   </Button>
                 </div>
 
-                {windows.length > 0 && (
-                  <div className="mt-4 flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                    <span className="text-sm text-muted-foreground">
-                      {windows.length} window{windows.length !== 1 ? 's' : ''} open
-                    </span>
-                    <Button size="sm" variant="destructive" onClick={closeAllWindows}>
-                      Close All Windows
-                    </Button>
-                  </div>
-                )}
+                {openWindowsBar}
               </CardContent>
             </Card>
 
             <CouponAI />
-            
-            {/* Financial Accounts Section */}
+
+            {/* Financial accounts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <CryptoWalletConnect />
               <TradingAccountConnect />
             </div>
 
-            {/* AI Trading Algorithms */}
-            <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-purple-500/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                    🤖 CyberLink AI Trading Algorithms
-                  </CardTitle>
-                  <CardDescription>
-                    Advanced AI-powered trading algorithms with real-time analysis and auto-trading capabilities
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-              
-              {/* CyberLink Exchange AI Agent - Master Controller */}
-              <CyberLinkExchangeAgent />
-              
-              <BTCAlgorithmEngine />
-              <StockAlgorithmEngine />
-              <NFTAlgorithmEngine />
-              <MoonshotAlgorithmEngine />
-              <BinaryOptionsAlgorithmEngine />
-            </div>
+            {/* Trader presence: go live with your group and build a following */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Radio className="w-5 h-5 text-primary" />
+                  Traders live now
+                </CardTitle>
+                <CardDescription>
+                  Go live with your trading group, build your following and host your own room.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <LiveEventsPanel
+                  category="trading"
+                  emptyMessage="No trading rooms are live right now — start yours."
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => open("Traders live", <LiveEventsPanel category="trading" />)}
+                  >
+                    Open as window
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/studio")}>
+                    Go live
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
-            {/* AI Ecosystem Dashboard */}
-            <AIEcosystemDashboard />
+            <TradingDisclaimer />
           </TabsContent>
 
-          {/* Live Studio Tab */}
+          {/* Studio */}
+          <TabsContent value="studio" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clapperboard className="w-5 h-5 text-accent" />
+                  Studio
+                </CardTitle>
+                <CardDescription>Create here, then send it out everywhere you are connected.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => navigate("/studio")}>Open Studio</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => open("Studio · Broadcast", <BroadcastPanel />, 680, 560)}
+                  >
+                    Broadcast setup window
+                  </Button>
+                </div>
+                {openWindowsBar}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Live Studio */}
           <TabsContent value="live" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Radio className="w-5 h-5 text-primary" />
-                  CyberLink Live Studio Control
+                  CyberLink Live Studio
                 </CardTitle>
-                <CardDescription>Access live streaming controls and features</CardDescription>
+                <CardDescription>Start a broadcast and watch who else is on air.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 gap-4">
-                  <Button
-                    variant="outline"
-                    className="h-24 flex flex-col gap-2"
-                    onClick={() => window.location.href = '/studio'}
-                  >
-                    <Radio className="w-6 h-6" />
-                    <span className="text-sm">Go Live</span>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => navigate("/studio")}>
+                    <Radio className="w-4 h-4 mr-2" />
+                    Go live
+                  </Button>
+                  <Button variant="outline" onClick={() => open("Live now", <LiveEventsPanel />)}>
+                    Open live board in a window
                   </Button>
                 </div>
-
-                {windows.length > 0 && (
-                  <div className="mt-4 flex items-center justify-between p-3 border rounded-lg bg-muted/30">
-                    <span className="text-sm text-muted-foreground">
-                      {windows.length} window{windows.length !== 1 ? 's' : ''} open
-                    </span>
-                    <Button size="sm" variant="destructive" onClick={closeAllWindows}>
-                      Close All Windows
-                    </Button>
-                  </div>
-                )}
+                <LiveEventsPanel />
+                {openWindowsBar}
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Trending */}
+          <TabsContent value="trending" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-secondary" />
+                  Trending topics
+                </CardTitle>
+                <CardDescription>Counted from real posts across CyberWorld</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button size="sm" variant="outline" onClick={() => open("Trending", <TrendingPanel />)}>
+                  Open as window
+                </Button>
+                <TrendingPanel />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Live Events */}
+          <TabsContent value="events" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-accent" />
+                  Live events
+                </CardTitle>
+                <CardDescription>Broadcasts happening right now</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button size="sm" variant="outline" onClick={() => open("Live events", <LiveEventsPanel />)}>
+                  Open as window
+                </Button>
+                <LiveEventsPanel />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Community */}
+          <TabsContent value="communities" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Your community
+                </CardTitle>
+                <CardDescription>The people around you on Cyber Link</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => open("Community", <CommunityPanel userId={user?.id ?? null} />)}
+                >
+                  Open as window
+                </Button>
+                <CommunityPanel userId={user?.id ?? null} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Discovery */}
+          <TabsContent value="discover" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-primary" />
+                  Discovery
+                </CardTitle>
+                <CardDescription>Creators on the platform, ranked by real followers</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button size="sm" variant="outline" onClick={() => open("Discovery", <CreatorsPanel />)}>
+                  Open as window
+                </Button>
+                <CreatorsPanel />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Pool */}
+          <TabsContent value="pools" className="space-y-6">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => open("Token pools", <TokenPoolManager />, 720, 560)}
+            >
+              Open as window
+            </Button>
+            <TokenPoolManager />
+          </TabsContent>
         </Tabs>
       </div>
-
     </div>
   );
 };
