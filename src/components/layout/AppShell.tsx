@@ -28,15 +28,50 @@ interface NavItem {
   icon: typeof Home;
 }
 
+/** The everyday basics stay flat; everything else lives in a group below. */
 const primaryNav: NavItem[] = [
   { title: "Home", url: "/", icon: Home },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Profile", url: "/profile", icon: User },
-  { title: "Studio", url: "/studio", icon: Radio },
-  { title: "Arena", url: "/cyber-arena", icon: Gamepad2 },
-  { title: "CyberWorld", url: "/cyber-world", icon: Globe },
-  { title: "Monetization", url: "/monetization", icon: DollarSign },
+  { title: "Messages", url: "/messages", icon: MessageSquare },
 ];
+
+interface NavGroup {
+  title: string;
+  icon: typeof Home;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    title: "Create",
+    icon: Radio,
+    items: [
+      { title: "Studio", url: "/studio", icon: Radio },
+      { title: "Movie Theater", url: "/theater", icon: Clapperboard },
+      { title: "Connectors", url: "/connectors", icon: Plug },
+    ],
+  },
+  {
+    title: "Markets",
+    icon: DollarSign,
+    items: [
+      { title: "Trading", url: "/trading", icon: LineChart },
+      { title: "Monetization", url: "/monetization", icon: DollarSign },
+      { title: "Miners", url: "/miners", icon: Pickaxe },
+    ],
+  },
+  {
+    title: "Worlds",
+    icon: Globe,
+    items: [
+      { title: "Arena", url: "/cyber-arena", icon: Gamepad2 },
+      { title: "CyberWorld", url: "/cyber-world", icon: Globe },
+      { title: "Terminal", url: "/terminal", icon: TerminalSquare },
+    ],
+  },
+];
+
 
 /** Small collapse toggle state persisted per panel, same treatment as Quick Access. */
 export const usePanelCollapse = (storageKey: string) => {
