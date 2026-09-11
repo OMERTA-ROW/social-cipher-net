@@ -14,6 +14,8 @@ export interface SpaceBgSettings {
   mode: SpaceBgMode;
   /** which scene the background renders */
   view: SpaceBgView;
+  /** where the camera sits inside the solar view */
+  camera: SpaceBgCamera;
   /** detail/performance tier for the world scenes */
   quality: SpaceBgQuality;
   /** 0 = background at full brightness, 1 = fully dimmed to flat colour */
