@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CheckCircle2, UserPlus, UserMinus } from "lucide-react";
 import ProfileMedia from "@/components/profile/ProfileMedia";
+import ProfileRadio from "@/components/profile/ProfileRadio";
 import { resolvePaidAccess } from "@/lib/paymentAccess";
 import { reportIssue } from "@/lib/monitoring";
 
