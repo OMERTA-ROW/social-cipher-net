@@ -50,7 +50,7 @@ const atmoFrag = /* glsl */ `
 
 type TextureKey = keyof typeof SPACE_TEXTURE_URLS;
 
-interface Body {
+export interface Body {
   name: string;
   texture: TextureKey;
   radius: number;
