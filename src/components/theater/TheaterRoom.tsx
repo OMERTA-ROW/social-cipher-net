@@ -45,9 +45,30 @@ const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
       });
   }, [userId]);
 
+  // Register attendance so chat access is scoped to this event
+  const [joined, setJoined] = useState(false);
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    supabase
+      .from("theater_participants")
+      .upsert(
+        { event_id: event.id, user_id: userId, last_seen_at: new Date().toISOString() },
+        { onConflict: "event_id,user_id" },
+      )
+      .then(() => {
+        if (!cancelled) setJoined(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [event.id, userId]);
+
   // Existing chat + live updates
   useEffect(() => {
     let cancelled = false;
+    if (!joined) return;
+
 
     supabase
       .from("theater_chat")
@@ -103,7 +124,7 @@ const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [event.id, isHost]);
+  }, [event.id, isHost, joined]);
 
   // Join at the current position
   useEffect(() => {

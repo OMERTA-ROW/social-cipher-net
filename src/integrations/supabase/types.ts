@@ -2531,6 +2531,35 @@ export type Database = {
         }
         Relationships: []
       }
+      theater_participants: {
+        Row: {
+          event_id: string
+          joined_at: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          joined_at?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          joined_at?: string
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theater_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "theater_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       theater_playback_state: {
         Row: {
           event_id: string
@@ -2945,6 +2974,10 @@ export type Database = {
       }
       is_stream_admin: {
         Args: { _stream_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_theater_member: {
+        Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
       is_user_adult: { Args: { user_uuid: string }; Returns: boolean }
