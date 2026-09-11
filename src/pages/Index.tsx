@@ -12,11 +12,10 @@ import StoriesBar from "@/components/StoriesBar";
 import { WalletCard } from "@/components/WalletCard";
 import { CryptoWalletConnect } from "@/components/CryptoWalletConnect";
 import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
-import { InfinityScrollFeed } from "@/components/InfinityScrollFeed";
 import SocialFeed from "@/components/SocialFeed";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Award, DollarSign, Play, Eye } from "lucide-react";
+import { Wallet, TrendingUp, Award, DollarSign, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -51,8 +50,6 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [showInfinityScroll, setShowInfinityScroll] = useState(false);
-  const [initialVideoId, setInitialVideoId] = useState<string | undefined>();
   const [searchParams] = useSearchParams();
   const { openWindow } = useFloatingWindowsContext();
   const [showSpaceBackground, setShowSpaceBackground] = useState(true);
@@ -321,17 +318,6 @@ const Index = () => {
                       All Seeing Eye
                     </Button>
                   </CarouselItem>
-                  <CarouselItem className="pl-2 md:pl-4 basis-auto">
-                    <Button 
-                      size="sm" 
-                      variant="default"
-                      className="bg-gradient-to-r from-purple-600 to-pink-600"
-                      onClick={() => setShowInfinityScroll(true)}
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Infinity Scroll
-                    </Button>
-                  </CarouselItem>
                 </CarouselContent>
                 <CarouselPrevious className="hidden md:flex" />
                 <CarouselNext className="hidden md:flex" />
@@ -354,16 +340,6 @@ const Index = () => {
         onOpenChange={setIsCreateDialogOpen}
         onPost={handleCreatePost}
       />
-
-      {showInfinityScroll && (
-        <InfinityScrollFeed 
-          onClose={() => {
-            setShowInfinityScroll(false);
-            setInitialVideoId(undefined);
-          }}
-          initialVideoId={initialVideoId}
-        />
-      )}
     </AppShell>
   );
 };

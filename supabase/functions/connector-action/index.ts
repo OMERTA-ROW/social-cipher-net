@@ -21,6 +21,7 @@ const ACTION_CAPABILITIES: Record<string, Capability[]> = {
   comment: ["reply_comment"],
   messages: ["read_messages"],
   analytics: ["read_analytics"],
+  revenue: ["read_revenue"],
   commerce: ["commerce"],
   import: ["import_assets"],
   multicast: ["live_ingest"],

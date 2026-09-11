@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import PostCard from "@/components/PostCard";
 import FollowButton from "@/components/FollowButton";
@@ -26,6 +26,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const cursorRef = useRef<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
@@ -69,6 +70,20 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       setLoadingMore(false);
     }
   }, [hasMore, loadingMore, tab, userId]);
+
+  // Infinite scroll is the default behaviour everywhere — no toggle, no button.
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) loadMore();
+      },
+      { rootMargin: "800px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loadMore, hasMore, loading, posts.length, tab]);
 
   const handlePaymentRequired = async (post: SocialPost) => {
     try {
@@ -134,10 +149,8 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
           </div>
         ))}
         {hasMore && (
-          <div className="flex justify-center py-4">
-            <Button variant="outline" onClick={loadMore} disabled={loadingMore}>
-              {loadingMore ? "Loading…" : "Load more"}
-            </Button>
+          <div ref={sentinelRef} className="py-4 space-y-4">
+            <PostCardSkeleton />
           </div>
         )}
       </div>
