@@ -25,6 +25,7 @@ export interface SpaceBgSettings {
 const STORAGE_KEY = "cyberlink.space-bg";
 
 const VIEWS = ["solar", "mining", "descent"] as const;
+const CAMERAS = ["galaxy", "chase", "orbit"] as const;
 const QUALITIES = ["auto", "ultra", "high", "balanced", "battery"] as const;
 
 export const prefersReducedMotion = () =>
