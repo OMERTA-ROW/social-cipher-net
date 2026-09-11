@@ -12,8 +12,9 @@ import Starfield from "./Starfield";
 import { marketPulse, useMarketPulse } from "./useMarketPulse";
 import MiningWorld from "./MiningWorld";
 import ShipChaseCamera from "./ShipChaseCamera";
+import PlanetOrbitCamera from "./PlanetOrbitCamera";
 import VesselFlight from "./VesselFlight";
-import type { SpaceBgView } from "@/lib/spaceBackgroundSettings";
+import type { SpaceBgCamera, SpaceBgView } from "@/lib/spaceBackgroundSettings";
 import DescentScene from "../world/DescentScene";
 import type { QualityTier } from "../world/qualityTiers";
 
@@ -24,13 +25,15 @@ interface Props {
   animate: boolean;
   /** solar system (default), the alien mining world, or the Earth descent */
   view?: SpaceBgView;
+  /** which vantage point the camera uses in the solar view */
+  cameraMode?: SpaceBgCamera;
   /** resolved detail tier for the world scenes */
   tier: QualityTier;
 }
 
 const CHROMA = new THREE.Vector2(0.00008, 0.0001);
 
-const SceneContents = ({ full, animate, dpr, view = "solar", tier }: Props & { dpr: number }) => {
+const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galaxy", tier }: Props & { dpr: number }) => {
   // ambient lift reacts gently to live market volatility
   const [boost, setBoost] = useState(1);
   useEffect(() => {
@@ -43,7 +46,13 @@ const SceneContents = ({ full, animate, dpr, view = "solar", tier }: Props & { d
 
   return (
     <>
-      {descent ? null : mining ? <ShipChaseCamera animate={animate} /> : <CameraRig animate={animate} />}
+      {descent ? null : mining || cameraMode === "chase" ? (
+        <ShipChaseCamera animate={animate} />
+      ) : cameraMode === "orbit" ? (
+        <PlanetOrbitCamera animate={animate} />
+      ) : (
+        <CameraRig animate={animate} />
+      )}
 
       {descent ? (
         <DescentScene full={full} animate={animate} tier={tier} dpr={dpr} />
@@ -73,7 +82,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar", tier }: Props & { d
   );
 };
 
-const SpaceScene = ({ full, animate, view = "solar", tier }: Props) => {
+const SpaceScene = ({ full, animate, view = "solar", cameraMode = "galaxy", tier }: Props) => {
   useMarketPulse();
   const dpr = full ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
 
@@ -89,7 +98,7 @@ const SpaceScene = ({ full, animate, view = "solar", tier }: Props) => {
         scene.background = new THREE.Color(0x000000);
       }}
     >
-      <SceneContents full={full} animate={animate} dpr={dpr} view={view} tier={tier} />
+      <SceneContents full={full} animate={animate} dpr={dpr} view={view} cameraMode={cameraMode} tier={tier} />
     </Canvas>
   );
 };

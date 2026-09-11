@@ -4,6 +4,8 @@ import { detectTier, type QualityTier } from "@/components/space/world/qualityTi
 export type SpaceBgMode = "full" | "lite" | "off";
 /** solar = realistic solar system (default), mining = alien world, descent = Earth approach */
 export type SpaceBgView = "solar" | "mining" | "descent";
+/** camera vantage point inside the solar view */
+export type SpaceBgCamera = "galaxy" | "chase" | "orbit";
 /** auto = pick from a device probe, otherwise an explicit tier */
 export type SpaceBgQuality = "auto" | QualityTier;
 
@@ -12,6 +14,8 @@ export interface SpaceBgSettings {
   mode: SpaceBgMode;
   /** which scene the background renders */
   view: SpaceBgView;
+  /** where the camera sits inside the solar view */
+  camera: SpaceBgCamera;
   /** detail/performance tier for the world scenes */
   quality: SpaceBgQuality;
   /** 0 = background at full brightness, 1 = fully dimmed to flat colour */
@@ -21,6 +25,7 @@ export interface SpaceBgSettings {
 const STORAGE_KEY = "cyberlink.space-bg";
 
 const VIEWS = ["solar", "mining", "descent"] as const;
+const CAMERAS = ["galaxy", "chase", "orbit"] as const;
 const QUALITIES = ["auto", "ultra", "high", "balanced", "battery"] as const;
 
 export const prefersReducedMotion = () =>
@@ -45,13 +50,14 @@ export const resolveQuality = (q: SpaceBgQuality): QualityTier =>
 const defaults = (): SpaceBgSettings => ({
   mode: prefersReducedMotion() ? "off" : isLowPowerDevice() ? "lite" : "full",
   view: "solar",
+  camera: "galaxy",
   quality: "auto",
   dim: 0.12,
 });
 
 let state: SpaceBgSettings = (() => {
   if (typeof window === "undefined")
-    return { mode: "off", view: "solar", quality: "auto", dim: 0.35 } as SpaceBgSettings;
+    return { mode: "off", view: "solar", camera: "galaxy", quality: "auto", dim: 0.35 } as SpaceBgSettings;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaults();
@@ -62,6 +68,9 @@ let state: SpaceBgSettings = (() => {
         ? (parsed.mode as SpaceBgMode)
         : base.mode,
       view: VIEWS.includes(parsed.view as SpaceBgView) ? (parsed.view as SpaceBgView) : "solar",
+      camera: CAMERAS.includes(parsed.camera as SpaceBgCamera)
+        ? (parsed.camera as SpaceBgCamera)
+        : "galaxy",
       quality: QUALITIES.includes(parsed.quality as SpaceBgQuality)
         ? (parsed.quality as SpaceBgQuality)
         : "auto",
