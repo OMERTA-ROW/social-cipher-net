@@ -86,7 +86,7 @@ export const BODIES: Body[] = [
 
 const ORBIT_SPEED = 0.24;
 
-const orbitPoint = (b: Body, t: number, out: THREE.Vector3) => {
+export const orbitPoint = (b: Body, t: number, out: THREE.Vector3) => {
   const period = Math.pow(b.a / 46, 1.5) * 120;
   const ang = b.phase + (t * ORBIT_SPEED) / period * Math.PI * 2;
   const bMin = b.a * Math.sqrt(Math.max(1 - b.ecc * b.ecc, 0.01));
