@@ -79,7 +79,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-transparent">
       {/* Fixed top header */}
       <header className="h-16 shrink-0 z-40 border-b border-border/60 bg-card/60 backdrop-blur-xl">
-        <div className="mx-auto max-w-[1400px] h-full px-3 sm:px-4 flex items-center justify-between gap-3">
+        <div className="w-full h-full px-4 sm:px-5 lg:px-6 flex items-center justify-between gap-3">
           <button
             onClick={() => navigate("/")}
             className="flex items-center gap-2 shrink-0"
@@ -120,9 +120,9 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
       </header>
 
       {/* Three column body */}
-      <div className="flex-1 min-h-0 w-full mx-auto max-w-[1400px] flex gap-0 lg:gap-6 px-0 lg:px-4">
-        {/* Left sidebar — fixed, own scroll if it overflows */}
-        <aside className="hidden md:flex md:w-[76px] xl:w-[248px] shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/40 bg-card/35 backdrop-blur-xl [scrollbar-gutter:stable]">
+      <div className="flex-1 min-h-0 w-full flex gap-0 lg:gap-6 px-0 md:px-4 lg:px-5 overflow-x-hidden">
+        {/* Left sidebar — fluid, collapses to icons on smaller screens */}
+        <aside className="hidden md:flex md:w-[6%] md:min-w-[68px] xl:w-[18%] xl:min-w-[200px] xl:max-w-[280px] shrink-0 flex-col overflow-y-auto overscroll-contain py-4 border-r border-border/40 bg-card/35 backdrop-blur-xl [scrollbar-gutter:stable]">
           <nav className="flex flex-col gap-1 px-2">
             {primaryNav.map((item) => (
               <NavLink
@@ -156,14 +156,14 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
           )}
           <main
             ref={scrollRef}
-            className="flex-1 min-h-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] px-3 sm:px-5 py-5 pb-24 md:pb-8"
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-10"
           >
-            <div className="mx-auto w-full max-w-2xl">{children}</div>
+            <div className="w-full">{children}</div>
           </main>
         </div>
 
-        {/* Right sidebar — fixed */}
-        <aside className="hidden lg:block w-[320px] shrink-0 overflow-y-auto overscroll-contain py-5 border-l border-border/40 bg-card/35 backdrop-blur-xl px-3 [scrollbar-gutter:stable]">
+        {/* Right sidebar — fluid */}
+        <aside className="hidden lg:block w-[24%] min-w-[260px] max-w-[380px] shrink-0 overflow-y-auto overscroll-contain py-6 border-l border-border/40 bg-card/35 backdrop-blur-xl px-4 [scrollbar-gutter:stable]">
           {rightRail ?? <RightRail />}
         </aside>
       </div>
