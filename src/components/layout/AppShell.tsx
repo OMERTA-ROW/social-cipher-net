@@ -245,7 +245,12 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
                 <span className="hidden xl:inline">{item.title}</span>
               </NavLink>
             ))}
+
+            {navGroups.map((group) => (
+              <NavGroupBlock key={group.title} group={group} />
+            ))}
           </nav>
+
         </aside>
 
         {/* Centre column — the only scrolling region on desktop */}
