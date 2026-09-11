@@ -221,8 +221,25 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
         </div>
 
         {/* Right sidebar — fluid */}
-        <aside className="hidden lg:block w-[24%] min-w-[260px] max-w-[380px] shrink-0 overflow-y-auto overscroll-contain py-6 border-l border-border/40 bg-card/35 backdrop-blur-xl px-4 [scrollbar-gutter:stable]">
-          {rightRail ?? <RightRail />}
+        <aside
+          className={cn(
+            "hidden lg:block shrink-0 overflow-y-auto overscroll-contain py-6 border-l border-border/40 bg-card/35 backdrop-blur-xl px-4 [scrollbar-gutter:stable] transition-[width] duration-200",
+            rightPanel.collapsed ? "w-[52px] min-w-[52px] px-1" : "w-[24%] min-w-[260px] max-w-[380px]",
+          )}
+        >
+          <div className={cn("flex pb-2", rightPanel.collapsed ? "justify-center" : "justify-start")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-primary"
+              onClick={rightPanel.toggle}
+              aria-expanded={!rightPanel.collapsed}
+              title={rightPanel.collapsed ? "Expand panel" : "Collapse panel"}
+            >
+              {rightPanel.collapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </Button>
+          </div>
+          {!rightPanel.collapsed && (rightRail ?? <RightRail />)}
         </aside>
       </div>
 
