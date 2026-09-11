@@ -32,6 +32,7 @@ export type Capability =
   | "read_messages"
   | "read_notifications"
   | "read_analytics"
+  | "read_revenue"
   | "publish_text"
   | "publish_image"
   | "publish_video"
@@ -175,6 +176,7 @@ export const CONNECTOR_MANIFEST: ConnectorDefinition[] = [
       "read_profile",
       "read_feed",
       "read_analytics",
+      "read_revenue",
       "publish_video",
       "reply_comment",
       "live_ingest",
@@ -386,7 +388,7 @@ export const CONNECTOR_MANIFEST: ConnectorDefinition[] = [
     methods: ["oauth", "api_key"],
     oauthProvider: "streamlabs",
     fields: [{ key: "api_token", label: "API token", secret: true }],
-    capabilities: ["read_notifications", "read_analytics"],
+    capabilities: ["read_notifications", "read_analytics", "read_revenue"],
     availability: "available",
     ratePolicy: light,
     sortOrder: 71,
@@ -544,7 +546,7 @@ export const CONNECTOR_MANIFEST: ConnectorDefinition[] = [
       { key: "shop_domain", label: "Store domain", placeholder: "my-store.myshopify.com" },
       { key: "admin_token", label: "Admin API token", secret: true },
     ],
-    capabilities: ["commerce", "read_analytics", "read_profile"],
+    capabilities: ["commerce", "read_analytics", "read_revenue", "read_profile"],
     availability: "available",
     ratePolicy: modest,
     sortOrder: 110,
@@ -557,7 +559,7 @@ export const CONNECTOR_MANIFEST: ConnectorDefinition[] = [
     glyph: "🧵",
     methods: ["oauth"],
     oauthProvider: "etsy",
-    capabilities: ["commerce", "read_analytics"],
+    capabilities: ["commerce", "read_analytics", "read_revenue"],
     availability: "review_required",
     availabilityNote: "Etsy reviews apps before granting production API access.",
     ratePolicy: light,
