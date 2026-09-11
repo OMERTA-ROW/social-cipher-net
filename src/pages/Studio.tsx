@@ -36,6 +36,8 @@ import { supabase } from "@/integrations/supabase/client";
 import AnimationStudio from "@/components/studio/AnimationStudio";
 import AssetLibrary from "@/components/studio/AssetLibrary";
 import ConnectedAccountsPanel from "@/components/studio/ConnectedAccountsPanel";
+import BroadcastPanel from "@/components/studio/BroadcastPanel";
+
 
 const Studio = () => {
   const navigate = useNavigate();
