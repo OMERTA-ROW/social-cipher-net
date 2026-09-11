@@ -117,6 +117,7 @@ const Dashboard = () => {
       parent_post_id: row.parent_post_id,
       like_count: row.like_count ?? 0,
       reply_count: row.reply_count ?? 0,
+      repost_count: row.repost_count ?? 0,
       monetization_type: row.monetization_type ?? "free",
       price: Number(row.price ?? 0),
       is_demo: !!row.is_demo,
