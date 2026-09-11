@@ -24,6 +24,9 @@ import {
 } from "@/lib/connectors/registry";
 import { useConnections } from "@/hooks/useConnections";
 import ConnectDialog from "@/components/connectors/ConnectDialog";
+import McpPanel from "@/components/connectors/McpPanel";
+import AiAgentsPanel from "@/components/connectors/AiAgentsPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MulticastPanel from "@/components/connectors/MulticastPanel";
 import PlatformComposer from "@/components/connectors/PlatformComposer";
 
@@ -56,17 +59,41 @@ const Connectors = () => {
     if (!code || !state) return;
 
     setFinishing(true);
+    // When the provider sent us back inside a popup, hand the result to the
+    // opener and close, so the main page shows the confirmation.
+    const inPopup = !!window.opener && window.opener !== window;
+
     supabase.functions
       .invoke("connector-oauth", { body: { action: "callback", code, state } })
       .then(({ data, error }) => {
-        if (error || data?.error) {
-          toast.error(data?.error ?? error?.message ?? "Authorization failed");
+        const failed = !!(error || data?.error);
+        const message = data?.error ?? error?.message ?? "Authorization failed";
+        if (inPopup) {
+          window.opener.postMessage(
+            {
+              type: "cyberlink:oauth-result",
+              ok: !failed,
+              message: failed ? message : "Account connected",
+              account: data?.account_name ?? null,
+            },
+            window.location.origin,
+          );
+          window.close();
+          return;
+        }
+        if (failed) {
+          toast.error(message);
         } else {
-          toast.success("Account connected");
+          toast.success(
+            data?.account_name
+              ? `Connected as ${data.account_name}`
+              : "Account connected",
+          );
           refresh();
         }
       })
       .finally(() => {
+        if (inPopup) return;
         setFinishing(false);
         params.delete("code");
         params.delete("state");
@@ -74,6 +101,26 @@ const Connectors = () => {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Confirmation coming back from the OAuth popup.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "cyberlink:oauth-result") return;
+      if (event.data.ok) {
+        toast.success(
+          event.data.account
+            ? `Connected as ${event.data.account}`
+            : "Account connected",
+        );
+        refresh();
+      } else {
+        toast.error(event.data.message || "Authorization failed");
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [refresh]);
 
   const disconnect = async (service: ConnectorService) => {
     const { data, error } = await supabase.functions.invoke(
@@ -139,10 +186,28 @@ const Connectors = () => {
           />
         </div>
 
-        <div className="grid gap-6 mb-8">
-          <PlatformComposer />
-          <MulticastPanel />
-        </div>
+        <Tabs defaultValue="services" className="mb-8">
+          <TabsList>
+            <TabsTrigger value="services">Services</TabsTrigger>
+            <TabsTrigger value="agents">AI assistants</TabsTrigger>
+            <TabsTrigger value="mcp">MCP servers</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="services" className="mt-6">
+            <div className="grid gap-6">
+              <PlatformComposer />
+              <MulticastPanel />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="agents" className="mt-6">
+            <AiAgentsPanel />
+          </TabsContent>
+
+          <TabsContent value="mcp" className="mt-6">
+            <McpPanel />
+          </TabsContent>
+        </Tabs>
 
         {CONNECTOR_CATEGORIES.map((category) => {
           const services = filtered(category.id);

@@ -56,7 +56,18 @@ const ConnectDialog = ({
         return;
       }
       if (data?.error) throw new Error(data.error);
-      window.location.href = data.authorize_url;
+      // Authorise in a popup so the user keeps their place on this page.
+      const popup = window.open(
+        data.authorize_url,
+        "cyberlink-oauth",
+        "width=600,height=760,noopener=no,noreferrer=no",
+      );
+      if (!popup) {
+        window.location.href = data.authorize_url;
+        return;
+      }
+      toast.info(`Finish signing in to ${service.name} in the popup window`);
+      onOpenChange(false);
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : `Could not start ${service.name} sign-in`,
