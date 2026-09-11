@@ -124,7 +124,7 @@ const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [event.id, isHost]);
+  }, [event.id, isHost, joined]);
 
   // Join at the current position
   useEffect(() => {
