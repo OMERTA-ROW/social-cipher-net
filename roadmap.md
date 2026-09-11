@@ -24,3 +24,12 @@
       Waiting on user's go-ahead to create a fresh store to claim.
 - [ ] Provider OAuth apps: each social/streaming provider needs developer app
       credentials before its OAuth button goes live.
+
+## Reliability & security hardening
+- [ ] Monitoring/alerts for post_payments permission denials and feed-load failures
+- [ ] Paid-post check fails open in UI (never paywall a paying viewer)
+- [ ] Batch/cache post media, stories, live streams, payment status
+- [ ] Automated tests: paid-post unlock (signed in / signed out)
+- [ ] Regression tests for stream-participant + self-service update RLS policies
+- [ ] Audit logging for role self-assignment and protected-record updates
+- [ ] Production alerting on permission-denied / RLS failures
