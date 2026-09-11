@@ -189,10 +189,12 @@ const TradingChart = ({ candles, chartType, indicators, height = 260 }: TradingC
 
 
     return () => {
+      cancelAnimationFrame(raf);
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
     };
+
   }, [candles, chartType, indicators, height]);
 
   return <div ref={holder} className="w-full" style={{ height }} />;
