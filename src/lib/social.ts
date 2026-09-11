@@ -17,6 +17,7 @@ export interface SocialPost {
   parent_post_id: string | null;
   like_count: number;
   reply_count: number;
+  repost_count: number;
   monetization_type: string;
   price: number;
   is_demo: boolean;
@@ -25,7 +26,7 @@ export interface SocialPost {
 }
 
 const POST_SELECT = `
-  id, user_id, content, created_at, parent_post_id, like_count, reply_count,
+  id, user_id, content, created_at, parent_post_id, like_count, reply_count, repost_count,
   monetization_type, price, is_demo,
   profiles!posts_user_id_fkey(id, username, display_name, avatar_url, is_verified),
   post_media(media_url, media_type, display_order)
@@ -39,6 +40,7 @@ const mapPost = (row: any): SocialPost => ({
   parent_post_id: row.parent_post_id,
   like_count: row.like_count ?? 0,
   reply_count: row.reply_count ?? 0,
+  repost_count: row.repost_count ?? 0,
   monetization_type: row.monetization_type ?? "free",
   price: Number(row.price ?? 0),
   is_demo: !!row.is_demo,
@@ -219,4 +221,82 @@ export function formatTimestamp(timestamp: string) {
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
   return date.toLocaleDateString();
+}
+
+/**
+ * Ranked "For You" feed: engagement (likes, replies, reposts, views) decayed by
+ * age, so popular recent posts surface first. Offset-paginated to match the
+ * ranking function.
+ */
+export async function fetchRankedFeed(
+  limit = FEED_PAGE_SIZE,
+  offset = 0
+): Promise<{ posts: SocialPost[]; nextOffset: number; hasMore: boolean }> {
+  const { data: ranked, error } = await supabase.rpc("get_ranked_feed", {
+    p_limit: limit,
+    p_offset: offset,
+  });
+  if (error) throw error;
+  const ids = (ranked ?? []).map((r: any) => r.post_id);
+  if (ids.length === 0) return { posts: [], nextOffset: offset, hasMore: false };
+
+  const { data, error: postsError } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .in("id", ids);
+  if (postsError) throw postsError;
+
+  const order = new Map<string, number>(ids.map((id: string, i: number) => [id, i]));
+  const rows = (data ?? []).sort(
+    (a: any, b: any) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0)
+  );
+  const posts = await resolvePostsMedia(rows.map(mapPost));
+  return { posts, nextOffset: offset + ids.length, hasMore: ids.length === limit };
+}
+
+/** Posts authored by one account, newest first. */
+export async function fetchUserPosts(
+  userId: string,
+  limit = FEED_PAGE_SIZE,
+  cursor?: string | null
+): Promise<FeedPage> {
+  let query = supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .eq("user_id", userId)
+    .is("parent_post_id", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (cursor) query = query.lt("created_at", cursor);
+  const { data, error } = await query;
+  if (error) throw error;
+  return await toPage(data ?? [], limit);
+}
+
+/** Toggles a repost for the signed-in user. Returns the new state. */
+export async function toggleRepost(postId: string, userId: string, reposted: boolean) {
+  if (reposted) {
+    const { error } = await supabase
+      .from("post_reposts")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", userId);
+    if (error) throw error;
+    return false;
+  }
+  const { error } = await supabase.from("post_reposts").insert({ post_id: postId, user_id: userId });
+  if (error) throw error;
+  return true;
+}
+
+/** Which of these posts the viewer has already reposted. */
+export async function fetchRepostedIds(postIds: string[], userId: string): Promise<Set<string>> {
+  if (postIds.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from("post_reposts")
+    .select("post_id")
+    .eq("user_id", userId)
+    .in("post_id", postIds);
+  if (error) return new Set();
+  return new Set((data ?? []).map((r) => r.post_id));
 }

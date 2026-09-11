@@ -15,6 +15,8 @@ import {
   displayNameOf,
   fetchDiscoverFeed,
   fetchFollowingFeed,
+  fetchRankedFeed,
+  fetchRepostedIds,
   formatTimestamp,
 } from "@/lib/social";
 
@@ -33,6 +35,8 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const [hasMore, setHasMore] = useState(false);
   const [unlockedIds, setUnlockedIds] = useState<Set<string>>(new Set());
   const cursorRef = useRef<string | null>(null);
+  const offsetRef = useRef(0);
+  const [repostedIds, setRepostedIds] = useState<Set<string>>(new Set());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -47,26 +51,42 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
     setUnlockedIds((prev) => new Set([...prev, ...unlocked]));
   }, [userId]);
 
+  const applyReposts = useCallback(async (batch: SocialPost[]) => {
+    if (!userId || batch.length === 0) return;
+    const ids = await fetchRepostedIds(batch.map((p) => p.id), userId);
+    setRepostedIds((prev) => new Set([...prev, ...ids]));
+  }, [userId]);
+
   const load = useCallback(async () => {
     if (tab === "shop" || tab === "market") return;
     setLoading(true);
     cursorRef.current = null;
+    offsetRef.current = 0;
     try {
-      const page = tab === "following" && userId
-        ? await fetchFollowingFeed(userId)
-        : await fetchDiscoverFeed();
+      let page: { posts: SocialPost[]; nextCursor?: string | null; hasMore: boolean };
+      if (tab === "for-you") {
+        const ranked = await fetchRankedFeed();
+        offsetRef.current = ranked.nextOffset;
+        page = { posts: ranked.posts, nextCursor: null, hasMore: ranked.hasMore };
+      } else if (tab === "following" && userId) {
+        page = await fetchFollowingFeed(userId);
+      } else {
+        page = await fetchDiscoverFeed();
+      }
       setPosts(page.posts);
       setUnlockedIds(new Set());
-      cursorRef.current = page.nextCursor;
+      setRepostedIds(new Set());
+      cursorRef.current = page.nextCursor ?? null;
       setHasMore(page.hasMore);
       await applyAccess(page.posts);
+      await applyReposts(page.posts);
     } catch (error: any) {
       reportIssue("feed_load_failed", error, { surface: "social_feed", tab });
       toast.error(error.message || "Failed to load feed");
     } finally {
       setLoading(false);
     }
-  }, [applyAccess, tab, userId]);
+  }, [applyAccess, applyReposts, tab, userId]);
 
 
   useEffect(() => { load(); }, [load, refreshKey]);
@@ -75,23 +95,31 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
     if (loadingMore || !hasMore || !isPostTab) return;
     setLoadingMore(true);
     try {
-      const page = tab === "following" && userId
-        ? await fetchFollowingFeed(userId, undefined, cursorRef.current)
-        : await fetchDiscoverFeed(undefined, cursorRef.current);
+      let page: { posts: SocialPost[]; nextCursor?: string | null; hasMore: boolean };
+      if (tab === "for-you") {
+        const ranked = await fetchRankedFeed(undefined, offsetRef.current);
+        offsetRef.current = ranked.nextOffset;
+        page = { posts: ranked.posts, nextCursor: null, hasMore: ranked.hasMore };
+      } else if (tab === "following" && userId) {
+        page = await fetchFollowingFeed(userId, undefined, cursorRef.current);
+      } else {
+        page = await fetchDiscoverFeed(undefined, cursorRef.current);
+      }
       setPosts((prev) => {
         const seen = new Set(prev.map((p) => p.id));
         return [...prev, ...page.posts.filter((p) => !seen.has(p.id))];
       });
-      cursorRef.current = page.nextCursor;
+      cursorRef.current = page.nextCursor ?? null;
       setHasMore(page.hasMore);
       await applyAccess(page.posts);
+      await applyReposts(page.posts);
     } catch (error: any) {
       reportIssue("feed_load_failed", error, { surface: "social_feed", tab, paging: true });
       toast.error(error.message || "Failed to load more posts");
     } finally {
       setLoadingMore(false);
     }
-  }, [applyAccess, hasMore, isPostTab, loadingMore, tab, userId]);
+  }, [applyAccess, applyReposts, hasMore, isPostTab, loadingMore, tab, userId]);
 
   // Infinite scroll is the default behaviour everywhere — no toggle, no button.
   useEffect(() => {
@@ -159,6 +187,8 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
               likes={post.like_count}
               comments={post.reply_count}
               replyCount={post.reply_count}
+              reposts={post.repost_count}
+              isReposted={repostedIds.has(post.id)}
               isVerified={!!post.profile?.is_verified}
               monetizationType={post.monetization_type}
               price={post.price}

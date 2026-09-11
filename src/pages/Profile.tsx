@@ -12,6 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CheckCircle2, Upload, LogOut, ExternalLink, Loader2 } from "lucide-react";
 import ProfileMedia from "@/components/profile/ProfileMedia";
+import ProfileRadio from "@/components/profile/ProfileRadio";
+import ProfilePosts from "@/components/profile/ProfilePosts";
+import PostComposer from "@/components/post/PostComposer";
 
 interface ProfileData {
   id: string;
@@ -27,6 +30,7 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [postsKey, setPostsKey] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [email, setEmail] = useState<string>("");
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -139,7 +143,7 @@ const Profile = () => {
           <div className="flex items-start gap-6 flex-col sm:flex-row">
             <div className="relative">
               <Avatar className="h-28 w-28">
-                <AvatarImage src={profile?.avatar_url || ""} />
+                <AvatarImage src={profile?.avatar_url || ""} className="object-cover" />
                 <AvatarFallback className="text-2xl">
                   {displayName?.[0] || username?.[0] || email[0]?.toUpperCase()}
                 </AvatarFallback>
@@ -195,7 +199,30 @@ const Profile = () => {
 
         {profile && (
           <div className="mb-6">
+            <PostComposer
+              avatarUrl={profile.avatar_url}
+              displayName={displayName || username}
+              onPublished={() => setPostsKey((k) => k + 1)}
+            />
+          </div>
+        )}
+
+        {profile && (
+          <div className="mb-6">
+            <ProfileRadio userId={profile.id} isOwner />
+          </div>
+        )}
+
+        {profile && (
+          <div className="mb-6">
             <ProfileMedia userId={profile.id} isOwner />
+          </div>
+        )}
+
+        {profile && (
+          <div className="mb-6 space-y-4">
+            <h2 className="text-lg font-semibold">Posts</h2>
+            <ProfilePosts userId={profile.id} refreshKey={postsKey} />
           </div>
         )}
 
