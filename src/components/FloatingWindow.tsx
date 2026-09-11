@@ -195,9 +195,13 @@ export default function FloatingWindow({
         userSelect: mode === "idle" ? undefined : "none",
       }}
     >
-      <Card className="h-full flex flex-col border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
+      <Card
+        className={`h-full flex flex-col border-2 bg-background/95 backdrop-blur-sm ${
+          pinned ? "border-accent/50" : "border-primary/20"
+        }`}
+      >
         <CardHeader
-          className="border-b bg-muted/30 py-2 px-4 cursor-move touch-none"
+          className={`border-b bg-muted/30 py-2 px-4 touch-none ${pinned ? "cursor-default" : "cursor-move"}`}
           onMouseDown={(e) => {
             if ((e.target as HTMLElement).closest("button")) return;
             startGesture(e.clientX, e.clientY, "drag");
