@@ -391,6 +391,133 @@ export type Database = {
         }
         Relationships: []
       }
+      dm_messages: {
+        Row: {
+          attachments: Json
+          body: string
+          created_at: string
+          external_message_id: string | null
+          filter_reason: string | null
+          id: string
+          is_filtered: boolean
+          sender_id: string | null
+          sender_label: string | null
+          source_platform: string
+          thread_id: string
+        }
+        Insert: {
+          attachments?: Json
+          body: string
+          created_at?: string
+          external_message_id?: string | null
+          filter_reason?: string | null
+          id?: string
+          is_filtered?: boolean
+          sender_id?: string | null
+          sender_label?: string | null
+          source_platform?: string
+          thread_id: string
+        }
+        Update: {
+          attachments?: Json
+          body?: string
+          created_at?: string
+          external_message_id?: string | null
+          filter_reason?: string | null
+          id?: string
+          is_filtered?: boolean
+          sender_id?: string | null
+          sender_label?: string | null
+          source_platform?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_participants: {
+        Row: {
+          created_at: string
+          id: string
+          is_archived: boolean
+          is_private: boolean
+          last_read_at: string
+          tags: string[]
+          thread_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_private?: boolean
+          last_read_at?: string
+          tags?: string[]
+          thread_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_private?: boolean
+          last_read_at?: string
+          tags?: string[]
+          thread_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_participants_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_threads: {
+        Row: {
+          created_at: string
+          created_by: string
+          external_thread_id: string | null
+          id: string
+          last_message_at: string
+          source_platform: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          external_thread_id?: string | null
+          id?: string
+          last_message_at?: string
+          source_platform?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          external_thread_id?: string | null
+          id?: string
+          last_message_at?: string
+          source_platform?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       external_affiliate_clicks: {
         Row: {
           clicker_id: string | null
@@ -647,6 +774,48 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           verification_status?: string
+        }
+        Relationships: []
+      }
+      link_previews: {
+        Row: {
+          created_at: string
+          description: string | null
+          embed_url: string | null
+          fetched_at: string
+          id: string
+          image_url: string | null
+          media_kind: string
+          site_name: string | null
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          embed_url?: string | null
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          media_kind?: string
+          site_name?: string | null
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          embed_url?: string | null
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          media_kind?: string
+          site_name?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string
         }
         Relationships: []
       }
@@ -943,6 +1112,48 @@ export type Database = {
           total_mined?: number
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      moderation_reviews: {
+        Row: {
+          created_at: string
+          details: Json
+          id: string
+          reason: string
+          reported_by: string | null
+          severity: string
+          status: string
+          subject_id: string | null
+          subject_type: string
+          subject_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          id?: string
+          reason: string
+          reported_by?: string | null
+          severity?: string
+          status?: string
+          subject_id?: string | null
+          subject_type: string
+          subject_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          id?: string
+          reason?: string
+          reported_by?: string | null
+          severity?: string
+          status?: string
+          subject_id?: string | null
+          subject_type?: string
+          subject_user_id?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1333,6 +1544,38 @@ export type Database = {
           },
         ]
       }
+      post_reposts: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reposts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_views: {
         Row: {
           created_at: string | null
@@ -1386,6 +1629,7 @@ export type Database = {
           parent_post_id: string | null
           price: number | null
           reply_count: number | null
+          repost_count: number
           updated_at: string | null
           user_id: string
           view_count: number | null
@@ -1403,6 +1647,7 @@ export type Database = {
           parent_post_id?: string | null
           price?: number | null
           reply_count?: number | null
+          repost_count?: number
           updated_at?: string | null
           user_id: string
           view_count?: number | null
@@ -1420,6 +1665,7 @@ export type Database = {
           parent_post_id?: string | null
           price?: number | null
           reply_count?: number | null
+          repost_count?: number
           updated_at?: string | null
           user_id?: string
           view_count?: number | null
@@ -1673,6 +1919,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profile_radio: {
+        Row: {
+          created_at: string
+          embed_url: string | null
+          id: string
+          is_enabled: boolean
+          playlist_url: string | null
+          provider: string
+          route_to_stream: boolean
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          embed_url?: string | null
+          id?: string
+          is_enabled?: boolean
+          playlist_url?: string | null
+          provider?: string
+          route_to_stream?: boolean
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          embed_url?: string | null
+          id?: string
+          is_enabled?: boolean
+          playlist_url?: string | null
+          provider?: string
+          route_to_stream?: boolean
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -2362,6 +2647,51 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_tiers: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json
+          id: string
+          interval: string
+          is_active: boolean
+          is_addon: boolean
+          key: string
+          name: string
+          price_cents: number
+          rank: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          interval?: string
+          is_active?: boolean
+          is_addon?: boolean
+          key: string
+          name: string
+          price_cents?: number
+          rank?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          interval?: string
+          is_active?: boolean
+          is_addon?: boolean
+          key?: string
+          name?: string
+          price_cents?: number
+          rank?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscription_unlocks: {
         Row: {
           created_at: string | null
@@ -2450,6 +2780,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      terminal_commands: {
+        Row: {
+          args: Json
+          command: string
+          created_at: string
+          id: string
+          output: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          args?: Json
+          command: string
+          created_at?: string
+          id?: string
+          output?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          args?: Json
+          command?: string
+          created_at?: string
+          id?: string
+          output?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       theater_chat: {
         Row: {
@@ -2685,6 +3045,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       user_connections: {
         Row: {
           account_handle: string | null
@@ -2737,6 +3121,39 @@ export type Database = {
           scopes?: string[] | null
           service_id?: string
           status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_entitlements: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          source: string
+          status: string
+          tier_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          source?: string
+          status?: string
+          tier_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          source?: string
+          status?: string
+          tier_key?: string
           updated_at?: string
           user_id?: string
         }
@@ -2964,12 +3381,28 @@ export type Database = {
         }[]
       }
       get_follower_count: { Args: { user_uuid: string }; Returns: number }
+      get_ranked_feed: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          post_id: string
+          score: number
+        }[]
+      }
       get_total_views: { Args: { user_uuid: string }; Returns: number }
+      has_entitlement: {
+        Args: { _tier_key: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_blocked: { Args: { _a: string; _b: string }; Returns: boolean }
+      is_dm_member: {
+        Args: { _thread_id: string; _user_id: string }
         Returns: boolean
       }
       is_stream_admin: {
