@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,8 +32,27 @@ const ConnectDialog = ({
   const [accountName, setAccountName] = useState("");
   const [saving, setSaving] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [configured, setConfigured] = useState<string[] | null>(null);
+
+  // Which services already have their developer app set up on the server.
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    supabase.functions
+      .invoke("connector-oauth", { body: { action: "status" } })
+      .then(({ data }) => {
+        if (alive && Array.isArray(data?.configured)) setConfigured(data.configured);
+      })
+      .catch(() => {
+        if (alive) setConfigured(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   if (!service) return null;
+
 
   const supportsOauth = service.methods.includes("oauth") && service.oauthProvider;
 
