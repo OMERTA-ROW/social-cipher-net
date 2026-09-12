@@ -132,6 +132,8 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}${nextPath}`,
           data: {
             birthdate: birthdate,
+            username: username.trim(),
+            display_name: displayName.trim(),
           }
         },
       });
