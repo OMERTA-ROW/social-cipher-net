@@ -226,7 +226,7 @@ const DracoAI = ({ onFibonacciRequest, chartSymbol = "Chart" }: DracoAIProps) =>
               variant="ghost"
               size="icon"
               onClick={() => handleHyperSpeedJump("/")}
-              className="text-accent hover:text-accent/80 hover:bg-accent/10"
+              className="text-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
               title="Hyper Speed to Hub"
             >
               <Rocket className="h-4 w-4" />

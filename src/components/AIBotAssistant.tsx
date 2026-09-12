@@ -599,7 +599,7 @@ const AIBotAssistant = () => {
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   isSpeaking ? "animate-pulse" : ""
-                } bg-gradient-to-br ${currentChar.gradient} group-hover:ring-2 group-hover:ring-accent transition`}>
+                } bg-gradient-to-br ${currentChar.gradient} group-hover:ring-2 group-hover:ring-primary group-hover:shadow-[0_0_14px_hsl(var(--primary)/0.45)] transition`}>
                   <Bot className={`w-6 h-6 text-primary-foreground ${isSpeaking ? "animate-bounce" : ""}`} />
                 </div>
                 {isSpeaking && (
@@ -651,7 +651,7 @@ const AIBotAssistant = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => handleHyperSpeedJump("/")}
-                className="text-accent hover:text-accent/80 hover:bg-accent/10"
+                className="text-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
                 aria-label="Hyper Speed to Hub"
                 title="Hyper Speed to Hub"
               >

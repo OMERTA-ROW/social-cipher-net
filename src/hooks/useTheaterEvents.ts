@@ -26,7 +26,7 @@ export const useTheaterEvents = () => {
     setUserId(user?.id ?? null);
 
     const { data } = await supabase
-      .from("theater_events_public")
+      .from("theater_event_catalog")
       .select(
         "id, host_id, title, description, poster_url, starts_at, capacity, status, is_live",
       )
