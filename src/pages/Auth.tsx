@@ -18,6 +18,8 @@ const Auth = () => {
   const [documentType, setDocumentType] = useState<string>("");
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [birthdate, setBirthdate] = useState("");
+  const [birthdateTouched, setBirthdateTouched] = useState(false);
+
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -445,11 +447,22 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-foreground">Date of Birth</Label>
-                  <ScrollDatePicker value={birthdate} onChange={setBirthdate} />
-                  <p className="text-xs text-muted-foreground">
-                    Scroll each column to pick your date. You must be at least 13 years old. Users under 18 cannot view adult nudity/sexual content.
-                  </p>
+                  <ScrollDatePicker
+                    value={birthdate}
+                    onChange={(v) => {
+                      setBirthdateTouched(true);
+                      setBirthdate(v);
+                    }}
+                  />
+                  {birthdateTouched && !birthdate ? (
+                    <p className="text-xs text-destructive">Please choose your date of birth.</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Scroll each column to pick your date. You must be at least 13 years old. Users under 18 cannot view adult nudity/sexual content.
+                    </p>
+                  )}
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="document-type" className="text-foreground">Document Type</Label>
                   <Select value={documentType} onValueChange={setDocumentType} required>
