@@ -7,6 +7,18 @@ import CreatePostDialog from "@/components/CreatePostDialog";
 import MatrixOverlay from "@/components/MatrixOverlay";
 import { SnipeLayer } from "@/components/sniper/SnipeLayer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ProfileAvatar from "@/components/profile/ProfileAvatar";
+import StandingAvatar, { DEFAULT_STANDING, StandingPosition } from "@/components/profile/StandingAvatar";
+
+/** The saved placement arrives as loose JSON. */
+const asStandingPosition = (v: unknown): StandingPosition => {
+  const p = (v ?? {}) as Partial<StandingPosition>;
+  return {
+    x: typeof p.x === 'number' ? p.x : DEFAULT_STANDING.x,
+    y: typeof p.y === 'number' ? p.y : DEFAULT_STANDING.y,
+    scale: typeof p.scale === 'number' ? p.scale : DEFAULT_STANDING.scale,
+  };
+};
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -51,6 +63,9 @@ interface UserProfile {
   display_name: string | null;
   username: string | null;
   avatar_url: string | null;
+  avatar_mode?: string | null;
+  avatar_standing_url?: string | null;
+  avatar_standing_position?: unknown;
   bio: string | null;
   is_verified: boolean;
 }
@@ -277,12 +292,20 @@ const UserProfile = () => {
             {profile && (
               <Card className="p-6 mb-6 bg-background/80 backdrop-blur-sm border-border/50">
                 <div className="flex items-start gap-4">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={profile.avatar_url || ''} className="object-cover" />
-                    <AvatarFallback className="text-2xl">
-                      {profile.display_name?.charAt(0) || profile.username?.charAt(0) || '?'}
-                    </AvatarFallback>
-                  </Avatar>
+                  {profile.avatar_mode === 'standing' && profile.avatar_standing_url ? (
+                    <StandingAvatar
+                      src={profile.avatar_standing_url}
+                      alt={profile.display_name || profile.username || 'Character'}
+                      position={asStandingPosition(profile.avatar_standing_position)}
+                      baseHeight={180}
+                    />
+                  ) : (
+                    <ProfileAvatar
+                      src={profile.avatar_url}
+                      name={profile.display_name || profile.username}
+                      size={96}
+                    />
+                  )}
                   
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
