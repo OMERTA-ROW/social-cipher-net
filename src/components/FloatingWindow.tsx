@@ -106,25 +106,45 @@ export default function FloatingWindow({
   );
   const [isMinimized, setIsMinimized] = useState(false);
   const [pinned, setPinned] = useState(() => readPinned(title, workspace));
+  const [anchor, setAnchor] = useState(() => readAnchor(title, workspace));
+  const [scrollTop, setScrollTop] = useState(0);
   const [mode, setMode] = useState<"idle" | "drag" | "resize">("idle");
   const gesture = useRef({ startX: 0, startY: 0, originX: 0, originY: 0, originW: 0, originH: 0 });
 
-  // A pinned window stays exactly where the user parked it.
+  // A pinned window sticks to the page and travels with it as the user scrolls.
   useEffect(() => {
     setPinned(readPinned(title, workspace));
+    setAnchor(readAnchor(title, workspace));
   }, [title, workspace]);
+
+  // Follow the page scroll while pinned so the window holds its spot on the page.
+  useEffect(() => {
+    if (!pinned) return;
+    const host = scrollHost();
+    const update = () => setScrollTop(currentScroll());
+    update();
+    const target: HTMLElement | Window = host ?? window;
+    target.addEventListener("scroll", update, { passive: true });
+    return () => target.removeEventListener("scroll", update);
+  }, [pinned]);
 
   const togglePin = () => {
     setPinned((current) => {
       const next = !current;
+      const here = currentScroll();
       try {
         localStorage.setItem(pinKey(title, workspace), next ? "1" : "0");
+        localStorage.setItem(anchorKey(title, workspace), String(here));
       } catch {
         /* storage unavailable */
       }
+      setAnchor(here);
+      setScrollTop(here);
       return next;
     });
   };
+
+  const scrollShift = pinned ? scrollTop - anchor : 0;
 
   // Remember where the user placed this window.
   useEffect(() => {
