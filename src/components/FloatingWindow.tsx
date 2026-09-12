@@ -183,7 +183,7 @@ export default function FloatingWindow({
         setPlacement((p) => ({
           ...p,
           x: Math.min(Math.max(0, g.originX + dx), Math.max(0, window.innerWidth - 120)),
-          y: Math.min(Math.max(0, g.originY + dy), Math.max(0, window.innerHeight - 60)),
+          y: Math.max(0, g.originY + dy),
         }));
       } else if (mode === "resize") {
         setPlacement((p) => ({
@@ -222,7 +222,7 @@ export default function FloatingWindow({
       className="fixed z-50 shadow-2xl"
       style={{
         left: `${placement.x}px`,
-        top: `${placement.y}px`,
+        top: `${placement.y - scrollShift}px`,
         width: isMinimized ? "300px" : `${placement.width}px`,
         height: isMinimized ? "auto" : `${placement.height}px`,
         pointerEvents: "auto",
@@ -235,7 +235,7 @@ export default function FloatingWindow({
         }`}
       >
         <CardHeader
-          className={`border-b bg-muted/30 py-2 px-4 touch-none ${pinned ? "cursor-default" : "cursor-move"}`}
+          className="border-b bg-muted/30 py-2 px-4 touch-none cursor-move"
           onMouseDown={(e) => {
             if ((e.target as HTMLElement).closest("button")) return;
             startGesture(e.clientX, e.clientY, "drag");
