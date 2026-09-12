@@ -78,3 +78,37 @@ windows, no pop-ups. It aggregates every post made anywhere on the site, in any 
 while each post still lives in its own section too. The pin-and-scroll multi-window
 system stays exactly as-is for Trading, Studio, Live Studio, Trending, Live Events,
 Community, Discovery and Pool.
+
+## Commerce: real storefront + shoppable posts
+
+### Shop becomes a real store
+- Each seller gets their own store page (banner, name, bio, product grid) at a shareable
+  address, built on the existing seller profile.
+- Products gain proper detail: multiple images, variants (size, colour, anything the
+  seller names), per-variant price and stock, shipping cost, category. Clothing and
+  apparel is the lead category, but sellers can create any category.
+- Product detail page: image gallery, variant picker, stock/sold-out state, price,
+  shipping, seller link, and its own comment section (same comments as everywhere else).
+- Shop tab becomes a browsable storefront — categories, search, featured products —
+  styled to the existing Cyber Link look (pure black surfaces, blue with subtle purple).
+- Seller dashboard gains product create/edit with image upload, variants and stock.
+
+### Posts you can buy from
+- A seller can attach one or more of their products to any post, in any section.
+- Shoppable posts show the product row inline: image, name, price, variant picker,
+  quantity, Add to cart and Buy now — the buyer never leaves the feed.
+- A cart lives site-wide (persisted per user), with a small cart indicator in the header;
+  checkout can be done inline from the post or from the cart.
+- Checkout runs through the existing payment setup; orders and inventory decrement on a
+  confirmed payment only.
+
+### Technical notes
+- New tables: `product_variants` (product_id, name, options, price, stock, sku),
+  `product_images` (product_id, url, order), `stores` fields folded into
+  `seller_profiles` (banner, slug, bio), `carts` / `cart_items` (owner-scoped),
+  `orders` / `order_items` (buyer + seller scoped), `post_products` (post_id,
+  product_id) — all with GRANTs, RLS and indexes.
+- Reuse `create-checkout` / `process-sale` edge functions; extend them for multi-item
+  carts and variant-level stock. Stock decrements server-side inside the sale handler.
+- New UI: `StorePage`, `ProductDetail`, `ProductForm`, `CartSheet`, `PostProductCard`
+  (rendered inside `PostCard` when a post has products), and a rebuilt `FeedShopTab`.
