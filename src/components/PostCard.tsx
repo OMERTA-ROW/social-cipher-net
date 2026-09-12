@@ -7,8 +7,10 @@ import StoryRing from "@/components/StoryRing";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LinkPreview from "@/components/post/LinkPreview";
+import PostProductCard from "@/components/shop/PostProductCard";
 import { extractUrls } from "@/lib/links";
 import { toggleRepost } from "@/lib/social";
+import type { StoreProduct } from "@/lib/commerce";
 
 interface PostCardProps {
   postId: string;
