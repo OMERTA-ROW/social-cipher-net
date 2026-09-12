@@ -52,6 +52,21 @@ const readPlacement = (title: string, workspace: WindowWorkspace): Placement | n
 };
 
 const pinKey = (title: string, workspace: WindowWorkspace) => `${storageKey(title, workspace)}:pinned`;
+const anchorKey = (title: string, workspace: WindowWorkspace) => `${storageKey(title, workspace)}:anchor`;
+
+/** The page's scrolling region — the centre column on desktop, window otherwise. */
+const scrollHost = (): HTMLElement | null =>
+  (document.querySelector("[data-app-scroll]") as HTMLElement | null) ?? null;
+
+const currentScroll = () => scrollHost()?.scrollTop ?? window.scrollY ?? 0;
+
+const readAnchor = (title: string, workspace: WindowWorkspace): number => {
+  try {
+    return Number(localStorage.getItem(anchorKey(title, workspace)) ?? 0) || 0;
+  } catch {
+    return 0;
+  }
+};
 
 const readPinned = (title: string, workspace: WindowWorkspace): boolean => {
   try {
