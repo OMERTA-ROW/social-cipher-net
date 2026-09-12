@@ -2569,6 +2569,42 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_health_events: {
+        Row: {
+          action: string
+          created_at: string
+          fallback_provider: string | null
+          id: string
+          message: string | null
+          provider: string
+          status: string
+          symbol: string | null
+          timeframe: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          fallback_provider?: string | null
+          id?: string
+          message?: string | null
+          provider: string
+          status: string
+          symbol?: string | null
+          timeframe?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          fallback_provider?: string | null
+          id?: string
+          message?: string | null
+          provider?: string
+          status?: string
+          symbol?: string | null
+          timeframe?: string | null
+        }
+        Relationships: []
+      }
       publish_batches: {
         Row: {
           body: string

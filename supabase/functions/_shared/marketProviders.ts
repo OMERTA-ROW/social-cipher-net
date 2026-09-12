@@ -7,6 +7,9 @@
  * free-tier rate limits of the upstream APIs.
  */
 
+import { errorMessage, reportProviderEvent } from "./marketAlerts.ts";
+export { reportProviderEvent } from "./marketAlerts.ts";
+
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -223,30 +226,145 @@ async function krakenCandles(symbol: string, timeframe: string, limit: number): 
   }));
 }
 
-export async function cryptoCandles(symbol: string, timeframe: string, limit = 200): Promise<Candle[]> {
+/** Coinbase Exchange public candles — second fallback, not geo-blocked. */
+const COINBASE_GRANULARITY: Record<string, number> = {
+  "1m": 60,
+  "5m": 300,
+  "15m": 900,
+  "1h": 3600,
+  "1D": 86400,
+};
+
+async function coinbaseCandles(symbol: string, timeframe: string, limit: number): Promise<Candle[]> {
+  const granularity = COINBASE_GRANULARITY[timeframe];
+  if (!granularity) throw new Error(`Coinbase does not serve ${timeframe} candles`);
+  const rows = await getJson(
+    `https://api.exchange.coinbase.com/products/${symbol.toUpperCase()}-USD/candles?granularity=${granularity}`,
+  );
+  if (!Array.isArray(rows) || !rows.length) throw new Error("No candle data available");
+  // Coinbase returns [time, low, high, open, close, volume] newest-first.
+  return (rows as any[])
+    .slice(0, limit)
+    .map((r) => ({
+      time: Number(r[0]) * 1000,
+      open: Number(r[3]),
+      high: Number(r[2]),
+      low: Number(r[1]),
+      close: Number(r[4]),
+      volume: Number(r[5]),
+    }))
+    .sort((a, b) => a.time - b.time);
+}
+
+/** CoinGecko OHLC — last-resort fallback (no volume, coarse granularity). */
+const COINGECKO_DAYS: Record<string, number> = {
+  "1m": 1,
+  "5m": 1,
+  "15m": 7,
+  "1h": 30,
+  "4h": 90,
+  "1D": 365,
+  "1W": 365,
+};
+
+async function coingeckoCandles(symbol: string, timeframe: string, limit: number): Promise<Candle[]> {
+  const id = COIN_IDS[symbol.toUpperCase()];
+  if (!id) throw new Error(`No CoinGecko coin id for ${symbol}`);
+  const days = COINGECKO_DAYS[timeframe] ?? 30;
+  const rows = await getJson(
+    `https://api.coingecko.com/api/v3/coins/${id}/ohlc?vs_currency=usd&days=${days}`,
+  );
+  if (!Array.isArray(rows) || !rows.length) throw new Error("No candle data available");
+  return (rows as any[]).slice(-limit).map((r) => ({
+    time: Number(r[0]),
+    open: Number(r[1]),
+    high: Number(r[2]),
+    low: Number(r[3]),
+    close: Number(r[4]),
+    volume: 0,
+  }));
+}
+
+export type CandleSeries = { candles: Candle[]; source: string; latency: "realtime" | "delayed" };
+
+/**
+ * Real crypto candles with a provider chain, so a regional block on one
+ * exchange (Binance returns HTTP 451 from several hosting regions) never
+ * leaves a chart empty. Every provider is a live public feed.
+ */
+export async function cryptoCandleSeries(
+  symbol: string,
+  timeframe: string,
+  limit = 200,
+): Promise<CandleSeries> {
   const interval = BINANCE_INTERVAL[timeframe];
   if (!interval) throw new Error(`Unsupported timeframe: ${timeframe}`);
   const pair = `${symbol.toUpperCase()}USDT`;
   const ttl = interval === "1m" ? 15_000 : interval === "5m" ? 45_000 : 120_000;
+
   return await cached(`kl:${pair}:${interval}:${limit}`, ttl, async () => {
-    try {
-      const rows = await binanceJson(
-        `/api/v3/klines?symbol=${pair}&interval=${interval}&limit=${limit}`,
-      );
-      return (rows as any[]).map((r) => ({
-        time: Number(r[0]),
-        open: Number(r[1]),
-        high: Number(r[2]),
-        low: Number(r[3]),
-        close: Number(r[4]),
-        volume: Number(r[5]),
-      }));
-    } catch (e) {
-      console.error("[marketProviders] binance candles failed, trying Kraken", e);
-      return await krakenCandles(symbol, timeframe, limit);
+    const attempts: Array<{ provider: string; latency: "realtime" | "delayed"; run: () => Promise<Candle[]> }> = [
+      {
+        provider: "Binance spot klines",
+        latency: "realtime",
+        run: async () => {
+          const rows = await binanceJson(
+            `/api/v3/klines?symbol=${pair}&interval=${interval}&limit=${limit}`,
+          );
+          return (rows as any[]).map((r) => ({
+            time: Number(r[0]),
+            open: Number(r[1]),
+            high: Number(r[2]),
+            low: Number(r[3]),
+            close: Number(r[4]),
+            volume: Number(r[5]),
+          }));
+        },
+      },
+      { provider: "Kraken OHLC", latency: "realtime", run: () => krakenCandles(symbol, timeframe, limit) },
+      { provider: "Coinbase Exchange", latency: "realtime", run: () => coinbaseCandles(symbol, timeframe, limit) },
+      { provider: "CoinGecko OHLC", latency: "delayed", run: () => coingeckoCandles(symbol, timeframe, limit) },
+    ];
+
+    const failures: string[] = [];
+    for (const attempt of attempts) {
+      try {
+        const candles = await attempt.run();
+        if (!candles.length) throw new Error("No candle data available");
+        if (failures.length) {
+          reportProviderEvent({
+            provider: attempts[0].provider,
+            action: "crypto_candles",
+            status: "fallback",
+            symbol,
+            timeframe,
+            fallbackProvider: attempt.provider,
+            message: failures.join(" | "),
+          });
+        }
+        return { candles, source: attempt.provider, latency: attempt.latency };
+      } catch (e) {
+        const msg = `${attempt.provider}: ${errorMessage(e)}`;
+        failures.push(msg);
+        reportProviderEvent({
+          provider: attempt.provider,
+          action: "crypto_candles",
+          status: "failure",
+          symbol,
+          timeframe,
+          message: errorMessage(e),
+        });
+      }
     }
+    throw new Error(`No live candle provider available (${failures.join(" | ")})`);
   });
 }
+
+/** Backwards-compatible helper returning only the candle rows. */
+export async function cryptoCandles(symbol: string, timeframe: string, limit = 200): Promise<Candle[]> {
+  return (await cryptoCandleSeries(symbol, timeframe, limit)).candles;
+}
+
 
 /* ------------------------------ equities ------------------------------ */
 

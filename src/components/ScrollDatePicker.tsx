@@ -33,17 +33,19 @@ const Column = ({
   label,
 }: {
   items: { key: string; label: string }[];
+  /** -1 when nothing has been chosen yet (empty state). */
   selectedIndex: number;
   onSelect: (index: number) => void;
   label: string;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const settle = useRef<number | null>(null);
+  const interacted = useRef(false);
 
   // Keep the list aligned with the selected value when it changes externally.
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || selectedIndex < 0) return;
     const target = selectedIndex * ITEM_HEIGHT;
     if (Math.abs(el.scrollTop - target) > 2) {
       el.scrollTo({ top: target, behavior: "smooth" });
@@ -52,7 +54,8 @@ const Column = ({
 
   const handleScroll = () => {
     const el = ref.current;
-    if (!el) return;
+    // Never emit from programmatic alignment — only real user scrolling counts.
+    if (!el || !interacted.current) return;
     if (settle.current) window.clearTimeout(settle.current);
     settle.current = window.setTimeout(() => {
       const index = Math.max(
@@ -63,6 +66,10 @@ const Column = ({
     }, 90);
   };
 
+  const markInteracted = () => {
+    interacted.current = true;
+  };
+
   return (
     <div
       ref={ref}
@@ -70,13 +77,18 @@ const Column = ({
       aria-label={label}
       tabIndex={0}
       onScroll={handleScroll}
+      onWheel={markInteracted}
+      onPointerDown={markInteracted}
+      onTouchStart={markInteracted}
       onKeyDown={(e) => {
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          onSelect(Math.min(items.length - 1, selectedIndex + 1));
+          markInteracted();
+          onSelect(selectedIndex < 0 ? 0 : Math.min(items.length - 1, selectedIndex + 1));
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
-          onSelect(Math.max(0, selectedIndex - 1));
+          markInteracted();
+          onSelect(selectedIndex < 0 ? 0 : Math.max(0, selectedIndex - 1));
         }
       }}
       className="relative h-[108px] flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-none outline-none focus-visible:ring-1 focus-visible:ring-primary rounded-md"
@@ -89,7 +101,10 @@ const Column = ({
           type="button"
           role="option"
           aria-selected={i === selectedIndex}
-          onClick={() => onSelect(i)}
+          onClick={() => {
+            markInteracted();
+            onSelect(i);
+          }}
           style={{ height: ITEM_HEIGHT }}
           className={cn(
             "w-full snap-center flex items-center justify-center text-sm transition-colors",
@@ -106,6 +121,7 @@ const Column = ({
   );
 };
 
+
 const ScrollDatePicker = ({
   value,
   onChange,
@@ -114,6 +130,7 @@ const ScrollDatePicker = ({
   className,
   id,
 }: ScrollDatePickerProps) => {
+  const hasValue = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const parsed = useMemo(() => {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
     const fallbackYear = maxYear - 18;
@@ -141,14 +158,6 @@ const ScrollDatePicker = ({
     [],
   );
 
-  // Record the date shown on first render so the highlighted value is real.
-  useEffect(() => {
-    if (!value) {
-      onChange(`${parsed.year}-${pad(parsed.month)}-${pad(parsed.day)}`);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-
   const emit = (year: number, month: number, day: number) => {
     const maxDay = new Date(year, month, 0).getDate();
     onChange(`${year}-${pad(month)}-${pad(Math.min(day, maxDay))}`);
@@ -161,6 +170,7 @@ const ScrollDatePicker = ({
         "relative rounded-md border border-primary/30 bg-background/50 px-2",
         className,
       )}
+      data-empty={hasValue ? "false" : "true"}
     >
       {/* Selection band */}
       <div
@@ -168,26 +178,33 @@ const ScrollDatePicker = ({
         style={{ height: ITEM_HEIGHT }}
         aria-hidden
       />
+      {/* Empty state: nothing is selected until the user picks a date. */}
+      {!hasValue && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-md bg-background/70 text-xs text-muted-foreground">
+          Scroll or tap a column to choose your date of birth
+        </div>
+      )}
       <div className="relative flex gap-1">
         <Column
           label="Month"
           items={months}
-          selectedIndex={parsed.month - 1}
+          selectedIndex={hasValue ? parsed.month - 1 : -1}
           onSelect={(i) => emit(parsed.year, i + 1, parsed.day)}
         />
         <Column
           label="Day"
           items={days}
-          selectedIndex={Math.min(parsed.day, daysInMonth) - 1}
+          selectedIndex={hasValue ? Math.min(parsed.day, daysInMonth) - 1 : -1}
           onSelect={(i) => emit(parsed.year, parsed.month, i + 1)}
         />
         <Column
           label="Year"
           items={years}
-          selectedIndex={Math.max(0, maxYear - parsed.year)}
+          selectedIndex={hasValue ? Math.max(0, maxYear - parsed.year) : -1}
           onSelect={(i) => emit(maxYear - i, parsed.month, parsed.day)}
         />
       </div>
+
     </div>
   );
 };
