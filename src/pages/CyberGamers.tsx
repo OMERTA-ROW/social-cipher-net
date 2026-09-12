@@ -34,12 +34,6 @@ const TRADING_PLATFORMS = [
   { name: "Interactive Brokers", url: "https://www.interactivebrokers.com/" },
 ];
 
-const TOURNAMENTS = [
-  { name: "Cyber Strike Championship", date: "Dec 15, 2025", prize: "$5,000" },
-  { name: "Neon Racers Grand Prix", date: "Dec 20, 2025", prize: "$3,000" },
-  { name: "Gang Wars Tournament", date: "Dec 25, 2025", prize: "$10,000" },
-];
-
 const SECTIONS = [
   { id: "saved-tabs", label: "My Tabs", icon: <Save className="w-5 h-5" /> },
   { id: "pools", label: "Token Pools", icon: <Trophy className="w-5 h-5" /> },
@@ -54,13 +48,47 @@ const CyberGamers = () => {
   const { saveTab } = useSavedTabs();
   const [searchQuery, setSearchQuery] = useState("");
   const [section, setSection] = useState("saved-tabs");
-  const [gangMembers] = useState<GangMember[]>([
-    { id: 1, name: "CyberNinja", rank: "Leader", level: 99, isLive: true },
-    { id: 2, name: "PixelWarrior", rank: "Elite", level: 87, isLive: false },
-    { id: 3, name: "NeonGhost", rank: "Elite", level: 85, isLive: true },
-    { id: 4, name: "DataHunter", rank: "Member", level: 72, isLive: false },
-    { id: 5, name: "CodeBreaker", rank: "Member", level: 68, isLive: false },
-  ]);
+  // Gang members are the accounts this user actually follows. Nothing is
+  // pre-populated: with no follows the section shows a genuine empty state.
+  const [gangMembers, setGangMembers] = useState<GangMember[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadGang = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: follows } = await supabase
+        .from("followers")
+        .select("following_id")
+        .eq("follower_id", user.id);
+      const ids = (follows ?? []).map((f: { following_id: string }) => f.following_id);
+      if (ids.length === 0) {
+        if (!cancelled) setGangMembers([]);
+        return;
+      }
+
+      const [{ data: profiles }, { data: live }] = await Promise.all([
+        supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids),
+        supabase.from("live_streams").select("user_id").in("user_id", ids).eq("is_live", true),
+      ]);
+      const liveIds = new Set((live ?? []).map((l: { user_id: string }) => l.user_id));
+      if (!cancelled) {
+        setGangMembers(
+          (profiles ?? []).map((p: any) => ({
+            id: p.id,
+            name: p.display_name || p.username || "Member",
+            avatarUrl: p.avatar_url ?? null,
+            isLive: liveIds.has(p.id),
+          })),
+        );
+      }
+    };
+    loadGang();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const launch = async (tabName: string, tabUrl: string, source: string) => {
     const {
@@ -130,7 +158,6 @@ const CyberGamers = () => {
     <>
       <ArenaStatusChip label={`${liveCount} live`} tone="live" />
       <ArenaStatusChip label={`${gangMembers.length} gang members`} />
-      <ArenaStatusChip label={`${TOURNAMENTS.length} tournaments open`} />
       <div className="flex flex-wrap gap-2 ml-auto">
         {TRADING_PLATFORMS.slice(0, 5).map((platform) => (
           <Button
@@ -170,21 +197,21 @@ const CyberGamers = () => {
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {gangMembers.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No gang members yet. Follow other players to see them here.
+                  </p>
+                )}
                 {gangMembers.map((member) => (
                   <Card key={member.id} className="p-4 bg-muted/20 border-primary/10">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-12 h-12 border-2 border-primary/50">
-                          <AvatarImage
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`}
-                          />
+                          <AvatarImage src={member.avatarUrl ?? undefined} />
                           <AvatarFallback>{member.name.slice(0, 2)}</AvatarFallback>
                         </Avatar>
                         <div>
                           <h3 className="font-semibold text-foreground">{member.name}</h3>
-                          <Badge variant="outline" className="text-xs">
-                            {member.rank}
-                          </Badge>
                         </div>
                       </div>
                       {member.isLive && (
@@ -193,13 +220,6 @@ const CyberGamers = () => {
                           LIVE
                         </Badge>
                       )}
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                      <span className="flex items-center gap-1">
-                        <Zap className="w-4 h-4 text-primary" />
-                        Level {member.level}
-                      </span>
                     </div>
 
                     <Button
@@ -266,24 +286,9 @@ const CyberGamers = () => {
               Upcoming Tournaments
             </h2>
 
-            <div className="space-y-4">
-              {TOURNAMENTS.map((tournament, idx) => (
-                <Card key={idx} className="p-4 bg-muted/20 border-primary/10">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-foreground">{tournament.name}</h3>
-                      <p className="text-sm text-muted-foreground">{tournament.date}</p>
-                    </div>
-                    <div className="text-right">
-                      <Badge className="bg-primary text-primary-foreground mb-2">
-                        {tournament.prize}
-                      </Badge>
-                      <Button size="sm">Register</Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              No tournaments scheduled yet.
+            </p>
           </Card>
         )}
       </ArenaShell>
