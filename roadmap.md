@@ -42,8 +42,8 @@
 - [x] Direct messaging + unified inbox (block/report/tags/scam filter)
 - [x] Sidebar restructure (lean basics + dropdown groups)
 - [x] Sandboxed Terminal (/terminal), tier-gated, with AI agent `ask`
-- [ ] Subscription checkout for the Terminal add-on
-- [ ] Moderation: no auto-suspension, review queue only
+- [x] Subscription checkout for the Terminal add-on
+- [x] Moderation: no auto-suspension, review queue only
 - [ ] Social links/connectors live
 
 ## Trading layer
@@ -56,10 +56,10 @@
 ## Universal connectors system
 - [x] One page for OAuth + API key + MCP connections
 - [x] OAuth popup flow with clear connected/failed confirmation + account name
-- [ ] Encrypted server-side key storage, masked display, test-connection button
+- [x] Encrypted server-side key storage, masked display, test-connection button
 - [x] MCP servers: add endpoint + credentials, list tools, enable/disable per tool
 - [x] AI agent connectors (OpenAI, Anthropic, Gemini, others); Terminal wiring pending Terminal build
-- [ ] Live status per connection: connected / expired / needs re-auth / error, auto refresh
+- [x] Live status per connection: connected / expired / needs re-auth / error, auto refresh
 - [ ] Connected accounts feed inbox, earnings and aggregated feed
 
 - [ ] Home feed exception: plain vertical scrolling feed only (no pinning/floating windows); aggregates posts from every section.
