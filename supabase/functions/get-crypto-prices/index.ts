@@ -83,23 +83,52 @@ serve(async (req) => {
     let quotes: Quote[] = [];
     let source = "Binance spot";
     let latency: "realtime" | "delayed" = "realtime";
+    let binanceFailure: string | null = null;
     try {
       quotes = await binanceQuotes(symbols);
     } catch (e) {
-      console.error("[get-crypto-prices] binance failed", e);
+      binanceFailure = e instanceof Error ? e.message : String(e);
+      reportProviderEvent({
+        provider: "Binance spot",
+        action: "crypto_quotes",
+        status: "failure",
+        message: binanceFailure,
+        symbol: symbols.join(","),
+      });
     }
 
     const missing = symbols.filter((s) => !quotes.some((q) => q.symbol === s));
     if (missing.length) {
-      const fallback = await coingeckoQuotes(missing);
-      if (fallback.length) {
-        quotes = [...quotes, ...fallback];
-        source = quotes.length === fallback.length ? "CoinGecko" : "Binance spot + CoinGecko";
-        if (quotes.length === fallback.length) latency = "delayed";
+      try {
+        const fallback = await coingeckoQuotes(missing);
+        if (fallback.length) {
+          quotes = [...quotes, ...fallback];
+          source = quotes.length === fallback.length ? "CoinGecko" : "Binance spot + CoinGecko";
+          if (quotes.length === fallback.length) latency = "delayed";
+          if (binanceFailure) {
+            reportProviderEvent({
+              provider: "Binance spot",
+              action: "crypto_quotes",
+              status: "fallback",
+              fallbackProvider: "CoinGecko",
+              message: binanceFailure,
+              symbol: missing.join(","),
+            });
+          }
+        }
+      } catch (e) {
+        reportProviderEvent({
+          provider: "CoinGecko",
+          action: "crypto_quotes",
+          status: "failure",
+          message: e instanceof Error ? e.message : String(e),
+          symbol: missing.join(","),
+        });
       }
     }
 
     if (!quotes.length) throw new Error("No live crypto feed available right now");
+
 
     // legacy shape kept alongside the richer quote list
     const prices: Record<string, { usd: number; change24h: number }> = {};
