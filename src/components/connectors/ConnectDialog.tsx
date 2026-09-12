@@ -55,6 +55,8 @@ const ConnectDialog = ({
 
 
   const supportsOauth = service.methods.includes("oauth") && service.oauthProvider;
+  const oauthReady =
+    configured === null ? true : configured.includes(String(service.oauthProvider));
 
   const startOauth = async () => {
     setStarting(true);
@@ -67,14 +69,31 @@ const ConnectDialog = ({
           redirect_uri: `${window.location.origin}/connectors`,
         },
       });
-      if (error) throw error;
-      if (data?.error === "not_configured") {
+      // A refused start comes back as a non-2xx, so read the real reason out of it.
+      let payload = data;
+      if (error) {
+        const raw =
+          typeof (error as { context?: { text?: () => Promise<string> } }).context?.text ===
+          "function"
+            ? await (error as { context: { text: () => Promise<string> } }).context.text()
+            : "";
+        try {
+          payload = raw ? JSON.parse(raw) : null;
+        } catch {
+          payload = null;
+        }
+        if (!payload?.error) throw error;
+      }
+      if (payload?.error === "not_configured") {
         toast.error(`${service.name} isn't set up for one-click sign-in yet`, {
-          description: "Use the key entry below in the meantime.",
+          description:
+            payload.message ?? "Use the key entry below in the meantime.",
         });
         return;
       }
-      if (data?.error) throw new Error(data.error);
+      if (payload?.error) throw new Error(payload.error);
+      data.authorize_url = payload?.authorize_url ?? data?.authorize_url;
+
       // Authorise in a popup so the user keeps their place on this page.
       const popup = window.open(
         data.authorize_url,
