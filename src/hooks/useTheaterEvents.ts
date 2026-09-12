@@ -26,14 +26,14 @@ export const useTheaterEvents = () => {
     setUserId(user?.id ?? null);
 
     const { data } = await supabase
-      .from("theater_events")
+      .from("theater_event_catalog")
       .select(
-        "id, host_id, title, description, poster_url, video_url, starts_at, capacity, status, is_live",
+        "id, host_id, title, description, poster_url, starts_at, capacity, status, is_live",
       )
       .order("starts_at", { ascending: true })
       .limit(50);
 
-    setEvents((data ?? []) as TheaterEvent[]);
+    setEvents((data ?? []).map((event) => ({ ...event, video_url: null })) as TheaterEvent[]);
     setLoading(false);
   }, []);
 

@@ -99,17 +99,17 @@ const MediaUpload = ({ onFilesChange, maxFiles = 10 }: MediaUploadProps) => {
       {mediaFiles.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {mediaFiles.map((media, idx) => (
-            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-secondary">
+            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-secondary/60 flex items-center justify-center">
               {media.type === 'image' ? (
                 <img 
                   src={media.preview} 
                   alt={`Upload ${idx + 1}`}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               ) : (
                 <video 
                   src={media.preview}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               )}
               <button

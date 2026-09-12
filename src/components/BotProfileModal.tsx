@@ -280,7 +280,7 @@ export const BotProfileModal = ({ open, onOpenChange, mode, triggerRef }: BotPro
                         role="button"
                         aria-label={`${row.label}: ${row.value}. ${row.tooltip || ""}`}
                         onKeyDown={handleButtonKeyDown}
-                        className={`rounded-md border p-2 ${p.chassisAccent} cursor-help transition-colors hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:bg-accent/10`}
+                        className={`rounded-md border p-2 ${p.chassisAccent} cursor-help transition-colors hover:border-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
                       >
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           {row.icon}

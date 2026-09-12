@@ -259,7 +259,7 @@ const PostCard = ({
                           className={
                             media.length === 1
                               ? 'w-full max-h-[560px] object-contain'
-                              : 'w-full h-full object-cover'
+                              : 'w-full h-full object-contain'
                           }
                         />
                       ) : (
@@ -270,7 +270,7 @@ const PostCard = ({
                           className={
                             media.length === 1
                               ? 'w-full max-h-[560px] object-contain'
-                              : 'w-full h-full object-cover'
+                              : 'w-full h-full object-contain'
                           }
                         />
                       )}
@@ -296,7 +296,7 @@ const PostCard = ({
               variant="ghost"
               size="sm"
               onClick={handleLike}
-              className={`gap-2 ${isLiked ? 'text-accent' : 'text-muted-foreground'} hover:text-accent`}
+              className={`gap-2 ${isLiked ? 'text-primary' : 'text-muted-foreground'} hover:text-primary`}
             >
               <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
               <span>{likeCount}</span>
@@ -316,7 +316,7 @@ const PostCard = ({
               variant="ghost"
               size="sm"
               onClick={handleRepost}
-              className={`gap-2 ${reposted ? 'text-accent' : 'text-muted-foreground'} hover:text-accent`}
+              className={`gap-2 ${reposted ? 'text-primary' : 'text-muted-foreground'} hover:text-primary`}
               title="Repost"
             >
               <Repeat2 className="w-5 h-5" />

@@ -302,7 +302,7 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
                     <button
                       key={index}
                       onClick={() => handleSelectWebsite(result)}
-                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-accent transition-colors text-left"
+                      className="w-full px-4 py-3 flex items-center gap-3 border border-transparent hover:border-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)] transition-colors text-left"
                     >
                       <Icon className="w-5 h-5 text-primary" />
                       <div className="flex-1">

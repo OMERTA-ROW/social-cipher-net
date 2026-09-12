@@ -28,8 +28,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import RightRail from "@/components/layout/RightRail";
-import TopBarStats from "@/components/layout/TopBarStats";
 import SidebarAuthButton from "@/components/layout/SidebarAuthButton";
+import ProfileMenu from "@/components/layout/ProfileMenu";
 import AllSeeingEye from "@/components/space/AllSeeingEye";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 
@@ -200,9 +200,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
             <span className="text-xl font-bold text-primary text-glow hidden sm:inline">Cyber Link</span>
           </button>
 
-          <TopBarStats />
-
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="ml-auto flex items-center gap-1 sm:gap-2">
 
             <Button
               variant="ghost"
@@ -219,19 +217,11 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
                 <span className="hidden sm:inline">Post</span>
               </Button>
             )}
+            <ProfileMenu />
             <Button
               variant="ghost"
               size="icon"
               className="text-foreground hover:text-primary"
-              title="My profile"
-              onClick={() => navigate("/profile")}
-            >
-              <User className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-foreground hover:text-accent"
               title={onSpaceDesktop ? "Back to main desktop" : "Solar system desktop"}
               aria-label={onSpaceDesktop ? "Back to main desktop" : "Solar system desktop"}
               aria-pressed={onSpaceDesktop}

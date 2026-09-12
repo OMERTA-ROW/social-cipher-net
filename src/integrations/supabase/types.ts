@@ -3483,6 +3483,62 @@ export type Database = {
           },
         ]
       }
+      theater_event_catalog: {
+        Row: {
+          capacity: number | null
+          created_at: string
+          description: string | null
+          format: string | null
+          host_id: string
+          id: string
+          is_live: boolean
+          is_open: boolean
+          poster_url: string | null
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number | null
+          created_at: string
+          description?: string | null
+          format?: string | null
+          host_id: string
+          id: string
+          is_live: boolean
+          is_open?: boolean
+          poster_url?: string | null
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          format?: string | null
+          host_id?: string
+          id?: string
+          is_live?: boolean
+          is_open?: boolean
+          poster_url?: string | null
+          starts_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theater_event_catalog_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "theater_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       theater_events: {
         Row: {
           capacity: number | null

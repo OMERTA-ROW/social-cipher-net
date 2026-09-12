@@ -101,7 +101,7 @@ export function InviteToStreamDialog({ open, onOpenChange, streamId, onInvite }:
               users.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)] transition-colors"
                 >
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={user.avatar_url} />
