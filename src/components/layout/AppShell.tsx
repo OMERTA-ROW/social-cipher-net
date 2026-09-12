@@ -28,6 +28,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import RightRail from "@/components/layout/RightRail";
+import TopBarStats from "@/components/layout/TopBarStats";
+import SidebarAuthButton from "@/components/layout/SidebarAuthButton";
 import AllSeeingEye from "@/components/space/AllSeeingEye";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 
@@ -198,7 +200,10 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
             <span className="text-xl font-bold text-primary text-glow hidden sm:inline">Cyber Link</span>
           </button>
 
+          <TopBarStats />
+
           <div className="flex items-center gap-1 sm:gap-2">
+
             <Button
               variant="ghost"
               size="icon"
