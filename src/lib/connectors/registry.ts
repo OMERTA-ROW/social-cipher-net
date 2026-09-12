@@ -540,8 +540,7 @@ export const CONNECTOR_MANIFEST: ConnectorDefinition[] = [
     category: "commerce",
     blurb: "Pull products, orders and revenue into the dashboard.",
     glyph: "🛍️",
-    methods: ["oauth", "api_key"],
-    oauthProvider: "shopify",
+    methods: ["api_key"],
     fields: [
       { key: "shop_domain", label: "Store domain", placeholder: "my-store.myshopify.com" },
       { key: "admin_token", label: "Admin API token", secret: true },

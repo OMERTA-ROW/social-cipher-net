@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { getSecrets } from "../_shared/connectorVault.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,14 +93,8 @@ Deno.serve(async (req) => {
       return json({ error: "Connect this account first" }, 400);
     }
 
-    const { data: secretRows } = await admin
-      .from("connection_secrets")
-      .select("secret_type, secret_value")
-      .eq("connection_id", connection.id);
-
-    const token = (secretRows ?? []).find(
-      (r) => r.secret_type === "access_token" || r.secret_type === "api_key",
-    )?.secret_value as string | undefined;
+    const secrets = await getSecrets(admin, connection.id);
+    const token = secrets.access_token ?? secrets.api_key;
 
     if (!token) return json({ error: "This connection has no token" }, 400);
 

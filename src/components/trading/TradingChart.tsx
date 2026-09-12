@@ -82,8 +82,8 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
     const down = css("--destructive", "#ef4444");
 
     const chart = createChart(holder.current, {
-      autoSize: true,
-      width: holder.current.clientWidth || undefined,
+      autoSize: false,
+      width: Math.max(holder.current.clientWidth, 320),
       height: holder.current.clientHeight || height,
       layout: { background: { color: "transparent" }, textColor: text, attributionLogo: false },
       grid: { vertLines: { color: grid }, horzLines: { color: grid } },
@@ -188,34 +188,18 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
 
     chart.timeScale().fitContent();
 
-    // autoSize keeps the canvas bitmap in sync with the container. Some
-    // environments never fire the library's internal size observer, which
-    // leaves the drawing surface at its 300x150 default and paints nothing,
-    // so we verify the backing bitmaps and size them ourselves if needed.
-    const syncBitmaps = () => {
+    // Size through the chart API only. Writing canvas width/height directly
+    // clears the drawing buffer and was the cause of blank live charts.
+    const syncSize = () => {
       const host = holder.current;
       if (!host) return;
       const w = host.clientWidth;
       const h = host.clientHeight;
       if (!w || !h) return;
       chart.resize(w, h, true);
-      const dpr = window.devicePixelRatio || 1;
-      let repaired = false;
-      host.querySelectorAll("canvas").forEach((c) => {
-        const want = Math.round(c.clientWidth * dpr);
-        const wantH = Math.round(c.clientHeight * dpr);
-        if (want > 0 && wantH > 0 && (c.width !== want || c.height !== wantH)) {
-          c.width = want;
-          c.height = wantH;
-          repaired = true;
-        }
-      });
-      if (repaired) chart.resize(w - 1, h, true);
-      chart.resize(w, h, true);
-      chart.timeScale().fitContent();
     };
-    const raf = requestAnimationFrame(syncBitmaps);
-    const ro = new ResizeObserver(() => syncBitmaps());
+    const raf = requestAnimationFrame(syncSize);
+    const ro = new ResizeObserver(() => syncSize());
     ro.observe(holder.current);
 
     return () => {

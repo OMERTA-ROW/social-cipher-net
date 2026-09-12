@@ -6,7 +6,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import PresenceAvatar from "@/components/profile/PresenceAvatar";
+import { useLivePresence } from "@/hooks/useLivePresence";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -64,6 +65,7 @@ const useMembers = (userId: string | null) => {
 
 const MemberList = ({ members, empty }: { members: Member[] | null; empty: string }) => {
   const navigate = useNavigate();
+  const liveIds = useLivePresence((members ?? []).map((member) => member.id));
   if (!members) return <Skeleton className="h-14 w-full" />;
   if (members.length === 0) {
     return (
@@ -75,10 +77,7 @@ const MemberList = ({ members, empty }: { members: Member[] | null; empty: strin
       {members.map((member) => (
         <div key={member.id} className="flex items-center justify-between rounded-lg border p-3">
           <div className="flex min-w-0 items-center gap-3">
-            <Avatar>
-              {member.avatar && <AvatarImage src={member.avatar} alt={member.name} />}
-              <AvatarFallback>{member.name[0]}</AvatarFallback>
-            </Avatar>
+            <PresenceAvatar src={member.avatar} name={member.name} size={40} isLive={liveIds.has(member.id)} />
             <div className="min-w-0">
               <p className="truncate font-medium">{member.name}</p>
               <p className="truncate text-sm text-muted-foreground">{member.handle}</p>

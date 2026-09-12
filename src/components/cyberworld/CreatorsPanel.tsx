@@ -5,7 +5,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import PresenceAvatar from "@/components/profile/PresenceAvatar";
+import { useLivePresence } from "@/hooks/useLivePresence";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -21,6 +22,7 @@ const CreatorsPanel = () => {
   const [creators, setCreators] = useState<Creator[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const liveIds = useLivePresence((creators ?? []).map((creator) => creator.id));
 
   useEffect(() => {
     let alive = true;
@@ -88,10 +90,7 @@ const CreatorsPanel = () => {
           className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
         >
           <div className="flex min-w-0 items-center gap-3">
-            <Avatar>
-              {creator.avatar && <AvatarImage src={creator.avatar} alt={creator.name} />}
-              <AvatarFallback>{creator.name[0]}</AvatarFallback>
-            </Avatar>
+            <PresenceAvatar src={creator.avatar} name={creator.name} size={40} isLive={liveIds.has(creator.id)} />
             <div className="min-w-0">
               <p className="truncate font-medium">{creator.name}</p>
               <p className="truncate text-sm text-muted-foreground">{creator.handle}</p>

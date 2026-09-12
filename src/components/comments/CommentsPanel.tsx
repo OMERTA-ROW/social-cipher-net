@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import PresenceAvatar from "@/components/profile/PresenceAvatar";
+import { useLivePresence } from "@/hooks/useLivePresence";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,6 +52,7 @@ const CommentsPanel = ({
   const [sending, setSending] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const liveIds = useLivePresence(comments.map((comment) => comment.user_id));
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
@@ -154,10 +156,7 @@ const CommentsPanel = ({
         ) : (
           comments.map((c) => (
             <div key={c.id} className="flex gap-3">
-              <Avatar className="w-8 h-8 shrink-0">
-                <AvatarImage src={c.profile?.avatar_url || undefined} alt={displayNameOf(c.profile)} />
-                <AvatarFallback>{displayNameOf(c.profile).slice(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <PresenceAvatar src={c.profile?.avatar_url} name={displayNameOf(c.profile)} size={32} isLive={liveIds.has(c.user_id)} />
               <div className="min-w-0 flex-1">
                 <p className="text-sm">
                   <span className="font-medium">{displayNameOf(c.profile)}</span>

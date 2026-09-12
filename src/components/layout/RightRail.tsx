@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import FollowButton from "@/components/FollowButton";
+import PresenceAvatar from "@/components/profile/PresenceAvatar";
+import { useLivePresence } from "@/hooks/useLivePresence";
 import { supabase } from "@/integrations/supabase/client";
 import { SocialProfile, displayNameOf } from "@/lib/social";
 import { Sparkles, TrendingUp } from "lucide-react";
@@ -11,6 +12,7 @@ import { Sparkles, TrendingUp } from "lucide-react";
 const RightRail = () => {
   const [suggestions, setSuggestions] = useState<SocialProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const liveIds = useLivePresence(suggestions.map((profile) => profile.id));
 
   useEffect(() => {
     let cancelled = false;
@@ -32,7 +34,13 @@ const RightRail = () => {
         ? await query.not("id", "in", `(${excluded.join(",")})`)
         : await query;
       if (!cancelled) {
-        setSuggestions((data ?? []) as SocialProfile[]);
+        const profiles = (data ?? []) as SocialProfile[];
+        const ids = profiles.map((profile) => profile.id);
+        const { data: live } = ids.length
+          ? await supabase.from("live_streams").select("user_id").in("user_id", ids).eq("is_live", true)
+          : { data: [] as { user_id: string }[] };
+        const liveSet = new Set((live ?? []).map((row) => row.user_id));
+        setSuggestions(profiles.sort((a, b) => Number(liveSet.has(b.id)) - Number(liveSet.has(a.id))));
         setLoading(false);
       }
     };
@@ -65,10 +73,7 @@ const RightRail = () => {
             {suggestions.map((profile) => (
               <div key={profile.id} className="flex items-center gap-3">
                 <Link to={`/profile/${profile.id}`} className="shrink-0">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={profile.avatar_url || ""} alt={displayNameOf(profile)} />
-                    <AvatarFallback>{displayNameOf(profile)[0]?.toUpperCase()}</AvatarFallback>
-                  </Avatar>
+                  <PresenceAvatar src={profile.avatar_url} name={displayNameOf(profile)} size={36} isLive={liveIds.has(profile.id)} />
                 </Link>
                 <div className="min-w-0 flex-1">
                   <Link to={`/profile/${profile.id}`} className="block truncate text-sm font-medium hover:text-primary">

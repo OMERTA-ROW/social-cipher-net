@@ -185,33 +185,10 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
     setSearchResults([]);
   };
 
-  const handleConnect = async (platform: string) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Please sign in to connect platforms");
-        return;
-      }
-
-      toast.info(`Opening ${PLATFORM_NAMES[platform]} OAuth...`);
-      
-      // Call edge function to initiate OAuth flow
-      const { data, error } = await supabase.functions.invoke("connect-social-platform", {
-        body: { platform },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) throw error;
-      
-      if (data?.auth_url) {
-        window.location.href = data.auth_url;
-      }
-    } catch (error: any) {
-      console.error("Connection error:", error);
-      toast.error(error.message || `Failed to connect to ${PLATFORM_NAMES[platform]}`);
-    }
+  const handleConnect = async (_platform: string) => {
+    // One connector screen now owns OAuth, encrypted credentials, callbacks,
+    // reconnect state and tests. This removes the older competing redirect flow.
+    window.location.assign("/connectors");
   };
 
   const handleDisconnect = async (connectionId: string, platform: string) => {

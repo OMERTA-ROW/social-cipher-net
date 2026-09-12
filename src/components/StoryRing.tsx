@@ -26,14 +26,13 @@ const StoryRing = ({ avatar, author, hasStory = false, isLive = false, size = "m
       )}
       onClick={onClick}
     >
-      {/* Live Ring - Pulsing purple/blue border animation */}
+      {/* Live Ring */}
       {isLive && (
         <>
-          <div className="absolute inset-0 rounded-full p-[3px] bg-gradient-to-tr from-purple-500 via-blue-500 to-purple-600 animate-pulse">
+          <div className="absolute inset-0 rounded-full p-[3px] bg-primary animate-pulse">
             <div className="absolute inset-[3px] rounded-full bg-background" />
           </div>
-          {/* Outer glow effect */}
-          <div className="absolute inset-[-4px] rounded-full bg-purple-500/30 blur-md animate-pulse" />
+          <div className="absolute inset-[-4px] rounded-full shadow-[0_0_16px_hsl(var(--primary)/0.8)] animate-pulse" />
         </>
       )}
       
@@ -59,7 +58,7 @@ const StoryRing = ({ avatar, author, hasStory = false, isLive = false, size = "m
       {/* Live Badge */}
       {isLive && (
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-20">
-          <div className="flex items-center gap-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
+          <div className="flex items-center gap-1 border border-primary bg-background text-primary text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
             <Radio className="w-2 h-2 animate-pulse" />
             <span>LIVE</span>
           </div>
