@@ -7,6 +7,9 @@
  * free-tier rate limits of the upstream APIs.
  */
 
+import { errorMessage, reportProviderEvent } from "./marketAlerts.ts";
+export { reportProviderEvent } from "./marketAlerts.ts";
+
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
