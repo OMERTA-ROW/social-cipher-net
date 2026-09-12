@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { resolvePaidAccess } from "@/lib/paymentAccess";
 import { reportIssue } from "@/lib/monitoring";
+import { fetchPostProducts, type StoreProduct } from "@/lib/commerce";
 import {
   SocialPost,
   displayNameOf,
@@ -38,6 +39,8 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const offsetRef = useRef(0);
   const [repostedIds, setRepostedIds] = useState<Set<string>>(new Set());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // Shoppable posts: the inline cart lives on the home feed only.
+  const [postProducts, setPostProducts] = useState<Map<string, StoreProduct[]>>(new Map());
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
@@ -50,6 +53,13 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
     const { unlocked } = await resolvePaidAccess(batch, userId);
     setUnlockedIds((prev) => new Set([...prev, ...unlocked]));
   }, [userId]);
+
+  const applyProducts = useCallback(async (batch: SocialPost[]) => {
+    if (batch.length === 0) return;
+    const map = await fetchPostProducts(batch.map((p) => p.id));
+    if (map.size === 0) return;
+    setPostProducts((prev) => new Map([...prev, ...map]));
+  }, []);
 
   const applyReposts = useCallback(async (batch: SocialPost[]) => {
     if (!userId || batch.length === 0) return;
@@ -75,18 +85,20 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       }
       setPosts(page.posts);
       setUnlockedIds(new Set());
+      setPostProducts(new Map());
       setRepostedIds(new Set());
       cursorRef.current = page.nextCursor ?? null;
       setHasMore(page.hasMore);
       await applyAccess(page.posts);
       await applyReposts(page.posts);
+      await applyProducts(page.posts);
     } catch (error: any) {
       reportIssue("feed_load_failed", error, { surface: "social_feed", tab });
       toast.error(error.message || "Failed to load feed");
     } finally {
       setLoading(false);
     }
-  }, [applyAccess, applyReposts, tab, userId]);
+  }, [applyAccess, applyProducts, applyReposts, tab, userId]);
 
 
   useEffect(() => { load(); }, [load, refreshKey]);
@@ -113,13 +125,14 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       setHasMore(page.hasMore);
       await applyAccess(page.posts);
       await applyReposts(page.posts);
+      await applyProducts(page.posts);
     } catch (error: any) {
       reportIssue("feed_load_failed", error, { surface: "social_feed", tab, paging: true });
       toast.error(error.message || "Failed to load more posts");
     } finally {
       setLoadingMore(false);
     }
-  }, [applyAccess, applyReposts, hasMore, isPostTab, loadingMore, tab, userId]);
+  }, [applyAccess, applyProducts, applyReposts, hasMore, isPostTab, loadingMore, tab, userId]);
 
   // Infinite scroll is the default behaviour everywhere — no toggle, no button.
   useEffect(() => {
@@ -196,6 +209,8 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
               media={post.media}
               isDemo={post.is_demo}
               linkToThread
+              products={postProducts.get(post.id) ?? []}
+              shoppable
               onPaymentRequired={() => handlePaymentRequired(post)}
             />
           </div>

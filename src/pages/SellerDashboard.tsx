@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useProductModeration } from "@/hooks/useProductModeration";
 import { Loader2, Plus, Package, DollarSign, ShieldAlert } from "lucide-react";
 import { User } from "@supabase/supabase-js";
+import StoreSettingsCard from "@/components/shop/StoreSettingsCard";
+import ProductOptionsDialog from "@/components/shop/ProductOptionsDialog";
 
 const SellerDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -19,6 +21,7 @@ const SellerDashboard = () => {
   const [sellerProfile, setSellerProfile] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [optionsProductId, setOptionsProductId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState({
     title: "",
     description: "",
@@ -304,6 +307,12 @@ const SellerDashboard = () => {
           </Card>
         </div>
 
+        {sellerProfile && (
+          <div className="mb-6">
+            <StoreSettingsCard sellerProfile={sellerProfile} onSaved={fetchSellerProfile} />
+          </div>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Your Products</CardTitle>
@@ -346,6 +355,14 @@ const SellerDashboard = () => {
                           {product.blocked_reason}
                         </p>
                       )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 w-full"
+                        onClick={() => setOptionsProductId(product.id)}
+                      >
+                        Options and images
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -353,6 +370,12 @@ const SellerDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        <ProductOptionsDialog
+          productId={optionsProductId}
+          open={!!optionsProductId}
+          onOpenChange={(open) => !open && setOptionsProductId(null)}
+        />
       </div>
     </div>
   );

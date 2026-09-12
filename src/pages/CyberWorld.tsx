@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SectionFeed from "@/components/feed/SectionFeed";
 import { Badge } from "@/components/ui/badge";
 import {
   Globe,
@@ -301,6 +302,7 @@ const CyberWorld = () => {
             </Card>
 
             <TradingDisclaimer />
+            <SectionFeed section="trading" />
           </TabsContent>
 
           {/* Studio */}
@@ -326,6 +328,7 @@ const CyberWorld = () => {
                 {openWindowsBar}
               </CardContent>
             </Card>
+            <SectionFeed section="studio" />
           </TabsContent>
 
           {/* Live Studio */}
@@ -352,6 +355,7 @@ const CyberWorld = () => {
                 {openWindowsBar}
               </CardContent>
             </Card>
+            <SectionFeed section="live" />
           </TabsContent>
 
           {/* Trending */}
@@ -371,6 +375,7 @@ const CyberWorld = () => {
                 <TrendingPanel />
               </CardContent>
             </Card>
+            <SectionFeed section="trending" />
           </TabsContent>
 
           {/* Live Events */}
@@ -390,6 +395,7 @@ const CyberWorld = () => {
                 <LiveEventsPanel />
               </CardContent>
             </Card>
+            <SectionFeed section="events" />
           </TabsContent>
 
           {/* Community */}
@@ -413,6 +419,7 @@ const CyberWorld = () => {
                 <CommunityPanel userId={user?.id ?? null} />
               </CardContent>
             </Card>
+            <SectionFeed section="community" />
           </TabsContent>
 
           {/* Discovery */}
@@ -432,6 +439,7 @@ const CyberWorld = () => {
                 <CreatorsPanel />
               </CardContent>
             </Card>
+            <SectionFeed section="discovery" />
           </TabsContent>
 
           {/* Pool */}
@@ -444,6 +452,7 @@ const CyberWorld = () => {
               Open as window
             </Button>
             <TokenPoolManager />
+            <SectionFeed section="pool" />
           </TabsContent>
         </Tabs>
       </div>

@@ -300,3 +300,215 @@ export async function fetchRepostedIds(postIds: string[], userId: string): Promi
   if (error) return new Set();
   return new Set((data ?? []).map((r) => r.post_id));
 }
+
+/* ------------------------------------------------------------------ *
+ * Sections, community branches and subject-anchored comment threads.
+ * Every section of the site posts into the same table; `section` (and
+ * optionally `community_slug`) is what makes a section feel like its
+ * own feed while everything still flows into the home feed.
+ * ------------------------------------------------------------------ */
+
+export const SECTIONS = [
+  "main",
+  "profile",
+  "arena",
+  "trading",
+  "studio",
+  "theater",
+  "community",
+  "discovery",
+  "pool",
+  "live",
+  "trending",
+  "events",
+  "shop",
+  "cyberworld",
+] as const;
+export type SectionKey = (typeof SECTIONS)[number];
+
+export const SECTION_LABELS: Record<string, string> = {
+  main: "Home",
+  profile: "Profile",
+  arena: "Arena",
+  trading: "Trading",
+  studio: "Studio",
+  theater: "Movie Theater",
+  community: "Community",
+  discovery: "Discovery",
+  pool: "Pool",
+  live: "Live Studio",
+  trending: "Trending",
+  events: "Live Events",
+  shop: "Shop",
+  cyberworld: "Cyber World",
+};
+
+/** Feed for one section, optionally narrowed to a community branch. */
+export async function fetchSectionFeed(
+  section: string,
+  options: { community?: string | null; limit?: number; cursor?: string | null } = {}
+): Promise<FeedPage> {
+  const limit = options.limit ?? FEED_PAGE_SIZE;
+  let query = supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .is("parent_post_id", null)
+    .is("subject_type", null)
+    .eq("section", section)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (options.community) query = query.eq("community_slug", options.community);
+  if (options.cursor) query = query.lt("created_at", options.cursor);
+  const { data, error } = await query;
+  if (error) throw error;
+  return await toPage(data ?? [], limit);
+}
+
+export interface Community {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  created_by: string;
+}
+
+export async function fetchCommunities(): Promise<Community[]> {
+  const { data, error } = await supabase
+    .from("communities")
+    .select("id, slug, name, description, icon, created_by")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Community[];
+}
+
+export const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48);
+
+export async function createCommunity(input: {
+  name: string;
+  description?: string;
+}): Promise<Community> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in to create a community");
+  const slug = slugify(input.name);
+  if (!slug) throw new Error("Give the community a name");
+  const { data, error } = await supabase
+    .from("communities")
+    .insert({
+      slug,
+      name: input.name.trim(),
+      description: input.description?.trim() || null,
+      created_by: user.id,
+    })
+    .select("id, slug, name, description, icon, created_by")
+    .single();
+  if (error) throw error;
+  return data as Community;
+}
+
+/** Publish a post into a section (and optional community branch). */
+export async function createSectionPost(input: {
+  content: string;
+  section?: string;
+  communitySlug?: string | null;
+  parentPostId?: string | null;
+}): Promise<string> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in to post");
+  const { data, error } = await supabase
+    .from("posts")
+    .insert({
+      user_id: user.id,
+      content: input.content.trim(),
+      section: input.section ?? "main",
+      community_slug: input.communitySlug ?? null,
+      parent_post_id: input.parentPostId ?? null,
+      monetization_type: "free",
+      price: 0,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id as string;
+}
+
+export type SubjectType =
+  | "media"
+  | "album"
+  | "theater_event"
+  | "live_stream"
+  | "chart"
+  | "product";
+
+/**
+ * Returns the id of the anchor post that owns the comment thread for a piece
+ * of content, creating it on first use. Every comment on the site therefore
+ * lives in the same posts/replies system.
+ */
+export async function ensureSubjectThread(
+  subjectType: SubjectType,
+  subjectId: string,
+  meta: { section?: string; title?: string } = {}
+): Promise<string> {
+  const { data: existing } = await supabase
+    .from("posts")
+    .select("id")
+    .eq("subject_type", subjectType)
+    .eq("subject_id", subjectId)
+    .maybeSingle();
+  if (existing?.id) return existing.id as string;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in to comment");
+
+  const { data, error } = await supabase
+    .from("posts")
+    .insert({
+      user_id: user.id,
+      content: meta.title ?? "",
+      section: meta.section ?? "main",
+      subject_type: subjectType,
+      subject_id: subjectId,
+      monetization_type: "free",
+      price: 0,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    // Someone else created the anchor first — re-read it.
+    const { data: race } = await supabase
+      .from("posts")
+      .select("id")
+      .eq("subject_type", subjectType)
+      .eq("subject_id", subjectId)
+      .maybeSingle();
+    if (race?.id) return race.id as string;
+    throw error;
+  }
+  return data.id as string;
+}
+
+/** Flat, chronological comments under an anchor or post. */
+export async function fetchComments(parentId: string, limit = 100): Promise<SocialPost[]> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .eq("parent_post_id", parentId)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  return await resolvePostsMedia((data ?? []).map(mapPost));
+}

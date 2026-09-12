@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Play, Pause, Send, X, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import CommentsPanel from "@/components/comments/CommentsPanel";
 import type { TheaterEvent } from "@/hooks/useTheaterEvents";
 
 interface ChatMessage {
@@ -281,6 +282,17 @@ const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
             <Send className="w-4 h-4" />
           </Button>
         </div>
+      </Card>
+
+      <Card className="lg:col-span-3 p-4 bg-card/50 backdrop-blur border-primary/20">
+        <h3 className="font-semibold mb-3">Comments</h3>
+        <CommentsPanel
+          subjectType="theater_event"
+          subjectId={event.id}
+          section="theater"
+          title={event.title}
+          live
+        />
       </Card>
     </div>
   );

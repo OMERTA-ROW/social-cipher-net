@@ -7,8 +7,10 @@ import StoryRing from "@/components/StoryRing";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LinkPreview from "@/components/post/LinkPreview";
+import PostProductCard from "@/components/shop/PostProductCard";
 import { extractUrls } from "@/lib/links";
 import { toggleRepost } from "@/lib/social";
+import type { StoreProduct } from "@/lib/commerce";
 
 interface PostCardProps {
   postId: string;
@@ -36,6 +38,10 @@ interface PostCardProps {
   linkToThread?: boolean;
   onPaymentRequired?: () => void;
   onReply?: () => void;
+  /** Products attached to this post. Cart controls render on the home feed only. */
+  products?: StoreProduct[];
+  /** True only when the card is rendered inside the home feed. */
+  shoppable?: boolean;
 }
 
 const PostCard = ({
@@ -61,7 +67,9 @@ const PostCard = ({
   isDemo = false,
   linkToThread = false,
   onPaymentRequired,
-  onReply
+  onReply,
+  products = [],
+  shoppable = false
 }: PostCardProps) => {
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
@@ -274,6 +282,12 @@ const PostCard = ({
               {links.map((url) => (
                 <LinkPreview key={url} url={url} />
               ))}
+
+              {shoppable && products.length > 0 && (
+                <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+                  <PostProductCard products={products} />
+                </div>
+              )}
             </>
           )}
 

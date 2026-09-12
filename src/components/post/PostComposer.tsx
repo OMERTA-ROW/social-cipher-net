@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import { Loader2, Send } from "lucide-react";
 import MediaUpload from "@/components/MediaUpload";
 import LinkPreview from "@/components/post/LinkPreview";
 import { extractUrls } from "@/lib/links";
+import { attachProductToPost } from "@/lib/commerce";
 
 interface Props {
   avatarUrl?: string | null;
@@ -27,6 +28,37 @@ const PostComposer = ({ avatarUrl, displayName, onPublished }: Props) => {
   const [mediaFiles, setMediaFiles] = useState<
     Array<{ file: File; preview: string; type: "image" | "video" }>
   >([]);
+
+  const [myProducts, setMyProducts] = useState<Array<{ id: string; title: string }>>([]);
+  const [productId, setProductId] = useState<string>("");
+
+  // Sellers can attach one of their products; the buy controls show on the home feed.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: seller } = await supabase
+        .from("seller_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!seller?.id) return;
+      const { data } = await supabase
+        .from("products")
+        .select("id, title")
+        .eq("seller_id", seller.id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (alive) setMyProducts((data ?? []) as Array<{ id: string; title: string }>);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const urls = useMemo(() => extractUrls(content).slice(0, 2), [content]);
   const initials = (displayName ?? "You").slice(0, 2).toUpperCase();
@@ -76,8 +108,17 @@ const PostComposer = ({ avatarUrl, displayName, onPublished }: Props) => {
         if (mediaErr) throw mediaErr;
       }
 
+      if (productId) {
+        try {
+          await attachProductToPost(post.id, productId);
+        } catch {
+          toast.error("Posted, but the product could not be attached");
+        }
+      }
+
       setContent("");
       setMediaFiles([]);
+      setProductId("");
       toast.success("Posted to your feed");
       onPublished?.(post.id);
     } catch (error: any) {
@@ -112,6 +153,27 @@ const PostComposer = ({ avatarUrl, displayName, onPublished }: Props) => {
           <div className="border-t border-border/40 pt-3">
             <MediaUpload onFilesChange={setMediaFiles} maxFiles={6} />
           </div>
+
+          {myProducts.length > 0 && (
+            <div className="flex items-center gap-2 border-t border-border/40 pt-3">
+              <label htmlFor="composer-product" className="text-xs text-muted-foreground">
+                Sell a product with this post
+              </label>
+              <select
+                id="composer-product"
+                value={productId}
+                onChange={(e) => setProductId(e.target.value)}
+                className="h-9 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+              >
+                <option value="">None</option>
+                {myProducts.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="flex justify-end">
             <Button onClick={publish} disabled={posting} className="gap-2 glow-primary">

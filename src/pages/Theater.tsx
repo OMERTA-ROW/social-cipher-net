@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheaterEvents, type TheaterEvent } from "@/hooks/useTheaterEvents";
 import TheaterRoom from "@/components/theater/TheaterRoom";
+import SectionFeed from "@/components/feed/SectionFeed";
 
 const Theater = () => {
   const { events, loading, userId, refresh } = useTheaterEvents();
@@ -30,6 +31,7 @@ const Theater = () => {
     video_url: "",
     poster_url: "",
     starts_at: "",
+    format: "movie",
   });
 
   const { showing, upcoming } = useMemo(() => {
@@ -62,6 +64,8 @@ const Theater = () => {
       poster_url: form.poster_url.trim() || null,
       starts_at: new Date(form.starts_at).toISOString(),
       status: "scheduled",
+      format: form.format,
+      is_open: true,
     });
     setCreating(false);
     if (error) {
@@ -69,7 +73,7 @@ const Theater = () => {
       return;
     }
     toast.success("Screening scheduled");
-    setForm({ title: "", description: "", video_url: "", poster_url: "", starts_at: "" });
+    setForm({ title: "", description: "", video_url: "", poster_url: "", starts_at: "", format: "movie" });
     setOpen(false);
     refresh();
   };
@@ -145,7 +149,8 @@ const Theater = () => {
               </h1>
             </div>
             <p className="text-muted-foreground">
-              Host a screening, watch together in sync, and chat beside the picture.
+              Host a watch-along, podcast or live discussion, watch together in
+              sync, and chat beside the picture. Open to every account.
             </p>
           </div>
 
@@ -168,6 +173,21 @@ const Theater = () => {
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
                   />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="t-format">Format</Label>
+                  <select
+                    id="t-format"
+                    value={form.format}
+                    onChange={(e) => setForm({ ...form, format: e.target.value })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="movie">Movie</option>
+                    <option value="series">Series</option>
+                    <option value="podcast">Podcast</option>
+                    <option value="discussion">Live discussion</option>
+                    <option value="other">Other watch-along</option>
+                  </select>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="t-when">Starts at</Label>
@@ -251,6 +271,21 @@ const Theater = () => {
                   ))}
                 </div>
               )}
+            </section>
+
+            <section className="mt-10">
+              <h2 className="text-xl font-bold text-foreground mb-3">
+                Movie Theater feed
+              </h2>
+              <p className="text-sm text-muted-foreground mb-4">
+                Post about what you are watching. Everything here also appears on
+                the home feed.
+              </p>
+              <SectionFeed
+                section="theater"
+                placeholder="What are you watching tonight?"
+                emptyLabel="No posts in the theater yet. Start the conversation."
+              />
             </section>
           </>
         )}
