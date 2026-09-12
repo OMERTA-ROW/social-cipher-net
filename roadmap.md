@@ -61,3 +61,5 @@
 - [x] AI agent connectors (OpenAI, Anthropic, Gemini, others); Terminal wiring pending Terminal build
 - [ ] Live status per connection: connected / expired / needs re-auth / error, auto refresh
 - [ ] Connected accounts feed inbox, earnings and aggregated feed
+
+- [ ] Home feed exception: plain vertical scrolling feed only (no pinning/floating windows); aggregates posts from every section.

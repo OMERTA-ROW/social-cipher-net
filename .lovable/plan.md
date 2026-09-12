@@ -70,3 +70,11 @@ that branch. Creating one takes a name and description; anyone can post into it.
 - `StartLiveStreamDialog` / `useLiveStream` pass and filter on `section`;
   `LiveEventsPanel` filters by section instead of category alone.
 - Styling untouched: existing cards, colours, spacing and the galaxy background stay.
+
+## Home feed is the exception
+
+The home feed stays a plain, vertically scrolling social feed — no pinning, no floating
+windows, no pop-ups. It aggregates every post made anywhere on the site, in any section,
+while each post still lives in its own section too. The pin-and-scroll multi-window
+system stays exactly as-is for Trading, Studio, Live Studio, Trending, Live Events,
+Community, Discovery and Pool.
