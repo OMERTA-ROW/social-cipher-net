@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import SponsoredCard from "@/components/ads/SponsoredCard";
+import { useAdSlot, useAdsSuppressed } from "@/hooks/useAdSlot";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindows } from "@/hooks/useFloatingWindows";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +64,9 @@ interface ChatMessage {
 }
 
 const CyberStreamer = () => {
+  // Live-stream ad placement: real running campaigns only, hidden for paid tiers.
+  const adsSuppressed = useAdsSuppressed();
+  const { data: streamAds } = useAdSlot("livestream");
   const navigate = useNavigate();
   const { windows, openWindow, closeWindow } = useFloatingWindows();
   const [loading, setLoading] = useState(true);
