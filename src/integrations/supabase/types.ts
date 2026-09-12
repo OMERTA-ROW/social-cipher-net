@@ -2481,6 +2481,11 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_mode: string
+          avatar_original_url: string | null
+          avatar_standing_position: Json
+          avatar_standing_url: string | null
+          avatar_transform: Json
           avatar_url: string | null
           bio: string | null
           created_at: string | null
@@ -2495,6 +2500,11 @@ export type Database = {
           verified_at: string | null
         }
         Insert: {
+          avatar_mode?: string
+          avatar_original_url?: string | null
+          avatar_standing_position?: Json
+          avatar_standing_url?: string | null
+          avatar_transform?: Json
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
@@ -2509,6 +2519,11 @@ export type Database = {
           verified_at?: string | null
         }
         Update: {
+          avatar_mode?: string
+          avatar_original_url?: string | null
+          avatar_standing_position?: Json
+          avatar_standing_url?: string | null
+          avatar_transform?: Json
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
