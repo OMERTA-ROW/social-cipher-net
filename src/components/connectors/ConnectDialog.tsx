@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,10 +32,31 @@ const ConnectDialog = ({
   const [accountName, setAccountName] = useState("");
   const [saving, setSaving] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [configured, setConfigured] = useState<string[] | null>(null);
+
+  // Which services already have their developer app set up on the server.
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    supabase.functions
+      .invoke("connector-oauth", { body: { action: "status" } })
+      .then(({ data }) => {
+        if (alive && Array.isArray(data?.configured)) setConfigured(data.configured);
+      })
+      .catch(() => {
+        if (alive) setConfigured(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   if (!service) return null;
 
+
   const supportsOauth = service.methods.includes("oauth") && service.oauthProvider;
+  const oauthReady =
+    configured === null ? true : configured.includes(String(service.oauthProvider));
 
   const startOauth = async () => {
     setStarting(true);
@@ -48,22 +69,40 @@ const ConnectDialog = ({
           redirect_uri: `${window.location.origin}/connectors`,
         },
       });
-      if (error) throw error;
-      if (data?.error === "not_configured") {
+      // A refused start comes back as a non-2xx, so read the real reason out of it.
+      let payload = data;
+      if (error) {
+        const raw =
+          typeof (error as { context?: { text?: () => Promise<string> } }).context?.text ===
+          "function"
+            ? await (error as { context: { text: () => Promise<string> } }).context.text()
+            : "";
+        try {
+          payload = raw ? JSON.parse(raw) : null;
+        } catch {
+          payload = null;
+        }
+        if (!payload?.error) throw error;
+      }
+      if (payload?.error === "not_configured") {
         toast.error(`${service.name} isn't set up for one-click sign-in yet`, {
-          description: "Use the key entry below in the meantime.",
+          description:
+            payload.message ?? "Use the key entry below in the meantime.",
         });
         return;
       }
-      if (data?.error) throw new Error(data.error);
+      if (payload?.error) throw new Error(payload.error);
+      const authorizeUrl: string | undefined = payload?.authorize_url ?? data?.authorize_url;
+      if (!authorizeUrl) throw new Error("No sign-in link was returned");
+
       // Authorise in a popup so the user keeps their place on this page.
       const popup = window.open(
-        data.authorize_url,
+        authorizeUrl,
         "cyberlink-oauth",
         "width=600,height=760,noopener=no,noreferrer=no",
       );
       if (!popup) {
-        window.location.href = data.authorize_url;
+        window.location.href = authorizeUrl;
         return;
       }
       toast.info(`Finish signing in to ${service.name} in the popup window`);
@@ -121,17 +160,19 @@ const ConnectDialog = ({
             <Button
               className="w-full glow-primary"
               onClick={startOauth}
-              disabled={starting}
+              disabled={starting || !oauthReady}
             >
               {starting ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <ShieldCheck className="w-4 h-4 mr-2" />
               )}
-              Authorize with {service.name}
+              {oauthReady ? `Authorize with ${service.name}` : "Setup needed"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              You sign in on {service.name} — Cyber Link never sees your password.
+              {oauthReady
+                ? `You sign in on ${service.name} — Cyber Link never sees your password.`
+                : `One-click sign-in for ${service.name} is waiting on its developer app details. You can still connect with your own keys below.`}
             </p>
             {service.fields?.length ? (
               <div className="flex items-center gap-3 py-1">

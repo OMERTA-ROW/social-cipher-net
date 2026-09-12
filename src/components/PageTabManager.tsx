@@ -7,27 +7,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 import { useSavedTabs } from "@/hooks/useSavedTabs";
-import { toast } from "sonner";
+import { useOpenSavedTab } from "@/hooks/useOpenSavedTab";
 
 export const PageTabManager = () => {
-  const { windows, closeWindow, bringToFront, openWindow } = useFloatingWindowsContext();
+  const { windows, closeWindow, bringToFront } = useFloatingWindowsContext();
   const { savedTabs } = useSavedTabs();
   const [showSavedTabs, setShowSavedTabs] = useState(false);
+  const openSavedTab = useOpenSavedTab();
 
-  const handleOpenSavedTab = (tab: any) => {
-    openWindow(
-      tab.tab_name,
-      <iframe
-        src={tab.tab_url}
-        className="w-full h-full border-0"
-        title={tab.tab_name}
-      />,
-      1200,
-      800
-    );
-    toast.success(`Opening ${tab.tab_name}`);
+  const handleOpenSavedTab = (tab: { tab_name: string; tab_url: string }) => {
+    openSavedTab(tab);
     setShowSavedTabs(false);
   };
+
 
   if (windows.length === 0 && savedTabs.length === 0) return null;
 

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CheckCircle2, Upload, ExternalLink, Loader2, Crop, UserRound, PersonStanding, Pencil } from "lucide-react";
-import AvatarEditor, { AvatarTransform, DEFAULT_TRANSFORM, renderAvatar } from "@/components/profile/AvatarEditor";
+import AvatarEditor, { AvatarTransform, DEFAULT_TRANSFORM, headshotTransform, renderAvatar } from "@/components/profile/AvatarEditor";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import StandingAvatar, { DEFAULT_STANDING, StandingPosition } from "@/components/profile/StandingAvatar";
 import { cutOutSubject } from "@/lib/cutout";
@@ -166,8 +166,8 @@ const Profile = () => {
       return;
     }
     setProfile({ ...profile, avatar_original_url: publicUrl });
-    // A new photo starts from a clean frame, and the cut-out is now stale.
-    setTransform(DEFAULT_TRANSFORM);
+    // A new photo starts framed on the head, and the cut-out is now stale.
+    setTransform(await headshotTransform(publicUrl));
     setStandingUrl(null);
     setEditorSrc(publicUrl);
     setEditorOpen(true);

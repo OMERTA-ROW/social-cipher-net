@@ -17,6 +17,23 @@ export type AvatarTransform = { zoom: number; x: number; y: number };
 
 export const DEFAULT_TRANSFORM: AvatarTransform = { zoom: 1, x: 0, y: 0 };
 
+/**
+ * Starting frame for a freshly uploaded photo. Tall photos are shifted down so
+ * the head sits in the circle instead of the chest, which is what people expect
+ * from a profile picture.
+ */
+export async function headshotTransform(src: string): Promise<AvatarTransform> {
+  try {
+    const img = await loadImage(src);
+    if (img.height <= img.width) return DEFAULT_TRANSFORM;
+    // How much taller the cover-fitted image is than the square, in square units.
+    const overflow = img.height / img.width - 1;
+    return { zoom: 1, x: 0, y: clamp(overflow * 0.35, 0, 0.4) };
+  } catch {
+    return DEFAULT_TRANSFORM;
+  }
+}
+
 /** Rendered avatars are 512px so a 256px slot still has a 2x source. */
 export const AVATAR_RENDER_SIZE = 512;
 
