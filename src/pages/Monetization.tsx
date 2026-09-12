@@ -22,7 +22,9 @@ const Monetization = () => {
     subscriptions: 0, 
     total: 0,
     payPerView: 0,
-    payPerClick: 0
+    payPerClick: 0,
+    affiliate: 0,
+    brandDeals: 0,
   });
   const [recent, setRecent] = useState<Array<{ id: string; amount: number; earning_type: string; created_at: string }>>([]);
   const navigate = useNavigate();
