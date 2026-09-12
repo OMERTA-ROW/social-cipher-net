@@ -288,6 +288,18 @@ Deno.serve(async (req) => {
     } = await admin.auth.getUser(authHeader.replace("Bearer ", ""));
     if (!user) return json({ error: "Sign in required" }, 401);
 
+    // ---- status: which services already have their developer app set up ----
+    if (action === "status") {
+      const configured = Object.keys(PROVIDERS).filter((p) =>
+        Boolean(Deno.env.get(envKey(p, "CLIENT_ID")) && Deno.env.get(envKey(p, "CLIENT_SECRET")))
+      );
+      return json({
+        ok: true,
+        configured,
+        all: Object.keys(PROVIDERS),
+      });
+    }
+
     if (action !== "start") return json({ error: "Unknown action" }, 400);
 
     const provider = String(body.provider ?? "");
