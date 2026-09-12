@@ -92,16 +92,17 @@ const ConnectDialog = ({
         return;
       }
       if (payload?.error) throw new Error(payload.error);
-      data.authorize_url = payload?.authorize_url ?? data?.authorize_url;
+      const authorizeUrl: string | undefined = payload?.authorize_url ?? data?.authorize_url;
+      if (!authorizeUrl) throw new Error("No sign-in link was returned");
 
       // Authorise in a popup so the user keeps their place on this page.
       const popup = window.open(
-        data.authorize_url,
+        authorizeUrl,
         "cyberlink-oauth",
         "width=600,height=760,noopener=no,noreferrer=no",
       );
       if (!popup) {
-        window.location.href = data.authorize_url;
+        window.location.href = authorizeUrl;
         return;
       }
       toast.info(`Finish signing in to ${service.name} in the popup window`);
