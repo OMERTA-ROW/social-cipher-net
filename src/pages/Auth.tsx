@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Lock } from "lucide-react";
+import ScrollDatePicker from "@/components/ScrollDatePicker";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
