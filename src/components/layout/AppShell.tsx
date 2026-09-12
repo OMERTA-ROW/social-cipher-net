@@ -22,6 +22,7 @@ import {
   LineChart,
   Pickaxe,
   TerminalSquare,
+  ShoppingBag,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ const navGroups: NavGroup[] = [
     title: "Markets",
     icon: DollarSign,
     items: [
+      { title: "Shop", url: "/shop", icon: ShoppingBag },
       { title: "Trading", url: "/trading", icon: LineChart },
       { title: "Monetization", url: "/monetization", icon: DollarSign },
       { title: "Miners", url: "/miners", icon: Pickaxe },
