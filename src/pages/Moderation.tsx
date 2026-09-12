@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,9 +21,12 @@ type Review = {
   status: string;
   details: unknown;
   created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  reviewer_note: string | null;
 };
 
-const STATUSES = ["pending", "reviewed", "dismissed"] as const;
+const STATUSES = ["pending", "approved", "rejected"] as const;
 
 /**
  * Review-only moderation queue. Reviewers record a decision; nothing here
@@ -35,13 +39,14 @@ const Moderation = () => {
   const [items, setItems] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("moderation_reviews")
       .select(
-        "id, subject_type, subject_id, subject_user_id, reason, severity, status, details, created_at",
+        "id, subject_type, subject_id, subject_user_id, reason, severity, status, details, created_at, reviewed_by, reviewed_at, reviewer_note",
       )
       .eq("status", status)
       .order("created_at", { ascending: false })
@@ -61,19 +66,53 @@ const Moderation = () => {
     if (isCeo) load();
   }, [isCeo, load]);
 
-  const decide = async (id: string, next: "reviewed" | "dismissed") => {
-    setSaving(id);
+  const decide = async (item: Review, next: "approved" | "rejected") => {
+    setSaving(item.id);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     const { error } = await supabase
       .from("moderation_reviews")
-      .update({ status: next })
-      .eq("id", id);
-    setSaving(null);
+      .update({
+        status: next,
+        reviewed_by: user?.id ?? null,
+        reviewed_at: new Date().toISOString(),
+        reviewer_note: notes[item.id]?.trim() || null,
+      })
+      .eq("id", item.id);
+
     if (error) {
+      setSaving(null);
       toast.error(error.message);
       return;
     }
-    toast.success(next === "reviewed" ? "Marked as reviewed" : "Report dismissed");
-    setItems((prev) => prev.filter((i) => i.id !== id));
+
+    // Immutable trail of who decided what, and on which report.
+    await supabase.rpc("log_security_event", {
+      _user_id: user?.id ?? null,
+      _event_type: "moderation_decision",
+      _severity: next === "approved" ? "medium" : "low",
+      _metadata: {
+        review_id: item.id,
+        decision: next,
+        subject_type: item.subject_type,
+        subject_id: item.subject_id,
+        subject_user_id: item.subject_user_id,
+        note: notes[item.id]?.trim() || null,
+      },
+    });
+
+    setSaving(null);
+    toast.success(
+      next === "approved" ? "Report approved and recorded" : "Report rejected and recorded",
+    );
+    setItems((prev) => prev.filter((i) => i.id !== item.id));
+    setNotes((prev) => {
+      const rest = { ...prev };
+      delete rest[item.id];
+      return rest;
+    });
   };
 
   if (roleLoading) {
@@ -114,7 +153,8 @@ const Moderation = () => {
           <div>
             <h1 className="text-2xl font-bold">Review queue</h1>
             <p className="text-sm text-muted-foreground">
-              Reports raised by people on Cyber Link. Decisions are recorded here only.
+              Reports raised by people on Cyber Link. Approving records the decision; it never
+              removes content or suspends an account on its own.
             </p>
           </div>
         </header>
@@ -164,24 +204,45 @@ const Moderation = () => {
                       Reference: {item.subject_id}
                     </p>
                   )}
-                  {status === "pending" && (
-                    <div className="flex gap-2 pt-1">
-                      <Button
-                        size="sm"
-                        onClick={() => decide(item.id, "reviewed")}
-                        disabled={saving === item.id}
-                      >
-                        Mark reviewed
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => decide(item.id, "dismissed")}
-                        disabled={saving === item.id}
-                      >
-                        Dismiss
-                      </Button>
+                  {status === "pending" ? (
+                    <div className="space-y-2 pt-1">
+                      <Textarea
+                        value={notes[item.id] ?? ""}
+                        onChange={(e) =>
+                          setNotes((prev) => ({ ...prev, [item.id]: e.target.value }))
+                        }
+                        placeholder="Optional note kept with the decision"
+                        rows={2}
+                        className="text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => decide(item, "approved")}
+                          disabled={saving === item.id}
+                        >
+                          {saving === item.id && (
+                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                          )}
+                          Approve report
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => decide(item, "rejected")}
+                          disabled={saving === item.id}
+                        >
+                          Reject report
+                        </Button>
+                      </div>
                     </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      {item.reviewed_at
+                        ? `Decided ${new Date(item.reviewed_at).toLocaleString()}`
+                        : "No decision time recorded"}
+                      {item.reviewer_note ? ` — ${item.reviewer_note}` : ""}
+                    </p>
                   )}
                 </CardContent>
               </Card>
