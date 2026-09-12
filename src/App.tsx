@@ -43,6 +43,7 @@ import Thread from "./pages/Thread";
 import Dashboard from "./pages/Dashboard";
 import Trading from "./pages/Trading";
 import Terminal from "./pages/Terminal";
+import Moderation from "./pages/Moderation";
 import OAuthConsent from "./pages/OAuthConsent";
 import AIBotAssistant from "./components/AIBotAssistant";
 import SpaceBackground from "./components/space/SpaceBackground";
@@ -83,6 +84,7 @@ const AppContent = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/trading" element={<Trading />} />
         <Route path="/terminal" element={<Terminal />} />
+        <Route path="/moderation" element={<Moderation />} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/ceo" element={<CeoPortal />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
