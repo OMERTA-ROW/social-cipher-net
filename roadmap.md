@@ -67,6 +67,15 @@
 - [ ] Inline post cart appears on home feed only; posts in their own sections stay plain.
 - [ ] Movie Theater community: hosted watch sessions + host live stream, open posting, comments, feeds into home feed, drag/pin/scroll windows, format-agnostic (movies, podcasts, discussions).
 
+## Dashboard and profile menu update (Sept 12)
+- [x] Remove duplicated dashboard/header counters and move live totals into the account dropdown
+- [x] Remove email from the account dropdown; keep name, handle, profile, settings, and sign out
+- [x] Deep-link working account settings and add Home/optional Monetization dashboard access
+- [x] Preserve full uploaded-image aspect ratio in previews, posts, profile media, and album covers
+- [x] Remove the visible Profile Radio playlist-link field
+- [x] Replace purple hover blocks and halos with blue illumination
+- [x] Protect theater playback URLs while retaining a safe public event schedule
+
 ## Batch update (Sept 12)
 - [x] 1 Connector layer audit + fixes (code done; provider app credentials still needed from owner)
 - [x] 2 Charts render real live data everywhere
