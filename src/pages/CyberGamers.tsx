@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +16,9 @@ import { supabase } from "@/integrations/supabase/client";
 import ArenaShell, { ArenaStatusChip } from "@/components/arena/ArenaShell";
 
 interface GangMember {
-  id: number;
+  id: string;
   name: string;
-  rank: string;
-  level: number;
+  avatarUrl: string | null;
   isLive: boolean;
 }
 
