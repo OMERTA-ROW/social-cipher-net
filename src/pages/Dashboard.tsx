@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { resolvePostsMedia } from "@/lib/media";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import PostCard from "@/components/PostCard";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsCeo } from "@/hooks/useIsCeo";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,15 +21,7 @@ import {
   displayNameOf,
   formatTimestamp,
 } from "@/lib/social";
-import { CheckCircle2, Heart, Loader2, LogOut, MessageCircle, Users, FileText } from "lucide-react";
-
-interface Stats {
-  posts: number;
-  followers: number;
-  following: number;
-  likes: number;
-  replies: number;
-}
+import { DollarSign, Home, Loader2 } from "lucide-react";
 
 interface NotificationPrefs {
   notify_likes: boolean;
@@ -48,22 +39,12 @@ const defaultPrefs: NotificationPrefs = {
   email_updates: false,
 };
 
-const StatTile = ({ label, value, icon: Icon }: { label: string; value: number; icon: typeof Heart }) => (
-  <Card className="p-4 bg-card/70 backdrop-blur-sm border-border/60 min-h-[92px]">
-    <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-      <Icon className="w-3.5 h-3.5" /> {label}
-    </div>
-    <div className="text-2xl font-bold tabular-nums">{value}</div>
-  </Card>
-);
-
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { isCeo } = useIsCeo();
+  const [searchParams] = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<SocialProfile & { bio?: string | null } | null>(null);
-  const [stats, setStats] = useState<Stats>({ posts: 0, followers: 0, following: 0, likes: 0, replies: 0 });
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,6 +58,9 @@ const Dashboard = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPrefs>(defaultPrefs);
   const [savingPrefs, setSavingPrefs] = useState(false);
+  const [showMonetization, setShowMonetization] = useState(() => {
+    try { return localStorage.getItem("cyberlink:dashboard-monetization-hidden") !== "1"; } catch { return true; }
+  });
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -128,13 +112,6 @@ const Dashboard = () => {
 
     const roots = await resolvePostsMedia(mapped.filter((p) => !p.parent_post_id));
     setPosts(roots);
-    setStats({
-      posts: roots.length,
-      followers: followersRes.count ?? 0,
-      following: followingRes.count ?? 0,
-      likes: mapped.reduce((sum, p) => sum + p.like_count, 0),
-      replies: mapped.reduce((sum, p) => sum + p.reply_count, 0),
-    });
 
     if (prefsRes.data) {
       const d = prefsRes.data as any;
@@ -206,54 +183,28 @@ const Dashboard = () => {
     if (error) toast.error(error.message);
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+  const toggleMonetization = (visible: boolean) => {
+    setShowMonetization(visible);
+    try { localStorage.setItem("cyberlink:dashboard-monetization-hidden", visible ? "0" : "1"); } catch { /* ignore */ }
   };
 
   return (
     <AppShell>
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
 
-      {/* Profile summary */}
-      <Card className="p-5 mb-5 bg-card/70 backdrop-blur-sm border-border/60 min-h-[132px]">
-        <div className="flex items-start gap-4">
-          <ProfileAvatar
-            src={profile?.avatar_url}
-            name={displayNameOf(profile) || email}
-            size={64}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-semibold truncate">{displayNameOf(profile)}</h2>
-              {profile?.is_verified && (
-                <Badge variant="secondary" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Verified</Badge>
-              )}
-            </div>
-            {profile?.username && <p className="text-sm text-muted-foreground">@{profile.username}</p>}
-            <p className="text-xs text-muted-foreground mt-1">{email}</p>
-            <div className="flex gap-2 mt-3 flex-wrap">
-              {userId && (
-                <Button size="sm" variant="outline" asChild>
-                  <Link to={`/profile/${userId}`}>View public profile</Link>
-                </Button>
-              )}
-            </div>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
+        <p className="text-sm text-muted-foreground">Your creative programs and site activity in one place.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" asChild><Link to="/"><Home className="h-4 w-4" /> Home</Link></Button>
+          {showMonetization && <Button size="sm" variant="outline" asChild><Link to="/monetization"><DollarSign className="h-4 w-4" /> Monetization</Link></Button>}
+          <div className="flex items-center gap-2 pl-1">
+            <Label htmlFor="show-monetization" className="text-xs text-muted-foreground">Show Monetization</Label>
+            <Switch id="show-monetization" checked={showMonetization} onCheckedChange={toggleMonetization} />
           </div>
         </div>
-      </Card>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-        <StatTile label="Posts" value={stats.posts} icon={FileText} />
-        <StatTile label="Followers" value={stats.followers} icon={Users} />
-        <StatTile label="Following" value={stats.following} icon={Users} />
-        <StatTile label="Likes received" value={stats.likes} icon={Heart} />
-        <StatTile label="Replies received" value={stats.replies} icon={MessageCircle} />
-        <StatTile label="Engagement" value={stats.likes + stats.replies} icon={Heart} />
       </div>
 
-      <Tabs defaultValue="posts">
+      <Tabs defaultValue={searchParams.get("tab") === "settings" ? "settings" : "posts"}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="posts">My posts</TabsTrigger>
           <TabsTrigger value="settings">Account settings</TabsTrigger>

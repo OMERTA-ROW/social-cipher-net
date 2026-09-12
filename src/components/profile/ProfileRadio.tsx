@@ -233,15 +233,6 @@ const ProfileRadio = ({ userId, isOwner = false }: Props) => {
             )}
           </div>
           <div>
-            <Label htmlFor="radio-url">Playlist link</Label>
-            <Input
-              id="radio-url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://open.spotify.com/playlist/…"
-            />
-          </div>
-          <div>
             <Label htmlFor="radio-title">Station name (optional)</Label>
             <Input
               id="radio-title"

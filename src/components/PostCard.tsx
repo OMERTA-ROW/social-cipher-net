@@ -259,7 +259,7 @@ const PostCard = ({
                           className={
                             media.length === 1
                               ? 'w-full max-h-[560px] object-contain'
-                              : 'w-full h-full object-cover'
+                              : 'w-full h-full object-contain'
                           }
                         />
                       ) : (
@@ -270,7 +270,7 @@ const PostCard = ({
                           className={
                             media.length === 1
                               ? 'w-full max-h-[560px] object-contain'
-                              : 'w-full h-full object-cover'
+                              : 'w-full h-full object-contain'
                           }
                         />
                       )}

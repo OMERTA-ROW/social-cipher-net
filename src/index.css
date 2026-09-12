@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --muted: 0 0% 0%;
     --muted-foreground: 200 10% 65%;
 
-    --accent: 280 85% 65%;
+    --accent: 190 95% 55%;
     --accent-foreground: 200 20% 98%;
 
     --destructive: 0 75% 60%;
@@ -49,8 +49,8 @@ All colors MUST be HSL.
     --radius: 0.75rem;
 
     --glow-primary: 190 95% 55%;
-    --glow-accent: 280 85% 65%;
-    --glow-purple: 280 80% 60%;
+    --glow-accent: 190 95% 55%;
+    --glow-purple: 190 95% 55%;
     --glow-destructive: 0 75% 60%;
   }
 }
@@ -69,7 +69,7 @@ All colors MUST be HSL.
   .glow-primary {
     box-shadow:
       0 0 20px hsl(var(--glow-primary) / 0.3),
-      0 0 34px hsl(var(--glow-purple) / 0.14);
+      0 0 34px hsl(var(--glow-primary) / 0.14);
   }
   
   .glow-accent {
@@ -77,7 +77,7 @@ All colors MUST be HSL.
   }
   
   .glow-purple {
-    box-shadow: 0 0 20px hsl(var(--glow-purple) / 0.4), 0 0 40px hsl(var(--glow-purple) / 0.2);
+    box-shadow: 0 0 20px hsl(var(--glow-primary) / 0.4), 0 0 40px hsl(var(--glow-primary) / 0.2);
   }
   
   .glow-destructive {
@@ -87,7 +87,7 @@ All colors MUST be HSL.
   .text-glow {
     text-shadow:
       0 0 10px hsl(var(--glow-primary) / 0.5),
-      0 0 18px hsl(var(--glow-purple) / 0.22);
+      0 0 18px hsl(var(--glow-primary) / 0.22);
   }
 
   /* Subtle blue-to-purple edge used for accent lines and gradient borders. */

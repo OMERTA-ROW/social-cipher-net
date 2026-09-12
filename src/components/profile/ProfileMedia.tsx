@@ -186,7 +186,7 @@ const ProfileMedia = ({ userId, isOwner }: ProfileMediaProps) => {
     >
       {item.media_type === "video" ? (
         <>
-          <video src={item.media_url} className="h-full w-full object-cover" muted preload="metadata" />
+          <video src={item.media_url} className="h-full w-full object-contain" muted preload="metadata" />
           <span className="absolute inset-0 flex items-center justify-center bg-background/30">
             <Play className="w-6 h-6 text-primary" />
           </span>
@@ -196,7 +196,7 @@ const ProfileMedia = ({ userId, isOwner }: ProfileMediaProps) => {
           src={item.media_url}
           alt={item.caption ?? "Profile media"}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+          className="h-full w-full object-contain transition-transform duration-200"
         />
       )}
     </button>
@@ -360,7 +360,7 @@ const ProfileMedia = ({ userId, isOwner }: ProfileMediaProps) => {
                     >
                       <div className="aspect-video bg-muted/20">
                         {cover ? (
-                          <img src={cover} alt={album.title} loading="lazy" className="h-full w-full object-cover" />
+                           <img src={cover} alt={album.title} loading="lazy" className="h-full w-full object-contain" />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center">
                             <Images className="w-5 h-5 text-muted-foreground" />
