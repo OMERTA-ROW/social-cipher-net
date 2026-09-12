@@ -4,26 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { useSavedTabs } from "@/hooks/useSavedTabs";
-import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
-import { toast } from "sonner";
+import { useOpenSavedTab } from "@/hooks/useOpenSavedTab";
 
 export const SavedTabsManager = () => {
   const { savedTabs, deleteTab } = useSavedTabs();
-  const { openWindow } = useFloatingWindowsContext();
+  const handleOpenTab = useOpenSavedTab();
 
-  const handleOpenTab = (tab: any) => {
-    openWindow(
-      tab.tab_name,
-      <iframe
-        src={tab.tab_url}
-        className="w-full h-full border-0"
-        title={tab.tab_name}
-      />,
-      1200,
-      800
-    );
-    toast.success(`Opening ${tab.tab_name}`);
-  };
 
   if (savedTabs.length === 0) {
     return (
