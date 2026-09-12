@@ -1,0 +1,1 @@
+ALTER VIEW public.theater_events_public SET (security_invoker = true);
