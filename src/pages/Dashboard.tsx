@@ -10,9 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useIsCeo } from "@/hooks/useIsCeo";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -43,7 +41,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<SocialProfile & { bio?: string | null } | null>(null);
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,9 +66,7 @@ const Dashboard = () => {
       return;
     }
     setUserId(user.id);
-    setEmail(user.email ?? "");
-
-    const [profileRes, postsRes, followersRes, followingRes, prefsRes] = await Promise.all([
+    const [profileRes, postsRes, prefsRes] = await Promise.all([
       supabase.from("profiles").select("id, username, display_name, avatar_url, is_verified, bio").eq("id", user.id).maybeSingle(),
       supabase
         .from("posts")
@@ -79,8 +74,6 @@ const Dashboard = () => {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50),
-      supabase.from("followers").select("id", { count: "exact", head: true }).eq("following_id", user.id),
-      supabase.from("followers").select("id", { count: "exact", head: true }).eq("follower_id", user.id),
       supabase.from("notification_preferences").select("*").eq("user_id", user.id).maybeSingle(),
     ]);
 

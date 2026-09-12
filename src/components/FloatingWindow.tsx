@@ -266,7 +266,7 @@ export default function FloatingWindow({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-6 w-6 hover:text-accent"
+                  className="h-6 w-6 hover:text-primary"
                   onClick={onToggleWorkspace}
                   title={workspace === "space" ? "Bring back to main desktop" : "Send out to the solar system desktop"}
                   aria-label={workspace === "space" ? "Bring back to main desktop" : "Send out to the solar system desktop"}

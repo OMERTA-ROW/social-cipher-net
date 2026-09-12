@@ -142,7 +142,7 @@ export const MentionTextarea = ({
               key={user.id}
               onClick={() => insertMention(user)}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors",
+                "w-full flex items-center gap-3 px-4 py-2 border border-transparent hover:border-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)] transition-colors",
                 index === selectedIndex && "bg-accent"
               )}
             >

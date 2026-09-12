@@ -703,7 +703,7 @@ const CyberStreamer = () => {
                 {commercePlatforms.map((platform) => {
                   const Icon = platform.icon;
                   return (
-                    <div key={platform.id} className="flex items-center justify-between p-4 border rounded-lg hover:border-accent/50 transition-colors">
+                    <div key={platform.id} className="flex items-center justify-between p-4 border rounded-lg hover:border-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.35)] transition-colors">
                       <div className="flex items-center gap-3">
                         <Icon className="w-6 h-6" />
                         <div>

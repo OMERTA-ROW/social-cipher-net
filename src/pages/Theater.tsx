@@ -23,6 +23,7 @@ import SectionFeed from "@/components/feed/SectionFeed";
 const Theater = () => {
   const { events, loading, userId, refresh } = useTheaterEvents();
   const [active, setActive] = useState<TheaterEvent | null>(null);
+  const [enteringId, setEnteringId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -91,6 +92,36 @@ const Theater = () => {
     setActive({ ...event, is_live: true });
   };
 
+  const enterEvent = async (event: TheaterEvent) => {
+    if (!userId) {
+      toast.error("Sign in to enter a screening");
+      return;
+    }
+    setEnteringId(event.id);
+    if (userId !== event.host_id) {
+      const { error } = await supabase.from("theater_participants").upsert(
+        { event_id: event.id, user_id: userId, last_seen_at: new Date().toISOString() },
+        { onConflict: "event_id,user_id" },
+      );
+      if (error) {
+        setEnteringId(null);
+        toast.error("Could not enter this screening");
+        return;
+      }
+    }
+    const { data, error } = await supabase
+      .from("theater_events")
+      .select("id, host_id, title, description, poster_url, video_url, starts_at, capacity, status, is_live")
+      .eq("id", event.id)
+      .maybeSingle();
+    setEnteringId(null);
+    if (error || !data) {
+      toast.error("Screening details are unavailable");
+      return;
+    }
+    setActive(data as TheaterEvent);
+  };
+
   const EventCard = ({ event }: { event: TheaterEvent }) => (
     <Card className="p-4 bg-card/50 backdrop-blur border-primary/20 hover:border-primary/50 transition-colors flex flex-col">
       <div className="aspect-video rounded-lg overflow-hidden bg-muted/20 mb-3 flex items-center justify-center">
@@ -122,9 +153,9 @@ const Theater = () => {
         </p>
       )}
       <div className="mt-auto flex gap-2">
-        <Button className="flex-1" onClick={() => setActive(event)}>
+        <Button className="flex-1" onClick={() => enterEvent(event)} disabled={enteringId === event.id}>
           <Ticket className="w-4 h-4 mr-2" />
-          Enter
+          {enteringId === event.id ? "Entering…" : "Enter"}
         </Button>
         {userId === event.host_id && !event.is_live && (
           <Button variant="outline" onClick={() => goLive(event)}>

@@ -219,7 +219,7 @@ export function MegaChat({ streamId }: MegaChatProps) {
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((msg) => (
-            <div key={msg.id} className="flex gap-3 group hover:bg-accent/50 p-2 rounded-lg transition-colors">
+            <div key={msg.id} className="flex gap-3 group border border-transparent hover:border-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.35)] p-2 rounded-lg transition-colors">
               <Avatar className="w-8 h-8 relative">
                 <AvatarImage src={msg.user_avatar} />
                 <AvatarFallback className="text-xs">
