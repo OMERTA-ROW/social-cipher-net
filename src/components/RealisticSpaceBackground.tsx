@@ -161,11 +161,14 @@ const RealisticSpaceBackground = ({
       ctx.clearRect(0, 0, w, h);
 
       const t = now / 4000;
-      const g1 = ctx.createRadialGradient(w * 0.25, h * 0.35, 0, w * 0.25, h * 0.35, w * 0.5);
-      g1.addColorStop(0, `hsla(${pal.nebulaA}, 80%, 55%, ${0.12 + Math.sin(t) * 0.04})`);
-      g1.addColorStop(1, `hsla(${pal.nebulaA}, 80%, 55%, 0)`);
-      ctx.fillStyle = g1;
-      ctx.fillRect(0, 0, w, h);
+      const nebulaAOpacity = pal.nebulaAOpacity ?? 1;
+      if (nebulaAOpacity > 0) {
+        const g1 = ctx.createRadialGradient(w * 0.25, h * 0.35, 0, w * 0.25, h * 0.35, w * 0.5);
+        g1.addColorStop(0, `hsla(${pal.nebulaA}, 80%, 55%, ${(0.12 + Math.sin(t) * 0.04) * nebulaAOpacity})`);
+        g1.addColorStop(1, `hsla(${pal.nebulaA}, 80%, 55%, 0)`);
+        ctx.fillStyle = g1;
+        ctx.fillRect(0, 0, w, h);
+      }
 
       const g2 = ctx.createRadialGradient(w * 0.8, h * 0.7, 0, w * 0.8, h * 0.7, w * 0.55);
       g2.addColorStop(0, `hsla(${pal.nebulaB}, 90%, 55%, ${0.1 + Math.cos(t * 0.8) * 0.04})`);

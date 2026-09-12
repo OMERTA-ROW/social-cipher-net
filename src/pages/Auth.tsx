@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Lock } from "lucide-react";
+import ScrollDatePicker from "@/components/ScrollDatePicker";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -17,6 +18,8 @@ const Auth = () => {
   const [documentType, setDocumentType] = useState<string>("");
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [birthdate, setBirthdate] = useState("");
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isAccountLocked, setIsAccountLocked] = useState(false);
   const [lockoutEndTime, setLockoutEndTime] = useState<Date | null>(null);
@@ -84,6 +87,15 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (username.trim().length < 3 || !displayName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please choose a username (3+ characters) and a display name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!documentType || !idDocument) {
       toast({
         title: "Error",
@@ -129,6 +141,8 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}${nextPath}`,
           data: {
             birthdate: birthdate,
+            username: username.trim(),
+            display_name: displayName.trim(),
           }
         },
       });
@@ -177,6 +191,8 @@ const Auth = () => {
       setDocumentType("");
       setIdDocument(null);
       setBirthdate("");
+      setUsername("");
+      setDisplayName("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -403,18 +419,35 @@ const Auth = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="birthdate" className="text-foreground">Date of Birth</Label>
+                  <Label htmlFor="signup-username" className="text-foreground">Username</Label>
                   <Input
-                    id="birthdate"
-                    type="date"
-                    value={birthdate}
-                    onChange={(e) => setBirthdate(e.target.value)}
+                    id="signup-username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase())}
+                    placeholder="yourhandle"
                     required
-                    max={new Date().toISOString().split('T')[0]}
+                    minLength={3}
+                    maxLength={24}
                     className="bg-background/50 border-primary/30 focus:border-primary transition-all"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-displayname" className="text-foreground">Display Name</Label>
+                  <Input
+                    id="signup-displayname"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="How others see you"
+                    required
+                    maxLength={40}
+                    className="bg-background/50 border-primary/30 focus:border-primary transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-foreground">Date of Birth</Label>
+                  <ScrollDatePicker value={birthdate} onChange={setBirthdate} />
                   <p className="text-xs text-muted-foreground">
-                    You must be at least 13 years old. Users under 18 cannot view adult nudity/sexual content.
+                    Scroll each column to pick your date. You must be at least 13 years old. Users under 18 cannot view adult nudity/sexual content.
                   </p>
                 </div>
                 <div className="space-y-2">
