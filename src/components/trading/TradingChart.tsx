@@ -188,25 +188,17 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
 
     chart.timeScale().fitContent();
 
-    let lastWidth = 0;
-    let lastHeight = 0;
-    const fit = () => {
+    // autoSize keeps the canvas bitmap in sync with the container; a single
+    // deferred fit covers the first paint before layout has settled.
+    const raf = requestAnimationFrame(() => {
       const w = holder.current?.clientWidth ?? 0;
       const h = holder.current?.clientHeight ?? 0;
-      if (!w || !h || (w === lastWidth && h === lastHeight)) return;
-      lastWidth = w;
-      lastHeight = h;
-      chart.resize(w, h, true);
-    };
-    const ro = new ResizeObserver(fit);
-    ro.observe(holder.current);
-    fit();
-
-
-
+      if (w && h) chart.resize(w, h, true);
+      chart.timeScale().fitContent();
+    });
 
     return () => {
-      ro.disconnect();
+      cancelAnimationFrame(raf);
       chart.remove();
       chartRef.current = null;
     };
