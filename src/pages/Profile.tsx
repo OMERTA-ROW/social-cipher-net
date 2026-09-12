@@ -289,12 +289,17 @@ const Profile = () => {
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  aria-label="Upload a new picture"
+                  className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full"
+                  onClick={() => setShowAvatarControls((v) => !v)}
+                  aria-expanded={showAvatarControls}
+                  aria-label={showAvatarControls ? "Hide picture options" : "Edit picture"}
+                  title={showAvatarControls ? "Hide picture options" : "Edit picture"}
                 >
-                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploading || cuttingOut ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Pencil className="w-3.5 h-3.5" />
+                  )}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -305,48 +310,61 @@ const Profile = () => {
                 />
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1"
-                  disabled={!profile?.avatar_original_url && !profile?.avatar_url}
-                  onClick={() => {
-                    setEditorSrc(profile?.avatar_original_url || profile?.avatar_url || null);
-                    setEditorOpen(true);
-                  }}
-                >
-                  <Crop className="h-3 w-3" /> Adjust
-                </Button>
-                <Button
-                  size="sm"
-                  variant={mode === "framed" ? "default" : "ghost"}
-                  className="gap-1"
-                  onClick={() => handleModeChange("framed")}
-                  aria-pressed={mode === "framed"}
-                >
-                  <UserRound className="h-3 w-3" /> Framed
-                </Button>
-                <Button
-                  size="sm"
-                  variant={mode === "standing" ? "default" : "ghost"}
-                  className="gap-1"
-                  onClick={() => handleModeChange("standing")}
-                  aria-pressed={mode === "standing"}
-                  disabled={cuttingOut}
-                >
-                  {cuttingOut ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <PersonStanding className="h-3 w-3" />
+              {showAvatarControls && (
+                <div className="rounded-lg border border-border/60 bg-card/70 p-2">
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      <Upload className="h-3 w-3" /> Upload
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 px-2 text-xs"
+                      disabled={!profile?.avatar_original_url && !profile?.avatar_url}
+                      onClick={() => {
+                        setEditorSrc(profile?.avatar_original_url || profile?.avatar_url || null);
+                        setEditorOpen(true);
+                      }}
+                    >
+                      <Crop className="h-3 w-3" /> Adjust
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={mode === "framed" ? "default" : "ghost"}
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => handleModeChange("framed")}
+                      aria-pressed={mode === "framed"}
+                    >
+                      <UserRound className="h-3 w-3" /> Framed
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={mode === "standing" ? "default" : "ghost"}
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => handleModeChange("standing")}
+                      aria-pressed={mode === "standing"}
+                      disabled={cuttingOut}
+                    >
+                      {cuttingOut ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <PersonStanding className="h-3 w-3" />
+                      )}
+                      Standing
+                    </Button>
+                  </div>
+                  {mode === "standing" && standingUrl && (
+                    <p className="mt-1.5 max-w-[14rem] text-center text-[11px] text-muted-foreground">
+                      Drag your character to place it, or use the arrow keys.
+                    </p>
                   )}
-                  Standing
-                </Button>
-              </div>
-              {mode === "standing" && standingUrl && (
-                <p className="max-w-[14rem] text-center text-xs text-muted-foreground">
-                  Drag your character to place it, or use the arrow keys.
-                </p>
+                </div>
               )}
             </div>
 
