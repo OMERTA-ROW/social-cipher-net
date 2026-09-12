@@ -102,3 +102,6 @@
 - [x] Replace dead story click, follower-count placeholder, and password-change placeholder
 - [ ] Provider OAuth apps need owner-supplied developer credentials
 - [ ] Remaining provider actions/import adapters require provider-specific implementation and approvals
+
+## AI enablement (Sept 12)
+- [x] Enable Lovable AI for the project and verify one real server-side request

@@ -332,14 +332,15 @@ const AIBotAssistant = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token || ""}`,
           },
           body: JSON.stringify(requestBody),
         }
       );
 
       if (!response.ok || !response.body) {
-        throw new Error("Failed to get AI response");
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.error || "Failed to get AI response");
       }
 
       const reader = response.body.getReader();
@@ -367,7 +368,8 @@ const AIBotAssistant = () => {
 
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
+            const content = parsed.choices?.[0]?.delta?.content
+              || (parsed.type === "response.output_text.delta" ? parsed.delta : "");
             if (content) {
               assistantContent += content;
               setMessages((prev) => {
@@ -387,7 +389,7 @@ const AIBotAssistant = () => {
       }
     } catch (error) {
       console.error("AI bot error:", error);
-      toast.error("Failed to get AI response");
+      toast.error(error instanceof Error ? error.message : "Failed to get AI response");
     } finally {
       setIsLoading(false);
     }
