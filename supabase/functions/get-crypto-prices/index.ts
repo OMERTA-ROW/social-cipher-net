@@ -6,7 +6,9 @@ import {
   cached,
   coingeckoQuotes,
   corsHeaders,
-  cryptoCandles,
+  cryptoCandleSeries,
+  reportProviderEvent,
+
   errorResponse,
   getJson,
   json,
