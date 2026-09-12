@@ -66,7 +66,7 @@ interface ChatMessage {
 const CyberStreamer = () => {
   // Live-stream ad placement: real running campaigns only, hidden for paid tiers.
   const adsSuppressed = useAdsSuppressed();
-  const { data: streamAds } = useAdSlot("livestream");
+  const { data: streamAds } = useAdSlot("stream");
   const navigate = useNavigate();
   const { windows, openWindow, closeWindow } = useFloatingWindows();
   const [loading, setLoading] = useState(true);
@@ -339,7 +339,7 @@ const CyberStreamer = () => {
       <div className="container mx-auto px-4 pt-24 pb-12 max-w-7xl">
         {!adsSuppressed && streamAds?.[0] && (
           <div className="mb-6">
-            <SponsoredCard creative={streamAds[0]} placement="livestream" />
+            <SponsoredCard creative={streamAds[0]} placement="stream" />
           </div>
         )}
         {/* Header */}

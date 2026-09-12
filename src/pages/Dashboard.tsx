@@ -97,6 +97,9 @@ const Dashboard = () => {
       monetization_type: row.monetization_type ?? "free",
       price: Number(row.price ?? 0),
       is_demo: !!row.is_demo,
+      is_sponsored: !!row.is_sponsored,
+      sponsor_name: row.sponsor_name ?? null,
+      affiliate_link_id: row.affiliate_link_id ?? null,
       profile: (profileRes.data as any) ?? null,
       media: (row.post_media ?? [])
         .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
