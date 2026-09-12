@@ -8,6 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Music, Radio as RadioIcon } from "lucide-react";
 import { providerLabel, RadioSettings, toEmbedUrl } from "@/lib/radio";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+interface SavedPlaylist {
+  id: string;
+  provider: RadioSettings["provider"];
+  playlist_url: string;
+  embed_url: string;
+  title: string | null;
+}
 
 interface Props {
   userId: string;
