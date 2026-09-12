@@ -18,6 +18,8 @@ const Auth = () => {
   const [documentType, setDocumentType] = useState<string>("");
   const [idDocument, setIdDocument] = useState<File | null>(null);
   const [birthdate, setBirthdate] = useState("");
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isAccountLocked, setIsAccountLocked] = useState(false);
   const [lockoutEndTime, setLockoutEndTime] = useState<Date | null>(null);
