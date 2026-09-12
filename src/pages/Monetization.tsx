@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, Users, CreditCard, Loader2 } from "lucide-react";
+import { money } from "@/hooks/usePlatformFees";
 import { User } from "@supabase/supabase-js";
 import CrossPlatformEarnings from "@/components/CrossPlatformEarnings";
 import AffiliatesTab from "@/components/monetization/AffiliatesTab";
@@ -27,6 +28,7 @@ const Monetization = () => {
     brandDeals: 0,
   });
   const [recent, setRecent] = useState<Array<{ id: string; amount: number; earning_type: string; created_at: string }>>([]);
+  const [breakdown, setBreakdown] = useState<Array<{ type: string; gross: number; fee: number; net: number; currency: string }>>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -85,7 +87,7 @@ const Monetization = () => {
     try {
       const { data, error } = await supabase
         .from("creator_earnings")
-        .select("id, amount, earning_type, created_at")
+        .select("id, amount, earning_type, gross_amount, platform_fee, net_amount, currency, created_at")
         .eq("creator_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -104,11 +106,18 @@ const Monetization = () => {
         .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
       // Brand deals count once they are actually paid.
-      const { data: paidDeals } = await supabase
+      const [{ data: paidDeals }, { data: conversions }] = await Promise.all([
+        supabase
         .from("brand_deals")
-        .select("net_amount")
+        .select("amount, platform_fee, net_amount, currency")
         .eq("creator_id", user.id)
-        .eq("status", "paid");
+        .eq("status", "paid"),
+        supabase
+          .from("affiliate_conversions")
+          .select("commission_amount, platform_fee, net_amount, currency")
+          .eq("user_id", user.id)
+          .eq("status", "confirmed"),
+      ]);
       const brandDeals = (paidDeals ?? []).reduce((sum, d: any) => sum + Number(d.net_amount ?? 0), 0);
 
       const total = payPerView + payPerClick + affiliate + brandDeals;
@@ -121,6 +130,39 @@ const Monetization = () => {
           created_at: e.created_at,
         })),
       );
+
+      const rows = new Map<string, { type: string; gross: number; fee: number; net: number; currency: string }>();
+      const add = (type: string, gross: number, fee: number, net: number, currency = "USD") => {
+        const row = rows.get(type) ?? { type, gross: 0, fee: 0, net: 0, currency };
+        row.gross += gross;
+        row.fee += fee;
+        row.net += net;
+        rows.set(type, row);
+      };
+      (data ?? [])
+        .filter((entry: any) => entry.earning_type !== "affiliate_commission")
+        .forEach((entry: any) => add(
+          entry.earning_type,
+          Number(entry.gross_amount ?? entry.amount ?? 0),
+          Number(entry.platform_fee ?? 0),
+          Number(entry.net_amount ?? entry.amount ?? 0),
+          entry.currency ?? "USD",
+        ));
+      (conversions ?? []).forEach((entry: any) => add(
+        "affiliate_conversions",
+        Number(entry.commission_amount ?? 0),
+        Number(entry.platform_fee ?? 0),
+        Number(entry.net_amount ?? 0),
+        entry.currency ?? "USD",
+      ));
+      (paidDeals ?? []).forEach((entry: any) => add(
+        "brand_deals",
+        Number(entry.amount ?? 0),
+        Number(entry.platform_fee ?? 0),
+        Number(entry.net_amount ?? 0),
+        entry.currency ?? "USD",
+      ));
+      setBreakdown([...rows.values()]);
 
       setEarnings({
         total,
@@ -253,6 +295,33 @@ const Monetization = () => {
               <TabsContent value="brand-deals"><BrandDealsTab /></TabsContent>
 
               <TabsContent value="overview" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Earnings breakdown</CardTitle>
+                    <CardDescription>Gross income, Cyber Link fee, and your net payout by revenue type.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {breakdown.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No completed earnings to break down yet.</p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <div className="min-w-[520px] space-y-2">
+                          <div className="grid grid-cols-[minmax(0,1fr)_repeat(3,7rem)] gap-3 px-3 text-xs text-muted-foreground">
+                            <span>Revenue type</span><span className="text-right">Gross</span><span className="text-right">Platform fee</span><span className="text-right">Net payout</span>
+                          </div>
+                          {breakdown.map((row) => (
+                            <div key={row.type} className="grid grid-cols-[minmax(0,1fr)_repeat(3,7rem)] gap-3 rounded-md border p-3 text-sm">
+                              <span className="capitalize">{row.type.replace(/_/g, " ")}</span>
+                              <span className="text-right">{money(row.gross, row.currency)}</span>
+                              <span className="text-right text-muted-foreground">{money(row.fee, row.currency)}</span>
+                              <span className="text-right font-semibold text-primary">{money(row.net, row.currency)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Activity</CardTitle>

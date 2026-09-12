@@ -82,8 +82,13 @@ serve(async (req) => {
 
     await admin.from("creator_earnings").insert({
       creator_id: link.user_id,
+      post_id: null,
       amount: net,
       earning_type: "affiliate_commission",
+      gross_amount: commission,
+      platform_fee: fee,
+      net_amount: net,
+      currency: String(body.currency ?? "USD").slice(0, 8),
     });
 
     if (fee > 0) {
