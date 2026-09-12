@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, Upload, LogOut, ExternalLink, Loader2, Crop, UserRound, PersonStanding } from "lucide-react";
+import { CheckCircle2, Upload, ExternalLink, Loader2, Crop, UserRound, PersonStanding, Pencil } from "lucide-react";
 import AvatarEditor, { AvatarTransform, DEFAULT_TRANSFORM, renderAvatar } from "@/components/profile/AvatarEditor";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import StandingAvatar, { DEFAULT_STANDING, StandingPosition } from "@/components/profile/StandingAvatar";
@@ -66,6 +66,7 @@ const Profile = () => {
   const [standingUrl, setStandingUrl] = useState<string | null>(null);
   const [standingPos, setStandingPos] = useState<StandingPosition>(DEFAULT_STANDING);
   const [cuttingOut, setCuttingOut] = useState(false);
+  const [showAvatarControls, setShowAvatarControls] = useState(false);
   const [email, setEmail] = useState<string>("");
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [username, setUsername] = useState("");
