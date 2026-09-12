@@ -220,6 +220,7 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
 
     return () => {
       cancelAnimationFrame(raf);
+      ro.disconnect();
       chart.remove();
       chartRef.current = null;
     };
