@@ -115,3 +115,30 @@ Community, Discovery and Pool.
   carts and variant-level stock. Stock decrements server-side inside the sale handler.
 - New UI: `StorePage`, `ProductDetail`, `ProductForm`, `CartSheet`, `PostProductCard`
   (rendered inside `PostCard` only when the card is in home-feed context), and a rebuilt `FeedShopTab`.
+
+## Movie Theater as a full community
+
+Movie Theater becomes its own community section, built for group watching but not
+locked to movies — sessions carry a format (movie, podcast, live discussion, other) so
+it can grow.
+
+- Host or join watch sessions: a host schedules or starts a session, others join, and
+  playback stays in sync for everyone in the room.
+- A host can go live alongside the session (Theater-scoped live, per the per-section
+  live rule) so they can stream themselves watching with an audience.
+- Anyone with an account can post in Movie Theater — no tier gate. Posts use the same
+  composer, carry the Theater section label, get their own comment section, and flow
+  into the home feed while still living in Theater.
+- Live chat runs beside a session, and each session has a comment thread that persists
+  after it ends.
+- Theater gets the same drag/pin/scroll multi-window system as the other sections, so a
+  user can pin a stream, a discussion and a session list side by side.
+
+### Technical notes
+- Extend `theater_events` with `format` (default `movie`) and `is_open` so the section
+  is not movie-only; keep existing host/participant RLS.
+- Theater posts are ordinary posts with `section = 'theater'`; the Theater page mounts
+  the shared `<SectionFeed section="theater" />`.
+- Session live streams use `live_streams.section = 'theater'`.
+- Theater panels (Now playing, Sessions, Discussion, Stream) become window-openable
+  through the existing `useFloatingWindows` context.
