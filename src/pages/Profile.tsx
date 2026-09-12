@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, Upload, LogOut, ExternalLink, Loader2 } from "lucide-react";
+import { CheckCircle2, Upload, LogOut, ExternalLink, Loader2, Crop, UserRound, PersonStanding } from "lucide-react";
+import AvatarEditor, { AvatarTransform, DEFAULT_TRANSFORM, renderAvatar } from "@/components/profile/AvatarEditor";
+import ProfileAvatar from "@/components/profile/ProfileAvatar";
+import StandingAvatar, { DEFAULT_STANDING, StandingPosition } from "@/components/profile/StandingAvatar";
+import { cutOutSubject } from "@/lib/cutout";
 import ProfileMedia from "@/components/profile/ProfileMedia";
 import ProfileRadio from "@/components/profile/ProfileRadio";
 import ProfilePosts from "@/components/profile/ProfilePosts";
@@ -21,9 +24,33 @@ interface ProfileData {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  avatar_original_url: string | null;
+  avatar_transform: AvatarTransform;
+  avatar_mode: string;
+  avatar_standing_url: string | null;
+  avatar_standing_position: StandingPosition;
   bio: string | null;
   is_verified: boolean;
 }
+
+/** Storage values arrive as loose JSON; fall back to sane defaults. */
+const asTransform = (v: unknown): AvatarTransform => {
+  const t = (v ?? {}) as Partial<AvatarTransform>;
+  return {
+    zoom: typeof t.zoom === "number" ? t.zoom : 1,
+    x: typeof t.x === "number" ? t.x : 0,
+    y: typeof t.y === "number" ? t.y : 0,
+  };
+};
+
+const asStanding = (v: unknown): StandingPosition => {
+  const p = (v ?? {}) as Partial<StandingPosition>;
+  return {
+    x: typeof p.x === "number" ? p.x : 0,
+    y: typeof p.y === "number" ? p.y : 0,
+    scale: typeof p.scale === "number" ? p.scale : 1,
+  };
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -32,6 +59,13 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [postsKey, setPostsKey] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorSrc, setEditorSrc] = useState<string | null>(null);
+  const [transform, setTransform] = useState<AvatarTransform>(DEFAULT_TRANSFORM);
+  const [mode, setMode] = useState<"framed" | "standing">("framed");
+  const [standingUrl, setStandingUrl] = useState<string | null>(null);
+  const [standingPos, setStandingPos] = useState<StandingPosition>(DEFAULT_STANDING);
+  const [cuttingOut, setCuttingOut] = useState(false);
   const [email, setEmail] = useState<string>("");
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [username, setUsername] = useState("");
@@ -54,7 +88,12 @@ const Profile = () => {
       if (error) {
         toast.error("Failed to load profile");
       } else if (data) {
-        setProfile(data as ProfileData);
+        const row = data as unknown as ProfileData;
+        setProfile(row);
+        setTransform(asTransform(row.avatar_transform));
+        setMode(row.avatar_mode === "standing" ? "standing" : "framed");
+        setStandingUrl(row.avatar_standing_url);
+        setStandingPos(asStanding(row.avatar_standing_position));
         setUsername(data.username || "");
         setDisplayName(data.display_name || "");
         setBio(data.bio || "");
@@ -95,32 +134,117 @@ const Profile = () => {
   };
 
 
+  /** Upload the untouched original, then open the editor to frame it. */
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file || !profile) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `${profile.id}/avatar-${Date.now()}.${ext}`;
+    const ext = (file.name.split(".").pop() || "png").toLowerCase();
+    const path = `${profile.id}/avatar-original-${Date.now()}.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from("post-media")
-      .upload(path, file, { upsert: true });
+      .upload(path, file, { upsert: true, contentType: file.type, cacheControl: "31536000" });
     if (uploadError) {
       toast.error(uploadError.message);
       setUploading(false);
       return;
     }
     const { data: { publicUrl } } = supabase.storage.from("post-media").getPublicUrl(path);
-    const { error: updateError } = await supabase
+    const { error: saveOriginal } = await supabase
       .from("profiles")
-      .update({ avatar_url: publicUrl })
+      .update({ avatar_original_url: publicUrl })
       .eq("id", profile.id);
-    if (updateError) {
-      toast.error(updateError.message);
-    } else {
-      setProfile({ ...profile, avatar_url: publicUrl });
-      toast.success("Avatar updated");
-    }
     setUploading(false);
+    if (saveOriginal) {
+      toast.error(saveOriginal.message);
+      return;
+    }
+    setProfile({ ...profile, avatar_original_url: publicUrl });
+    // A new photo starts from a clean frame, and the cut-out is now stale.
+    setTransform(DEFAULT_TRANSFORM);
+    setStandingUrl(null);
+    setEditorSrc(publicUrl);
+    setEditorOpen(true);
+  };
+
+  /** Render the framed square from the original and store it plus the crop. */
+  const handleCropSave = async (next: AvatarTransform) => {
+    if (!profile || !editorSrc) return;
+    setUploading(true);
+    try {
+      const blob = await renderAvatar(editorSrc, next);
+      const path = `${profile.id}/avatar-${Date.now()}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from("post-media")
+        .upload(path, blob, { upsert: true, contentType: "image/png", cacheControl: "31536000" });
+      if (uploadError) throw new Error(uploadError.message);
+      const { data: { publicUrl } } = supabase.storage.from("post-media").getPublicUrl(path);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl, avatar_original_url: editorSrc, avatar_transform: next })
+        .eq("id", profile.id);
+      if (error) throw new Error(error.message);
+      setProfile({ ...profile, avatar_url: publicUrl, avatar_original_url: editorSrc });
+      setTransform(next);
+      setEditorOpen(false);
+      toast.success("Picture updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save that picture");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  /** Switch between the round frame and the free-standing character. */
+  const handleModeChange = async (next: "framed" | "standing") => {
+    if (!profile || next === mode) return;
+    const source = profile.avatar_original_url || profile.avatar_url;
+    if (next === "standing" && !source) {
+      toast.error("Upload a picture first");
+      return;
+    }
+
+    let cutUrl = standingUrl;
+    if (next === "standing" && !cutUrl && source) {
+      setCuttingOut(true);
+      try {
+        const blob = await cutOutSubject(source);
+        const path = `${profile.id}/avatar-standing-${Date.now()}.png`;
+        const { error: uploadError } = await supabase.storage
+          .from("post-media")
+          .upload(path, blob, { upsert: true, contentType: "image/png", cacheControl: "31536000" });
+        if (uploadError) throw new Error(uploadError.message);
+        cutUrl = supabase.storage.from("post-media").getPublicUrl(path).data.publicUrl;
+        setStandingUrl(cutUrl);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not cut out the picture");
+        setCuttingOut(false);
+        return;
+      }
+      setCuttingOut(false);
+    }
+
+    setMode(next);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ avatar_mode: next, avatar_standing_url: cutUrl })
+      .eq("id", profile.id);
+    if (error) toast.error(error.message);
+  };
+
+  /** Remember where the standing character was dragged to. */
+  const saveStandingPosition = async (pos: StandingPosition) => {
+    setStandingPos(pos);
+    if (!profile) return;
+    await supabase
+      .from("profiles")
+      .update({ avatar_standing_position: pos })
+      .eq("id", profile.id);
   };
 
   const handleSignOut = async () => {
@@ -138,32 +262,92 @@ const Profile = () => {
 
   return (
     <AppShell>
+      <AvatarEditor
+        open={editorOpen}
+        src={editorSrc}
+        initial={transform}
+        saving={uploading}
+        onCancel={() => setEditorOpen(false)}
+        onSave={handleCropSave}
+      />
       <div>
         <Card className="p-6 bg-background/80 backdrop-blur-sm border-border/50 mb-6">
           <div className="flex items-start gap-6 flex-col sm:flex-row">
-            <div className="relative">
-              <Avatar className="h-28 w-28">
-                <AvatarImage src={profile?.avatar_url || ""} className="object-cover" />
-                <AvatarFallback className="text-2xl">
-                  {displayName?.[0] || username?.[0] || email[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                size="icon"
-                variant="secondary"
-                className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarUpload}
-              />
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative flex min-h-[7rem] items-end justify-center">
+                {mode === "standing" && standingUrl ? (
+                  <StandingAvatar
+                    src={standingUrl}
+                    alt={displayName || username || "Your character"}
+                    position={standingPos}
+                    editable
+                    onCommit={saveStandingPosition}
+                  />
+                ) : (
+                  <ProfileAvatar src={profile?.avatar_url} name={displayName || username || email} size={112} />
+                )}
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  aria-label="Upload a new picture"
+                >
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  disabled={!profile?.avatar_original_url && !profile?.avatar_url}
+                  onClick={() => {
+                    setEditorSrc(profile?.avatar_original_url || profile?.avatar_url || null);
+                    setEditorOpen(true);
+                  }}
+                >
+                  <Crop className="h-3 w-3" /> Adjust
+                </Button>
+                <Button
+                  size="sm"
+                  variant={mode === "framed" ? "default" : "ghost"}
+                  className="gap-1"
+                  onClick={() => handleModeChange("framed")}
+                  aria-pressed={mode === "framed"}
+                >
+                  <UserRound className="h-3 w-3" /> Framed
+                </Button>
+                <Button
+                  size="sm"
+                  variant={mode === "standing" ? "default" : "ghost"}
+                  className="gap-1"
+                  onClick={() => handleModeChange("standing")}
+                  aria-pressed={mode === "standing"}
+                  disabled={cuttingOut}
+                >
+                  {cuttingOut ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <PersonStanding className="h-3 w-3" />
+                  )}
+                  Standing
+                </Button>
+              </div>
+              {mode === "standing" && standingUrl && (
+                <p className="max-w-[14rem] text-center text-xs text-muted-foreground">
+                  Drag your character to place it, or use the arrow keys.
+                </p>
+              )}
             </div>
 
             <div className="flex-1">

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsCeo } from "@/hooks/useIsCeo";
 import { supabase } from "@/integrations/supabase/client";
@@ -218,10 +218,11 @@ const Dashboard = () => {
       {/* Profile summary */}
       <Card className="p-5 mb-5 bg-card/70 backdrop-blur-sm border-border/60 min-h-[132px]">
         <div className="flex items-start gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={profile?.avatar_url || ""} alt={displayNameOf(profile)} />
-            <AvatarFallback>{(displayNameOf(profile)[0] || email[0] || "?").toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <ProfileAvatar
+            src={profile?.avatar_url}
+            name={displayNameOf(profile) || email}
+            size={64}
+          />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-semibold truncate">{displayNameOf(profile)}</h2>
