@@ -9,6 +9,8 @@ import FollowButton from "@/components/FollowButton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { resolvePaidAccess } from "@/lib/paymentAccess";
+import SponsoredCard from "@/components/ads/SponsoredCard";
+import { useAdSlot, useAdsSuppressed, type AdPlacement } from "@/hooks/useAdSlot";
 import { reportIssue } from "@/lib/monitoring";
 import { fetchPostProducts, type StoreProduct } from "@/lib/commerce";
 import {
@@ -41,6 +43,9 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   // Shoppable posts: the inline cart lives on the home feed only.
   const [postProducts, setPostProducts] = useState<Map<string, StoreProduct[]>>(new Map());
+  // Native ad slots: real running campaigns only, hidden for paid tiers.
+  const adsSuppressed = useAdsSuppressed();
+  const { data: ads } = useAdSlot(tab === "discover" ? "discovery" : tab === "shop" ? "shop" : tab === "market" ? "market" : "feed");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
