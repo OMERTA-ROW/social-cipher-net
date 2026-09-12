@@ -38,6 +38,10 @@ interface PostCardProps {
   linkToThread?: boolean;
   onPaymentRequired?: () => void;
   onReply?: () => void;
+  /** Products attached to this post. Cart controls render on the home feed only. */
+  products?: StoreProduct[];
+  /** True only when the card is rendered inside the home feed. */
+  shoppable?: boolean;
 }
 
 const PostCard = ({
@@ -63,7 +67,9 @@ const PostCard = ({
   isDemo = false,
   linkToThread = false,
   onPaymentRequired,
-  onReply
+  onReply,
+  products = [],
+  shoppable = false
 }: PostCardProps) => {
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
