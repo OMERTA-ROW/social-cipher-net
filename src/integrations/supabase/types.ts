@@ -2479,6 +2479,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_radio_playlists: {
+        Row: {
+          created_at: string
+          embed_url: string
+          id: string
+          playlist_url: string
+          provider: string
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          embed_url: string
+          id?: string
+          playlist_url: string
+          provider: string
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          embed_url?: string
+          id?: string
+          playlist_url?: string
+          provider?: string
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_mode: string

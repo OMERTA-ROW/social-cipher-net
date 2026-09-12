@@ -28,6 +28,7 @@ import {
   setThreadPrivate,
   setThreadTags,
 } from "@/lib/messaging";
+import NewConversationDialog from "@/components/messages/NewConversationDialog";
 
 const Messages = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -37,6 +38,7 @@ const Messages = () => {
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
   const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastTypingSent = useRef(0);
@@ -225,10 +227,24 @@ const Messages = () => {
     <AppShell>
       <div className="grid gap-4 lg:grid-cols-[minmax(260px,32%)_1fr]">
         <Card className="p-3 bg-background/80 backdrop-blur-sm border-border/50">
-          <h1 className="text-lg font-semibold px-2 py-1">Inbox</h1>
+          <div className="flex items-center justify-between gap-2 px-2 py-1">
+            <h1 className="text-lg font-semibold">Inbox</h1>
+            <Button size="sm" className="gap-1" onClick={() => setComposeOpen(true)}>
+              <Send className="h-3 w-3" /> New
+            </Button>
+          </div>
           <p className="px-2 pb-2 text-xs text-muted-foreground">
             Every connected account in one stream.
           </p>
+          <NewConversationDialog
+            open={composeOpen}
+            onOpenChange={setComposeOpen}
+            currentUserId={userId}
+            onStarted={(threadId) => {
+              loadInbox();
+              setActiveId(threadId);
+            }}
+          />
           <ScrollArea className="h-[60vh]">
             {loading ? (
               <div className="p-4 text-muted-foreground flex items-center gap-2">

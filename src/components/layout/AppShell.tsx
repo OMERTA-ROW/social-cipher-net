@@ -28,6 +28,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import RightRail from "@/components/layout/RightRail";
+import TopBarStats from "@/components/layout/TopBarStats";
+import SidebarAuthButton from "@/components/layout/SidebarAuthButton";
 import AllSeeingEye from "@/components/space/AllSeeingEye";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 
@@ -145,8 +147,8 @@ const NavGroupBlock = ({ group }: { group: NavGroup }) => {
               cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors justify-center xl:justify-start",
                 isActive
-                  ? "bg-primary/15 text-primary"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                  ? "text-primary [text-shadow:0_0_10px_hsl(var(--primary)/0.8)]"
+                  : "text-muted-foreground hover:text-primary hover:[text-shadow:0_0_10px_hsl(var(--primary)/0.75)]",
               )
             }
             title={item.title}
@@ -198,7 +200,10 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
             <span className="text-xl font-bold text-primary text-glow hidden sm:inline">Cyber Link</span>
           </button>
 
+          <TopBarStats />
+
           <div className="flex items-center gap-1 sm:gap-2">
+
             <Button
               variant="ghost"
               size="icon"
@@ -278,8 +283,8 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     "justify-center xl:justify-start",
                     isActive
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                      ? "text-primary [text-shadow:0_0_10px_hsl(var(--primary)/0.8)]"
+                      : "text-muted-foreground hover:text-primary hover:[text-shadow:0_0_10px_hsl(var(--primary)/0.75)]",
                   )
                 }
                 title={item.title}
@@ -292,6 +297,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
             {navGroups.map((group) => (
               <NavGroupBlock key={group.title} group={group} />
             ))}
+            <SidebarAuthButton collapsed={leftPanel.collapsed} />
           </nav>
 
         </aside>
@@ -305,6 +311,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
           )}
           <main
             ref={scrollRef}
+            data-app-scroll
             className="flex-1 min-h-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-10"
           >
             <div className="w-full">{children}</div>

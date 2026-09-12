@@ -52,6 +52,21 @@ const readPlacement = (title: string, workspace: WindowWorkspace): Placement | n
 };
 
 const pinKey = (title: string, workspace: WindowWorkspace) => `${storageKey(title, workspace)}:pinned`;
+const anchorKey = (title: string, workspace: WindowWorkspace) => `${storageKey(title, workspace)}:anchor`;
+
+/** The page's scrolling region — the centre column on desktop, window otherwise. */
+const scrollHost = (): HTMLElement | null =>
+  (document.querySelector("[data-app-scroll]") as HTMLElement | null) ?? null;
+
+const currentScroll = () => scrollHost()?.scrollTop ?? window.scrollY ?? 0;
+
+const readAnchor = (title: string, workspace: WindowWorkspace): number => {
+  try {
+    return Number(localStorage.getItem(anchorKey(title, workspace)) ?? 0) || 0;
+  } catch {
+    return 0;
+  }
+};
 
 const readPinned = (title: string, workspace: WindowWorkspace): boolean => {
   try {
@@ -91,25 +106,45 @@ export default function FloatingWindow({
   );
   const [isMinimized, setIsMinimized] = useState(false);
   const [pinned, setPinned] = useState(() => readPinned(title, workspace));
+  const [anchor, setAnchor] = useState(() => readAnchor(title, workspace));
+  const [scrollTop, setScrollTop] = useState(0);
   const [mode, setMode] = useState<"idle" | "drag" | "resize">("idle");
   const gesture = useRef({ startX: 0, startY: 0, originX: 0, originY: 0, originW: 0, originH: 0 });
 
-  // A pinned window stays exactly where the user parked it.
+  // A pinned window sticks to the page and travels with it as the user scrolls.
   useEffect(() => {
     setPinned(readPinned(title, workspace));
+    setAnchor(readAnchor(title, workspace));
   }, [title, workspace]);
+
+  // Follow the page scroll while pinned so the window holds its spot on the page.
+  useEffect(() => {
+    if (!pinned) return;
+    const host = scrollHost();
+    const update = () => setScrollTop(currentScroll());
+    update();
+    const target: HTMLElement | Window = host ?? window;
+    target.addEventListener("scroll", update, { passive: true });
+    return () => target.removeEventListener("scroll", update);
+  }, [pinned]);
 
   const togglePin = () => {
     setPinned((current) => {
       const next = !current;
+      const here = currentScroll();
       try {
         localStorage.setItem(pinKey(title, workspace), next ? "1" : "0");
+        localStorage.setItem(anchorKey(title, workspace), String(here));
       } catch {
         /* storage unavailable */
       }
+      setAnchor(here);
+      setScrollTop(here);
       return next;
     });
   };
+
+  const scrollShift = pinned ? scrollTop - anchor : 0;
 
   // Remember where the user placed this window.
   useEffect(() => {
@@ -128,7 +163,6 @@ export default function FloatingWindow({
   }, [workspace]);
 
   const startGesture = (clientX: number, clientY: number, next: "drag" | "resize") => {
-    if (pinned) return;
     gesture.current = {
       startX: clientX,
       startY: clientY,
@@ -149,7 +183,7 @@ export default function FloatingWindow({
         setPlacement((p) => ({
           ...p,
           x: Math.min(Math.max(0, g.originX + dx), Math.max(0, window.innerWidth - 120)),
-          y: Math.min(Math.max(0, g.originY + dy), Math.max(0, window.innerHeight - 60)),
+          y: Math.max(0, g.originY + dy),
         }));
       } else if (mode === "resize") {
         setPlacement((p) => ({
@@ -188,7 +222,7 @@ export default function FloatingWindow({
       className="fixed z-50 shadow-2xl"
       style={{
         left: `${placement.x}px`,
-        top: `${placement.y}px`,
+        top: `${placement.y - scrollShift}px`,
         width: isMinimized ? "300px" : `${placement.width}px`,
         height: isMinimized ? "auto" : `${placement.height}px`,
         pointerEvents: "auto",
@@ -201,7 +235,7 @@ export default function FloatingWindow({
         }`}
       >
         <CardHeader
-          className={`border-b bg-muted/30 py-2 px-4 touch-none ${pinned ? "cursor-default" : "cursor-move"}`}
+          className="border-b bg-muted/30 py-2 px-4 touch-none cursor-move"
           onMouseDown={(e) => {
             if ((e.target as HTMLElement).closest("button")) return;
             startGesture(e.clientX, e.clientY, "drag");
@@ -266,7 +300,7 @@ export default function FloatingWindow({
             <CardContent className="flex-1 p-4 overflow-y-auto overflow-x-hidden overscroll-contain">
               {children}
             </CardContent>
-            {!pinned && (
+            {/* Always resizable — pinning only anchors the window to the page. */}
             <div
               role="presentation"
               aria-label="Resize"
@@ -285,7 +319,6 @@ export default function FloatingWindow({
                 if (t) startGesture(t.clientX, t.clientY, "resize");
               }}
             />
-            )}
           </>
         )}
       </Card>

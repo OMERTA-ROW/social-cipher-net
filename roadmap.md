@@ -66,3 +66,20 @@
 - [ ] Commerce: full Shop storefront (per-seller stores, variants/sizes, inventory, product pages) + shoppable posts with inline cart/checkout.
 - [ ] Inline post cart appears on home feed only; posts in their own sections stay plain.
 - [ ] Movie Theater community: hosted watch sessions + host live stream, open posting, comments, feeds into home feed, drag/pin/scroll windows, format-agnostic (movies, podcasts, discussions).
+
+## Batch update (Sept 12)
+- [ ] 1 Connector layer audit + fixes
+- [ ] 2 Charts render real live data everywhere
+- [ ] 3 Duplicate audit + consolidation
+- [ ] 4 Engagement counts into top bar
+- [ ] 5 Sign out moved to left sidebar (Log In/Log Out)
+- [ ] 6 Dashboard real data
+- [ ] 7 Messages real DMs + inbox
+- [ ] 8 Photo crop/save framing fix
+- [ ] 9 Profile adjust controls behind Edit button
+- [ ] 10 @handle always rendered with display name
+- [ ] 11 Profile radio playlist dropdown
+- [ ] 12 Pinned windows scroll with page, unlimited
+- [ ] 13 Purple highlight blocks -> blue letter glow on hover
+- [ ] 14 CEO portal fully hidden
+- [ ] 15 Own favicon + OG link preview image

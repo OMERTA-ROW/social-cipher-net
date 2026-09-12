@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, Upload, LogOut, ExternalLink, Loader2, Crop, UserRound, PersonStanding } from "lucide-react";
+import { CheckCircle2, Upload, ExternalLink, Loader2, Crop, UserRound, PersonStanding, Pencil } from "lucide-react";
 import AvatarEditor, { AvatarTransform, DEFAULT_TRANSFORM, renderAvatar } from "@/components/profile/AvatarEditor";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import StandingAvatar, { DEFAULT_STANDING, StandingPosition } from "@/components/profile/StandingAvatar";
@@ -66,6 +66,7 @@ const Profile = () => {
   const [standingUrl, setStandingUrl] = useState<string | null>(null);
   const [standingPos, setStandingPos] = useState<StandingPosition>(DEFAULT_STANDING);
   const [cuttingOut, setCuttingOut] = useState(false);
+  const [showAvatarControls, setShowAvatarControls] = useState(false);
   const [email, setEmail] = useState<string>("");
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [username, setUsername] = useState("");
@@ -289,12 +290,17 @@ const Profile = () => {
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  aria-label="Upload a new picture"
+                  className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full"
+                  onClick={() => setShowAvatarControls((v) => !v)}
+                  aria-expanded={showAvatarControls}
+                  aria-label={showAvatarControls ? "Hide picture options" : "Edit picture"}
+                  title={showAvatarControls ? "Hide picture options" : "Edit picture"}
                 >
-                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploading || cuttingOut ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Pencil className="w-3.5 h-3.5" />
+                  )}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -305,48 +311,61 @@ const Profile = () => {
                 />
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1"
-                  disabled={!profile?.avatar_original_url && !profile?.avatar_url}
-                  onClick={() => {
-                    setEditorSrc(profile?.avatar_original_url || profile?.avatar_url || null);
-                    setEditorOpen(true);
-                  }}
-                >
-                  <Crop className="h-3 w-3" /> Adjust
-                </Button>
-                <Button
-                  size="sm"
-                  variant={mode === "framed" ? "default" : "ghost"}
-                  className="gap-1"
-                  onClick={() => handleModeChange("framed")}
-                  aria-pressed={mode === "framed"}
-                >
-                  <UserRound className="h-3 w-3" /> Framed
-                </Button>
-                <Button
-                  size="sm"
-                  variant={mode === "standing" ? "default" : "ghost"}
-                  className="gap-1"
-                  onClick={() => handleModeChange("standing")}
-                  aria-pressed={mode === "standing"}
-                  disabled={cuttingOut}
-                >
-                  {cuttingOut ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <PersonStanding className="h-3 w-3" />
+              {showAvatarControls && (
+                <div className="rounded-lg border border-border/60 bg-card/70 p-2">
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      <Upload className="h-3 w-3" /> Upload
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 px-2 text-xs"
+                      disabled={!profile?.avatar_original_url && !profile?.avatar_url}
+                      onClick={() => {
+                        setEditorSrc(profile?.avatar_original_url || profile?.avatar_url || null);
+                        setEditorOpen(true);
+                      }}
+                    >
+                      <Crop className="h-3 w-3" /> Adjust
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={mode === "framed" ? "default" : "ghost"}
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => handleModeChange("framed")}
+                      aria-pressed={mode === "framed"}
+                    >
+                      <UserRound className="h-3 w-3" /> Framed
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={mode === "standing" ? "default" : "ghost"}
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => handleModeChange("standing")}
+                      aria-pressed={mode === "standing"}
+                      disabled={cuttingOut}
+                    >
+                      {cuttingOut ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <PersonStanding className="h-3 w-3" />
+                      )}
+                      Standing
+                    </Button>
+                  </div>
+                  {mode === "standing" && standingUrl && (
+                    <p className="mt-1.5 max-w-[14rem] text-center text-[11px] text-muted-foreground">
+                      Drag your character to place it, or use the arrow keys.
+                    </p>
                   )}
-                  Standing
-                </Button>
-              </div>
-              {mode === "standing" && standingUrl && (
-                <p className="max-w-[14rem] text-center text-xs text-muted-foreground">
-                  Drag your character to place it, or use the arrow keys.
-                </p>
+                </div>
               )}
             </div>
 
@@ -355,6 +374,7 @@ const Profile = () => {
                 <h1 className="text-2xl font-bold">
                   {displayName || username || "My Profile"}
                 </h1>
+                {username && <span className="text-sm text-muted-foreground">@{username}</span>}
                 {profile?.is_verified && (
                   <Badge variant="secondary" className="gap-1">
                     <CheckCircle2 className="h-3 w-3" /> Verified
@@ -373,9 +393,6 @@ const Profile = () => {
                     <ExternalLink className="w-3 h-3" /> View public profile
                   </Button>
                 )}
-                <Button size="sm" variant="ghost" onClick={handleSignOut} className="gap-1">
-                  <LogOut className="w-3 h-3" /> Sign out
-                </Button>
               </div>
             </div>
           </div>
