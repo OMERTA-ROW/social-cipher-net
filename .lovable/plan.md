@@ -95,8 +95,11 @@ Community, Discovery and Pool.
 
 ### Posts you can buy from
 - A seller can attach one or more of their products to any post, in any section.
-- Shoppable posts show the product row inline: image, name, price, variant picker,
-  quantity, Add to cart and Buy now — the buyer never leaves the feed.
+- The inline cart appears on the home feed only. Since every post flows into the home
+  feed, that is where the buy action lives. In their own sections, posts stay plain —
+  no cart, no buy button.
+- On the home feed a shoppable post shows the product row inline: image, name, price,
+  variant picker, quantity, Add to cart and Buy now — the buyer never leaves the feed.
 - A cart lives site-wide (persisted per user), with a small cart indicator in the header;
   checkout can be done inline from the post or from the cart.
 - Checkout runs through the existing payment setup; orders and inventory decrement on a
@@ -111,4 +114,4 @@ Community, Discovery and Pool.
 - Reuse `create-checkout` / `process-sale` edge functions; extend them for multi-item
   carts and variant-level stock. Stock decrements server-side inside the sale handler.
 - New UI: `StorePage`, `ProductDetail`, `ProductForm`, `CartSheet`, `PostProductCard`
-  (rendered inside `PostCard` when a post has products), and a rebuilt `FeedShopTab`.
+  (rendered inside `PostCard` only when the card is in home-feed context), and a rebuilt `FeedShopTab`.
