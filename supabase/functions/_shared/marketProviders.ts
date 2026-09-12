@@ -190,22 +190,62 @@ export async function coingeckoQuotes(symbols: string[]): Promise<Quote[]> {
   return out;
 }
 
+/** Kraken OHLC intervals (minutes) for the same timeframes. */
+const KRAKEN_INTERVAL: Record<string, number> = {
+  "1m": 1,
+  "5m": 5,
+  "15m": 15,
+  "1h": 60,
+  "4h": 240,
+  "1D": 1440,
+  "1W": 10080,
+};
+
+/** Kraken public OHLC — used when Binance is unavailable from this region. */
+async function krakenCandles(symbol: string, timeframe: string, limit: number): Promise<Candle[]> {
+  const minutes = KRAKEN_INTERVAL[timeframe];
+  if (!minutes) throw new Error(`Unsupported timeframe: ${timeframe}`);
+  const pair = `${symbol.toUpperCase()}USD`;
+  const data = await getJson(
+    `https://api.kraken.com/0/public/OHLC?pair=${pair}&interval=${minutes}`,
+  );
+  if (data?.error?.length) throw new Error(`UPSTREAM_KRAKEN: ${data.error.join(", ")}`);
+  const key = Object.keys(data?.result ?? {}).find((k) => k !== "last");
+  const rows = key ? (data.result[key] as any[]) : [];
+  if (!rows.length) throw new Error("No candle data available");
+  return rows.slice(-limit).map((r) => ({
+    time: Number(r[0]) * 1000,
+    open: Number(r[1]),
+    high: Number(r[2]),
+    low: Number(r[3]),
+    close: Number(r[4]),
+    volume: Number(r[6]),
+  }));
+}
+
 export async function cryptoCandles(symbol: string, timeframe: string, limit = 200): Promise<Candle[]> {
   const interval = BINANCE_INTERVAL[timeframe];
   if (!interval) throw new Error(`Unsupported timeframe: ${timeframe}`);
   const pair = `${symbol.toUpperCase()}USDT`;
   const ttl = interval === "1m" ? 15_000 : interval === "5m" ? 45_000 : 120_000;
-  const rows = await cached(`bn:kl:${pair}:${interval}:${limit}`, ttl, () =>
-    getJson(`https://api.binance.com/api/v3/klines?symbol=${pair}&interval=${interval}&limit=${limit}`),
-  );
-  return (rows as any[]).map((r) => ({
-    time: Number(r[0]),
-    open: Number(r[1]),
-    high: Number(r[2]),
-    low: Number(r[3]),
-    close: Number(r[4]),
-    volume: Number(r[5]),
-  }));
+  return await cached(`kl:${pair}:${interval}:${limit}`, ttl, async () => {
+    try {
+      const rows = await binanceJson(
+        `/api/v3/klines?symbol=${pair}&interval=${interval}&limit=${limit}`,
+      );
+      return (rows as any[]).map((r) => ({
+        time: Number(r[0]),
+        open: Number(r[1]),
+        high: Number(r[2]),
+        low: Number(r[3]),
+        close: Number(r[4]),
+        volume: Number(r[5]),
+      }));
+    } catch (e) {
+      console.error("[marketProviders] binance candles failed, trying Kraken", e);
+      return await krakenCandles(symbol, timeframe, limit);
+    }
+  });
 }
 
 /* ------------------------------ equities ------------------------------ */
