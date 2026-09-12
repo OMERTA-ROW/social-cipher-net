@@ -108,6 +108,8 @@ const Auth = () => {
     }
 
     if (!birthdate) {
+      setBirthdateTouched(true);
+
       toast({
         title: "Error",
         description: "Please enter your date of birth.",
