@@ -12,15 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, context, password } = await req.json();
-
-    // Military-grade security check
-    if (password !== "Dupree$$$01") {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized: Invalid security credentials" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { action, context } = await req.json();
 
     // Owner-only: caller must be a signed-in account holding the admin role
     const authHeader = req.headers.get("Authorization") ?? "";
