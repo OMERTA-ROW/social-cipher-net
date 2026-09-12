@@ -33,17 +33,19 @@ const Column = ({
   label,
 }: {
   items: { key: string; label: string }[];
+  /** -1 when nothing has been chosen yet (empty state). */
   selectedIndex: number;
   onSelect: (index: number) => void;
   label: string;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const settle = useRef<number | null>(null);
+  const interacted = useRef(false);
 
   // Keep the list aligned with the selected value when it changes externally.
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || selectedIndex < 0) return;
     const target = selectedIndex * ITEM_HEIGHT;
     if (Math.abs(el.scrollTop - target) > 2) {
       el.scrollTo({ top: target, behavior: "smooth" });
@@ -52,7 +54,8 @@ const Column = ({
 
   const handleScroll = () => {
     const el = ref.current;
-    if (!el) return;
+    // Never emit from programmatic alignment — only real user scrolling counts.
+    if (!el || !interacted.current) return;
     if (settle.current) window.clearTimeout(settle.current);
     settle.current = window.setTimeout(() => {
       const index = Math.max(
@@ -63,6 +66,10 @@ const Column = ({
     }, 90);
   };
 
+  const markInteracted = () => {
+    interacted.current = true;
+  };
+
   return (
     <div
       ref={ref}
@@ -70,13 +77,18 @@ const Column = ({
       aria-label={label}
       tabIndex={0}
       onScroll={handleScroll}
+      onWheel={markInteracted}
+      onPointerDown={markInteracted}
+      onTouchStart={markInteracted}
       onKeyDown={(e) => {
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          onSelect(Math.min(items.length - 1, selectedIndex + 1));
+          markInteracted();
+          onSelect(selectedIndex < 0 ? 0 : Math.min(items.length - 1, selectedIndex + 1));
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
-          onSelect(Math.max(0, selectedIndex - 1));
+          markInteracted();
+          onSelect(selectedIndex < 0 ? 0 : Math.max(0, selectedIndex - 1));
         }
       }}
       className="relative h-[108px] flex-1 overflow-y-auto snap-y snap-mandatory scrollbar-none outline-none focus-visible:ring-1 focus-visible:ring-primary rounded-md"
@@ -89,7 +101,10 @@ const Column = ({
           type="button"
           role="option"
           aria-selected={i === selectedIndex}
-          onClick={() => onSelect(i)}
+          onClick={() => {
+            markInteracted();
+            onSelect(i);
+          }}
           style={{ height: ITEM_HEIGHT }}
           className={cn(
             "w-full snap-center flex items-center justify-center text-sm transition-colors",
@@ -105,6 +120,7 @@ const Column = ({
     </div>
   );
 };
+
 
 const ScrollDatePicker = ({
   value,
