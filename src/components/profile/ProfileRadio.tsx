@@ -145,6 +145,42 @@ const ProfileRadio = ({ userId, isOwner = false }: Props) => {
       {isOwner && (
         <div className="space-y-3 border-t border-border/40 pt-4">
           <div>
+            <Label htmlFor="radio-playlist">Playlist</Label>
+            <Select
+              value={selectedId}
+              onValueChange={(value) => {
+                setSelectedId(value);
+                if (value === "new") {
+                  setUrl("");
+                  setTitle("");
+                  return;
+                }
+                const found = playlists.find((p) => p.id === value);
+                if (found) {
+                  setUrl(found.playlist_url);
+                  setTitle(found.title ?? "");
+                }
+              }}
+            >
+              <SelectTrigger id="radio-playlist">
+                <SelectValue placeholder="Choose a playlist" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">Add a new playlist…</SelectItem>
+                {playlists.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.title || providerLabel[p.provider]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {playlists.length === 0 && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                No saved playlists yet — add your first one below.
+              </p>
+            )}
+          </div>
+          <div>
             <Label htmlFor="radio-url">Playlist link</Label>
             <Input
               id="radio-url"
