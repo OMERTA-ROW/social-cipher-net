@@ -14,6 +14,282 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_advertisers: {
+        Row: {
+          company_name: string
+          contact_email: string | null
+          created_at: string
+          id: string
+          status: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          company_name: string
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          company_name?: string
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      ad_campaigns: {
+        Row: {
+          advertiser_id: string
+          budget_cents: number
+          cpc_cents: number
+          cpm_cents: number
+          created_at: string
+          ends_at: string | null
+          id: string
+          interests: string[]
+          min_audience: number
+          name: string
+          placements: string[]
+          spent_cents: number
+          starts_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          advertiser_id: string
+          budget_cents?: number
+          cpc_cents?: number
+          cpm_cents?: number
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          interests?: string[]
+          min_audience?: number
+          name: string
+          placements?: string[]
+          spent_cents?: number
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          advertiser_id?: string
+          budget_cents?: number
+          cpc_cents?: number
+          cpm_cents?: number
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          interests?: string[]
+          min_audience?: number
+          name?: string
+          placements?: string[]
+          spent_cents?: number
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_campaigns_advertiser_id_fkey"
+            columns: ["advertiser_id"]
+            isOneToOne: false
+            referencedRelation: "ad_advertisers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_clicks: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          creative_id: string
+          id: string
+          placement: string
+          viewer_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          creative_id: string
+          id?: string
+          placement?: string
+          viewer_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          creative_id?: string
+          id?: string
+          placement?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_clicks_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_clicks_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "ad_creatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_creatives: {
+        Row: {
+          body: string | null
+          campaign_id: string
+          created_at: string
+          cta_label: string
+          cta_url: string
+          headline: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+        }
+        Insert: {
+          body?: string | null
+          campaign_id: string
+          created_at?: string
+          cta_label?: string
+          cta_url: string
+          headline: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+        }
+        Update: {
+          body?: string | null
+          campaign_id?: string
+          created_at?: string
+          cta_label?: string
+          cta_url?: string
+          headline?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_creatives_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ad_impressions: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          creative_id: string
+          id: string
+          placement: string
+          viewer_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          creative_id: string
+          id?: string
+          placement?: string
+          viewer_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          creative_id?: string
+          id?: string
+          placement?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_impressions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_impressions_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "ad_creatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_conversions: {
+        Row: {
+          commission_amount: number
+          created_at: string
+          currency: string
+          external_id: string | null
+          gross_amount: number
+          id: string
+          link_id: string
+          net_amount: number
+          occurred_at: string
+          platform_fee: number
+          source: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          commission_amount?: number
+          created_at?: string
+          currency?: string
+          external_id?: string | null
+          gross_amount?: number
+          id?: string
+          link_id: string
+          net_amount?: number
+          occurred_at?: string
+          platform_fee?: number
+          source?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          commission_amount?: number
+          created_at?: string
+          currency?: string
+          external_id?: string | null
+          gross_amount?: number
+          id?: string
+          link_id?: string
+          net_amount?: number
+          occurred_at?: string
+          platform_fee?: number
+          source?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_conversions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "external_affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_links: {
         Row: {
           affiliate_code: string
@@ -48,6 +324,62 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      affiliate_network_secrets: {
+        Row: {
+          api_key_encrypted: string
+          created_at: string
+          network_id: string
+        }
+        Insert: {
+          api_key_encrypted: string
+          created_at?: string
+          network_id: string
+        }
+        Update: {
+          api_key_encrypted?: string
+          created_at?: string
+          network_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_network_secrets_network_id_fkey"
+            columns: ["network_id"]
+            isOneToOne: true
+            referencedRelation: "affiliate_networks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_networks: {
+        Row: {
+          account_label: string | null
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          network: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          account_label?: string | null
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          network: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          account_label?: string | null
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          network?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       agent_secrets: {
         Row: {
@@ -134,6 +466,151 @@ export type Database = {
             columns: ["mcp_server_id"]
             isOneToOne: false
             referencedRelation: "mcp_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_campaigns: {
+        Row: {
+          brand_name: string
+          brand_user_id: string
+          budget: number | null
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          min_followers: number
+          niche: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          brand_name: string
+          brand_user_id: string
+          budget?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          min_followers?: number
+          niche?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          brand_name?: string
+          brand_user_id?: string
+          budget?: number | null
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          min_followers?: number
+          niche?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      brand_deals: {
+        Row: {
+          amount: number
+          brand_name: string
+          brand_user_id: string | null
+          campaign_id: string | null
+          created_at: string
+          creator_id: string
+          currency: string
+          id: string
+          net_amount: number
+          notes: string | null
+          paid_at: string | null
+          platform_fee: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          brand_name: string
+          brand_user_id?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          creator_id: string
+          currency?: string
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          platform_fee?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          brand_name?: string
+          brand_user_id?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          creator_id?: string
+          currency?: string
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          platform_fee?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_deals_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "brand_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_applications: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          creator_id: string
+          id: string
+          message: string | null
+          proposed_rate: number | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          message?: string | null
+          proposed_rate?: number | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          message?: string | null
+          proposed_rate?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_applications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "brand_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -511,6 +988,48 @@ export type Database = {
           },
         ]
       }
+      creator_media_kits: {
+        Row: {
+          bio: string | null
+          contact_email: string | null
+          created_at: string
+          headline: string | null
+          id: string
+          is_public: boolean
+          niche: string | null
+          rate_card: Json
+          slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio?: string | null
+          contact_email?: string | null
+          created_at?: string
+          headline?: string | null
+          id?: string
+          is_public?: boolean
+          niche?: string | null
+          rate_card?: Json
+          slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio?: string | null
+          contact_email?: string | null
+          created_at?: string
+          headline?: string | null
+          id?: string
+          is_public?: boolean
+          niche?: string | null
+          rate_card?: Json
+          slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       crypto_transactions: {
         Row: {
           chain: string
@@ -749,43 +1268,76 @@ export type Database = {
         Row: {
           affiliate_url: string
           click_count: number | null
+          conversion_count: number
           created_at: string | null
           description: string | null
+          earnings: number
           id: string
           is_active: boolean | null
           link_name: string
           link_type: string
           merchant_name: string
+          network: string | null
+          post_id: string | null
+          product_id: string | null
+          short_code: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           affiliate_url: string
           click_count?: number | null
+          conversion_count?: number
           created_at?: string | null
           description?: string | null
+          earnings?: number
           id?: string
           is_active?: boolean | null
           link_name: string
           link_type?: string
           merchant_name: string
+          network?: string | null
+          post_id?: string | null
+          product_id?: string | null
+          short_code?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           affiliate_url?: string
           click_count?: number | null
+          conversion_count?: number
           created_at?: string | null
           description?: string | null
+          earnings?: number
           id?: string
           is_active?: boolean | null
           link_name?: string
           link_type?: string
           merchant_name?: string
+          network?: string | null
+          post_id?: string | null
+          product_id?: string | null
+          short_code?: string | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "external_affiliate_links_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_affiliate_links_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       external_mining_accounts: {
         Row: {
@@ -1666,6 +2218,57 @@ export type Database = {
           },
         ]
       }
+      platform_fee_rates: {
+        Row: {
+          percent: number
+          revenue_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          percent?: number
+          revenue_type: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          percent?: number
+          revenue_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      platform_revenue: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          reference_id: string | null
+          reference_type: string | null
+          source: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          source: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       pool_consent: {
         Row: {
           consent_given: boolean
@@ -2046,12 +2649,14 @@ export type Database = {
       }
       posts: {
         Row: {
+          affiliate_link_id: string | null
           click_count: number | null
           community_slug: string | null
           content: string
           created_at: string | null
           id: string
           is_demo: boolean
+          is_sponsored: boolean
           like_count: number
           media_type: string | null
           media_url: string | null
@@ -2061,6 +2666,7 @@ export type Database = {
           reply_count: number | null
           repost_count: number
           section: string
+          sponsor_name: string | null
           subject_id: string | null
           subject_type: string | null
           updated_at: string | null
@@ -2068,12 +2674,14 @@ export type Database = {
           view_count: number | null
         }
         Insert: {
+          affiliate_link_id?: string | null
           click_count?: number | null
           community_slug?: string | null
           content: string
           created_at?: string | null
           id?: string
           is_demo?: boolean
+          is_sponsored?: boolean
           like_count?: number
           media_type?: string | null
           media_url?: string | null
@@ -2083,6 +2691,7 @@ export type Database = {
           reply_count?: number | null
           repost_count?: number
           section?: string
+          sponsor_name?: string | null
           subject_id?: string | null
           subject_type?: string | null
           updated_at?: string | null
@@ -2090,12 +2699,14 @@ export type Database = {
           view_count?: number | null
         }
         Update: {
+          affiliate_link_id?: string | null
           click_count?: number | null
           community_slug?: string | null
           content?: string
           created_at?: string | null
           id?: string
           is_demo?: boolean
+          is_sponsored?: boolean
           like_count?: number
           media_type?: string | null
           media_url?: string | null
@@ -2105,6 +2716,7 @@ export type Database = {
           reply_count?: number | null
           repost_count?: number
           section?: string
+          sponsor_name?: string | null
           subject_id?: string | null
           subject_type?: string | null
           updated_at?: string | null
@@ -2112,6 +2724,13 @@ export type Database = {
           view_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "posts_affiliate_link_id_fkey"
+            columns: ["affiliate_link_id"]
+            isOneToOne: false
+            referencedRelation: "external_affiliate_links"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "posts_parent_post_id_fkey"
             columns: ["parent_post_id"]
@@ -4214,6 +4833,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      platform_fee_percent: { Args: { _revenue_type: string }; Returns: number }
       record_failed_login: {
         Args: { p_email: string }
         Returns: {
