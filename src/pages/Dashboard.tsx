@@ -238,9 +238,6 @@ const Dashboard = () => {
                   <Link to={`/profile/${userId}`}>View public profile</Link>
                 </Button>
               )}
-              <Button size="sm" variant="ghost" onClick={signOut} className="gap-1">
-                <LogOut className="w-3 h-3" /> Sign out
-              </Button>
             </div>
           </div>
         </div>
