@@ -64,3 +64,4 @@
 
 - [ ] Home feed exception: plain vertical scrolling feed only (no pinning/floating windows); aggregates posts from every section.
 - [ ] Commerce: full Shop storefront (per-seller stores, variants/sizes, inventory, product pages) + shoppable posts with inline cart/checkout.
+- [ ] Inline post cart appears on home feed only; posts in their own sections stay plain.
