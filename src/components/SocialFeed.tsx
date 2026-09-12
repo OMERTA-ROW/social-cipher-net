@@ -180,10 +180,20 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
         </div>
       );
     }
+    const placement: AdPlacement = tab === "discover" ? "discovery" : "feed";
+    const slotCreatives = adsSuppressed ? [] : (ads ?? []);
     return (
       <div className="space-y-4">
-        {posts.map((post) => (
+        {posts.map((post, index) => (
           <div key={post.id} className="relative">
+            {slotCreatives.length > 0 && index > 0 && index % 7 === 0 && (
+              <div className="mb-4">
+                <SponsoredCard
+                  creative={slotCreatives[Math.floor(index / 7 - 1) % slotCreatives.length]}
+                  placement={placement}
+                />
+              </div>
+            )}
             {tab !== "following" && post.user_id !== userId && (
               <div className="absolute right-4 top-4 z-10">
                 <FollowButton targetUserId={post.user_id} />
