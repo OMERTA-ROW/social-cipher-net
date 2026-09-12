@@ -62,8 +62,7 @@ serve(async (req) => {
       'balance_scraping',
       'mining_exploit',
       'credential_stuffing',
-      'account_takeover_attempt',
-      'console_tampering'
+      'account_takeover_attempt'
     ];
 
     const isKnownAttackPattern = criticalAttackPatterns.includes(action);
