@@ -66,7 +66,7 @@ const SpaceBackground = () => {
         type="button"
         variant="ghost"
         size="icon"
-        className="fixed z-30 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border-0 bg-transparent p-0 text-transparent shadow-none hover:bg-primary/5 focus-visible:bg-primary/10"
+        className="fixed -z-[5] h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border-0 bg-transparent p-0 text-transparent shadow-none hover:bg-primary/5 focus-visible:bg-primary/10"
         style={{ left: shipTarget.x, top: shipTarget.y }}
         onClick={() => window.dispatchEvent(new CustomEvent("cyberlink:open-ship-interface"))}
         aria-label="Open spaceship crew interface"

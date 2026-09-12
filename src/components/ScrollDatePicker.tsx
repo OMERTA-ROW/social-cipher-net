@@ -141,6 +141,14 @@ const ScrollDatePicker = ({
     [],
   );
 
+  // Record the date shown on first render so the highlighted value is real.
+  useEffect(() => {
+    if (!value) {
+      onChange(`${parsed.year}-${pad(parsed.month)}-${pad(parsed.day)}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   const emit = (year: number, month: number, day: number) => {
     const maxDay = new Date(year, month, 0).getDate();
     onChange(`${year}-${pad(month)}-${pad(Math.min(day, maxDay))}`);
