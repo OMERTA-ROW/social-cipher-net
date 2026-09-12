@@ -199,6 +199,11 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
                 />
               </div>
             )}
+            {post.is_sponsored && (
+              <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+                Sponsored{post.sponsor_name ? ` · ${post.sponsor_name}` : ""}
+              </div>
+            )}
             {tab !== "following" && post.user_id !== userId && (
               <div className="absolute right-4 top-4 z-10">
                 <FollowButton targetUserId={post.user_id} />
@@ -252,8 +257,14 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       <TabsContent value="for-you">{renderList()}</TabsContent>
       <TabsContent value="following">{renderList()}</TabsContent>
       <TabsContent value="discover">{renderList()}</TabsContent>
-      <TabsContent value="shop"><FeedShopTab /></TabsContent>
-      <TabsContent value="market"><FeedMarketTab /></TabsContent>
+      <TabsContent value="shop" className="space-y-4">
+        {!adsSuppressed && ads?.[0] && <SponsoredCard creative={ads[0]} placement="shop" />}
+        <FeedShopTab />
+      </TabsContent>
+      <TabsContent value="market" className="space-y-4">
+        {!adsSuppressed && ads?.[0] && <SponsoredCard creative={ads[0]} placement="market" />}
+        <FeedMarketTab />
+      </TabsContent>
     </Tabs>
   );
 };
