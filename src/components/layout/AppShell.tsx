@@ -147,8 +147,8 @@ const NavGroupBlock = ({ group }: { group: NavGroup }) => {
               cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors justify-center xl:justify-start",
                 isActive
-                  ? "bg-primary/15 text-primary"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                  ? "text-primary [text-shadow:0_0_10px_hsl(var(--primary)/0.8)]"
+                  : "text-muted-foreground hover:text-primary hover:[text-shadow:0_0_10px_hsl(var(--primary)/0.75)]",
               )
             }
             title={item.title}
@@ -283,8 +283,8 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     "justify-center xl:justify-start",
                     isActive
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                      ? "text-primary [text-shadow:0_0_10px_hsl(var(--primary)/0.8)]"
+                      : "text-muted-foreground hover:text-primary hover:[text-shadow:0_0_10px_hsl(var(--primary)/0.75)]",
                   )
                 }
                 title={item.title}
@@ -297,6 +297,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
             {navGroups.map((group) => (
               <NavGroupBlock key={group.title} group={group} />
             ))}
+            <SidebarAuthButton collapsed={leftPanel.collapsed} />
           </nav>
 
         </aside>
