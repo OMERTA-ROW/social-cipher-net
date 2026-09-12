@@ -355,6 +355,7 @@ const Profile = () => {
                 <h1 className="text-2xl font-bold">
                   {displayName || username || "My Profile"}
                 </h1>
+                {username && <span className="text-sm text-muted-foreground">@{username}</span>}
                 {profile?.is_verified && (
                   <Badge variant="secondary" className="gap-1">
                     <CheckCircle2 className="h-3 w-3" /> Verified
