@@ -7,6 +7,7 @@ interface LiveStream {
   title: string;
   description: string | null;
   is_live: boolean;
+  section?: string | null;
   user_id: string;
   created_at: string;
 }
@@ -46,7 +47,11 @@ interface Invitation {
   };
 }
 
-export function useLiveStream() {
+/**
+ * Live is scoped per section: going live in Trading is a separate stream from
+ * going live in Studio, Theater, Arena or on a profile.
+ */
+export function useLiveStream(section: string = "studio") {
   const [currentStream, setCurrentStream] = useState<LiveStream | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -55,7 +60,8 @@ export function useLiveStream() {
   useEffect(() => {
     loadCurrentStream();
     loadInvitations();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section]);
 
   useEffect(() => {
     if (currentStream) {
@@ -73,7 +79,8 @@ export function useLiveStream() {
       .select("*")
       .eq("user_id", user.id)
       .eq("is_live", true)
-      .single();
+      .eq("section", section)
+      .maybeSingle();
 
     if (data && !error) {
       setCurrentStream(data);
@@ -193,6 +200,7 @@ export function useLiveStream() {
         description,
         user_id: user.id,
         is_live: true,
+        section,
       })
       .select()
       .single();
