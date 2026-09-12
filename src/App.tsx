@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Web3Provider } from "@/providers/Web3Provider";
 import { FloatingWindowsProvider } from "@/providers/FloatingWindowsProvider";
 import { FourClickCloseWrapper } from "@/components/FourClickCloseWrapper";
+import { CartProvider } from "@/hooks/useCart";
+import CartSheet from "@/components/shop/CartSheet";
 import { SecurityMonitor } from "@/components/SecurityMonitor";
 import Index from "./pages/Index";
 import Studio from "./pages/Studio";
@@ -19,6 +21,9 @@ import CyberGamers from "./pages/CyberGamers";
 import CyberStreamer from "./pages/CyberStreamer";
 import Connectors from "./pages/Connectors";
 import Theater from "./pages/Theater";
+import Shop from "./pages/Shop";
+import ProductDetail from "./pages/ProductDetail";
+import StorePage from "./pages/StorePage";
 import NotFound from "./pages/NotFound";
 import Security from "./pages/Security";
 import CommunityGuidelines from "./pages/CommunityGuidelines";
@@ -60,6 +65,9 @@ const AppContent = () => {
         <Route path="/cyber-streamer" element={<CyberStreamer />} />
         <Route path="/connectors" element={<Connectors />} />
         <Route path="/theater" element={<Theater />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/product/:productId" element={<ProductDetail />} />
+        <Route path="/store/:slug" element={<StorePage />} />
         <Route path="/security" element={<Security />} />
         <Route path="/community-guidelines" element={<CommunityGuidelines />} />
         <Route path="/verification" element={<Verification />} />
@@ -82,6 +90,7 @@ const AppContent = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <AIBotAssistant />
+      <CartSheet />
     </>
   );
 };
@@ -95,11 +104,13 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <CartProvider>
           <FloatingWindowsProvider>
             <FourClickCloseWrapper>
               <AppContent />
             </FourClickCloseWrapper>
           </FloatingWindowsProvider>
+          </CartProvider>
         </BrowserRouter>
       </TooltipProvider>
     </Web3Provider>
