@@ -130,6 +130,7 @@ const ScrollDatePicker = ({
   className,
   id,
 }: ScrollDatePickerProps) => {
+  const hasValue = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const parsed = useMemo(() => {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
     const fallbackYear = maxYear - 18;
@@ -157,14 +158,6 @@ const ScrollDatePicker = ({
     [],
   );
 
-  // Record the date shown on first render so the highlighted value is real.
-  useEffect(() => {
-    if (!value) {
-      onChange(`${parsed.year}-${pad(parsed.month)}-${pad(parsed.day)}`);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-
   const emit = (year: number, month: number, day: number) => {
     const maxDay = new Date(year, month, 0).getDate();
     onChange(`${year}-${pad(month)}-${pad(Math.min(day, maxDay))}`);
@@ -177,6 +170,7 @@ const ScrollDatePicker = ({
         "relative rounded-md border border-primary/30 bg-background/50 px-2",
         className,
       )}
+      data-empty={hasValue ? "false" : "true"}
     >
       {/* Selection band */}
       <div
@@ -184,26 +178,33 @@ const ScrollDatePicker = ({
         style={{ height: ITEM_HEIGHT }}
         aria-hidden
       />
+      {/* Empty state: nothing is selected until the user picks a date. */}
+      {!hasValue && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-md bg-background/70 text-xs text-muted-foreground">
+          Scroll or tap a column to choose your date of birth
+        </div>
+      )}
       <div className="relative flex gap-1">
         <Column
           label="Month"
           items={months}
-          selectedIndex={parsed.month - 1}
+          selectedIndex={hasValue ? parsed.month - 1 : -1}
           onSelect={(i) => emit(parsed.year, i + 1, parsed.day)}
         />
         <Column
           label="Day"
           items={days}
-          selectedIndex={Math.min(parsed.day, daysInMonth) - 1}
+          selectedIndex={hasValue ? Math.min(parsed.day, daysInMonth) - 1 : -1}
           onSelect={(i) => emit(parsed.year, parsed.month, i + 1)}
         />
         <Column
           label="Year"
           items={years}
-          selectedIndex={Math.max(0, maxYear - parsed.year)}
+          selectedIndex={hasValue ? Math.max(0, maxYear - parsed.year) : -1}
           onSelect={(i) => emit(maxYear - i, parsed.month, parsed.day)}
         />
       </div>
+
     </div>
   );
 };
