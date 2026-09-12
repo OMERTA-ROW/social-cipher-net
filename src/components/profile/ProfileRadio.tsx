@@ -21,6 +21,8 @@ interface Props {
  */
 const ProfileRadio = ({ userId, isOwner = false }: Props) => {
   const [settings, setSettings] = useState<RadioSettings | null>(null);
+  const [playlists, setPlaylists] = useState<SavedPlaylist[]>([]);
+  const [selectedId, setSelectedId] = useState<string>("new");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [url, setUrl] = useState("");
@@ -31,17 +33,27 @@ const ProfileRadio = ({ userId, isOwner = false }: Props) => {
     let active = true;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("profile_radio")
-        .select("provider, playlist_url, embed_url, title, is_enabled, route_to_stream")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const [{ data }, { data: saved }] = await Promise.all([
+        supabase
+          .from("profile_radio")
+          .select("provider, playlist_url, embed_url, title, is_enabled, route_to_stream")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("profile_radio_playlists")
+          .select("id, provider, playlist_url, embed_url, title")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false }),
+      ]);
       if (!active) return;
+      setPlaylists((saved ?? []) as SavedPlaylist[]);
       if (data) {
         setSettings(data as RadioSettings);
         setUrl(data.playlist_url ?? "");
         setTitle(data.title ?? "");
         setRouteToStream(!!data.route_to_stream);
+        const match = (saved ?? []).find((p) => p.playlist_url === data.playlist_url);
+        setSelectedId(match ? match.id : "new");
       } else {
         setSettings(null);
       }
@@ -69,11 +81,42 @@ const ProfileRadio = ({ userId, isOwner = false }: Props) => {
       route_to_stream: routeToStream,
     };
     const { error } = await supabase.from("profile_radio").upsert(payload, { onConflict: "user_id" });
-    setSaving(false);
     if (error) {
+      setSaving(false);
       toast.error(error.message || "Could not save your radio");
       return;
     }
+
+    // Keep the playlist in the owner's saved list so they can switch back to it.
+    const existing = playlists.find((p) => p.playlist_url === payload.playlist_url);
+    if (existing) {
+      await supabase
+        .from("profile_radio_playlists")
+        .update({ title: payload.title, embed_url: payload.embed_url, provider: payload.provider })
+        .eq("id", existing.id);
+      setPlaylists((list) =>
+        list.map((p) => (p.id === existing.id ? { ...p, title: payload.title, embed_url: payload.embed_url } : p)),
+      );
+      setSelectedId(existing.id);
+    } else {
+      const { data: inserted } = await supabase
+        .from("profile_radio_playlists")
+        .insert({
+          user_id: userId,
+          provider: payload.provider,
+          playlist_url: payload.playlist_url,
+          embed_url: payload.embed_url,
+          title: payload.title,
+        })
+        .select("id, provider, playlist_url, embed_url, title")
+        .maybeSingle();
+      if (inserted) {
+        setPlaylists((list) => [inserted as SavedPlaylist, ...list]);
+        setSelectedId((inserted as SavedPlaylist).id);
+      }
+    }
+
+    setSaving(false);
     setSettings(payload as RadioSettings);
     toast.success("Radio updated");
   };
