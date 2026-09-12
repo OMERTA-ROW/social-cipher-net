@@ -87,6 +87,15 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (username.trim().length < 3 || !displayName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please choose a username (3+ characters) and a display name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!documentType || !idDocument) {
       toast({
         title: "Error",
