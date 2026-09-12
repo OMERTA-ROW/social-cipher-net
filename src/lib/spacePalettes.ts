@@ -9,10 +9,12 @@ export interface Palette {
   aurora: number;  // cursor aurora hue
   shoot: number;   // shooting-star hue
   rippleBase: number; // click ripple base hue
+  /** Opacity multiplier for the primary nebula wash (0 hides it entirely). Default 1. */
+  nebulaAOpacity?: number;
 }
 
 export const PALETTES: Record<PaletteName, Palette> = {
-  cosmic: { nebulaA: 265, nebulaB: 195, aurora: 180, shoot: 200, rippleBase: 190 },
+  cosmic: { nebulaA: 265, nebulaB: 195, aurora: 180, shoot: 200, rippleBase: 190, nebulaAOpacity: 0 },
   draco:  { nebulaA: 12,  nebulaB: 30,  aurora: 18,  shoot: 25,  rippleBase: 10  },
   brain:  { nebulaA: 285, nebulaB: 250, aurora: 300, shoot: 280, rippleBase: 275 },
   solar:  { nebulaA: 40,  nebulaB: 20,  aurora: 45,  shoot: 50,  rippleBase: 35  },
