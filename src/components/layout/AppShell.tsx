@@ -311,6 +311,7 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
           )}
           <main
             ref={scrollRef}
+            data-app-scroll
             className="flex-1 min-h-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-10"
           >
             <div className="w-full">{children}</div>
