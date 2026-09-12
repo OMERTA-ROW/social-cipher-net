@@ -318,6 +318,9 @@ export const SECTIONS = [
   "community",
   "discovery",
   "pool",
+  "live",
+  "trending",
+  "events",
   "shop",
   "cyberworld",
 ] as const;
@@ -333,6 +336,9 @@ export const SECTION_LABELS: Record<string, string> = {
   community: "Community",
   discovery: "Discovery",
   pool: "Pool",
+  live: "Live Studio",
+  trending: "Trending",
+  events: "Live Events",
   shop: "Shop",
   cyberworld: "Cyber World",
 };
