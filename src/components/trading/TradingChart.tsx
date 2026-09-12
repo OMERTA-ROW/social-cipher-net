@@ -188,14 +188,35 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
 
     chart.timeScale().fitContent();
 
-    // autoSize keeps the canvas bitmap in sync with the container; a single
-    // deferred fit covers the first paint before layout has settled.
-    const raf = requestAnimationFrame(() => {
-      const w = holder.current?.clientWidth ?? 0;
-      const h = holder.current?.clientHeight ?? 0;
-      if (w && h) chart.resize(w, h, true);
+    // autoSize keeps the canvas bitmap in sync with the container. Some
+    // environments never fire the library's internal size observer, which
+    // leaves the drawing surface at its 300x150 default and paints nothing,
+    // so we verify the backing bitmaps and size them ourselves if needed.
+    const syncBitmaps = () => {
+      const host = holder.current;
+      if (!host) return;
+      const w = host.clientWidth;
+      const h = host.clientHeight;
+      if (!w || !h) return;
+      chart.resize(w, h, true);
+      const dpr = window.devicePixelRatio || 1;
+      let repaired = false;
+      host.querySelectorAll("canvas").forEach((c) => {
+        const want = Math.round(c.clientWidth * dpr);
+        const wantH = Math.round(c.clientHeight * dpr);
+        if (want > 0 && wantH > 0 && (c.width !== want || c.height !== wantH)) {
+          c.width = want;
+          c.height = wantH;
+          repaired = true;
+        }
+      });
+      if (repaired) chart.resize(w - 1, h, true);
+      chart.resize(w, h, true);
       chart.timeScale().fitContent();
-    });
+    };
+    const raf = requestAnimationFrame(syncBitmaps);
+    const ro = new ResizeObserver(() => syncBitmaps());
+    ro.observe(holder.current);
 
     return () => {
       cancelAnimationFrame(raf);
