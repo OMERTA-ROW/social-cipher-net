@@ -1412,6 +1412,9 @@ export type Database = {
           id: string
           reason: string
           reported_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_note: string | null
           severity: string
           status: string
           subject_id: string | null
@@ -1425,6 +1428,9 @@ export type Database = {
           id?: string
           reason: string
           reported_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_note?: string | null
           severity?: string
           status?: string
           subject_id?: string | null
@@ -1438,6 +1444,9 @@ export type Database = {
           id?: string
           reason?: string
           reported_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_note?: string | null
           severity?: string
           status?: string
           subject_id?: string | null
@@ -3101,6 +3110,30 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_webhook_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string
+          id: string
+          processed_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          event_type: string
+          id?: string
+          processed_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: string
+          processed_at?: string
+        }
+        Relationships: []
+      }
       studio_assets: {
         Row: {
           asset_type: string
@@ -4052,6 +4085,7 @@ export type Database = {
           unlock_time: string
         }[]
       }
+      user_id_for_email: { Args: { _email: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "seller" | "affiliate" | "user"

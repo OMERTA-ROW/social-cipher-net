@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Lock, TerminalSquare } from "lucide-react";
+import { Loader2, Lock, TerminalSquare, Unlock } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,30 @@ const Terminal = () => {
   const [signedIn, setSignedIn] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
+  // Access is read from real entitlements and kept live: a completed purchase
+  // arrives over the realtime channel and unlocks the page without a reload.
+  const evaluate = useCallback(async (userId: string) => {
+    let keys: string[] = [];
+    try {
+      const { data: synced } = await supabase.functions.invoke("sync-entitlements");
+      if (Array.isArray(synced?.tiers)) keys = synced.tiers;
+    } catch {
+      // fall back to the stored entitlements below
+    }
+    if (keys.length === 0) {
+      const { data: ent } = await supabase
+        .from("user_entitlements")
+        .select("tier_key")
+        .eq("user_id", userId)
+        .eq("status", "active");
+      keys = (ent ?? []).map((e) => e.tier_key);
+    }
+    setAllowed(keys.includes("terminal") || keys.includes("pro"));
+  }, []);
+
   useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
     (async () => {
       const { data } = await supabase.auth.getSession();
       const user = data.session?.user;
@@ -57,24 +80,38 @@ const Terminal = () => {
         setAllowed(false);
         return;
       }
-      // Refresh entitlements from live Stripe subscriptions before gating.
-      let keys: string[] = [];
-      try {
-        const { data: synced } = await supabase.functions.invoke("sync-entitlements");
-        if (Array.isArray(synced?.tiers)) keys = synced.tiers;
-      } catch {
-        // fall back to the stored entitlements below
-      }
-      if (keys.length === 0) {
-        const { data: ent } = await supabase
-          .from("user_entitlements")
-          .select("tier_key")
-          .eq("status", "active");
-        keys = (ent ?? []).map((e) => e.tier_key);
-      }
-      setAllowed(keys.includes("terminal") || keys.includes("pro"));
+
+      await evaluate(user.id);
+
+      channel = supabase
+        .channel(`terminal-access-${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_entitlements",
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            void evaluate(user.id);
+          },
+        )
+        .subscribe();
     })();
-  }, []);
+
+    // A purchase finishes in another tab; re-check when this one is focused.
+    const onFocus = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) void evaluate(data.session.user.id);
+    };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [evaluate]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
@@ -268,6 +305,19 @@ const Terminal = () => {
           <Badge variant="outline" className="text-[10px] uppercase">
             sandboxed
           </Badge>
+          {allowed === null ? (
+            <Badge variant="outline" className="gap-1 text-[10px]">
+              <Loader2 className="h-3 w-3 animate-spin" /> Checking access
+            </Badge>
+          ) : allowed ? (
+            <Badge className="gap-1 text-[10px]">
+              <Unlock className="h-3 w-3" /> Unlocked
+            </Badge>
+          ) : (
+            <Badge variant="destructive" className="gap-1 text-[10px]">
+              <Lock className="h-3 w-3" /> Locked
+            </Badge>
+          )}
         </header>
 
         {allowed === false ? (
