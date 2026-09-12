@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, Users, CreditCard, Loader2 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import CrossPlatformEarnings from "@/components/CrossPlatformEarnings";
+import AffiliatesTab from "@/components/monetization/AffiliatesTab";
+import BrandDealsTab from "@/components/monetization/BrandDealsTab";
 
 const Monetization = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -203,9 +205,14 @@ const Monetization = () => {
             <Tabs defaultValue="overview" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="affiliates">Affiliates</TabsTrigger>
+                <TabsTrigger value="brand-deals">Brand Deals</TabsTrigger>
                 <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
                 <TabsTrigger value="payouts">Payouts</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="affiliates"><AffiliatesTab /></TabsContent>
+              <TabsContent value="brand-deals"><BrandDealsTab /></TabsContent>
 
               <TabsContent value="overview" className="space-y-6">
                 <Card>
