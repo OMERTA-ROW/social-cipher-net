@@ -18,22 +18,22 @@ import { Brain, Shield, Eye, Database, Zap, Activity, Loader2, Sparkles } from "
 
 interface ConnectionRow {
   id: string;
-  platform: string | null;
+  service_id: string;
   status: string | null;
-  last_sync_at: string | null;
+  health: string | null;
 }
 
 interface AgentRow {
   id: string;
-  name: string | null;
-  is_active: boolean | null;
+  label: string;
+  status: string | null;
 }
 
 interface SecurityEventRow {
   id: string;
   event_type: string;
   severity: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 const CyberLinkBrainDashboard = () => {
@@ -49,10 +49,10 @@ const CyberLinkBrainDashboard = () => {
     const [conn, ag, ev] = await Promise.all([
       supabase
         .from("user_connections")
-        .select("id, platform, status, last_sync_at")
-        .order("created_at", { ascending: false })
+        .select("id, service_id, status, health")
+        .order("connected_at", { ascending: false })
         .limit(100),
-      supabase.from("ai_agents").select("id, name, is_active").limit(100),
+      supabase.from("ai_agents").select("id, label, status").limit(100),
       supabase
         .from("security_audit_log")
         .select("id, event_type, severity, created_at")
@@ -87,7 +87,7 @@ const CyberLinkBrainDashboard = () => {
     }
   };
 
-  const activeAgents = agents.filter((a) => a.is_active).length;
+  const activeAgents = agents.filter((a) => (a.status ?? "") === "connected" || (a.status ?? "") === "active").length;
   const liveConnections = connections.filter((c) => (c.status ?? "") === "connected").length;
   const criticalEvents = events.filter((e) => (e.severity ?? "") === "critical").length;
 
@@ -176,7 +176,7 @@ const CyberLinkBrainDashboard = () => {
                         key={c.id}
                         className="flex items-center justify-between rounded-md border border-border/60 px-3 py-2 text-sm"
                       >
-                        <span className="capitalize truncate">{c.platform ?? "Account"}</span>
+                        <span className="capitalize truncate">{c.service_id}</span>
                         <Badge variant="outline" className="ml-2 shrink-0">
                           {c.status ?? "unknown"}
                         </Badge>
@@ -201,7 +201,7 @@ const CyberLinkBrainDashboard = () => {
                         <div key={e.id} className="flex items-center justify-between text-sm">
                           <span className="truncate">{e.event_type}</span>
                           <span className="text-xs text-muted-foreground ml-3 shrink-0">
-                            {e.severity ?? "info"} · {new Date(e.created_at).toLocaleString()}
+                            {e.severity ?? "info"}{e.created_at ? ` · ${new Date(e.created_at).toLocaleString()}` : ""}
                           </span>
                         </div>
                       ))}
