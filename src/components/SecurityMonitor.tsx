@@ -44,29 +44,5 @@ export const SecurityMonitor = () => {
     };
   }, []);
 
-  useEffect(() => {
-    // Monitor console tampering attempts
-    const originalConsole = { ...console };
-    let tamperAttempts = 0;
-
-    const detectTampering = () => {
-      tamperAttempts++;
-      if (tamperAttempts > 5) {
-        logSecurityEvent("console_tampering", "dev_tools_manipulation", {
-          attempts: tamperAttempts
-        });
-      }
-    };
-
-    // Check for console overrides
-    const checkInterval = setInterval(() => {
-      if (console.log !== originalConsole.log) {
-        detectTampering();
-      }
-    }, 5000);
-
-    return () => clearInterval(checkInterval);
-  }, []);
-
   return null; // This is a monitoring component with no UI
 };
