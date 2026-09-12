@@ -319,7 +319,6 @@ export default function FloatingWindow({
                 if (t) startGesture(t.clientX, t.clientY, "resize");
               }}
             />
-            )}
           </>
         )}
       </Card>
