@@ -28,6 +28,7 @@ import {
   setThreadPrivate,
   setThreadTags,
 } from "@/lib/messaging";
+import NewConversationDialog from "@/components/messages/NewConversationDialog";
 
 const Messages = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -37,6 +38,7 @@ const Messages = () => {
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
   const [peerTyping, setPeerTyping] = useState(false);
   const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastTypingSent = useRef(0);
