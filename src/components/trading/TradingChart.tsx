@@ -82,6 +82,8 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
     const down = css("--destructive", "#ef4444");
 
     const chart = createChart(holder.current, {
+      autoSize: true,
+      width: holder.current.clientWidth || undefined,
       height: holder.current.clientHeight || height,
       layout: { background: { color: "transparent" }, textColor: text, attributionLogo: false },
       grid: { vertLines: { color: grid }, horzLines: { color: grid } },
