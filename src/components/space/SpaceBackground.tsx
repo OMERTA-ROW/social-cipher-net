@@ -1,5 +1,4 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { isLowPowerDevice, prefersReducedMotion, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
 
 const SpaceScene = lazy(() => import("./scene/SpaceScene"));
@@ -15,21 +14,11 @@ const SpaceBackground = () => {
   const [reduced, setReduced] = useState(prefersReducedMotion);
   const lowPower = useMemo(isLowPowerDevice, []);
   const tier = useMemo(() => resolveQuality(quality), [quality]);
-  const [shipTarget, setShipTarget] = useState({ x: 0, y: 0, visible: false });
 
   useEffect(() => {
     const onVis = () => setVisible(!document.hidden);
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
-  }, []);
-
-  useEffect(() => {
-    const onShipPosition = (event: Event) => {
-      const detail = (event as CustomEvent<{ x: number; y: number; visible: boolean }>).detail;
-      if (detail) setShipTarget(detail);
-    };
-    window.addEventListener("cyberlink:ship-position", onShipPosition);
-    return () => window.removeEventListener("cyberlink:ship-position", onShipPosition);
   }, []);
 
   useEffect(() => {
@@ -43,7 +32,6 @@ const SpaceBackground = () => {
   const full = mode === "full" && !lowPower && !reduced;
 
   return (
-    <>
     <div aria-hidden className="fixed inset-0 -z-10 pointer-events-none select-none overflow-hidden bg-black">
       {/* Pure black base — every layer above dissolves into it. */}
       <div className="absolute inset-0 bg-black" />
@@ -54,6 +42,10 @@ const SpaceBackground = () => {
         </Suspense>
       )}
 
+      <div className="space-depth-light absolute inset-0" />
+      <div className="space-depth-haze absolute inset-0" />
+      <div className="space-depth-grain absolute inset-0" />
+
       {/* Dim veil + vignette keep text and feed content fully legible on top. */}
       <div
         className="absolute inset-0 bg-black transition-opacity duration-500"
@@ -61,21 +53,6 @@ const SpaceBackground = () => {
       />
       <div className="absolute inset-0 [background:radial-gradient(ellipse_at_50%_45%,transparent_32%,rgba(0,0,0,0.55)_80%,#000_100%)]" />
     </div>
-    {render3d && view === "solar" && shipTarget.visible && (
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="fixed -z-[5] h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border-0 bg-transparent p-0 text-transparent shadow-none hover:bg-primary/5 focus-visible:bg-primary/10"
-        style={{ left: shipTarget.x, top: shipTarget.y }}
-        onClick={() => window.dispatchEvent(new CustomEvent("cyberlink:open-ship-interface"))}
-        aria-label="Open spaceship crew interface"
-        title="Open Zozo, Draco, and miners"
-      >
-        <span className="sr-only">Open Zozo, Draco, and miners</span>
-      </Button>
-    )}
-    </>
   );
 };
 

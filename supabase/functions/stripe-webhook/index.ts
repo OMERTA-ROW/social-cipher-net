@@ -92,6 +92,32 @@ async function syncCustomer(customerId: string, userId: string) {
   return [...active.keys()];
 }
 
+async function recordPaidInvoice(event: Stripe.Event, invoice: Stripe.Invoice) {
+  const gross = Math.max(0, Number(invoice.amount_paid ?? 0) / 100);
+  if (gross <= 0) return;
+
+  const firstLine = invoice.lines.data[0];
+  const product = firstLine?.pricing?.price_details?.product;
+  const productId = typeof product === "string" ? product : product?.id;
+  const tier = productId ? PRODUCT_TIERS[productId] : undefined;
+  const source = tier === "terminal" ? "terminal_fees" : "subscription_revenue";
+
+  const { error } = await admin.from("platform_revenue").upsert(
+    {
+      source,
+      amount: gross,
+      currency: String(invoice.currency ?? "usd").toUpperCase(),
+      reference_type: "stripe_invoice",
+      gross_amount: gross,
+      platform_fee: gross,
+      net_amount: 0,
+      external_reference: event.id,
+    },
+    { onConflict: "external_reference" },
+  );
+  if (error) throw error;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -151,11 +177,20 @@ Deno.serve(async (req) => {
       } else {
         console.warn(`No account matched for event ${event.id}`);
       }
+
+      if (event.type === "invoice.paid") {
+        await recordPaidInvoice(event, event.data.object as Stripe.Invoice);
+      }
     }
   } catch (err) {
     console.error("Handler failed:", err instanceof Error ? err.message : err);
-    // Let the ledger row stand; Stripe retries are answered as duplicates and
-    // the in-app sync covers the account on next load.
+    // Failed deliveries must remain retryable. Only successfully processed
+    // events stay in the idempotency ledger.
+    const { error: cleanupError } = await admin
+      .from("stripe_webhook_events")
+      .delete()
+      .eq("event_id", event.id);
+    if (cleanupError) console.error("Could not release failed event:", cleanupError.message);
     return new Response("Handler error", { status: 500 });
   }
 

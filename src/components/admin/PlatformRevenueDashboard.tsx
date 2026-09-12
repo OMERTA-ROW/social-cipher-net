@@ -67,7 +67,14 @@ const PlatformRevenueDashboard = () => {
     setLoading(false);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    const channel = supabase
+      .channel("platform-revenue-dashboard")
+      .on("postgres_changes", { event: "*", schema: "public", table: "platform_revenue" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [load]);
 
   const saveFee = async (revenueType: string) => {
     const percent = Number(draft[revenueType]);

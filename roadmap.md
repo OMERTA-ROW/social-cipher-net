@@ -105,3 +105,9 @@
 
 ## AI enablement (Sept 12)
 - [x] Enable Lovable AI for the project and verify one real server-side request
+
+- [ ] Add required affiliate and Stripe webhook secrets (blocked until user supplies provider/shared values)
+- [x] Add creator earnings gross/fee/net breakdown by revenue type
+- [ ] Verify Stripe webhook-driven revenue updates (blocked until Stripe signing secret is supplied)
+- [x] Enhance only the existing space background depth and texture; preserve all UI
+- [x] Secure public affiliate-link financial data exposure

@@ -951,25 +951,37 @@ export type Database = {
           amount: number
           created_at: string | null
           creator_id: string
+          currency: string
           earning_type: string
+          gross_amount: number
           id: string
-          post_id: string
+          net_amount: number
+          platform_fee: number
+          post_id: string | null
         }
         Insert: {
           amount: number
           created_at?: string | null
           creator_id: string
+          currency?: string
           earning_type: string
+          gross_amount?: number
           id?: string
-          post_id: string
+          net_amount?: number
+          platform_fee?: number
+          post_id?: string | null
         }
         Update: {
           amount?: number
           created_at?: string | null
           creator_id?: string
+          currency?: string
           earning_type?: string
+          gross_amount?: number
           id?: string
-          post_id?: string
+          net_amount?: number
+          platform_fee?: number
+          post_id?: string | null
         }
         Relationships: [
           {
@@ -2244,7 +2256,11 @@ export type Database = {
           amount: number
           created_at: string
           currency: string
+          external_reference: string | null
+          gross_amount: number | null
           id: string
+          net_amount: number | null
+          platform_fee: number | null
           reference_id: string | null
           reference_type: string | null
           source: string
@@ -2253,7 +2269,11 @@ export type Database = {
           amount?: number
           created_at?: string
           currency?: string
+          external_reference?: string | null
+          gross_amount?: number | null
           id?: string
+          net_amount?: number | null
+          platform_fee?: number | null
           reference_id?: string | null
           reference_type?: string | null
           source: string
@@ -2262,7 +2282,11 @@ export type Database = {
           amount?: number
           created_at?: string
           currency?: string
+          external_reference?: string | null
+          gross_amount?: number | null
           id?: string
+          net_amount?: number | null
+          platform_fee?: number | null
           reference_id?: string | null
           reference_type?: string | null
           source?: string
