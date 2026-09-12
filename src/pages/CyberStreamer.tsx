@@ -244,14 +244,21 @@ const CyberStreamer = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Real credentials only: the RTMP server URL and stream key must come
+      // from the streaming provider's own dashboard. Nothing is generated here.
+      const rtmpUrl = window.prompt(`RTMP server URL from your ${platformId} dashboard`)?.trim();
+      if (!rtmpUrl) return;
+      const streamKey = window.prompt(`Stream key from your ${platformId} dashboard`)?.trim();
+      if (!streamKey) return;
+
       const { error } = await supabase
         .from('platform_connections')
         .insert({
           user_id: user.id,
           platform: platformId,
           is_active: true,
-          stream_key: `demo_key_${Date.now()}`,
-          rtmp_url: `rtmp://live.${platformId}.com/app`
+          stream_key: streamKey,
+          rtmp_url: rtmpUrl
         });
 
       if (error) throw error;
