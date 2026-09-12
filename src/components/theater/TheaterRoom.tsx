@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Play, Pause, Send, X, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import CommentsPanel from "@/components/comments/CommentsPanel";
 import type { TheaterEvent } from "@/hooks/useTheaterEvents";
 
 interface ChatMessage {
