@@ -26,8 +26,15 @@ serve(async (req) => {
 
     const { priceId } = await req.json();
 
-    if (!priceId) {
-      throw new Error("Price ID is required");
+    // Only prices we actually sell can be checked out.
+    const ALLOWED_PRICES = new Set([
+      "price_1SS5WmHTVeX8KHmEy9i3Aokb", // CyberBasis
+      "price_1SS5eQHTVeX8KHmExN8saFdg", // CyberPro
+      "price_1UEghyHTVeX8KHmENq6kMXeG", // Terminal add-on
+    ]);
+
+    if (!priceId || !ALLOWED_PRICES.has(String(priceId))) {
+      throw new Error("That plan is not available");
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -50,6 +57,9 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
+      client_reference_id: user.id,
+      metadata: { user_id: user.id },
+      subscription_data: { metadata: { user_id: user.id } },
       success_url: `${req.headers.get("origin")}/subscription?success=true`,
       cancel_url: `${req.headers.get("origin")}/subscription?canceled=true`,
     });
