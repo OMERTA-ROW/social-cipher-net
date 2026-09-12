@@ -160,17 +160,19 @@ const ConnectDialog = ({
             <Button
               className="w-full glow-primary"
               onClick={startOauth}
-              disabled={starting}
+              disabled={starting || !oauthReady}
             >
               {starting ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <ShieldCheck className="w-4 h-4 mr-2" />
               )}
-              Authorize with {service.name}
+              {oauthReady ? `Authorize with ${service.name}` : "Setup needed"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              You sign in on {service.name} — Cyber Link never sees your password.
+              {oauthReady
+                ? `You sign in on ${service.name} — Cyber Link never sees your password.`
+                : `One-click sign-in for ${service.name} is waiting on its developer app details. You can still connect with your own keys below.`}
             </p>
             {service.fields?.length ? (
               <div className="flex items-center gap-3 py-1">
