@@ -3989,6 +3989,7 @@ export type Database = {
         Args: { _event_type: string; _time_window?: string; _user_id: string }
         Returns: boolean
       }
+      fulfill_paid_order: { Args: { _order_id: string }; Returns: boolean }
       get_follow_counts: {
         Args: { target_user: string }
         Returns: {
