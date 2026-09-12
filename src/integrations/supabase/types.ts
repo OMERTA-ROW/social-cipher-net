@@ -138,6 +138,112 @@ export type Database = {
           },
         ]
       }
+      cart_items: {
+        Row: {
+          cart_id: string
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          updated_at: string
+          variant_id: string | null
+        }
+        Insert: {
+          cart_id: string
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Update: {
+          cart_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          updated_at?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carts: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      communities: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connection_secrets: {
         Row: {
           connection_id: string
@@ -1018,6 +1124,7 @@ export type Database = {
           is_live: boolean | null
           metadata: Json | null
           platforms: string[] | null
+          section: string
           started_at: string | null
           thumbnail_url: string | null
           title: string
@@ -1034,6 +1141,7 @@ export type Database = {
           is_live?: boolean | null
           metadata?: Json | null
           platforms?: string[] | null
+          section?: string
           started_at?: string | null
           thumbnail_url?: string | null
           title: string
@@ -1050,6 +1158,7 @@ export type Database = {
           is_live?: boolean | null
           metadata?: Json | null
           platforms?: string[] | null
+          section?: string
           started_at?: string | null
           thumbnail_url?: string | null
           title?: string
@@ -1371,6 +1480,97 @@ export type Database = {
           notify_replies?: boolean
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          quantity: number
+          seller_id: string
+          unit_price: number
+          variant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          quantity?: number
+          seller_id: string
+          unit_price?: number
+          variant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          quantity?: number
+          seller_id?: string
+          unit_price?: number
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          currency: string
+          id: string
+          shipping_address: Json | null
+          status: string
+          stripe_session_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          shipping_address?: Json | null
+          status?: string
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          shipping_address?: Json | null
+          status?: string
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1725,6 +1925,45 @@ export type Database = {
           },
         ]
       }
+      post_products: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          post_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          post_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          post_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_products_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_reposts: {
         Row: {
           comment: string | null
@@ -1799,6 +2038,7 @@ export type Database = {
       posts: {
         Row: {
           click_count: number | null
+          community_slug: string | null
           content: string
           created_at: string | null
           id: string
@@ -1811,12 +2051,16 @@ export type Database = {
           price: number | null
           reply_count: number | null
           repost_count: number
+          section: string
+          subject_id: string | null
+          subject_type: string | null
           updated_at: string | null
           user_id: string
           view_count: number | null
         }
         Insert: {
           click_count?: number | null
+          community_slug?: string | null
           content: string
           created_at?: string | null
           id?: string
@@ -1829,12 +2073,16 @@ export type Database = {
           price?: number | null
           reply_count?: number | null
           repost_count?: number
+          section?: string
+          subject_id?: string | null
+          subject_type?: string | null
           updated_at?: string | null
           user_id: string
           view_count?: number | null
         }
         Update: {
           click_count?: number | null
+          community_slug?: string | null
           content?: string
           created_at?: string | null
           id?: string
@@ -1847,6 +2095,9 @@ export type Database = {
           price?: number | null
           reply_count?: number | null
           repost_count?: number
+          section?: string
+          subject_id?: string | null
+          subject_type?: string | null
           updated_at?: string | null
           user_id?: string
           view_count?: number | null
@@ -1901,6 +2152,38 @@ export type Database = {
         }
         Relationships: []
       }
+      product_images: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_reviews: {
         Row: {
           created_at: string | null
@@ -1929,6 +2212,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          options: Json
+          price: number
+          product_id: string
+          sku: string | null
+          stock_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          options?: Json
+          price?: number
+          product_id: string
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          options?: Json
+          price?: number
+          product_id?: string
+          sku?: string | null
+          stock_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -2385,32 +2715,44 @@ export type Database = {
       }
       seller_profiles: {
         Row: {
+          banner_url: string | null
           business_description: string | null
           business_name: string
           commission_rate: number | null
           created_at: string | null
           id: string
+          logo_url: string | null
+          slug: string | null
           status: string | null
+          tagline: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          banner_url?: string | null
           business_description?: string | null
           business_name: string
           commission_rate?: number | null
           created_at?: string | null
           id?: string
+          logo_url?: string | null
+          slug?: string | null
           status?: string | null
+          tagline?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          banner_url?: string | null
           business_description?: string | null
           business_name?: string
           commission_rate?: number | null
           created_at?: string | null
           id?: string
+          logo_url?: string | null
+          slug?: string | null
           status?: string | null
+          tagline?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -3032,9 +3374,11 @@ export type Database = {
           capacity: number | null
           created_at: string
           description: string | null
+          format: string
           host_id: string
           id: string
           is_live: boolean
+          is_open: boolean
           poster_url: string | null
           starts_at: string
           status: string
@@ -3046,9 +3390,11 @@ export type Database = {
           capacity?: number | null
           created_at?: string
           description?: string | null
+          format?: string
           host_id: string
           id?: string
           is_live?: boolean
+          is_open?: boolean
           poster_url?: string | null
           starts_at: string
           status?: string
@@ -3060,9 +3406,11 @@ export type Database = {
           capacity?: number | null
           created_at?: string
           description?: string | null
+          format?: string
           host_id?: string
           id?: string
           is_live?: boolean
+          is_open?: boolean
           poster_url?: string | null
           starts_at?: string
           status?: string
