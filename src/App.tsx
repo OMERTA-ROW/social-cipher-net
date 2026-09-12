@@ -45,6 +45,9 @@ import Trading from "./pages/Trading";
 import Terminal from "./pages/Terminal";
 import Moderation from "./pages/Moderation";
 import OAuthConsent from "./pages/OAuthConsent";
+import MediaKit from "./pages/MediaKit";
+import Advertise from "./pages/Advertise";
+import AffiliateRedirect from "./pages/AffiliateRedirect";
 import AIBotAssistant from "./components/AIBotAssistant";
 import SpaceBackground from "./components/space/SpaceBackground";
 
@@ -88,6 +91,9 @@ const AppContent = () => {
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/ceo" element={<CeoPortal />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
+        <Route path="/kit/:slug" element={<MediaKit />} />
+        <Route path="/advertise" element={<Advertise />} />
+        <Route path="/r/:code" element={<AffiliateRedirect />} />
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

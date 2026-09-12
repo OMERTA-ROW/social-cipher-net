@@ -9,6 +9,8 @@ import FollowButton from "@/components/FollowButton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { resolvePaidAccess } from "@/lib/paymentAccess";
+import SponsoredCard from "@/components/ads/SponsoredCard";
+import { useAdSlot, useAdsSuppressed, type AdPlacement } from "@/hooks/useAdSlot";
 import { reportIssue } from "@/lib/monitoring";
 import { fetchPostProducts, type StoreProduct } from "@/lib/commerce";
 import {
@@ -41,6 +43,9 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   // Shoppable posts: the inline cart lives on the home feed only.
   const [postProducts, setPostProducts] = useState<Map<string, StoreProduct[]>>(new Map());
+  // Native ad slots: real running campaigns only, hidden for paid tiers.
+  const adsSuppressed = useAdsSuppressed();
+  const { data: ads } = useAdSlot(tab === "discover" ? "discovery" : tab === "shop" ? "shop" : tab === "market" ? "market" : "feed");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
@@ -180,10 +185,25 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
         </div>
       );
     }
+    const placement: AdPlacement = tab === "discover" ? "discovery" : "feed";
+    const slotCreatives = adsSuppressed ? [] : (ads ?? []);
     return (
       <div className="space-y-4">
-        {posts.map((post) => (
+        {posts.map((post, index) => (
           <div key={post.id} className="relative">
+            {slotCreatives.length > 0 && index > 0 && index % 7 === 0 && (
+              <div className="mb-4">
+                <SponsoredCard
+                  creative={slotCreatives[Math.floor(index / 7 - 1) % slotCreatives.length]}
+                  placement={placement}
+                />
+              </div>
+            )}
+            {post.is_sponsored && (
+              <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+                Sponsored{post.sponsor_name ? ` · ${post.sponsor_name}` : ""}
+              </div>
+            )}
             {tab !== "following" && post.user_id !== userId && (
               <div className="absolute right-4 top-4 z-10">
                 <FollowButton targetUserId={post.user_id} />
@@ -237,8 +257,14 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       <TabsContent value="for-you">{renderList()}</TabsContent>
       <TabsContent value="following">{renderList()}</TabsContent>
       <TabsContent value="discover">{renderList()}</TabsContent>
-      <TabsContent value="shop"><FeedShopTab /></TabsContent>
-      <TabsContent value="market"><FeedMarketTab /></TabsContent>
+      <TabsContent value="shop" className="space-y-4">
+        {!adsSuppressed && ads?.[0] && <SponsoredCard creative={ads[0]} placement="shop" />}
+        <FeedShopTab />
+      </TabsContent>
+      <TabsContent value="market" className="space-y-4">
+        {!adsSuppressed && ads?.[0] && <SponsoredCard creative={ads[0]} placement="market" />}
+        <FeedMarketTab />
+      </TabsContent>
     </Tabs>
   );
 };

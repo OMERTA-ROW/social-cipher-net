@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import CommentsPanel from "@/components/comments/CommentsPanel";
 import type { TheaterEvent } from "@/hooks/useTheaterEvents";
+import SponsoredCard from "@/components/ads/SponsoredCard";
+import { useAdSlot, useAdsSuppressed } from "@/hooks/useAdSlot";
 
 interface ChatMessage {
   id: string;
@@ -25,6 +27,9 @@ interface TheaterRoomProps {
 
 /** Shared watch room: host drives playback, everyone else follows in sync. */
 const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
+  // Pre-roll placement: real running campaigns only, hidden for paid tiers.
+  const adsSuppressed = useAdsSuppressed();
+  const { data: theaterAds } = useAdSlot("theater");
   const videoRef = useRef<HTMLVideoElement>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
@@ -215,6 +220,12 @@ const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
             <X className="w-4 h-4" />
           </Button>
         </div>
+
+        {!adsSuppressed && theaterAds?.[0] && (
+          <div className="mb-3">
+            <SponsoredCard creative={theaterAds[0]} placement="theater" />
+          </div>
+        )}
 
         <div className="aspect-video bg-muted/20 rounded-lg overflow-hidden">
           {event.video_url ? (

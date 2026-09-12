@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, Users, CreditCard, Loader2 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import CrossPlatformEarnings from "@/components/CrossPlatformEarnings";
+import AffiliatesTab from "@/components/monetization/AffiliatesTab";
+import BrandDealsTab from "@/components/monetization/BrandDealsTab";
 
 const Monetization = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -20,7 +22,9 @@ const Monetization = () => {
     subscriptions: 0, 
     total: 0,
     payPerView: 0,
-    payPerClick: 0
+    payPerClick: 0,
+    affiliate: 0,
+    brandDeals: 0,
   });
   const [recent, setRecent] = useState<Array<{ id: string; amount: number; earning_type: string; created_at: string }>>([]);
   const navigate = useNavigate();
@@ -95,7 +99,19 @@ const Monetization = () => {
         ?.filter(e => e.earning_type === "pay_per_click")
         .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
-      const total = payPerView + payPerClick;
+      const affiliate = data
+        ?.filter(e => e.earning_type === "affiliate_commission")
+        .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+
+      // Brand deals count once they are actually paid.
+      const { data: paidDeals } = await supabase
+        .from("brand_deals")
+        .select("net_amount")
+        .eq("creator_id", user.id)
+        .eq("status", "paid");
+      const brandDeals = (paidDeals ?? []).reduce((sum, d: any) => sum + Number(d.net_amount ?? 0), 0);
+
+      const total = payPerView + payPerClick + affiliate + brandDeals;
 
       setRecent(
         (data ?? []).slice(0, 10).map((e: any) => ({
@@ -112,6 +128,8 @@ const Monetization = () => {
         subscriptions: 0,
         payPerView,
         payPerClick,
+        affiliate,
+        brandDeals,
       });
     } catch (error: any) {
       toast({
@@ -165,7 +183,7 @@ const Monetization = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
@@ -198,14 +216,41 @@ const Monetization = () => {
                   <p className="text-xs text-muted-foreground">Click revenue</p>
                 </CardContent>
               </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Affiliates</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${earnings.affiliate.toFixed(2)}</div>
+                  <p className="text-xs text-muted-foreground">Net commissions</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Brand Deals</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${earnings.brandDeals.toFixed(2)}</div>
+                  <p className="text-xs text-muted-foreground">Paid deals, net</p>
+                </CardContent>
+              </Card>
             </div>
+
 
             <Tabs defaultValue="overview" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="affiliates">Affiliates</TabsTrigger>
+                <TabsTrigger value="brand-deals">Brand Deals</TabsTrigger>
                 <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
                 <TabsTrigger value="payouts">Payouts</TabsTrigger>
               </TabsList>
+
+              <TabsContent value="affiliates"><AffiliatesTab /></TabsContent>
+              <TabsContent value="brand-deals"><BrandDealsTab /></TabsContent>
 
               <TabsContent value="overview" className="space-y-6">
                 <Card>

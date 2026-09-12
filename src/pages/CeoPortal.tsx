@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import CyberLinkBrainDashboard from "@/components/CyberLinkBrainDashboard";
+import PlatformRevenueDashboard from "@/components/admin/PlatformRevenueDashboard";
 import { useIsCeo } from "@/hooks/useIsCeo";
 
 /**
@@ -23,6 +24,7 @@ const CeoPortal = () => {
   return (
     <div className="min-h-screen pt-20 pb-16">
       <div className="max-w-7xl mx-auto px-4 space-y-6">
+        <PlatformRevenueDashboard />
         <CyberLinkBrainDashboard />
       </div>
     </div>
