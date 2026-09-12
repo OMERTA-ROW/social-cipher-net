@@ -113,12 +113,37 @@ export const BINANCE_INTERVAL: Record<string, string> = {
   "1W": "1w",
 };
 
+/**
+ * Binance blocks some hosting regions with HTTP 451, so every Binance call
+ * tries the public data mirrors before giving up.
+ */
+const BINANCE_HOSTS = [
+  "https://data-api.binance.vision",
+  "https://api.binance.com",
+  "https://api1.binance.com",
+];
+
+async function binanceJson(path: string): Promise<any> {
+  let lastError: unknown;
+  for (const host of BINANCE_HOSTS) {
+    try {
+      return await getJson(`${host}${path}`);
+    } catch (e) {
+      lastError = e;
+      const msg = e instanceof Error ? e.message : String(e);
+      // Only keep trying other hosts on geo/403 blocks or server errors.
+      if (!/UPSTREAM_(451|403|5\d\d)/.test(msg)) throw e;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
 /** Binance 24h ticker — real-time spot data, no key required. */
 export async function binanceQuotes(symbols: string[]): Promise<Quote[]> {
   const pairs = symbols.map((s) => `${s.toUpperCase()}USDT`);
   const list = await cached(`bn:tickers:${pairs.sort().join(",")}`, 10_000, () =>
-    getJson(
-      `https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(JSON.stringify(pairs))}`,
+    binanceJson(
+      `/api/v3/ticker/24hr?symbols=${encodeURIComponent(JSON.stringify(pairs))}`,
     ),
   );
   const asOf = Date.now();
