@@ -216,6 +216,12 @@ const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
           </Button>
         </div>
 
+        {!adsSuppressed && theaterAds?.[0] && (
+          <div className="mb-3">
+            <SponsoredCard creative={theaterAds[0]} placement="theater" />
+          </div>
+        )}
+
         <div className="aspect-video bg-muted/20 rounded-lg overflow-hidden">
           {event.video_url ? (
             <video
