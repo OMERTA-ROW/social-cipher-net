@@ -317,8 +317,7 @@ const AIBotAssistant = () => {
         actionParam = "orchestrate";
         requestBody = {
           action: actionParam,
-          context: userMessage,
-          password: "Dupree$$$01"
+          context: userMessage
         };
       } else if (isCriticalAI) {
         functionName = "cyberlink-critical-ai";

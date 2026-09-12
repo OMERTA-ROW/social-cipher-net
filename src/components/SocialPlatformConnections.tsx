@@ -147,8 +147,9 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
       return;
     }
 
-    // Simulate website search results with domain detection
-    const mockResults = [
+    // Local suggestions only: the typed domain plus any known platform whose
+    // name matches. No fabricated accounts or external results are shown.
+    const suggestions = [
       { domain: query, platform: detectPlatformFromDomain(query), name: query }
     ];
 
@@ -157,7 +158,7 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
     platforms.forEach(platform => {
       const platformName = PLATFORM_NAMES[platform].toLowerCase();
       if (platformName.includes(query.toLowerCase()) || platform.includes(query.toLowerCase())) {
-        mockResults.push({
+        suggestions.push({
           domain: `${platform}.com`,
           platform: platform,
           name: PLATFORM_NAMES[platform]
@@ -165,7 +166,7 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: SocialPlatfor
       }
     });
 
-    setSearchResults(mockResults.slice(0, 5));
+    setSearchResults(suggestions.slice(0, 5));
   };
 
   const handleSelectWebsite = async (result: { domain: string; platform: string; name: string }) => {
