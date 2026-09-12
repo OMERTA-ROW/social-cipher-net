@@ -99,7 +99,19 @@ const Monetization = () => {
         ?.filter(e => e.earning_type === "pay_per_click")
         .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
-      const total = payPerView + payPerClick;
+      const affiliate = data
+        ?.filter(e => e.earning_type === "affiliate_commission")
+        .reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+
+      // Brand deals count once they are actually paid.
+      const { data: paidDeals } = await supabase
+        .from("brand_deals")
+        .select("net_amount")
+        .eq("creator_id", user.id)
+        .eq("status", "paid");
+      const brandDeals = (paidDeals ?? []).reduce((sum, d: any) => sum + Number(d.net_amount ?? 0), 0);
+
+      const total = payPerView + payPerClick + affiliate + brandDeals;
 
       setRecent(
         (data ?? []).slice(0, 10).map((e: any) => ({
@@ -116,6 +128,8 @@ const Monetization = () => {
         subscriptions: 0,
         payPerView,
         payPerClick,
+        affiliate,
+        brandDeals,
       });
     } catch (error: any) {
       toast({
