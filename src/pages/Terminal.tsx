@@ -57,11 +57,21 @@ const Terminal = () => {
         setAllowed(false);
         return;
       }
-      const { data: ent } = await supabase
-        .from("user_entitlements")
-        .select("tier_key")
-        .eq("status", "active");
-      const keys = (ent ?? []).map((e) => e.tier_key);
+      // Refresh entitlements from live Stripe subscriptions before gating.
+      let keys: string[] = [];
+      try {
+        const { data: synced } = await supabase.functions.invoke("sync-entitlements");
+        if (Array.isArray(synced?.tiers)) keys = synced.tiers;
+      } catch {
+        // fall back to the stored entitlements below
+      }
+      if (keys.length === 0) {
+        const { data: ent } = await supabase
+          .from("user_entitlements")
+          .select("tier_key")
+          .eq("status", "active");
+        keys = (ent ?? []).map((e) => e.tier_key);
+      }
       setAllowed(keys.includes("terminal") || keys.includes("pro"));
     })();
   }, []);

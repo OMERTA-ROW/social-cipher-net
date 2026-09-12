@@ -5,7 +5,7 @@ import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, Wallet, CreditCard } from "lucide-react";
+import { Check, Loader2, Wallet, CreditCard, TerminalSquare as TerminalIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
@@ -51,6 +51,13 @@ const TIERS = {
   },
 };
 
+const TERMINAL_ADDON = {
+  name: "Terminal add-on",
+  price: 8,
+  priceId: "price_1UEghyHTVeX8KHmENq6kMXeG",
+  productId: "prod_VFB4e6LecHM4mM",
+};
+
 const Subscription = () => {
   const [currentTier, setCurrentTier] = useState<string>("free");
   const [isLoading, setIsLoading] = useState(true);
@@ -58,12 +65,15 @@ const Subscription = () => {
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [selectedTier, setSelectedTier] = useState<"basis" | "pro" | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [hasTerminal, setHasTerminal] = useState(false);
+  const [terminalBusy, setTerminalBusy] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
     checkSubscription();
     fetchWallet();
+    syncEntitlements();
   }, []);
 
   const checkAuth = async () => {
@@ -92,6 +102,35 @@ const Subscription = () => {
       console.error("Error checking subscription:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Mirrors live Stripe subscriptions into entitlements, then reflects them here.
+  const syncEntitlements = async () => {
+    try {
+      const { data } = await supabase.functions.invoke("sync-entitlements");
+      const tiers: string[] = data?.tiers ?? [];
+      setHasTerminal(tiers.includes("terminal") || tiers.includes("pro"));
+    } catch (error) {
+      console.error("Entitlement sync failed:", error);
+    }
+  };
+
+  const handleBuyTerminal = async () => {
+    setTerminalBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-tier-checkout", {
+        body: { priceId: TERMINAL_ADDON.priceId },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        toast.success("Opening checkout for the Terminal add-on");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Could not start checkout");
+    } finally {
+      setTerminalBusy(false);
     }
   };
 
@@ -301,6 +340,38 @@ const Subscription = () => {
               })}
             </div>
           )}
+
+          <Card className="mt-10 border-primary/30 bg-card/60">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <TerminalIcon className="h-5 w-5 text-primary" />
+                {TERMINAL_ADDON.name}
+              </CardTitle>
+              <CardDescription>
+                Sandboxed command line with the AI assistant. Read-only commands, money actions never run from it.
+                Included with CyberPro.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center justify-between gap-4">
+              <div className="text-2xl font-bold">
+                ${TERMINAL_ADDON.price}
+                <span className="text-sm text-muted-foreground font-normal">/year</span>
+              </div>
+              {hasTerminal ? (
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">Active</Badge>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/terminal")}>
+                    Open Terminal
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={handleBuyTerminal} disabled={terminalBusy}>
+                  {terminalBusy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Add the Terminal
+                </Button>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="mt-12 text-center">
             <p className="text-sm text-muted-foreground">
