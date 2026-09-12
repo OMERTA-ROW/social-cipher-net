@@ -282,6 +282,17 @@ const TheaterRoom = ({ event, userId, onClose }: TheaterRoomProps) => {
           </Button>
         </div>
       </Card>
+
+      <Card className="lg:col-span-3 p-4 bg-card/50 backdrop-blur border-primary/20">
+        <h3 className="font-semibold mb-3">Comments</h3>
+        <CommentsPanel
+          subjectType="theater_event"
+          subjectId={event.id}
+          section="theater"
+          title={event.title}
+          live
+        />
+      </Card>
     </div>
   );
 };
