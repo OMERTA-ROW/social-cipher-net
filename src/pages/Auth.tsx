@@ -182,6 +182,8 @@ const Auth = () => {
       setDocumentType("");
       setIdDocument(null);
       setBirthdate("");
+      setUsername("");
+      setDisplayName("");
     } catch (error: any) {
       toast({
         title: "Error",
