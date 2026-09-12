@@ -188,8 +188,10 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
 
     chart.timeScale().fitContent();
 
-    // Size through the chart API only. Writing canvas width/height directly
-    // clears the drawing buffer and was the cause of blank live charts.
+    let redrawFrame = 0;
+    // Resize through the chart API. Chromium can leave the library's backing
+    // canvases at 300x150 inside a resized floating pane; when that happens,
+    // update the bitmap once and trigger the chart redraw on the next frame.
     const syncSize = () => {
       const host = holder.current;
       if (!host) return;
@@ -197,6 +199,27 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
       const h = host.clientHeight;
       if (!w || !h) return;
       chart.resize(w, h, true);
+      const dpr = window.devicePixelRatio || 1;
+      let staleBitmap = false;
+      host.querySelectorAll("canvas").forEach((canvas) => {
+        const desiredWidth = Math.max(1, Math.round(canvas.clientWidth * dpr));
+        const desiredHeight = Math.max(1, Math.round(canvas.clientHeight * dpr));
+        if (canvas.width !== desiredWidth || canvas.height !== desiredHeight) {
+          canvas.width = desiredWidth;
+          canvas.height = desiredHeight;
+          staleBitmap = true;
+        }
+      });
+      if (staleBitmap) {
+        cancelAnimationFrame(redrawFrame);
+        redrawFrame = requestAnimationFrame(() => {
+          chart.resize(Math.max(1, w - 1), h, true);
+          requestAnimationFrame(() => {
+            chart.resize(w, h, true);
+            chart.timeScale().fitContent();
+          });
+        });
+      }
     };
     const raf = requestAnimationFrame(syncSize);
     const ro = new ResizeObserver(() => syncSize());
@@ -204,6 +227,7 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
 
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(redrawFrame);
       ro.disconnect();
       chart.remove();
       chartRef.current = null;

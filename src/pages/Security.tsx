@@ -33,11 +33,10 @@ const Security = () => {
 
   const loadData = async (userId: string) => {
     try {
-      const [profileRes, privacyRes, logsRes, privateRes] = await Promise.all([
+      const [profileRes, privacyRes, logsRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', userId).single(),
         supabase.from('privacy_settings').select('*').eq('user_id', userId).single(),
         supabase.from('security_audit_log').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
-        supabase.from('profile_private').select('two_factor_enabled').eq('user_id', userId).maybeSingle()
       ]);
 
       if (profileRes.data) setProfile(profileRes.data);
