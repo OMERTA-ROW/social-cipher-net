@@ -38,6 +38,7 @@ const Connectors = () => {
   const [active, setActive] = useState<ConnectorService | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [finishing, setFinishing] = useState(false);
+  const [testing, setTesting] = useState<string | null>(null);
 
   // Auth guard
   useEffect(() => {
@@ -133,6 +134,28 @@ const Connectors = () => {
     }
     toast.success(`${service.name} disconnected`);
     refresh();
+  };
+
+  // Real round trip to the provider so the badge reflects a live check.
+  const testConnection = async (service: ConnectorService) => {
+    setTesting(service.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("connector-action", {
+        body: { action: "profile", service_id: service.id },
+      });
+      const result = Array.isArray(data?.results) ? data.results[0] : null;
+      const ok = !error && !data?.error && result?.ok !== false;
+      if (ok) {
+        toast.success(`${service.name} responded successfully`);
+      } else {
+        toast.error(
+          result?.detail ?? data?.error ?? error?.message ?? "The provider did not respond",
+        );
+      }
+    } finally {
+      setTesting(null);
+      refresh();
+    }
   };
 
   const open = (service: ConnectorService) => {
@@ -312,6 +335,20 @@ const Connectors = () => {
                             "Connect"
                           )}
                         </Button>
+                        {connected && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => testConnection(service)}
+                            disabled={testing === service.id}
+                          >
+                            {testing === service.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              "Test"
+                            )}
+                          </Button>
+                        )}
                         {connected && (
                           <Button
                             size="sm"
