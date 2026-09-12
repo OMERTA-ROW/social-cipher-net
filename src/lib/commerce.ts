@@ -110,11 +110,32 @@ export async function fetchCategories(): Promise<string[]> {
   return Array.from(new Set((data ?? []).map((r: any) => r.category as string))).sort();
 }
 
-export async function fetchStore(slugOrUserId: string): Promise<Store | null> {
-  const columns = "id, user_id, slug, business_name, business_description, tagline, banner_url, logo_url";
-  const bySlug = await supabase.from("seller_profiles").select(columns).eq("slug", slugOrUserId).maybeSingle();
+const STORE_COLUMNS =
+  "id, user_id, slug, business_name, business_description, tagline, banner_url, logo_url";
+
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
+/** Accepts a store slug, a store id, or the owner's user id. */
+export async function fetchStore(slugOrId: string): Promise<Store | null> {
+  const bySlug = await supabase
+    .from("seller_profiles")
+    .select(STORE_COLUMNS)
+    .eq("slug", slugOrId)
+    .maybeSingle();
   if (bySlug.data) return bySlug.data as Store;
-  const byUser = await supabase.from("seller_profiles").select(columns).eq("user_id", slugOrUserId).maybeSingle();
+  if (!isUuid(slugOrId)) return null;
+  const byId = await supabase
+    .from("seller_profiles")
+    .select(STORE_COLUMNS)
+    .eq("id", slugOrId)
+    .maybeSingle();
+  if (byId.data) return byId.data as Store;
+  const byUser = await supabase
+    .from("seller_profiles")
+    .select(STORE_COLUMNS)
+    .eq("user_id", slugOrId)
+    .maybeSingle();
   return (byUser.data as Store) ?? null;
 }
 

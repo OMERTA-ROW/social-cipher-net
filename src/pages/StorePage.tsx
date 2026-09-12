@@ -22,7 +22,7 @@ const StorePage = () => {
       .then(async (s) => {
         if (!alive) return;
         setStore(s);
-        if (s) setProducts(await fetchStorefront({ sellerId: s.user_id }).catch(() => []));
+        if (s) setProducts(await fetchStorefront({ sellerId: s.id }).catch(() => []));
       })
       .finally(() => alive && setLoading(false));
     return () => {

@@ -94,7 +94,7 @@ const ProductDetail = () => {
           <div>
             {store && (
               <Link
-                to={`/store/${store.slug ?? store.user_id}`}
+                to={`/store/${store.slug ?? store.id}`}
                 className="text-sm text-muted-foreground hover:text-primary"
               >
                 {store.business_name}
