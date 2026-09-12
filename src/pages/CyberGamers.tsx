@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import PresenceAvatar from "@/components/profile/PresenceAvatar";
 import { Input } from "@/components/ui/input";
 import { Gamepad2, Users, Radio, Trophy, Zap, Search, Save } from "lucide-react";
 import FloatingWindow from "@/components/FloatingWindow";
@@ -205,10 +205,7 @@ const CyberGamers = () => {
                   <Card key={member.id} className="p-4 bg-muted/20 border-primary/10">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <Avatar className="w-12 h-12 border-2 border-primary/50">
-                          <AvatarImage src={member.avatarUrl ?? undefined} />
-                          <AvatarFallback>{member.name.slice(0, 2)}</AvatarFallback>
-                        </Avatar>
+                        <PresenceAvatar src={member.avatarUrl} name={member.name} size={48} isLive={member.isLive} />
                         <div>
                           <h3 className="font-semibold text-foreground">{member.name}</h3>
                         </div>

@@ -92,3 +92,13 @@
 - [x] 13 Purple highlight blocks -> blue letter glow on hover
 - [x] 14 CEO portal fully hidden
 - [x] 15 Own favicon + OG link preview image
+
+## Charts, connectors, and live presence (Sept 12)
+- [x] Verify Cloud project, client binding, and all market/connector function deployments
+- [x] Repair blank lightweight charts without clearing their canvas drawing buffers
+- [x] Consolidate the older social redirect flow into the universal connector screen
+- [x] Fix encrypted Canva/Adobe credential reads and remove unsupported Shopify OAuth affordance
+- [x] Add realtime blue live rings and prioritize live creators in Who to follow
+- [x] Replace dead story click, follower-count placeholder, and password-change placeholder
+- [ ] Provider OAuth apps need owner-supplied developer credentials
+- [ ] Remaining provider actions/import adapters require provider-specific implementation and approvals

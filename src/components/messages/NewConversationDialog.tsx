@@ -7,7 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import PresenceAvatar from "@/components/profile/PresenceAvatar";
+import { useLivePresence } from "@/hooks/useLivePresence";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { startThread } from "@/lib/messaging";
@@ -33,6 +34,7 @@ const NewConversationDialog = ({ open, onOpenChange, currentUserId, onStarted }:
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const [startingId, setStartingId] = useState<string | null>(null);
+  const liveIds = useLivePresence(people.map((person) => person.id));
 
   useEffect(() => {
     if (!open) return;
@@ -99,12 +101,12 @@ const NewConversationDialog = ({ open, onOpenChange, currentUserId, onStarted }:
                 disabled={startingId === person.id}
                 className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-muted/40"
               >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={person.avatar_url || undefined} className="object-cover" />
-                  <AvatarFallback>
-                    {(person.display_name || person.username || "?").charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                <PresenceAvatar
+                  src={person.avatar_url}
+                  name={person.display_name || person.username}
+                  size={32}
+                  isLive={liveIds.has(person.id)}
+                />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium">
                     {person.display_name || person.username || "Member"}

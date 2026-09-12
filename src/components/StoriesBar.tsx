@@ -5,6 +5,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Loader2 } from "lucide-react";
 import { cached } from "@/lib/queryCache";
 import { reportIssue } from "@/lib/monitoring";
+import { useNavigate } from "react-router-dom";
 
 interface StoryUser {
   id: string;
@@ -17,6 +18,7 @@ interface StoryUser {
 const StoriesBar = () => {
   const [users, setUsers] = useState<StoryUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchStoriesAndLive();
@@ -116,10 +118,7 @@ const StoriesBar = () => {
                 hasStory={user.hasStory}
                 isLive={user.isLive}
                 size="lg"
-                onClick={() => {
-                  // TODO: Open story/live viewer
-                  console.log("View content for:", user.username);
-                }}
+                onClick={() => navigate(`/profile/${user.id}`)}
               />
               <span className="text-xs text-foreground/70 truncate max-w-[80px] text-center">
                 {user.username}

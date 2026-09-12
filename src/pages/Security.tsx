@@ -15,7 +15,6 @@ const Security = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [privacy, setPrivacy] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
@@ -41,7 +40,6 @@ const Security = () => {
         supabase.from('profile_private').select('two_factor_enabled').eq('user_id', userId).maybeSingle()
       ]);
 
-      if (privateRes.data) setTwoFactorEnabled(!!privateRes.data.two_factor_enabled);
       if (profileRes.data) setProfile(profileRes.data);
       if (privacyRes.data) setPrivacy(privacyRes.data);
       if (logsRes.data) setAuditLogs(logsRes.data);
@@ -91,6 +89,19 @@ const Security = () => {
     } catch (error: any) {
       toast.error(error.message);
     }
+  };
+
+  const sendPasswordReset = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      toast.error("No email address is available for this account");
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${window.location.origin}/security`,
+    });
+    if (error) toast.error(error.message);
+    else toast.success("Password reset email sent");
   };
 
   if (loading) {
@@ -154,23 +165,8 @@ const Security = () => {
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Add an extra layer of security (Coming soon)
-                    </p>
-                  </div>
-                  <Switch
-                    checked={twoFactorEnabled}
-                    disabled
-                  />
-                </div>
-
                 <div className="pt-4 border-t">
-                  <Button variant="outline" className="w-full" onClick={() => {
-                    toast.info("Password change feature coming soon");
-                  }}>
+                  <Button variant="outline" className="w-full" onClick={sendPasswordReset}>
                     Change Password
                   </Button>
                 </div>

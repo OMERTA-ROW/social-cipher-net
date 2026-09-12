@@ -13,7 +13,7 @@ const Verification = () => {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [followerCount] = useState(0); // TODO: Implement follower counting
+  const [followerCount, setFollowerCount] = useState<number | null>(null);
 
   useEffect(() => {
     checkProfile();
@@ -27,14 +27,15 @@ const Verification = () => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      const [{ data, error }, { count, error: countError }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        supabase.from("followers").select("id", { count: "exact", head: true }).eq("following_id", user.id),
+      ]);
 
       if (error) throw error;
+      if (countError) throw countError;
       setProfile(data);
+      setFollowerCount(count ?? 0);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -70,7 +71,7 @@ const Verification = () => {
   const handleFollowerVerification = async () => {
     setProcessing(true);
     try {
-      if (followerCount < 10000) {
+      if (followerCount == null || followerCount < 10000) {
         toast({
           title: "Not Eligible",
           description: "You need at least 10,000 followers to verify via followers.",
@@ -189,7 +190,7 @@ const Verification = () => {
               </ul>
               <div className="mb-4">
                 <p className="text-sm text-muted-foreground">
-                  Current followers: <span className="font-bold text-foreground">{followerCount.toLocaleString()}</span>
+                   Current followers: <span className="font-bold text-foreground">{followerCount == null ? "Unavailable" : followerCount.toLocaleString()}</span>
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Required: <span className="font-bold text-foreground">10,000</span>
@@ -197,11 +198,11 @@ const Verification = () => {
               </div>
               <Button
                 onClick={handleFollowerVerification}
-                disabled={processing || followerCount < 10000}
+                 disabled={processing || followerCount == null || followerCount < 10000}
                 className="w-full"
                 variant="secondary"
               >
-                {processing ? "Processing..." : followerCount >= 10000 ? "Verify with Followers" : "Not Enough Followers"}
+                 {processing ? "Processing..." : followerCount != null && followerCount >= 10000 ? "Verify with Followers" : "Not Enough Followers"}
               </Button>
             </Card>
           </div>

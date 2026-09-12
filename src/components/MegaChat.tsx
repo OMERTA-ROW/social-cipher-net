@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import PresenceAvatar from "@/components/profile/PresenceAvatar";
+import { useLivePresence } from "@/hooks/useLivePresence";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Send, Users, Youtube, Facebook, Instagram, Video } from "lucide-react";
@@ -16,6 +17,7 @@ interface ChatMessage {
   message: string;
   user_avatar?: string;
   created_at: string;
+  user_id?: string;
 }
 
 interface MegaChatProps {
@@ -27,6 +29,7 @@ export function MegaChat({ streamId }: MegaChatProps) {
   const [newMessage, setNewMessage] = useState("");
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const liveIds = useLivePresence(messages.flatMap((message) => message.user_id ? [message.user_id] : []));
 
   useEffect(() => {
     loadMessages();
@@ -220,15 +223,12 @@ export function MegaChat({ streamId }: MegaChatProps) {
         <div className="space-y-4">
           {messages.map((msg) => (
             <div key={msg.id} className="flex gap-3 group border border-transparent hover:border-primary hover:text-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.35)] p-2 rounded-lg transition-colors">
-              <Avatar className="w-8 h-8 relative">
-                <AvatarImage src={msg.user_avatar} />
-                <AvatarFallback className="text-xs">
-                  {msg.username[0]?.toUpperCase()}
-                </AvatarFallback>
+              <div className="relative shrink-0">
+                <PresenceAvatar src={msg.user_avatar} name={msg.username} size={32} isLive={Boolean(msg.user_id && liveIds.has(msg.user_id))} showBadge={false} />
                 <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full ${getPlatformColor(msg.platform)} flex items-center justify-center border-2 border-background`}>
                   {getPlatformIcon(msg.platform)}
                 </div>
-              </Avatar>
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <div className={`w-5 h-5 rounded flex items-center justify-center ${getPlatformColor(msg.platform)}`}>
