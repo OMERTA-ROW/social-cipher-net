@@ -163,7 +163,6 @@ export default function FloatingWindow({
   }, [workspace]);
 
   const startGesture = (clientX: number, clientY: number, next: "drag" | "resize") => {
-    if (pinned) return;
     gesture.current = {
       startX: clientX,
       startY: clientY,
