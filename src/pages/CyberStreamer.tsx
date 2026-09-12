@@ -332,6 +332,11 @@ const CyberStreamer = () => {
     <div className="min-h-screen bg-transparent">
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12 max-w-7xl">
+        {!adsSuppressed && streamAds?.[0] && (
+          <div className="mb-6">
+            <SponsoredCard creative={streamAds[0]} placement="livestream" />
+          </div>
+        )}
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
