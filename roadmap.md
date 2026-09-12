@@ -104,4 +104,4 @@
 - [ ] Remaining provider actions/import adapters require provider-specific implementation and approvals
 
 ## AI enablement (Sept 12)
-- [ ] Enable Lovable AI for the project and verify one real server-side request
+- [x] Enable Lovable AI for the project and verify one real server-side request
