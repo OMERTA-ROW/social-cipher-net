@@ -61,16 +61,17 @@ serve(async (req) => {
       const timeframe = String(body.timeframe ?? "1h");
       if (!BINANCE_INTERVAL[timeframe]) throw new Error(`Unsupported timeframe: ${timeframe}`);
       const limit = Math.min(Math.max(Number(body.limit ?? 200), 20), 500);
-      const candles = await cryptoCandles(symbol, timeframe, limit);
+      const series = await cryptoCandleSeries(symbol, timeframe, limit);
       return json({
         symbol,
         timeframe,
-        candles,
-        source: "Binance spot klines",
-        latency: "realtime",
+        candles: series.candles,
+        source: series.source,
+        latency: series.latency,
         asOf: Date.now(),
       });
     }
+
 
     const symbols: string[] = (body.symbols ?? body.currencies ?? Object.keys(COIN_IDS)).map(
       (s: string) => String(s).toUpperCase(),
