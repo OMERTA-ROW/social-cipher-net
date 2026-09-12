@@ -282,6 +282,12 @@ const PostCard = ({
               {links.map((url) => (
                 <LinkPreview key={url} url={url} />
               ))}
+
+              {shoppable && products.length > 0 && (
+                <div className="mb-4" onClick={(e) => e.stopPropagation()}>
+                  <PostProductCard products={products} />
+                </div>
+              )}
             </>
           )}
 
