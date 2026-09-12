@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
       mode: "payment",
       shipping_address_collection: { allowed_countries: ["US", "CA", "GB", "AU", "DE", "FR", "NL", "IE", "SE", "ES", "IT"] },
       metadata: { order_id: order.id, buyer_id: user.id },
-      success_url: `${origin}/shop?order=success`,
+      success_url: `${origin}/shop?order=success&order_id=${order.id}`,
       cancel_url: `${origin}/shop?order=cancelled`,
     });
 
