@@ -20,6 +20,7 @@ interface GangMember {
   name: string;
   avatarUrl: string | null;
   isLive: boolean;
+  streamId: string | null;
 }
 
 const TRADING_PLATFORMS = [
@@ -69,16 +70,17 @@ const CyberGamers = () => {
 
       const [{ data: profiles }, { data: live }] = await Promise.all([
         supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids),
-        supabase.from("live_streams").select("user_id").in("user_id", ids).eq("is_live", true),
+        supabase.from("live_streams").select("id, user_id").in("user_id", ids).eq("is_live", true),
       ]);
-      const liveIds = new Set((live ?? []).map((l: { user_id: string }) => l.user_id));
+      const liveByUser = new Map((live ?? []).map((l: { id: string; user_id: string }) => [l.user_id, l.id]));
       if (!cancelled) {
         setGangMembers(
           (profiles ?? []).map((p: any) => ({
             id: p.id,
             name: p.display_name || p.username || "Member",
             avatarUrl: p.avatar_url ?? null,
-            isLive: liveIds.has(p.id),
+            isLive: liveByUser.has(p.id),
+            streamId: liveByUser.get(p.id) ?? null,
           })),
         );
       }
@@ -219,7 +221,7 @@ const CyberGamers = () => {
                     </div>
 
                     <Button
-                      onClick={() => navigate("/studio")}
+                      onClick={() => navigate(member.streamId ? `/live/${member.streamId}` : `/profile/${member.id}`)}
                       variant={member.isLive ? "default" : "outline"}
                       className="w-full"
                     >
@@ -247,32 +249,12 @@ const CyberGamers = () => {
         )}
 
         {section === "games" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              "Cyber Strike",
-              "Neon Racers",
-              "Digital Warfare",
-              "Pixel Legends",
-              "Code Combat",
-              "Virtual Arena",
-            ].map((game, idx) => (
-              <Card
-                key={idx}
-                className="p-6 bg-card/50 backdrop-blur border-primary/20 hover:border-primary/50 transition-colors"
-              >
-                <div className="aspect-video bg-muted/20 rounded-lg mb-4 flex items-center justify-center">
-                  <Gamepad2 className="w-16 h-16 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{game}</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Join the action and compete with gang members
-                </p>
-                <Button variant="outline" className="w-full">
-                  Play Now
-                </Button>
-              </Card>
-            ))}
-          </div>
+          <Card className="p-8 text-center bg-card/50 backdrop-blur border-primary/20">
+            <Gamepad2 className="mx-auto mb-3 h-10 w-10 text-primary" />
+            <h2 className="text-lg font-semibold">No connected games</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Games appear here only after a supported service is connected.</p>
+            <Button variant="outline" className="mt-4" onClick={() => navigate("/connectors")}>Open Connectors</Button>
+          </Card>
         )}
 
         {section === "tournaments" && (

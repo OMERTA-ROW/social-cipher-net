@@ -12,7 +12,7 @@ import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
 import SocialFeed from "@/components/SocialFeed";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Award, DollarSign, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { Wallet, TrendingUp, Award, DollarSign, Eye, ChevronDown, ChevronUp, LayoutDashboard, User, Radio, Gamepad2, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -103,6 +103,21 @@ const Index = () => {
       <StoriesBar />
       <div>
         <div>
+          <nav aria-label="Major sections" className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {[
+              { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+              { label: "Profile", path: "/profile", icon: User },
+              { label: "Studio", path: "/studio", icon: Radio },
+              { label: "Arena", path: "/cyber-arena", icon: Gamepad2 },
+              { label: "Cyber World", path: "/cyber-world", icon: Globe },
+              { label: "Monetization", path: "/monetization", icon: DollarSign },
+            ].map((item) => (
+              <Button key={item.path} variant="outline" className="h-auto min-h-16 flex-col gap-1 px-2 py-2 text-xs" onClick={() => navigate(item.path)}>
+                <item.icon className="h-5 w-5 text-primary" />
+                <span className="text-center leading-tight">{item.label}</span>
+              </Button>
+            ))}
+          </nav>
           {currentUserId && (
             <div className="mb-6 p-4 border rounded-lg bg-muted/30">
               <div className="flex items-center justify-between mb-3">
