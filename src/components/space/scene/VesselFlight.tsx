@@ -4,6 +4,8 @@ import * as THREE from "three";
 import MiningVessel from "./MiningVessel";
 import { shipTelemetry } from "./shipTelemetry";
 import { ShipAutopilot } from "./shipAutopilot";
+import { asteroidRegistry } from "./asteroidRegistry";
+import { asteroidDebugStats } from "./asteroidDebug";
 
 /**
  * Solar-system view: the vessel explores the system on its own.
