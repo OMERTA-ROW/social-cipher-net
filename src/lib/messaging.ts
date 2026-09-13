@@ -194,38 +194,10 @@ export async function reportMessage(messageId: string, reason: string, subjectUs
 
 /** Starts (or reuses) a one-to-one thread with another account. */
 export async function startThread(otherUserId: string): Promise<string> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sign in first");
-
-  const { data: mine } = await supabase
-    .from("dm_participants")
-    .select("thread_id")
-    .eq("user_id", user.id);
-  const myThreads = (mine ?? []).map((r) => r.thread_id);
-  if (myThreads.length > 0) {
-    const { data: shared } = await supabase
-      .from("dm_participants")
-      .select("thread_id")
-      .eq("user_id", otherUserId)
-      .in("thread_id", myThreads)
-      .limit(1);
-    if (shared && shared.length > 0) return shared[0].thread_id;
-  }
-
-  const { data: thread, error } = await supabase
-    .from("dm_threads")
-    .insert({ created_by: user.id, source_platform: "cyberlink" })
-    .select("id")
-    .single();
+  const { data, error } = await supabase.rpc("start_dm_thread", {
+    _peer: otherUserId,
+  });
   if (error) throw error;
-
-  const { error: partError } = await supabase.from("dm_participants").insert([
-    { thread_id: thread.id, user_id: user.id },
-    { thread_id: thread.id, user_id: otherUserId },
-  ]);
-  if (partError) throw partError;
-
-  return thread.id;
+  if (!data) throw new Error("Could not start that conversation");
+  return data as string;
 }

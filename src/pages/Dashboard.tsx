@@ -19,6 +19,7 @@ import {
   displayNameOf,
   formatTimestamp,
 } from "@/lib/social";
+import ProfilePictureEditor from "@/components/profile/ProfilePictureEditor";
 import { DollarSign, Home, Loader2 } from "lucide-react";
 
 interface NotificationPrefs {
@@ -134,17 +135,32 @@ const Dashboard = () => {
     if (displayName.length > 50) return toast.error("Display name must be 50 characters or less");
     if (bio.length > 300) return toast.error("Bio must be 300 characters or less");
     setSavingProfile(true);
+    // Write, then read the row back so the form always shows what the database holds.
     const { error } = await supabase
       .from("profiles")
       .update({ username: handle || null, display_name: displayName.trim() || null, bio: bio.trim() || null })
       .eq("id", userId);
-    setSavingProfile(false);
     if (error) {
+      setSavingProfile(false);
       toast.error(error.code === "23505" ? "That handle is already taken" : error.message);
       return;
     }
-    setUsername(handle);
-    setProfile((p) => (p ? { ...p, username: handle || null, display_name: displayName || null } : p));
+    const { data: saved } = await supabase
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, is_verified, bio")
+      .eq("id", userId)
+      .maybeSingle();
+    setSavingProfile(false);
+    if (saved) {
+      setProfile(saved as any);
+      setUsername(saved.username ?? "");
+      setDisplayName(saved.display_name ?? "");
+      setBio((saved as any).bio ?? "");
+      if (handle && (saved.username ?? "") !== handle) {
+        toast.error("That handle could not be saved. Try a different one.");
+        return;
+      }
+    }
     toast.success("Profile updated");
   };
 
@@ -242,6 +258,17 @@ const Dashboard = () => {
         </TabsContent>
 
         <TabsContent value="settings" className="mt-4 space-y-4">
+          <Card className="p-5 bg-card/70 backdrop-blur-sm border-border/60">
+            <h3 className="font-semibold mb-4">Profile picture</h3>
+            {userId && (
+              <ProfilePictureEditor
+                userId={userId}
+                name={displayName || username}
+                onChange={(url) => setProfile((p) => (p ? { ...p, avatar_url: url } : p))}
+              />
+            )}
+          </Card>
+
           <Card className="p-5 bg-card/70 backdrop-blur-sm border-border/60">
             <h3 className="font-semibold mb-4">Edit profile</h3>
             <div className="space-y-3">
