@@ -19,6 +19,8 @@ import { WORLD_SCALE } from "../worldScale";
  */
 
 const atmoVert = /* glsl */ `
+  #include <common>
+  #include <logdepthbuf_pars_vertex>
   varying vec3 vNormalW;
   varying vec3 vPosW;
   void main() {
@@ -26,11 +28,14 @@ const atmoVert = /* glsl */ `
     vPosW = world.xyz;
     vNormalW = normalize(mat3(modelMatrix) * normal);
     gl_Position = projectionMatrix * viewMatrix * world;
+    #include <logdepthbuf_vertex>
   }
 `;
 
 const atmoFrag = /* glsl */ `
   precision highp float;
+  #include <common>
+  #include <logdepthbuf_pars_fragment>
   varying vec3 vNormalW;
   varying vec3 vPosW;
   uniform vec3 uColor;
@@ -38,6 +43,7 @@ const atmoFrag = /* glsl */ `
   uniform float uStrength;
 
   void main() {
+    #include <logdepthbuf_fragment>
     vec3 n = normalize(vNormalW);
     vec3 V = normalize(cameraPosition - vPosW);
     vec3 L = normalize(uLightPos - vPosW);
@@ -48,6 +54,7 @@ const atmoFrag = /* glsl */ `
     gl_FragColor = vec4(uColor * (0.9 + forward * 0.5), clamp(a, 0.0, 1.0));
   }
 `;
+
 
 type TextureKey = keyof typeof SPACE_TEXTURE_URLS;
 

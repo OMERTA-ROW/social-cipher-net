@@ -71,19 +71,24 @@ const useHullMaterials = () => {
       normalScale: new THREE.Vector2(1.5, 1.5),
       envMapIntensity: 0.7,
     });
+    // Canopy glass: transmission handles the see-through look, so the mesh
+    // stays in the opaque pass with a single front face. Rendering it as a
+    // double-sided *transparent* sphere made front/back faces re-sort every
+    // frame, which read as the canopy flashing while the ship manoeuvred.
     const glass = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#0b1a20"),
       metalness: 0,
       roughness: 0.04,
       transmission: 0.72,
       thickness: 0.35,
-      transparent: true,
-      opacity: 0.65,
+      transparent: false,
+      opacity: 1,
       clearcoat: 1,
       clearcoatRoughness: 0.02,
       ior: 1.45,
-      side: THREE.DoubleSide,
+      side: THREE.FrontSide,
     });
+
     const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color("#39e6ff"), toneMapped: false });
     const engineGlow = new THREE.MeshBasicMaterial({
       color: new THREE.Color("#63d9ff"),
@@ -162,10 +167,13 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
             <boxGeometry args={[1.5, 0.02, 0.12]} />
           </mesh>
         ))}
-        {/* nose */}
-        <mesh material={mats.primary} position={[0, 0.02, 2.2]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <coneGeometry args={[0.72, 1.0, 40]} />
+        {/* nose — seated slightly forward with a smaller base so its rim cuts
+            cleanly through the fuselage cap instead of grazing it tangentially,
+            which produced a z-fighting seam that shimmered as the ship moved */}
+        <mesh material={mats.primary} position={[0, 0.02, 2.3]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <coneGeometry args={[0.68, 1.12, 40]} />
         </mesh>
+
         {/* nose ring and sensor head */}
         <mesh material={mats.accent} position={[0, 0.02, 1.94]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.7, 0.045, 10, 40]} />

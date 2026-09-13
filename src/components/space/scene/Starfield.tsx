@@ -9,6 +9,9 @@ import * as THREE from "three";
  */
 
 const vert = /* glsl */ `
+  #include <common>
+  #include <logdepthbuf_pars_vertex>
+
   attribute float aSize;
   attribute float aSeed;
   attribute vec3 aColor;
@@ -23,6 +26,7 @@ const vert = /* glsl */ `
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mv;
+    #include <logdepthbuf_vertex>
 
     float tw = 0.90 + 0.10 * sin(uTime * (0.25 + aSeed * 0.65) + aSeed * 40.0);
     float dist = max(-mv.z, 1.0);
@@ -35,10 +39,14 @@ const vert = /* glsl */ `
 `;
 
 const frag = /* glsl */ `
+  #include <common>
+  #include <logdepthbuf_pars_fragment>
+
   varying vec3 vColor;
   varying float vBright;
 
   void main() {
+    #include <logdepthbuf_fragment>
     vec2 uv = gl_PointCoord - 0.5;
     float d = length(uv);
     // diffraction-like pin core with a restrained halo on bright stars
@@ -51,6 +59,7 @@ const frag = /* glsl */ `
     gl_FragColor = vec4(vColor * vBright * (1.0 + core * 1.8), a);
   }
 `;
+
 
 // Stellar temperature ramp: O/B blue-white -> A/F white -> G yellow -> K amber -> M red
 const TEMP_COLORS: [number, number, number][] = [
