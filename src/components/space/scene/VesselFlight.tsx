@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import MiningVessel from "./MiningVessel";
@@ -24,6 +24,9 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
   const pilot = useMemo(() => new ShipAutopilot(), []);
   const pose = useMemo(() => new ShipPose(), []);
   const debug = useRef(isAsteroidDebug());
+
+  // a view switch invalidates the shared pose until this scene writes one
+  useEffect(() => () => { shipTelemetry.ready = false; }, []);
 
   useFrame((state, delta) => {
     if (!group.current) return;

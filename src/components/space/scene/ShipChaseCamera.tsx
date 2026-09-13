@@ -34,7 +34,10 @@ const ShipChaseCamera = ({ animate }: { animate: boolean }) => {
   useFrame((state, delta) => {
     // wait for a real ship pose; framing the group at the origin first caused
     // a startup position/velocity spike and a long fly-in
-    if (!shipTelemetry.ready) return;
+    if (!shipTelemetry.ready) {
+      ready.current = false; // re-snap after a view switch
+      return;
+    }
     const dt = Math.min(delta, 0.05);
     const off = OFFSETS[shipTelemetry.phase] ?? OFFSETS.travel;
     const factor = clearanceFactor(shipTelemetry.scale);

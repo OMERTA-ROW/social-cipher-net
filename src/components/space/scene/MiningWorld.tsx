@@ -328,6 +328,9 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
     }
   };
 
+  // a view switch invalidates the shared pose until this scene writes one
+  useEffect(() => () => { shipTelemetry.ready = false; }, []);
+
   useFrame((state, delta) => {
     if (!ship.current) return;
     const dt = Math.min(delta, 0.05);
