@@ -15,12 +15,27 @@ export type MissionPhase =
   | "combat"
   | "departure";
 
+/**
+ * Hull scale the chase-camera offsets were framed against (the mining view).
+ * Other views report their own scale and the camera keeps proportional
+ * clearance, so a larger hull is never inside the camera or its plumes.
+ */
+export const MINING_SHIP_SCALE = 2.2;
+
 export const shipTelemetry = {
   position: new THREE.Vector3(0, 0, 0),
   quaternion: new THREE.Quaternion(),
   velocity: new THREE.Vector3(),
   /** 0..1 engine output, drives thruster glow and camera shake */
   throttle: 0.5,
+  /** Hull scale of the vessel currently flying; chase clearance scales with it. */
+  scale: MINING_SHIP_SCALE,
+  /**
+   * False until the flying vessel has written a real pose this session.
+   * The chase camera waits for it, so it never frames the group at the origin
+   * (which produced a startup position/velocity spike and a flying-in jump).
+   */
+  ready: false,
   phase: "travel" as MissionPhase,
   /** 0..1 progress inside the current phase */
   phaseProgress: 0,

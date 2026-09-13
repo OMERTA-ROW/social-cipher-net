@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { shipTelemetry } from "./shipTelemetry";
+import { MINING_SHIP_SCALE, shipTelemetry } from "./shipTelemetry";
 
 /**
  * Cinematic chase camera for the alien-world view. It trails the vessel from
@@ -19,29 +19,52 @@ const OFFSETS: Record<string, THREE.Vector3> = {
   departure: new THREE.Vector3(-8, 8, -28),
 };
 
+/** Offsets were framed against the mining hull; keep that clearance in proportion. */
+export const clearanceFactor = (scale: number) =>
+  THREE.MathUtils.clamp((scale || MINING_SHIP_SCALE) / MINING_SHIP_SCALE, 1, 6);
+
 const ShipChaseCamera = ({ animate }: { animate: boolean }) => {
   const { camera } = useThree();
   const desired = useRef(new THREE.Vector3());
   const look = useRef(new THREE.Vector3());
   const target = useRef(new THREE.Vector3());
   const shake = useRef(new THREE.Vector3());
+  const ready = useRef(false);
 
   useFrame((state, delta) => {
+    // wait for a real ship pose; framing the group at the origin first caused
+    // a startup position/velocity spike and a long fly-in
+    if (!shipTelemetry.ready) {
+      ready.current = false; // re-snap after a view switch
+      return;
+    }
     const dt = Math.min(delta, 0.05);
     const off = OFFSETS[shipTelemetry.phase] ?? OFFSETS.travel;
+    const factor = clearanceFactor(shipTelemetry.scale);
 
-    desired.current.copy(off).applyQuaternion(shipTelemetry.quaternion).add(shipTelemetry.position);
+    desired.current
+      .copy(off)
+      .multiplyScalar(factor)
+      .applyQuaternion(shipTelemetry.quaternion)
+      .add(shipTelemetry.position);
 
     // light engine shake, scaled by throttle, never enough to feel jittery
     const t = state.clock.elapsedTime;
-    const amp = animate ? shipTelemetry.throttle * 0.09 : 0;
+    const amp = animate ? shipTelemetry.throttle * 0.09 * factor : 0;
     shake.current.set(Math.sin(t * 21.3) * amp, Math.sin(t * 17.1) * amp, Math.sin(t * 13.7) * amp);
     desired.current.add(shake.current);
 
-    camera.position.lerp(desired.current, 1 - Math.exp(-2.1 * dt));
-
     target.current.copy(shipTelemetry.position).addScaledVector(shipTelemetry.velocity, 4);
-    look.current.lerp(target.current, 1 - Math.exp(-2.6 * dt));
+
+    if (!ready.current) {
+      // snap on the first frame / after a mode switch instead of flying in
+      camera.position.copy(desired.current);
+      look.current.copy(target.current);
+      ready.current = true;
+    } else {
+      camera.position.lerp(desired.current, 1 - Math.exp(-2.1 * dt));
+      look.current.lerp(target.current, 1 - Math.exp(-2.6 * dt));
+    }
 
     camera.up.set(0, 1, 0);
     camera.lookAt(look.current);

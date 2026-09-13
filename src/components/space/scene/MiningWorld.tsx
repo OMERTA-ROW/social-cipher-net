@@ -5,7 +5,7 @@ import * as THREE from "three";
 import MiningVessel from "./MiningVessel";
 import { Draco, Grey } from "./AlienCrew";
 import { oreMaps, plateMaps, rockMaps } from "./procTextures";
-import { missionAt, shipTelemetry } from "./shipTelemetry";
+import { MINING_SHIP_SCALE, missionAt, shipTelemetry } from "./shipTelemetry";
 
 /**
  * The alien mining world: a real-time surface where the vessel travels in,
@@ -328,6 +328,9 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
     }
   };
 
+  // a view switch invalidates the shared pose until this scene writes one
+  useEffect(() => () => { shipTelemetry.ready = false; }, []);
+
   useFrame((state, delta) => {
     if (!ship.current) return;
     const dt = Math.min(delta, 0.05);
@@ -360,6 +363,8 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
     shipTelemetry.quaternion.copy(ship.current.quaternion);
     shipTelemetry.velocity.subVectors(ship.current.position, prev.current);
     shipTelemetry.throttle = throttle.current;
+    shipTelemetry.scale = MINING_SHIP_SCALE;
+    shipTelemetry.ready = true;
     shipTelemetry.phase = beat.phase;
     shipTelemetry.phaseProgress = beat.progress;
   });
@@ -371,7 +376,7 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
         beam={beam.current}
         throttle={throttle.current}
         crew={full}
-        scale={2.2}
+        scale={MINING_SHIP_SCALE}
       />
     </group>
   );
