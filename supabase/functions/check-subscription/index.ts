@@ -41,7 +41,7 @@ serve(async (req) => {
     if (userError || !userData.user?.email) {
       logStep("User not authenticated, returning free tier", { error: userError?.message });
       return new Response(
-        JSON.stringify({ subscribed: false, tier: "CyberFree", product_id: null }),
+        JSON.stringify({ subscribed: false, tier: "Free", product_id: null }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -57,7 +57,7 @@ serve(async (req) => {
     if (customers.data.length === 0) {
       logStep("No customer found, free tier");
       return new Response(
-        JSON.stringify({ subscribed: false, tier: "CyberFree", product_id: null }),
+        JSON.stringify({ subscribed: false, tier: "Free", product_id: null }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -91,10 +91,10 @@ serve(async (req) => {
       logStep("Determined product ID", { productId });
 
       // Map product IDs to tiers - CyberBasis and CyberPro
-      if (productId === "prod_RlNFTN4LJIdK5c") {
-        tier = "CyberBasis";
-      } else if (productId === "prod_RlNG0uIMPYZazH") {
-        tier = "CyberPro";
+      if (productId === "prod_TOtJnFseC54ChY") {
+        tier = "Plus";
+      } else if (productId === "prod_TOtRdMUKNeKkFc") {
+        tier = "Pro";
       }
     } else {
       logStep("No active subscription found");
@@ -115,7 +115,7 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR in check-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage, tier: "CyberFree" }), {
+    return new Response(JSON.stringify({ error: errorMessage, tier: "Free" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

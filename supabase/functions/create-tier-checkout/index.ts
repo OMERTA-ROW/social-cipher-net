@@ -28,8 +28,10 @@ serve(async (req) => {
 
     // Only prices we actually sell can be checked out.
     const ALLOWED_PRICES = new Set([
-      "price_1SS5WmHTVeX8KHmEy9i3Aokb", // CyberBasis
-      "price_1SS5eQHTVeX8KHmExN8saFdg", // CyberPro
+      "price_1SS5WmHTVeX8KHmEy9i3Aokb", // Plus yearly
+      "price_1UF12zHTVeX8KHmEtfEZPJwH", // Plus monthly
+      "price_1UF133HTVeX8KHmEGT7pfoyJ", // Pro monthly
+      "price_1SS5eQHTVeX8KHmExN8saFdg", // Pro yearly
       "price_1UEghyHTVeX8KHmENq6kMXeG", // Terminal add-on
     ]);
 
