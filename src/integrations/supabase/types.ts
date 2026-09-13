@@ -3939,7 +3939,11 @@ export type Database = {
           key: string
           name: string
           price_cents: number
+          price_cents_year: number | null
           rank: number
+          stripe_price_id_month: string | null
+          stripe_price_id_year: string | null
+          stripe_product_id: string | null
           updated_at: string
         }
         Insert: {
@@ -3953,7 +3957,11 @@ export type Database = {
           key: string
           name: string
           price_cents?: number
+          price_cents_year?: number | null
           rank?: number
+          stripe_price_id_month?: string | null
+          stripe_price_id_year?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -3967,7 +3975,11 @@ export type Database = {
           key?: string
           name?: string
           price_cents?: number
+          price_cents_year?: number | null
           rank?: number
+          stripe_price_id_month?: string | null
+          stripe_price_id_year?: string | null
+          stripe_product_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -4823,6 +4835,7 @@ export type Database = {
         Args: { _tier_key: string; _user_id: string }
         Returns: boolean
       }
+      has_paid_plan: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
