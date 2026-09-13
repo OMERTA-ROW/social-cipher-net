@@ -125,6 +125,16 @@ const Dashboard = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  /** Turn whatever was typed into a valid handle: no @, no spaces, lower case. */
+  const normalizeHandle = (raw: string) =>
+    raw
+      .trim()
+      .toLowerCase()
+      .replace(/^@+/, "")
+      .replace(/[\s.-]+/g, "_")
+      .replace(/[^a-z0-9_]/g, "")
+      .slice(0, 20);
+
   const saveProfile = async () => {
     if (!userId) return;
     const handle = normalizeHandle(username);
