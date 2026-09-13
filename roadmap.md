@@ -111,3 +111,18 @@
 - [ ] Verify Stripe webhook-driven revenue updates (blocked until Stripe signing secret is supplied)
 - [x] Enhance only the existing space background depth and texture; preserve all UI
 - [x] Secure public affiliate-link financial data exposure
+
+## Security hardening pass (Sept 13)
+- [x] Move stream mute/block state out of participation rows into its own
+      owner-scoped moderation table with host/admin-only access and audit trail
+- [x] Keep saved radio playlists visible to their owner only
+- [x] Serve the platform's cut through a logged single-purpose lookup instead of
+      a table anyone signed in can read
+- [x] Close visitor access to every private server-side helper, and start future
+      ones locked by default
+- [x] Extend the access-rule regression suite to the new moderation rules
+- [ ] Positive mute/block check needs a live stream plus a second real account
+      (the suite skips itself while only one account exists)
+- [ ] Linter floor of 18 findings is intentional: 2 tables deliberately left with
+      no access rules, 2 sign-in helpers that must answer before a session
+      exists, and 14 helpers that the app or the access rules themselves call
