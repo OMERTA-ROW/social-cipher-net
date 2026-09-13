@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { BODIES, orbitPoint } from "./Planets";
 import { TRAVEL_RADIUS } from "../worldScale";
+import { asteroidRegistry } from "./asteroidRegistry";
 
 /**
  * Lightweight local autopilot for the vessel.
@@ -201,6 +202,18 @@ export class ShipAutopilot {
       if (d < safe * 2.4 && d > 0.001) {
         const weight = Math.min(3.2, (safe * 2.4) / Math.max(d - safe * 0.5, 1));
         desiredDir.addScaledVector(away.normalize(), weight);
+      }
+    }
+
+    // --- asteroids: ease around rocks the field has placed nearby ---
+    for (let i = 0; i < asteroidRegistry.count; i++) {
+      const away = tmpB.subVectors(s.position, asteroidRegistry.centers[i]);
+      const d = away.length();
+      const safe = asteroidRegistry.radii[i] + 26;
+      if (d < safe * 3 && d > 0.001) {
+        // smooth falloff: no jitter when a rock drifts in and out of range
+        const f = 1 - d / (safe * 3);
+        desiredDir.addScaledVector(away.normalize(), f * f * 1.6);
       }
     }
 

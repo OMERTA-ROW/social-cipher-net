@@ -7,7 +7,7 @@ import CameraRig from "./CameraRig";
 import Galaxy from "./Galaxy";
 import MarketComets from "./MarketComets";
 import Planets from "./Planets";
-import StarTrails from "./StarTrails";
+import AsteroidField from "./AsteroidField";
 import Starfield from "./Starfield";
 import { marketPulse, useMarketPulse } from "./useMarketPulse";
 import MiningWorld from "./MiningWorld";
@@ -65,7 +65,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
           <Galaxy full={full} boost={boost} />
           <DeepSky full={full} />
           <Starfield full={full} dpr={dpr} boost={boost} />
-          <StarTrails count={full ? 420 : 120} animate={animate} />
+          <AsteroidField count={full ? 120 : 34} animate={animate} full={full} />
           <Planets full={full} />
           <MarketComets animate={animate} />
           <VesselFlight animate={animate} full={full} />
