@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, MessageCircle, Send } from "lucide-react";
+import GoLiveButton from "@/components/live/GoLiveButton";
 import {
   SocialPost,
   createSectionPost,
