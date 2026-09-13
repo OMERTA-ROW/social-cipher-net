@@ -113,10 +113,12 @@ All colors MUST be HSL.
     animation: hologram-shimmer 7s ease-in-out infinite;
   }
 
-  /* Legacy pages retain their own title until their body markup is simplified.
-     The shared shell owns the single visible page H1. */
-  .app-shell-page-body h1:first-of-type {
-    display: none;
+  /* Dynamic content titles remain visible beneath the shared route heading. */
+  .app-shell-page-body h1 {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 1px hsl(var(--hologram-blue) / 0.94);
+    text-shadow: 1px 0 hsl(var(--hologram-purple) / 0.28), 0 0 12px hsl(var(--hologram-blue) / 0.42);
   }
 
   .app-shell-page-body > .min-h-screen {

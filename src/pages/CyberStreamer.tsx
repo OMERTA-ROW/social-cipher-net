@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import SponsoredCard from "@/components/ads/SponsoredCard";
 import { useAdSlot, useAdsSuppressed } from "@/hooks/useAdSlot";
 import FloatingWindow from "@/components/FloatingWindow";
@@ -98,8 +97,6 @@ const CyberStreamer = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatScrollRef = useRef<HTMLDivElement>(null);
-  const [streamTitle, setStreamTitle] = useState("My Awesome Stream");
-  const [streamCategory, setStreamCategory] = useState("Gaming");
 
   useEffect(() => {
     checkAuth();
@@ -287,7 +284,6 @@ const CyberStreamer = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-transparent">
-        <Navigation />
         <div className="container mx-auto px-4 pt-24 pb-12">
           <div className="text-center">Loading...</div>
         </div>
@@ -297,7 +293,6 @@ const CyberStreamer = () => {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12 max-w-7xl">
         {!adsSuppressed && streamAds?.[0] && (
           <div className="mb-6">

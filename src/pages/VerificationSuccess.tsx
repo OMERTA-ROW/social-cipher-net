@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BadgeCheck, Loader2 } from "lucide-react";
@@ -69,7 +68,6 @@ const VerificationSuccess = () => {
 
   return (
     <div className="min-h-screen">
-      <Navigation />
       <div className="container mx-auto px-4 py-8">
         <Card className="max-w-2xl mx-auto p-8 text-center bg-card border-border">
           {verifying ? (

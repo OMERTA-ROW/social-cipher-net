@@ -14,7 +14,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import Navigation from "@/components/Navigation";
 import FloatingWindow from "@/components/FloatingWindow";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { usePlatformChat } from "@/hooks/usePlatformChat";
@@ -199,7 +198,6 @@ const Studio = () => {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <Navigation onCreatePost={() => {}} />
       {currentStream && <OmegaChat streamId={currentStream.id} streamerId={currentStream.user_id} />}
       
       <main className="container mx-auto px-4 pt-20 pb-8">
