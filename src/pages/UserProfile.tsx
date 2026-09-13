@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CheckCircle2, UserPlus, UserMinus } from "lucide-react";
 import ProfileMedia from "@/components/profile/ProfileMedia";
+import ConnectedPlatforms from "@/components/profile/ConnectedPlatforms";
 import ProfileRadio from "@/components/profile/ProfileRadio";
 import { resolvePaidAccess } from "@/lib/paymentAccess";
 import { reportIssue } from "@/lib/monitoring";
@@ -323,6 +324,9 @@ const UserProfile = () => {
                     {profile.username && (
                       <p className="text-muted-foreground mb-2">@{profile.username}</p>
                     )}
+
+                    <ConnectedPlatforms userId={profile.id} className="mb-3" />
+                    
                     
                     {profile.bio && (
                       <p className="text-sm mb-4">{profile.bio}</p>

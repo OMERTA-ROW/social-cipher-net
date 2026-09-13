@@ -4525,6 +4525,7 @@ export type Database = {
           method: string
           scopes: string[] | null
           service_id: string
+          show_on_profile: boolean
           status: string
           updated_at: string
           user_id: string
@@ -4543,6 +4544,7 @@ export type Database = {
           method?: string
           scopes?: string[] | null
           service_id: string
+          show_on_profile?: boolean
           status?: string
           updated_at?: string
           user_id: string
@@ -4561,6 +4563,7 @@ export type Database = {
           method?: string
           scopes?: string[] | null
           service_id?: string
+          show_on_profile?: boolean
           status?: string
           updated_at?: string
           user_id?: string
@@ -4871,6 +4874,15 @@ export type Database = {
         Returns: undefined
       }
       platform_fee_percent: { Args: { _revenue_type: string }; Returns: number }
+      profile_connections: {
+        Args: { _user: string }
+        Returns: {
+          account_handle: string
+          account_name: string
+          health: string
+          service_id: string
+        }[]
+      }
       record_failed_login: {
         Args: { p_email: string }
         Returns: {

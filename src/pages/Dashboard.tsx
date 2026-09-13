@@ -125,13 +125,24 @@ const Dashboard = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  /** Turn whatever was typed into a valid handle: no @, no spaces, lower case. */
+  const normalizeHandle = (raw: string) =>
+    raw
+      .trim()
+      .toLowerCase()
+      .replace(/^@+/, "")
+      .replace(/[\s.-]+/g, "_")
+      .replace(/[^a-z0-9_]/g, "")
+      .slice(0, 20);
+
   const saveProfile = async () => {
     if (!userId) return;
-    const handle = username.trim().toLowerCase();
-    if (handle && !/^[a-z0-9_]{3,20}$/.test(handle)) {
-      toast.error("Handle must be 3-20 characters: letters, numbers or underscores");
+    const handle = normalizeHandle(username);
+    if (handle && handle.length < 3) {
+      toast.error("Handle must be at least 3 characters: letters, numbers or underscores");
       return;
     }
+    setUsername(handle);
     if (displayName.length > 50) return toast.error("Display name must be 50 characters or less");
     if (bio.length > 300) return toast.error("Bio must be 300 characters or less");
     setSavingProfile(true);
@@ -160,8 +171,10 @@ const Dashboard = () => {
         toast.error("That handle could not be saved. Try a different one.");
         return;
       }
+      // Let the rest of the app (top bar, menus) pick the new handle up at once.
+      window.dispatchEvent(new CustomEvent("cyberlink:profile-updated", { detail: saved }));
     }
-    toast.success("Profile updated");
+    toast.success(handle ? `Profile saved — you are @${handle}` : "Profile updated");
   };
 
   const changePassword = async () => {
@@ -274,7 +287,17 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div>
                 <Label htmlFor="dash-handle">Handle</Label>
-                <Input id="dash-handle" value={username} maxLength={20} onChange={(e) => setUsername(e.target.value)} placeholder="cyber_handle" />
+                <Input
+                  id="dash-handle"
+                  value={username}
+                  maxLength={20}
+                  onChange={(e) => setUsername(normalizeHandle(e.target.value))}
+                  onBlur={(e) => setUsername(normalizeHandle(e.target.value))}
+                  placeholder="cyber_handle"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  3–20 characters: letters, numbers or underscores. People will find you as @{username || "your_handle"}.
+                </p>
               </div>
               <div>
                 <Label htmlFor="dash-name">Display name</Label>

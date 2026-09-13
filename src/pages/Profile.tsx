@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ExternalLink, Loader2, Settings } from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, Pencil } from "lucide-react";
+import ConnectedPlatforms from "@/components/profile/ConnectedPlatforms";
 import { AvatarTransform } from "@/components/profile/AvatarEditor";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import StandingAvatar, { DEFAULT_STANDING, StandingPosition } from "@/components/profile/StandingAvatar";
@@ -92,25 +93,32 @@ const Profile = () => {
             </div>
 
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h1 className="text-2xl font-bold">{name}</h1>
-                {profile?.username && <span className="text-sm text-muted-foreground">@{profile.username}</span>}
-                {profile?.is_verified && (
-                  <Badge variant="secondary" className="gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> Verified
-                  </Badge>
-                )}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-2xl font-bold">{name}</h1>
+                    {profile?.is_verified && (
+                      <Badge variant="secondary" className="gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Verified
+                      </Badge>
+                    )}
+                  </div>
+                  {profile?.username && (
+                    <p className="text-sm text-muted-foreground">@{profile.username}</p>
+                  )}
+                </div>
+                <Button size="sm" asChild className="gap-1 shrink-0">
+                  <Link to="/dashboard?tab=settings"><Pencil className="w-3 h-3" /> Edit</Link>
+                </Button>
               </div>
-              {profile?.bio && <p className="text-sm text-muted-foreground mb-3 max-w-prose">{profile.bio}</p>}
-              <div className="flex gap-2 flex-wrap">
+              {profile && <ConnectedPlatforms userId={profile.id} className="mt-3" />}
+              {profile?.bio && <p className="text-sm text-muted-foreground mt-3 mb-3 max-w-prose">{profile.bio}</p>}
+              <div className="flex gap-2 flex-wrap mt-3">
                 {profile && (
                   <Button size="sm" variant="outline" onClick={() => navigate(`/profile/${profile.id}`)} className="gap-1">
                     <ExternalLink className="w-3 h-3" /> View as a visitor
                   </Button>
                 )}
-                <Button size="sm" variant="outline" asChild className="gap-1">
-                  <Link to="/dashboard?tab=settings"><Settings className="w-3 h-3" /> Edit on Dashboard</Link>
-                </Button>
               </div>
             </div>
           </div>
