@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { marketPulse } from "./useMarketPulse";
+import { WORLD_SCALE } from "../worldScale";
 
 /**
  * Slow continuous orbital travel. The camera rides a wide, gently precessing
@@ -26,10 +27,10 @@ const CameraRig = ({ animate }: { animate: boolean }) => {
     const a = t.current;
 
     // wide precessing orbit around the star, well outside the inner bodies
-    const r = 210 + Math.sin(a * 0.37) * 55;
+    const r = (210 + Math.sin(a * 0.37) * 78) * WORLD_SCALE;
     const pos = tmp.current.set(
       Math.cos(a) * r,
-      Math.sin(a * 0.53) * 46 + 18,
+      Math.sin(a * 0.53) * 46 * WORLD_SCALE + 18 * WORLD_SCALE,
       Math.sin(a) * r * 0.86,
     );
 
@@ -41,7 +42,7 @@ const CameraRig = ({ animate }: { animate: boolean }) => {
     const ahead = 0.9;
     target.current.set(
       Math.cos(a + ahead) * r * 0.12,
-      Math.sin(a * 0.53 + ahead) * 10,
+      Math.sin(a * 0.53 + ahead) * 10 * WORLD_SCALE,
       Math.sin(a + ahead) * r * 0.1,
     );
     look.current.lerp(target.current, 1 - Math.exp(-0.48 * dt));

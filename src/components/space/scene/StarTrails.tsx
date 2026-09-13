@@ -8,7 +8,7 @@ import * as THREE from "three";
  * reads as speed. One instanced draw call.
  */
 
-const FIELD = 130; // half-size of the box that follows the camera
+const FIELD = 420; // half-size of the box that follows the camera
 
 const StarTrails = ({ count, animate }: { count: number; animate: boolean }) => {
   const { camera } = useThree();
@@ -56,7 +56,7 @@ const StarTrails = ({ count, animate }: { count: number; animate: boolean }) => 
     const speed = state.vel.length();
     const dir = speed > 1e-5 ? state.z.copy(state.vel).multiplyScalar(1 / speed) : state.z.set(0, 1, 0);
 
-    const stretch = THREE.MathUtils.clamp(speed * 18, 0.3, 4.5);
+    const stretch = THREE.MathUtils.clamp(speed * 18, 0.3, 4.5) * 3.2;
     const visible = animate && speed > 1e-4;
 
     for (let i = 0; i < count; i++) {
@@ -77,7 +77,7 @@ const StarTrails = ({ count, animate }: { count: number; animate: boolean }) => 
       state.q.setFromRotationMatrix(state.m);
 
       const s = state.seeds[i];
-      state.scale.set(0.09 * s, visible ? stretch * s * 0.35 : 0.09 * s, 1);
+      state.scale.set(0.28 * s, visible ? stretch * s * 0.35 : 0.28 * s, 1);
 
       state.dummy.position.copy(p);
       state.dummy.quaternion.copy(state.q);
