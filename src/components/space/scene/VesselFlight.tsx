@@ -23,13 +23,17 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
     () =>
       new THREE.CatmullRomCurve3(
         [
-          new THREE.Vector3(-160, 26, 120),
-          new THREE.Vector3(-70, 12, 62),
-          new THREE.Vector3(18, -18, 96),
-          new THREE.Vector3(120, 8, 48),
-          new THREE.Vector3(150, 34, -80),
-          new THREE.Vector3(30, 18, -140),
-          new THREE.Vector3(-90, -14, -96),
+          new THREE.Vector3(-1180, 190, 880),
+          new THREE.Vector3(-620, 60, 430),
+          new THREE.Vector3(-140, -240, 240),
+          new THREE.Vector3(320, -120, 700),
+          new THREE.Vector3(880, 60, 350),
+          new THREE.Vector3(1340, 260, -120),
+          new THREE.Vector3(1060, 420, -640),
+          new THREE.Vector3(420, 140, -1020),
+          new THREE.Vector3(-260, -180, -880),
+          new THREE.Vector3(-880, -60, -1180),
+          new THREE.Vector3(-1420, 180, -420),
         ],
         true,
         "catmullrom",
@@ -41,7 +45,7 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
   useFrame((state, delta) => {
     if (!group.current) return;
     const dt = Math.min(delta, 0.05);
-    if (animate) t.current += dt * 0.0075;
+    if (animate) t.current += dt * 0.0048;
     const u = t.current % 1;
 
     const pos = curve.getPointAt(u);
@@ -77,7 +81,7 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
 
   return (
     <group ref={group}>
-      <MiningVessel animate={animate} throttle={0.62} beam={0} crew={full} scale={2.6} />
+      <MiningVessel animate={animate} throttle={0.62} beam={0} crew={full} scale={7.5} />
     </group>
   );
 };

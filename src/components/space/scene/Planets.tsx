@@ -70,18 +70,18 @@ export interface Body {
 }
 
 export const BODIES: Body[] = [
-  { name: "inner", texture: "Mercury", radius: 3.2, a: 165.6, ecc: 0.19, incl: 0.12, phase: 0.7, tilt: 0.03, spin: 0.10,
+  { name: "inner", texture: "Mercury", radius: 6.08, a: 165.6, ecc: 0.19, incl: 0.12, phase: 0.7, tilt: 0.03, spin: 0.10,
     base: [0.55, 0.51, 0.47], atmo: [0.25, 0.22, 0.20], atmoStrength: 0.12, bump: 0.06, rough: 1.0 },
-  { name: "terra", texture: "Earth", radius: 5.0, a: 266.4, ecc: 0.05, incl: 0.05, phase: 2.3, tilt: 0.41, spin: 0.07,
+  { name: "terra", texture: "Earth", radius: 9.5, a: 266.4, ecc: 0.05, incl: 0.05, phase: 2.3, tilt: 0.41, spin: 0.07,
     base: [0.12, 0.3, 0.5], atmo: [0.30, 0.55, 1.0], atmoStrength: 0.85, bump: 0.05, rough: 0.72 },
-  { name: "rust", texture: "Mars", radius: 4.0, a: 388.8, ecc: 0.13, incl: 0.09, phase: 4.4, tilt: 0.44, spin: 0.065,
+  { name: "rust", texture: "Mars", radius: 7.6, a: 388.8, ecc: 0.13, incl: 0.09, phase: 4.4, tilt: 0.44, spin: 0.065,
     base: [0.65, 0.35, 0.20], atmo: [0.75, 0.40, 0.28], atmoStrength: 0.3, bump: 0.07, rough: 0.92 },
-  { name: "giant", texture: "Jupiter", radius: 11.0, a: 604.8, ecc: 0.06, incl: 0.03, phase: 1.1, tilt: 0.05, spin: 0.16,
+  { name: "giant", texture: "Jupiter", radius: 20.9, a: 604.8, ecc: 0.06, incl: 0.03, phase: 1.1, tilt: 0.05, spin: 0.16,
     base: [0.78, 0.68, 0.53], atmo: [0.80, 0.66, 0.45], atmoStrength: 0.45, bump: 0.015, rough: 0.6 },
-  { name: "ringed", texture: "Saturn", radius: 9.0, a: 864, ecc: 0.05, incl: 0.16, phase: 3.6, tilt: 0.47, spin: 0.14,
+  { name: "ringed", texture: "Saturn", radius: 17.1, a: 864, ecc: 0.05, incl: 0.16, phase: 3.6, tilt: 0.47, spin: 0.14,
     base: [0.85, 0.78, 0.58], atmo: [0.85, 0.78, 0.55], atmoStrength: 0.4, bump: 0.012, rough: 0.6,
     ring: { inner: 1.5, outer: 2.5 } },
-  { name: "ice", texture: "Uranus", radius: 6.4, a: 1152, ecc: 0.04, incl: 0.2, phase: 5.2, tilt: 1.6, spin: 0.09,
+  { name: "ice", texture: "Uranus", radius: 12.16, a: 1152, ecc: 0.04, incl: 0.2, phase: 5.2, tilt: 1.6, spin: 0.09,
     base: [0.45, 0.75, 0.80], atmo: [0.45, 0.80, 0.95], atmoStrength: 0.5, bump: 0.008, rough: 0.55 },
 ];
 
