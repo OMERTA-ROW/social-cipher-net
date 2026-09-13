@@ -59,6 +59,20 @@ BEGIN
     RAISE EXCEPTION 'FAIL: is_stream_admin() returned true for a normal viewer';
   END IF;
 
+  -- 4b. Moderation state is its own table now. A normal viewer may not write
+  --     it for anybody, not even for the stream owner.
+  flag := false;
+  BEGIN
+    INSERT INTO public.live_stream_moderation (stream_id, user_id, is_muted, muted_by)
+    VALUES (stream_id, owner_id, true, attacker_id);
+    flag := true;
+  EXCEPTION
+    WHEN insufficient_privilege THEN flag := false;
+  END;
+  IF flag THEN
+    RAISE EXCEPTION 'FAIL: a normal viewer was able to record moderation state';
+  END IF;
+
   -- 5. The stream owner CAN grant admin.
   PERFORM set_config('request.jwt.claims', json_build_object('sub', owner_id, 'role', 'authenticated')::text, true);
   UPDATE public.live_stream_participants SET is_admin = true WHERE id = participant_id;
