@@ -167,10 +167,13 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
             <boxGeometry args={[1.5, 0.02, 0.12]} />
           </mesh>
         ))}
-        {/* nose */}
-        <mesh material={mats.primary} position={[0, 0.02, 2.2]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <coneGeometry args={[0.72, 1.0, 40]} />
+        {/* nose — seated slightly forward with a smaller base so its rim cuts
+            cleanly through the fuselage cap instead of grazing it tangentially,
+            which produced a z-fighting seam that shimmered as the ship moved */}
+        <mesh material={mats.primary} position={[0, 0.02, 2.3]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <coneGeometry args={[0.68, 1.12, 40]} />
         </mesh>
+
         {/* nose ring and sensor head */}
         <mesh material={mats.accent} position={[0, 0.02, 1.94]} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.7, 0.045, 10, 40]} />
