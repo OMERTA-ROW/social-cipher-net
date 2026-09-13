@@ -4900,7 +4900,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      platform_fee_percent: { Args: { _revenue_type: string }; Returns: number }
       profile_connections: {
         Args: { _user: string }
         Returns: {
