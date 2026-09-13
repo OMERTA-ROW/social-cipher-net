@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
 import CreatePostDialog from "@/components/CreatePostDialog";
@@ -112,9 +112,11 @@ const Index = () => {
               { label: "Cyber World", path: "/cyber-world", icon: Globe },
               { label: "Monetization", path: "/monetization", icon: DollarSign },
             ].map((item) => (
-              <Button key={item.path} variant="outline" className="h-auto min-h-16 flex-col gap-1 px-2 py-2 text-xs" onClick={() => navigate(item.path)}>
-                <item.icon className="h-5 w-5 text-primary" />
-                <span className="text-center leading-tight">{item.label}</span>
+              <Button key={item.path} asChild variant="outline" className="h-auto min-h-16 flex-col gap-1 px-2 py-2 text-xs">
+                <Link to={item.path}>
+                  <item.icon className="h-5 w-5 text-primary" />
+                  <span className="text-center leading-tight">{item.label}</span>
+                </Link>
               </Button>
             ))}
           </nav>
