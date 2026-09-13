@@ -6,6 +6,10 @@ import { shipTelemetry } from "./shipTelemetry";
 import { ShipAutopilot } from "./shipAutopilot";
 import { asteroidRegistry } from "./asteroidRegistry";
 import { asteroidDebugStats } from "./asteroidDebug";
+import { ShipPose } from "./shipPose";
+
+/** Hull scale in the solar view; the chase camera keeps clearance from it. */
+export const SOLAR_SHIP_SCALE = 7.5;
 
 /**
  * Solar-system view: the vessel explores the system on its own.
