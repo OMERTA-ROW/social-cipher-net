@@ -39,6 +39,7 @@ import Backgrounds from "./pages/Backgrounds";
 import CeoPortal from "./pages/CeoPortal";
 import SolarSystemVoyage from "./pages/SolarSystemVoyage";
 import Profile from "./pages/Profile";
+import LiveRoom from "./pages/LiveRoom";
 import Thread from "./pages/Thread";
 import Dashboard from "./pages/Dashboard";
 import Trading from "./pages/Trading";
@@ -83,6 +84,7 @@ const AppContent = () => {
         <Route path="/profile/:userId" element={<UserProfile />} />
         <Route path="/token-purchase" element={<TokenPurchase />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/live/:streamId" element={<LiveRoom />} />
         <Route path="/post/:postId" element={<Thread />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/trading" element={<Trading />} />

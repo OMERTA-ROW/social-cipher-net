@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Video, X } from "lucide-react";
 import { toast } from "sonner";
@@ -12,9 +12,11 @@ interface MediaFile {
 interface MediaUploadProps {
   onFilesChange: (files: MediaFile[]) => void;
   maxFiles?: number;
+  /** Extra buttons rendered in the same action row (e.g. Go Live). */
+  extraActions?: ReactNode;
 }
 
-const MediaUpload = ({ onFilesChange, maxFiles = 10 }: MediaUploadProps) => {
+const MediaUpload = ({ onFilesChange, maxFiles = 10, extraActions }: MediaUploadProps) => {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -94,6 +96,8 @@ const MediaUpload = ({ onFilesChange, maxFiles = 10 }: MediaUploadProps) => {
           <Video className="w-4 h-4 mr-2" />
           Add Videos
         </Button>
+
+        {extraActions}
       </div>
 
       {mediaFiles.length > 0 && (

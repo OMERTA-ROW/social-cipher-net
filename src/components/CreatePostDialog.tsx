@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTier } from "@/lib/tiers";
 import { toast } from "sonner";
 import MediaUpload from "@/components/MediaUpload";
+import GoLiveButton from "@/components/live/GoLiveButton";
 import { Switch } from "@/components/ui/switch";
 import { MentionTextarea } from "@/components/MentionTextarea";
 
@@ -224,7 +225,11 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
               />
             )}
             
-            <MediaUpload onFilesChange={setMediaFiles} maxFiles={10} />
+            <MediaUpload
+              onFilesChange={setMediaFiles}
+              maxFiles={10}
+              extraActions={<GoLiveButton section="main" />}
+            />
 
             {canMonetize && (
             <div className="space-y-2">

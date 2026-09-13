@@ -24,6 +24,8 @@ export interface SocialPost {
   is_sponsored: boolean;
   sponsor_name: string | null;
   affiliate_link_id: string | null;
+  subject_type: string | null;
+  subject_id: string | null;
   profile: SocialProfile | null;
   media: Array<{ url: string; type: "image" | "video" }>;
 }
@@ -31,6 +33,7 @@ export interface SocialPost {
 const POST_SELECT = `
   id, user_id, content, created_at, parent_post_id, like_count, reply_count, repost_count,
   monetization_type, price, is_demo, is_sponsored, sponsor_name, affiliate_link_id,
+  subject_type, subject_id,
   profiles!posts_user_id_fkey(id, username, display_name, avatar_url, is_verified),
   post_media(media_url, media_type, display_order)
 `;
@@ -50,6 +53,8 @@ const mapPost = (row: any): SocialPost => ({
   is_sponsored: !!row.is_sponsored,
   sponsor_name: row.sponsor_name ?? null,
   affiliate_link_id: row.affiliate_link_id ?? null,
+  subject_type: row.subject_type ?? null,
+  subject_id: row.subject_id ?? null,
   profile: row.profiles ?? null,
   media: (row.post_media ?? [])
     .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
@@ -359,7 +364,8 @@ export async function fetchSectionFeed(
     .from("posts")
     .select(POST_SELECT)
     .is("parent_post_id", null)
-    .is("subject_type", null)
+    // Plain posts plus live announcements; other anchors stay out of feeds.
+    .or("subject_type.is.null,subject_type.eq.live_stream")
     .eq("section", section)
     .order("created_at", { ascending: false })
     .limit(limit);

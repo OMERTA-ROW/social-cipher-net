@@ -71,7 +71,7 @@ const Dashboard = () => {
       supabase.from("profiles").select("id, username, display_name, avatar_url, is_verified, bio").eq("id", user.id).maybeSingle(),
       supabase
         .from("posts")
-        .select("id, user_id, content, created_at, parent_post_id, like_count, reply_count, monetization_type, price, post_media(media_url, media_type, display_order)")
+        .select("id, user_id, content, created_at, parent_post_id, subject_type, subject_id, like_count, reply_count, monetization_type, price, post_media(media_url, media_type, display_order)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -92,6 +92,8 @@ const Dashboard = () => {
       content: row.content,
       created_at: row.created_at,
       parent_post_id: row.parent_post_id,
+      subject_type: row.subject_type ?? null,
+      subject_id: row.subject_id ?? null,
       like_count: row.like_count ?? 0,
       reply_count: row.reply_count ?? 0,
       repost_count: row.repost_count ?? 0,

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, MessageCircle, Send } from "lucide-react";
+import GoLiveButton from "@/components/live/GoLiveButton";
 import {
   SocialPost,
   createSectionPost,
@@ -125,7 +126,8 @@ const SectionFeed = ({
           disabled={!userId}
           className="bg-secondary/60 border-border resize-none"
         />
-        <div className="flex justify-end mt-2">
+        <div className="flex justify-end items-center gap-2 mt-2">
+          <GoLiveButton section={section} communitySlug={communitySlug} onStarted={() => load()} />
           <Button size="sm" onClick={publish} disabled={posting || !content.trim() || !userId}>
             {posting ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -156,6 +158,7 @@ const SectionFeed = ({
               handle={post.profile?.username}
               avatar={post.profile?.avatar_url || undefined}
               content={post.content}
+              liveStreamId={post.subject_type === "live_stream" ? post.subject_id : null}
               timestamp={formatTimestamp(post.created_at)}
               likes={post.like_count}
               comments={post.reply_count}
