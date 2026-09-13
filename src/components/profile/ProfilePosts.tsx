@@ -96,6 +96,7 @@ const ProfilePosts = ({ userId, refreshKey = 0 }: Props) => {
           handle={post.profile?.username}
           avatar={post.profile?.avatar_url || undefined}
           content={post.content}
+              liveStreamId={post.subject_type === "live_stream" ? post.subject_id : null}
           timestamp={formatTimestamp(post.created_at)}
           likes={post.like_count}
           comments={post.reply_count}
