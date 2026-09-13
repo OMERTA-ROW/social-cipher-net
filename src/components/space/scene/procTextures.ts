@@ -312,3 +312,235 @@ export const greySkinMaps = () =>
   cached("grey", () => build(skinCanvases(23, [176, 182, 188]), 1.6, 1));
 export const rockMaps = () => cached("rock", () => build(rockCanvases(41, [104, 96, 88]), 6.0, 1));
 export const oreMaps = () => cached("ore", () => build(rockCanvases(77, [72, 84, 96]), 6.0, 1));
+
+/* ------------------------------------------------------------------ *
+ * High-fidelity hull plating for the vessel.
+ *
+ * Unlike the generic worn-hull maps above this one lays out a regular
+ * panel grid with welded seams, rivet lines that follow the seams,
+ * gravity-aligned grime streaks, scuffed plate edges and a separate
+ * metalness map, so the ship reads as machined metal under real lighting
+ * rather than a noisy grey blob.
+ * ------------------------------------------------------------------ */
+
+export interface HullSurfaceMaps extends SurfaceMaps {
+  metalnessMap: THREE.Texture;
+}
+
+const shipHullCanvases = (seed: number, tint: [number, number, number], gridPx: number) => {
+  const size = 1024;
+  const colour = makeCanvas(size);
+  const height = makeCanvas(size);
+  const rough = makeCanvas(size);
+  const metal = makeCanvas(size);
+  const c = colour.getContext("2d")!;
+  const hc = height.getContext("2d")!;
+  const rc = rough.getContext("2d")!;
+  const mc = metal.getContext("2d")!;
+  const rnd = rand(seed);
+  const shade = (v: number, a = 1) =>
+    `rgba(${Math.round(tint[0] * v)},${Math.round(tint[1] * v)},${Math.round(tint[2] * v)},${a})`;
+
+  c.fillStyle = shade(1);
+  c.fillRect(0, 0, size, size);
+  hc.fillStyle = "#808080";
+  hc.fillRect(0, 0, size, size);
+  rc.fillStyle = "#6f6f6f"; // fairly polished base
+  rc.fillRect(0, 0, size, size);
+  mc.fillStyle = "#e6e6e6"; // metal nearly everywhere
+  mc.fillRect(0, 0, size, size);
+
+  // --- fine machining grain, so flat areas never look like plastic ---
+  for (let i = 0; i < 26000; i++) {
+    const x = rnd() * size;
+    const y = rnd() * size;
+    const v = 0.9 + rnd() * 0.2;
+    c.fillStyle = shade(v, 0.16);
+    c.fillRect(x, y, 1.4, 1);
+    rc.fillStyle = `rgba(255,255,255,${rnd() * 0.10})`;
+    rc.fillRect(x, y, 1.4, 1);
+  }
+
+  // --- panel grid: each cell is a plate with its own tone and finish ---
+  const cells = Math.max(2, Math.round(size / gridPx));
+  const step = size / cells;
+  for (let gx = 0; gx < cells; gx++) {
+    for (let gy = 0; gy < cells; gy++) {
+      // merge some neighbours into wider plates
+      const wide = rnd() > 0.78 ? 2 : 1;
+      const tall = rnd() > 0.86 ? 2 : 1;
+      const x = gx * step;
+      const y = gy * step;
+      const w = step * wide;
+      const h = step * tall;
+      const v = 0.88 + rnd() * 0.26;
+      c.fillStyle = shade(v, 0.5);
+      c.fillRect(x, y, w, h);
+      // plates sit at slightly different depths
+      hc.fillStyle = `rgba(255,255,255,${0.04 + rnd() * 0.06})`;
+      hc.fillRect(x, y, w, h);
+      // and take polish differently
+      rc.fillStyle = `rgba(${rnd() > 0.5 ? 255 : 0},${rnd() > 0.5 ? 255 : 0},255,${0.05 + rnd() * 0.18})`;
+      rc.fillRect(x, y, w, h);
+
+      // recessed seam
+      hc.strokeStyle = "rgba(0,0,0,0.9)";
+      hc.lineWidth = 3;
+      hc.strokeRect(x, y, w, h);
+      c.strokeStyle = "rgba(16,18,22,0.55)";
+      c.lineWidth = 1.5;
+      c.strokeRect(x, y, w, h);
+      // weld bead just inside the seam
+      hc.strokeStyle = "rgba(255,255,255,0.35)";
+      hc.lineWidth = 1.5;
+      hc.strokeRect(x + 2.5, y + 2.5, Math.max(1, w - 5), Math.max(1, h - 5));
+      rc.strokeStyle = "rgba(255,255,255,0.4)";
+      rc.lineWidth = 3;
+      rc.strokeRect(x, y, w, h);
+
+      // rivets marching along the seam
+      const pitch = 22;
+      for (let p = pitch / 2; p < w; p += pitch) {
+        for (const ry of [y + 5, y + h - 5]) {
+          hc.fillStyle = "rgba(255,255,255,0.7)";
+          hc.beginPath();
+          hc.arc(x + p, ry, 1.7, 0, Math.PI * 2);
+          hc.fill();
+          c.fillStyle = "rgba(30,33,38,0.35)";
+          c.beginPath();
+          c.arc(x + p, ry, 1.9, 0, Math.PI * 2);
+          c.fill();
+        }
+      }
+      for (let p = pitch / 2; p < h; p += pitch) {
+        for (const rx of [x + 5, x + w - 5]) {
+          hc.fillStyle = "rgba(255,255,255,0.7)";
+          hc.beginPath();
+          hc.arc(rx, y + p, 1.7, 0, Math.PI * 2);
+          hc.fill();
+        }
+      }
+
+      // scuffed, bare-metal plate edges
+      if (rnd() > 0.6) {
+        c.strokeStyle = "rgba(214,220,228,0.30)";
+        c.lineWidth = 1;
+        c.strokeRect(x + 1, y + 1, Math.max(1, w - 2), Math.max(1, h - 2));
+        rc.strokeStyle = "rgba(0,0,0,0.35)";
+        rc.lineWidth = 2;
+        rc.strokeRect(x + 1, y + 1, Math.max(1, w - 2), Math.max(1, h - 2));
+      }
+
+      // occasional vent / hatch greeble drawn into the maps
+      if (rnd() > 0.9) {
+        const vw = w * 0.5;
+        const vh = h * 0.26;
+        const vx = x + (w - vw) / 2;
+        const vy = y + (h - vh) / 2;
+        for (let l = 0; l < 5; l++) {
+          const ly = vy + (vh / 5) * l;
+          hc.fillStyle = "rgba(0,0,0,0.8)";
+          hc.fillRect(vx, ly, vw, 2.5);
+          c.fillStyle = "rgba(18,20,24,0.6)";
+          c.fillRect(vx, ly, vw, 2.5);
+          mc.fillStyle = "rgba(255,255,255,0.6)";
+          mc.fillRect(vx, ly, vw, 2.5);
+        }
+      }
+    }
+  }
+
+  // --- weathering: streaks running along the hull ---
+  for (let i = 0; i < 220; i++) {
+    const x = rnd() * size;
+    const y = rnd() * size;
+    const len = 30 + rnd() * 260;
+    const w = 1 + rnd() * 5;
+    const g = c.createLinearGradient(x, y, x, y + len);
+    const warm = rnd() > 0.72;
+    g.addColorStop(0, warm ? "rgba(96,58,30,0.34)" : "rgba(14,16,20,0.30)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    c.fillStyle = g;
+    c.fillRect(x, y, w, len);
+    rc.fillStyle = "rgba(255,255,255,0.16)";
+    rc.fillRect(x, y, w, len);
+    mc.fillStyle = "rgba(0,0,0,0.22)"; // dirt is not metal
+    mc.fillRect(x, y, w, len);
+  }
+
+  // --- soot blooms and oxidation patches ---
+  for (let i = 0; i < 90; i++) {
+    const x = rnd() * size;
+    const y = rnd() * size;
+    const r = 12 + rnd() * 90;
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    const warm = rnd() > 0.65;
+    g.addColorStop(0, warm ? "rgba(104,62,30,0.26)" : "rgba(12,14,18,0.28)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    c.fillStyle = g;
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fill();
+    const gr = rc.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, "rgba(255,255,255,0.30)");
+    gr.addColorStop(1, "rgba(255,255,255,0)");
+    rc.fillStyle = gr;
+    rc.beginPath();
+    rc.arc(x, y, r, 0, Math.PI * 2);
+    rc.fill();
+    const gm = mc.createRadialGradient(x, y, 0, x, y, r);
+    gm.addColorStop(0, "rgba(0,0,0,0.35)");
+    gm.addColorStop(1, "rgba(0,0,0,0)");
+    mc.fillStyle = gm;
+    mc.beginPath();
+    mc.arc(x, y, r, 0, Math.PI * 2);
+    mc.fill();
+  }
+
+  // --- chipped paint down to bright metal ---
+  for (let i = 0; i < 400; i++) {
+    const x = rnd() * size;
+    const y = rnd() * size;
+    const r = 0.8 + rnd() * 3.4;
+    c.fillStyle = `rgba(206,214,222,${0.18 + rnd() * 0.3})`;
+    c.beginPath();
+    c.arc(x, y, r, 0, Math.PI * 2);
+    c.fill();
+    rc.fillStyle = "rgba(0,0,0,0.45)";
+    rc.beginPath();
+    rc.arc(x, y, r, 0, Math.PI * 2);
+    rc.fill();
+    mc.fillStyle = "rgba(255,255,255,0.9)";
+    mc.beginPath();
+    mc.arc(x, y, r, 0, Math.PI * 2);
+    mc.fill();
+  }
+
+  return { colour, height, rough, metal };
+};
+
+const buildHull = (
+  seed: number,
+  tint: [number, number, number],
+  gridPx: number,
+  normalStrength: number,
+  repeat: number,
+): HullSurfaceMaps => {
+  const parts = shipHullCanvases(seed, tint, gridPx);
+  return {
+    map: finish(parts.colour, true, repeat),
+    normalMap: finish(heightToNormal(parts.height, normalStrength), false, repeat),
+    roughnessMap: finish(parts.rough, false, repeat),
+    metalnessMap: finish(parts.metal, false, repeat),
+  };
+};
+
+/** Primary hull plating. */
+export const shipHullMaps = () =>
+  cached("shipHull", () => buildHull(1337, [124, 132, 142], 128, 4.2, 2)) as HullSurfaceMaps;
+/** Darker structural / secondary plating. */
+export const shipPlateMaps = () =>
+  cached("shipPlate", () => buildHull(4711, [86, 92, 100], 96, 3.6, 3)) as HullSurfaceMaps;
+/** Painted hazard-orange trim, still metal underneath. */
+export const shipTrimMaps = () =>
+  cached("shipTrim", () => buildHull(9091, [164, 104, 42], 72, 3.2, 3)) as HullSurfaceMaps;
