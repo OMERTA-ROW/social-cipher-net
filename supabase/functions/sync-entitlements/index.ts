@@ -13,7 +13,7 @@ const corsHeaders = {
  * Stripe subscription behind it.
  */
 const PRODUCT_TIERS: Record<string, string> = {
-  prod_TOtJnFseC54ChY: "basis",
+  prod_TOtJnFseC54ChY: "plus",
   prod_TOtRdMUKNeKkFc: "pro",
   prod_VFB4e6LecHM4mM: "terminal",
 };

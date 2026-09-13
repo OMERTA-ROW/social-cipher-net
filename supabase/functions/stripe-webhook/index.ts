@@ -9,7 +9,7 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const PRODUCT_TIERS: Record<string, string> = {
-  prod_TOtJnFseC54ChY: "basis",
+  prod_TOtJnFseC54ChY: "plus",
   prod_TOtRdMUKNeKkFc: "pro",
   prod_VFB4e6LecHM4mM: "terminal",
 };

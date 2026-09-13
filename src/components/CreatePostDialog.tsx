@@ -21,6 +21,8 @@ interface CreatePostDialogProps {
 const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps) => {
   const [content, setContent] = useState("");
   const [monetizationType, setMonetizationType] = useState("free");
+  const { can } = useTier();
+  const canMonetize = can("payPerView");
   const [price, setPrice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<Array<{ file: File; preview: string; type: 'image' | 'video' }>>([]);
@@ -90,8 +92,8 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
           .insert({
             user_id: user.id,
             content: postContent,
-            monetization_type: monetizationType,
-            price: monetizationType === "free" ? 0 : parseFloat(price),
+            monetization_type: canMonetize ? monetizationType : "free",
+            price: !canMonetize || monetizationType === "free" ? 0 : parseFloat(price),
             parent_post_id: parentPostId,
           })
           .select()
