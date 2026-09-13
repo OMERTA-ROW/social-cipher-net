@@ -62,21 +62,21 @@ const AppContent = () => {
       <SpaceBackground />
       <SecurityMonitor />
       <Routes>
-        <Route path="/" element={<ShellRoute><Index /></ShellRoute>} />
+        <Route path="/" element={<Index />} />
         <Route path="/studio" element={<ShellRoute><Studio /></ShellRoute>} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/affiliate" element={<ShellRoute><Affiliate /></ShellRoute>} />
         <Route path="/seller-register" element={<ShellRoute><SellerRegister /></ShellRoute>} />
         <Route path="/seller-dashboard" element={<ShellRoute><SellerDashboard /></ShellRoute>} />
         <Route path="/monetization" element={<ShellRoute><Monetization /></ShellRoute>} />
-        <Route path="/messages" element={<ShellRoute><Messages /></ShellRoute>} />
+        <Route path="/messages" element={<Messages />} />
         <Route path="/cyber-arena" element={<CyberGamers />} />
         <Route path="/cyber-streamer" element={<ShellRoute><CyberStreamer /></ShellRoute>} />
         <Route path="/connectors" element={<ShellRoute><Connectors /></ShellRoute>} />
         <Route path="/theater" element={<ShellRoute><Theater /></ShellRoute>} />
-        <Route path="/shop" element={<ShellRoute><Shop /></ShellRoute>} />
-        <Route path="/product/:productId" element={<ShellRoute><ProductDetail /></ShellRoute>} />
-        <Route path="/store/:slug" element={<ShellRoute><StorePage /></ShellRoute>} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/product/:productId" element={<ProductDetail />} />
+        <Route path="/store/:slug" element={<StorePage />} />
         <Route path="/security" element={<ShellRoute><Security /></ShellRoute>} />
         <Route path="/community-guidelines" element={<ShellRoute><CommunityGuidelines /></ShellRoute>} />
         <Route path="/verification" element={<ShellRoute><Verification /></ShellRoute>} />
@@ -87,12 +87,12 @@ const AppContent = () => {
         <Route path="/miners" element={<ShellRoute><Miners /></ShellRoute>} />
         <Route path="/profile/:userId" element={<ShellRoute><UserProfile /></ShellRoute>} />
         <Route path="/token-purchase" element={<ShellRoute><TokenPurchase /></ShellRoute>} />
-        <Route path="/profile" element={<ShellRoute><Profile /></ShellRoute>} />
-        <Route path="/live/:streamId" element={<ShellRoute><LiveRoom /></ShellRoute>} />
-        <Route path="/post/:postId" element={<ShellRoute><Thread /></ShellRoute>} />
-        <Route path="/dashboard" element={<ShellRoute><Dashboard /></ShellRoute>} />
-        <Route path="/trading" element={<ShellRoute><Trading /></ShellRoute>} />
-        <Route path="/terminal" element={<ShellRoute><Terminal /></ShellRoute>} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/live/:streamId" element={<LiveRoom />} />
+        <Route path="/post/:postId" element={<Thread />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/trading" element={<Trading />} />
+        <Route path="/terminal" element={<Terminal />} />
         <Route path="/moderation" element={<ShellRoute><Moderation /></ShellRoute>} />
         <Route path="/backgrounds" element={<Backgrounds />} />
         <Route path="/ceo" element={<ShellRoute><CeoPortal /></ShellRoute>} />

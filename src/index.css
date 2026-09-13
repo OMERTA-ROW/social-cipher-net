@@ -119,6 +119,10 @@ All colors MUST be HSL.
     display: none;
   }
 
+  .app-shell-page-body > .min-h-screen {
+    min-height: auto;
+  }
+
   @keyframes hologram-shimmer {
     0%, 72%, 100% { background-position: 150% 0; }
     86% { background-position: -70% 0; }

@@ -186,13 +186,6 @@ const Monetization = () => {
     }
   };
 
-  const handleCreateSubscription = async () => {
-    toast({
-      title: "Coming Soon",
-      description: "Subscription setup will be available soon!",
-    });
-  };
-
   return (
     <div className="min-h-screen bg-transparent">
       <Navigation />
@@ -385,7 +378,7 @@ const Monetization = () => {
                     <CardDescription>Set up monthly subscriptions for your supporters</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button onClick={handleCreateSubscription} className="w-full">
+                    <Button onClick={() => navigate("/subscription")} className="w-full">
                       <CreditCard className="w-4 h-4 mr-2" />
                       Create Subscription Tier
                     </Button>
@@ -408,9 +401,7 @@ const Monetization = () => {
                         </div>
                         <p className="text-2xl font-bold">${earnings.total.toFixed(2)}</p>
                       </div>
-                      <Button variant="outline" className="w-full">
-                        Configure Payout Method
-                      </Button>
+                      <p className="text-sm text-muted-foreground">Payout controls appear after a supported payment account is connected.</p>
                     </div>
                   </CardContent>
                 </Card>

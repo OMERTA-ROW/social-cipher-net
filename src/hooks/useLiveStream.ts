@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { endLiveStream, startLiveStream } from "@/lib/live";
 
 interface LiveStream {
   id: string;
@@ -218,52 +219,30 @@ export function useLiveStream(section: string = "studio") {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("live_streams")
-      .insert({
-        title,
-        description,
-        user_id: user.id,
-        is_live: true,
-        section,
-      })
-      .select()
-      .single();
-
-    if (error) {
+    try {
+      const { streamId } = await startLiveStream({ title, description, section });
+      const { data, error } = await supabase.from("live_streams").select("*").eq("id", streamId).single();
+      if (error) throw error;
+      setCurrentStream(data);
+      toast({
+        title: "Stream Started",
+        description: "Your live stream is active and posted to the feed",
+      });
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to start stream",
         variant: "destructive",
       });
-      return;
     }
-
-    // Add host as participant and admin
-    await supabase.from("live_stream_participants").insert({
-      stream_id: data.id,
-      user_id: user.id,
-      is_host: true,
-      is_admin: true,
-      is_active: true,
-    });
-
-    setCurrentStream(data);
-    toast({
-      title: "Stream Started",
-      description: "Your live stream is now active",
-    });
   };
 
   const endStream = async () => {
     if (!currentStream) return;
 
-    const { error } = await supabase
-      .from("live_streams")
-      .update({ is_live: false, ended_at: new Date().toISOString() })
-      .eq("id", currentStream.id);
-
-    if (error) {
+    try {
+      await endLiveStream(currentStream.id);
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to end stream",

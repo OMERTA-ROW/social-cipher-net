@@ -139,11 +139,8 @@ const Affiliate = () => {
                         {product.description}
                       </p>
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1">
+                        <Button variant="outline" className="flex-1" onClick={() => navigate(`/product/${product.id}`)}>
                           View Details
-                        </Button>
-                        <Button className="flex-1">
-                          Create Affiliate Link
                         </Button>
                       </div>
                     </CardContent>

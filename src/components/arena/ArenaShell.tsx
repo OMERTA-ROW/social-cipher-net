@@ -120,7 +120,13 @@ const ArenaShell = ({
 
       {/* Arena floor */}
       <main className="pt-[112px] md:pt-[96px] pb-24 md:pb-8 md:pl-[84px] lg:pl-[204px] px-4">
-        <div className="mx-auto max-w-6xl">{children}</div>
+        <div className="mx-auto max-w-6xl">
+          <header className="mb-5 border-b border-primary/20 pb-4">
+            <h1 className="hologram-title text-3xl font-bold sm:text-4xl">Cyber Arena</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Organize saved tools, token pools, and your gaming network.</p>
+          </header>
+          {children}
+        </div>
       </main>
 
       {/* Mobile section bar */}

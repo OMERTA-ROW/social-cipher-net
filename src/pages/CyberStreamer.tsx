@@ -353,21 +353,6 @@ const CyberStreamer = () => {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => openWindow("Stream Monitor", (
-                  <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <Video className="w-16 h-16 mx-auto mb-4 text-primary animate-pulse" />
-                      <p className="text-xl font-bold">Stream Preview</p>
-                    </div>
-                  </div>
-                ))}
-              >
-                <Monitor className="w-4 h-4 mr-2" />
-                Monitor
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
                 onClick={() => openWindow("Stream Stats", (
                   <div className="grid grid-cols-2 gap-4">
                     <Card>
