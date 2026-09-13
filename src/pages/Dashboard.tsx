@@ -19,6 +19,7 @@ import {
   displayNameOf,
   formatTimestamp,
 } from "@/lib/social";
+import ProfilePictureEditor from "@/components/profile/ProfilePictureEditor";
 import { DollarSign, Home, Loader2 } from "lucide-react";
 
 interface NotificationPrefs {
