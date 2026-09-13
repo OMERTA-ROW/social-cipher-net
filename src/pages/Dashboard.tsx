@@ -161,8 +161,10 @@ const Dashboard = () => {
         toast.error("That handle could not be saved. Try a different one.");
         return;
       }
+      // Let the rest of the app (top bar, menus) pick the new handle up at once.
+      window.dispatchEvent(new CustomEvent("cyberlink:profile-updated", { detail: saved }));
     }
-    toast.success("Profile updated");
+    toast.success(handle ? `Profile saved — you are @${handle}` : "Profile updated");
   };
 
   const changePassword = async () => {
