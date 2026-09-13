@@ -1,7 +1,9 @@
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { asteroidRegistry } from "./asteroidRegistry";
+import { detectDeviceClass, resolveAsteroidConfig, type AsteroidConfig } from "./asteroidConfig";
+import { asteroidDebugStats } from "./asteroidDebug";
 
 /**
  * Real rocks drifting through the scene, replacing the old pale streak
@@ -9,9 +11,10 @@ import { asteroidRegistry } from "./asteroidRegistry";
  * meshes (one draw call each) and pooled: rocks that leave the travelling box
  * around the camera are recycled to the far side on a fresh trajectory, so
  * nothing pops into view close up.
+ *
+ * Density, geometry detail and the size range come from the per-device config
+ * so mobile stays cheap while desktop keeps its original look.
  */
-
-const FIELD = 520; // half-size of the box that follows the camera
 
 /** Deform an icosahedron into a pitted, cratered, irregular rock. */
 const makeRockGeometry = (seed: number, detail: number) => {
@@ -68,7 +71,7 @@ interface Rock {
   shape: number;
 }
 
-const AsteroidField = ({ count, animate, full }: { count: number; animate: boolean; full: boolean }) => {
+const AsteroidField = ({ animate, full }: { animate: boolean; full: boolean }) => {
   const { camera } = useThree();
   const meshes = [
     useRef<THREE.InstancedMesh>(null),
@@ -76,23 +79,51 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
     useRef<THREE.InstancedMesh>(null),
   ];
 
+  // device class can change (rotation, window resize) — re-resolve on resize
+  const [device, setDevice] = useState(detectDeviceClass);
+  useEffect(() => {
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setDevice(detectDeviceClass()));
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const cfg: AsteroidConfig = useMemo(() => resolveAsteroidConfig(full, device), [full, device]);
+
+  useEffect(() => {
+    asteroidDebugStats.device = device;
+    asteroidDebugStats.count = cfg.count;
+  }, [device, cfg.count]);
+
   const geometries = useMemo(
-    () => [makeRockGeometry(9137, full ? 2 : 1), makeRockGeometry(48211, full ? 2 : 1), makeRockGeometry(70513, full ? 2 : 1)],
-    [full],
+    () => [
+      makeRockGeometry(9137, cfg.detail),
+      makeRockGeometry(48211, cfg.detail),
+      makeRockGeometry(70513, cfg.detail),
+    ],
+    [cfg.detail],
   );
+  useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
 
   const rocks = useMemo<Rock[]>(() => {
     const list: Rock[] = [];
-    for (let i = 0; i < count; i++) {
+    const span = cfg.maxScale - cfg.minScale;
+    for (let i = 0; i < cfg.count; i++) {
       // several depth bands: near rocks are small and fast in screen terms,
       // far ones are large and slow, which is what reads as parallax
       const band = Math.random();
       const depth = band < 0.35 ? 0.35 : band < 0.75 ? 1 : 2.1;
       list.push({
         pos: new THREE.Vector3(
-          (Math.random() * 2 - 1) * FIELD,
-          (Math.random() * 2 - 1) * FIELD * 0.7,
-          (Math.random() * 2 - 1) * FIELD,
+          (Math.random() * 2 - 1) * cfg.field,
+          (Math.random() * 2 - 1) * cfg.field * 0.7,
+          (Math.random() * 2 - 1) * cfg.field,
         ),
         vel: new THREE.Vector3(Math.random() * 2 - 1, (Math.random() * 2 - 1) * 0.35, Math.random() * 2 - 1)
           .normalize()
@@ -103,12 +134,12 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
           (Math.random() * 2 - 1) * 0.28,
         ),
         rot: new THREE.Euler(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28),
-        scale: (0.5 + Math.random() * 1.5) * depth,
+        scale: (cfg.minScale + Math.random() * span) * depth,
         shape: i % 3,
       });
     }
     return list;
-  }, [count]);
+  }, [cfg.count, cfg.minScale, cfg.maxScale, cfg.field]);
 
   const scratch = useMemo(
     () => ({ dummy: new THREE.Object3D(), colour: new THREE.Color(), counts: [0, 0, 0] }),
@@ -146,7 +177,9 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
     const dt = animate ? Math.min(delta, 0.05) : 0;
     scratch.counts[0] = scratch.counts[1] = scratch.counts[2] = 0;
     asteroidRegistry.count = 0;
+    asteroidRegistry.recycled = 0;
 
+    const FIELD = cfg.field;
     for (const r of rocks) {
       if (dt > 0) {
         r.pos.addScaledVector(r.vel, dt);
@@ -159,9 +192,14 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
       // reappearance is never visible
       const p = r.pos;
       const c = camera.position;
-      if (Math.abs(p.x - c.x) > FIELD) p.x += p.x > c.x ? -2 * FIELD : 2 * FIELD;
-      if (Math.abs(p.y - c.y) > FIELD * 0.7) p.y += p.y > c.y ? -1.4 * FIELD : 1.4 * FIELD;
-      if (Math.abs(p.z - c.z) > FIELD) p.z += p.z > c.z ? -2 * FIELD : 2 * FIELD;
+      let wrapped = false;
+      if (Math.abs(p.x - c.x) > FIELD) { p.x += p.x > c.x ? -2 * FIELD : 2 * FIELD; wrapped = true; }
+      if (Math.abs(p.y - c.y) > FIELD * 0.7) { p.y += p.y > c.y ? -1.4 * FIELD : 1.4 * FIELD; wrapped = true; }
+      if (Math.abs(p.z - c.z) > FIELD) { p.z += p.z > c.z ? -2 * FIELD : 2 * FIELD; wrapped = true; }
+      if (wrapped) {
+        asteroidRegistry.recycled++;
+        asteroidRegistry.recycledTotal++;
+      }
 
       const inst = meshes[r.shape].current;
       if (!inst) continue;
@@ -173,12 +211,14 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
       inst.setMatrixAt(i, scratch.dummy.matrix);
 
       // publish the biggest nearby rocks so the autopilot can steer around them
-      if (asteroidRegistry.count < asteroidRegistry.centers.length && r.scale > 1.4) {
+      if (asteroidRegistry.count < asteroidRegistry.centers.length && r.scale > cfg.avoidanceMinScale) {
         asteroidRegistry.centers[asteroidRegistry.count].copy(p);
         asteroidRegistry.radii[asteroidRegistry.count] = r.scale * 1.35;
         asteroidRegistry.count++;
       }
     }
+
+    asteroidRegistry.alive = rocks.length;
 
     for (let shape = 0; shape < 3; shape++) {
       const inst = meshes[shape].current;
@@ -188,13 +228,13 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
     }
   });
 
-  const perShape = Math.ceil(count / 3) + 1;
+  const perShape = Math.ceil(cfg.count / 3) + 1;
 
   return (
     <>
       {geometries.map((geo, i) => (
         <instancedMesh
-          key={i}
+          key={`${i}-${cfg.count}-${cfg.detail}`}
           ref={meshes[i]}
           args={[geo, undefined as never, perShape]}
           frustumCulled={false}
@@ -208,7 +248,7 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
             emissiveIntensity={1.0}
             roughness={0.92}
             metalness={0.03}
-            flatShading={!full}
+            flatShading={cfg.flatShading}
           />
         </instancedMesh>
       ))}

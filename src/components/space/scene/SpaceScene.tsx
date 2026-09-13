@@ -2,7 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { Bloom, ChromaticAberration, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CameraRig from "./CameraRig";
 import Galaxy from "./Galaxy";
 import MarketComets from "./MarketComets";
@@ -18,6 +18,9 @@ import type { SpaceBgCamera, SpaceBgView } from "@/lib/spaceBackgroundSettings";
 import DescentScene from "../world/DescentScene";
 import type { QualityTier } from "../world/qualityTiers";
 import DeepSky from "./DeepSky";
+import AsteroidDebug from "./AsteroidDebug";
+import AsteroidDebugHud from "./AsteroidDebugHud";
+import { isAsteroidDebug } from "./asteroidDebug";
 import { CAMERA_FAR, CAMERA_NEAR, WORLD_SCALE } from "../worldScale";
 
 interface Props {
@@ -43,6 +46,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
     return () => clearInterval(id);
   }, []);
 
+  const debug = useMemo(isAsteroidDebug, []);
   const mining = view === "mining";
   const descent = view === "descent";
 
@@ -65,7 +69,8 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
           <Galaxy full={full} boost={boost} />
           <DeepSky full={full} />
           <Starfield full={full} dpr={dpr} boost={boost} />
-          <AsteroidField count={full ? 120 : 34} animate={animate} full={full} />
+          <AsteroidField animate={animate} full={full} />
+          {debug && <AsteroidDebug />}
           <Planets full={full} />
           <MarketComets animate={animate} />
           <VesselFlight animate={animate} full={full} />
@@ -90,6 +95,8 @@ const SpaceScene = ({ full, animate, view = "solar", cameraMode = "galaxy", tier
   const dpr = full ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
 
   return (
+    <>
+    {isAsteroidDebug() && <AsteroidDebugHud />}
     <Canvas
       className="absolute inset-0"
       gl={{ antialias: false, alpha: false, logarithmicDepthBuffer: true, powerPreference: full ? "high-performance" : "low-power" }}
@@ -103,6 +110,7 @@ const SpaceScene = ({ full, animate, view = "solar", cameraMode = "galaxy", tier
     >
       <SceneContents full={full} animate={animate} dpr={dpr} view={view} cameraMode={cameraMode} tier={tier} />
     </Canvas>
+    </>
   );
 };
 

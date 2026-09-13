@@ -67,6 +67,17 @@ export interface AutopilotState {
   legsCompleted: number;
   /** True while the ship is loitering around a point of interest. */
   investigating: boolean;
+  /** Debug/telemetry view of the asteroid avoidance behaviour. */
+  avoidance: {
+    /** Rocks currently pushing on the heading. */
+    rocks: number;
+    /** Combined steering weight applied this frame (0 = clear). */
+    strength: number;
+    /** Surface gap to the closest published rock, or Infinity. */
+    nearestClearance: number;
+    /** Smallest surface gap seen since launch. */
+    minClearance: number;
+  };
 }
 
 const tmpA = new THREE.Vector3();
@@ -101,6 +112,7 @@ export class ShipAutopilot {
       visited: [],
       legsCompleted: 0,
       investigating: false,
+      avoidance: { rocks: 0, strength: 0, nearestClearance: Infinity, minClearance: Infinity },
     };
     this.state.destination = this.pickDestination(0);
   }
@@ -206,16 +218,29 @@ export class ShipAutopilot {
     }
 
     // --- asteroids: ease around rocks the field has placed nearby ---
+    let rocksPushing = 0;
+    let pushStrength = 0;
+    let nearestClearance = Infinity;
     for (let i = 0; i < asteroidRegistry.count; i++) {
       const away = tmpB.subVectors(s.position, asteroidRegistry.centers[i]);
       const d = away.length();
-      const safe = asteroidRegistry.radii[i] + 26;
+      const radius = asteroidRegistry.radii[i];
+      const safe = radius + 26;
+      const clearance = d - radius;
+      if (clearance < nearestClearance) nearestClearance = clearance;
       if (d < safe * 3 && d > 0.001) {
         // smooth falloff: no jitter when a rock drifts in and out of range
         const f = 1 - d / (safe * 3);
-        desiredDir.addScaledVector(away.normalize(), f * f * 1.6);
+        const w = f * f * 1.6;
+        rocksPushing++;
+        pushStrength += w;
+        desiredDir.addScaledVector(away.normalize(), w);
       }
     }
+    s.avoidance.rocks = rocksPushing;
+    s.avoidance.strength = pushStrength;
+    s.avoidance.nearestClearance = nearestClearance;
+    if (nearestClearance < s.avoidance.minClearance) s.avoidance.minClearance = nearestClearance;
 
     // --- boundary: gentle inward bias, never a hard stop or wrap ---
     const radial = s.position.length();

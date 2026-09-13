@@ -4,6 +4,8 @@ import * as THREE from "three";
 import MiningVessel from "./MiningVessel";
 import { shipTelemetry } from "./shipTelemetry";
 import { ShipAutopilot } from "./shipAutopilot";
+import { asteroidRegistry } from "./asteroidRegistry";
+import { asteroidDebugStats } from "./asteroidDebug";
 
 /**
  * Solar-system view: the vessel explores the system on its own.
@@ -45,6 +47,21 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
     shipTelemetry.quaternion.copy(group.current.quaternion);
     shipTelemetry.velocity.subVectors(pos, prev.current);
     shipTelemetry.throttle = pilot.state.throttle;
+
+    // debug telemetry (cheap plain-number copies; overlay reads it at 10Hz)
+    const av = pilot.state.avoidance;
+    asteroidDebugStats.tracked = asteroidRegistry.count;
+    asteroidDebugStats.alive = asteroidRegistry.alive;
+    asteroidDebugStats.recycled = asteroidRegistry.recycled;
+    asteroidDebugStats.recycledTotal = asteroidRegistry.recycledTotal;
+    asteroidDebugStats.rocksPushing = av.rocks;
+    asteroidDebugStats.strength = av.strength;
+    asteroidDebugStats.nearestClearance = av.nearestClearance;
+    asteroidDebugStats.minClearance = av.minClearance;
+    asteroidDebugStats.speed = pilot.state.velocity.length();
+    asteroidDebugStats.radius = pos.length();
+    asteroidDebugStats.destinationKind = pilot.state.destination.kind;
+    asteroidDebugStats.legsCompleted = pilot.state.legsCompleted;
 
     if (state.clock.elapsedTime - lastPublished.current > 0.08) {
       lastPublished.current = state.clock.elapsedTime;
