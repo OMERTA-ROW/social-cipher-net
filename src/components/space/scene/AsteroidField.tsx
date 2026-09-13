@@ -103,7 +103,7 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
           (Math.random() * 2 - 1) * 0.28,
         ),
         rot: new THREE.Euler(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28),
-        scale: (0.7 + Math.random() * 2.6) * depth,
+        scale: (0.5 + Math.random() * 1.5) * depth,
         shape: i % 3,
       });
     }
@@ -128,9 +128,9 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
         if (r.shape !== shape) continue;
         const warm = Math.random();
         scratch.colour.setRGB(
-          0.36 + warm * 0.16,
-          0.33 + warm * 0.11,
-          0.30 + warm * 0.06,
+          0.62 + warm * 0.22,
+          0.56 + warm * 0.16,
+          0.50 + warm * 0.10,
         );
         colours[k * 3] = scratch.colour.r;
         colours[k * 3 + 1] = scratch.colour.g;
@@ -203,9 +203,11 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
         >
           <meshStandardMaterial
             vertexColors
-            color="#8c8378"
-            roughness={0.98}
-            metalness={0.04}
+            color="#9a9086"
+            emissive="#2a2b30"
+            emissiveIntensity={0.75}
+            roughness={0.92}
+            metalness={0.03}
             flatShading={!full}
           />
         </instancedMesh>
