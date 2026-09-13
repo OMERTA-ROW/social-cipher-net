@@ -17,6 +17,8 @@ import VesselFlight from "./VesselFlight";
 import type { SpaceBgCamera, SpaceBgView } from "@/lib/spaceBackgroundSettings";
 import DescentScene from "../world/DescentScene";
 import type { QualityTier } from "../world/qualityTiers";
+import DeepSky from "./DeepSky";
+import { CAMERA_FAR, CAMERA_NEAR, WORLD_SCALE } from "../worldScale";
 
 interface Props {
   /** false = reduced particle counts / no post-processing (mobile, low power) */
@@ -61,6 +63,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
       ) : (
         <>
           <Galaxy full={full} boost={boost} />
+          <DeepSky full={full} />
           <Starfield full={full} dpr={dpr} boost={boost} />
           <StarTrails count={full ? 420 : 120} animate={animate} />
           <Planets full={full} />
@@ -72,7 +75,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
 
       {full && (
         <EffectComposer multisampling={0}>
-          <Bloom intensity={0.62} luminanceThreshold={0.48} luminanceSmoothing={0.32} mipmapBlur />
+          <Bloom intensity={0.44} luminanceThreshold={0.58} luminanceSmoothing={0.32} mipmapBlur />
           <ChromaticAberration offset={CHROMA} blendFunction={BlendFunction.NORMAL} radialModulation={false} modulationOffset={0} />
           <Noise premultiply opacity={0.025} blendFunction={BlendFunction.OVERLAY} />
           <Vignette eskil={false} offset={0.28} darkness={0.82} />
@@ -89,10 +92,10 @@ const SpaceScene = ({ full, animate, view = "solar", cameraMode = "galaxy", tier
   return (
     <Canvas
       className="absolute inset-0"
-      gl={{ antialias: false, alpha: false, powerPreference: full ? "high-performance" : "low-power" }}
+      gl={{ antialias: false, alpha: false, logarithmicDepthBuffer: true, powerPreference: full ? "high-performance" : "low-power" }}
       dpr={dpr}
       frameloop={animate ? "always" : "demand"}
-      camera={{ fov: 60, near: 0.5, far: 9000, position: [210, 40, 0] }}
+      camera={{ fov: 60, near: CAMERA_NEAR, far: CAMERA_FAR, position: [210 * WORLD_SCALE, 40 * WORLD_SCALE, 0] }}
       onCreated={({ gl, scene }) => {
         gl.setClearColor(0x000000, 1);
         scene.background = new THREE.Color(0x000000);

@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { NOISE_GLSL } from "./noise.glsl";
+import { SKY_RADIUS } from "../worldScale";
 
 /**
  * Far-field galactic environment: the Milky Way band plus nebula clouds,
@@ -99,7 +100,7 @@ const Galaxy = ({ full, boost }: { full: boolean; boost: number }) => {
 
   return (
     <mesh frustumCulled={false} renderOrder={-10}>
-      <sphereGeometry args={[4200, 48, 32]} />
+      <sphereGeometry args={[SKY_RADIUS, 48, 32]} />
       <shaderMaterial
         ref={mat}
         vertexShader={vert}

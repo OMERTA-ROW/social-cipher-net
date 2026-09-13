@@ -161,10 +161,12 @@ const Starfield = ({ full, dpr, boost }: { full: boolean; dpr: number; boost: nu
   const scale = full ? 1 : 0.2;
   return (
     <group>
-      <Shell count={Math.round(9000 * scale)} inner={90} outer={190} sizeScale={1.18} spin={0.00065} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(12000 * scale)} inner={260} outer={520} sizeScale={0.9} spin={0.0003} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(12000 * scale)} inner={700} outer={1200} sizeScale={0.76} spin={0.00013} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(12000 * scale)} inner={1600} outer={2400} sizeScale={0.66} spin={0.00004} dpr={dpr} boost={boost} />
+      {/* near field: physically inside the flight volume, so travel gives real parallax */}
+      <Shell count={Math.round(7000 * scale)} inner={260} outer={620} sizeScale={1.32} spin={0.00065} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(11000 * scale)} inner={900} outer={1900} sizeScale={1.02} spin={0.0003} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(13000 * scale)} inner={2500} outer={4400} sizeScale={0.82} spin={0.00013} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(13000 * scale)} inner={5800} outer={9000} sizeScale={0.7} spin={0.00005} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(11000 * scale)} inner={12000} outer={18000} sizeScale={0.62} spin={0.00002} dpr={dpr} boost={boost} />
     </group>
   );
 };
