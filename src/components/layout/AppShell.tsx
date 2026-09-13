@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState, useCallback } from "react";
+import { ReactNode, createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -143,6 +143,9 @@ interface AppShellProps {
   hidePageHeader?: boolean;
 }
 
+const AppShellContext = createContext(false);
+export const useInsideAppShell = () => useContext(AppShellContext);
+
 /** One collapsible group of secondary destinations; open state is remembered. */
 const NavGroupBlock = ({ group }: { group: NavGroup }) => {
   const { collapsed, toggle } = usePanelCollapse(`cyberlink:nav-group-${group.title.toLowerCase()}`);
@@ -186,7 +189,7 @@ const NavGroupBlock = ({ group }: { group: NavGroup }) => {
 const scrollPositions = new Map<string, number>();
 
 
-const AppShell = ({
+const AppShellFrame = ({
   children,
   rightRail,
   onCreatePost,
@@ -222,6 +225,7 @@ const AppShell = ({
   }, [pathname]);
 
   return (
+    <AppShellContext.Provider value>
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-transparent">
       {/* Fixed top header */}
       <header className="h-16 shrink-0 z-40 border-b border-border/60 bg-card/60 backdrop-blur-xl">
@@ -377,7 +381,7 @@ const AppShell = ({
                   </div>
                 </header>
               )}
-              {children}
+              <div className="app-shell-page-body">{children}</div>
             </div>
           </main>
         </div>
@@ -434,7 +438,14 @@ const AppShell = ({
         )}
       </nav>
     </div>
+    </AppShellContext.Provider>
   );
+};
+
+const AppShell = (props: AppShellProps) => {
+  const nested = useInsideAppShell();
+  if (nested) return <>{props.children}</>;
+  return <AppShellFrame {...props} />;
 };
 
 export default AppShell;

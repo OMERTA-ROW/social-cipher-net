@@ -113,6 +113,12 @@ All colors MUST be HSL.
     animation: hologram-shimmer 7s ease-in-out infinite;
   }
 
+  /* Legacy pages retain their own title until their body markup is simplified.
+     The shared shell owns the single visible page H1. */
+  .app-shell-page-body h1:first-of-type {
+    display: none;
+  }
+
   @keyframes hologram-shimmer {
     0%, 72%, 100% { background-position: 150% 0; }
     86% { background-position: -70% 0; }
