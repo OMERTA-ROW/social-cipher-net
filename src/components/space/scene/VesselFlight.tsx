@@ -18,39 +18,36 @@ export const SOLAR_SHIP_SCALE = 7.5;
  */
 const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) => {
   const group = useRef<THREE.Group>(null);
-  const prev = useRef(new THREE.Vector3());
-  const look = useRef(new THREE.Vector3());
-  const m = useRef(new THREE.Matrix4());
-  const up = useRef(new THREE.Vector3(0, 1, 0));
   const projected = useRef(new THREE.Vector3());
   const lastPublished = useRef(0);
-  const rollQuat = useRef(new THREE.Quaternion());
-  const targetQuat = useRef(new THREE.Quaternion());
 
   const pilot = useMemo(() => new ShipAutopilot(), []);
+  const pose = useMemo(() => new ShipPose(), []);
 
   useFrame((state, delta) => {
     if (!group.current) return;
     const dt = Math.min(delta, 0.05);
     if (animate) pilot.step(dt, state.clock.elapsedTime);
 
-    const pos = pilot.state.position;
-    prev.current.copy(group.current.position);
-    group.current.position.copy(pos);
+    // simulation and pose first, so the chase camera never reads a stale or
+    // origin-relative frame (that caused the startup position/velocity spike)
+    pose.update({
+      position: pilot.state.position,
+      forward: pilot.state.forward,
+      roll: pilot.state.roll,
+      dt,
+      animate,
+    });
 
-    look.current.copy(pos).add(pilot.state.forward);
-    m.current.lookAt(pos, look.current, up.current);
-    targetQuat.current.setFromRotationMatrix(m.current);
-    // bank into the turn around the ship's own forward axis
-    rollQuat.current.setFromAxisAngle(new THREE.Vector3(0, 0, 1), pilot.state.roll);
-    targetQuat.current.multiply(rollQuat.current);
-    group.current.quaternion.slerp(targetQuat.current, animate ? Math.min(1, dt * 3) : 1);
-    group.current.rotateY(Math.PI); // model noses along +Z
+    const pos = pose.position;
+    group.current.position.copy(pos);
+    group.current.quaternion.copy(pose.quaternion);
 
     shipTelemetry.position.copy(pos);
-    shipTelemetry.quaternion.copy(group.current.quaternion);
-    shipTelemetry.velocity.subVectors(pos, prev.current);
+    shipTelemetry.quaternion.copy(pose.quaternion);
+    shipTelemetry.velocity.copy(pose.velocity);
     shipTelemetry.throttle = pilot.state.throttle;
+    shipTelemetry.scale = SOLAR_SHIP_SCALE;
 
     // debug telemetry (cheap plain-number copies; overlay reads it at 10Hz)
     const av = pilot.state.avoidance;
