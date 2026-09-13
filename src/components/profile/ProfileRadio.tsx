@@ -75,7 +75,7 @@ const ProfileRadio = ({ userId, isOwner = false }: Props) => {
     return () => {
       active = false;
     };
-  }, [userId]);
+  }, [userId, isOwner]);
 
   const save = async () => {
     const resolved = toEmbedUrl(url);
