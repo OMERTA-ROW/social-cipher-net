@@ -93,7 +93,9 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Security", url: "/security", icon: Shield },
       { title: "Guidelines", url: "/community-guidelines", icon: FileText },
+      { title: "Verification", url: "/verification", icon: BadgeCheck },
       { title: "Backgrounds", url: "/backgrounds", icon: Image },
+      { title: "Voyage", url: "/voyage", icon: Orbit },
     ],
   },
 ];

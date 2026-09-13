@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Settings2, ChevronDown, ChevronUp, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Settings2, ChevronDown, ChevronUp, Save, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
 
 interface VoyagePreset {
@@ -741,8 +742,11 @@ const SolarSystemVoyage = () => {
       </div>
 
       {/* Title */}
-      <div className="absolute top-4 left-4 z-10 pointer-events-none">
-        <h1 className="text-2xl font-bold text-primary drop-shadow">Solar System Voyage</h1>
+      <div className="absolute top-4 left-4 z-10">
+        <Button variant="ghost" size="sm" asChild className="mb-2 bg-background/60 backdrop-blur-xl">
+          <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Home</Link>
+        </Button>
+        <h1 className="hologram-title text-2xl font-bold">Solar System Voyage</h1>
         <p className="text-xs text-muted-foreground">Keys 1–6 switch views · Space pauses travel</p>
       </div>
     </div>

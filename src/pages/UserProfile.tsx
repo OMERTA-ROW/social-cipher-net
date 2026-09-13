@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
 import CreatePostDialog from "@/components/CreatePostDialog";
@@ -248,8 +247,6 @@ const UserProfile = () => {
     <div className="min-h-screen">
       <MatrixOverlay />
       <SnipeLayer targetUserId={profile?.id} />
-      <Navigation />
-      
       <div className="container mx-auto px-4 pt-20 pb-8">
         <div className="flex gap-6">
           {/* Friends Sidebar */}

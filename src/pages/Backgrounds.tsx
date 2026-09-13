@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Type } from "lucide-react";
+import { ArrowLeft, X, Type } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Link } from "react-router-dom";
 
 const Backgrounds = () => {
   const [showTextOverlay, setShowTextOverlay] = useState(false);
@@ -10,6 +11,13 @@ const Backgrounds = () => {
 
   return (
     <div className="fixed inset-0 w-screen h-screen overflow-hidden">
+      <header className="fixed left-4 top-4 z-50 max-w-[calc(100vw-2rem)]">
+        <Button variant="ghost" size="sm" asChild className="mb-2 bg-background/60 backdrop-blur-xl">
+          <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Home</Link>
+        </Button>
+        <h1 className="hologram-title text-2xl font-bold sm:text-3xl">Space Backgrounds</h1>
+        <p className="mt-1 text-xs text-muted-foreground">Control the full-screen galaxy workspace.</p>
+      </header>
       {/* Full-screen All Seeing Eye Background */}
       <div className="absolute inset-0 w-full h-full">
       </div>
@@ -19,16 +27,12 @@ const Backgrounds = () => {
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
           <div className="text-center space-y-4 px-4 max-w-4xl">
             {overlayText.split('\n').map((line, idx) => (
-              <h1 
+              <p
                 key={idx}
-                className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-pulse"
-                style={{ 
-                  textShadow: '0 0 40px rgba(var(--primary), 0.5), 0 0 80px rgba(var(--primary), 0.3)',
-                  filter: 'drop-shadow(0 0 20px rgba(var(--primary), 0.8))'
-                }}
+                className="hologram-title text-4xl md:text-6xl lg:text-7xl font-bold"
               >
                 {line}
-              </h1>
+              </p>
             ))}
           </div>
         </div>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import Navigation from "@/components/Navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -175,8 +174,6 @@ const Connectors = () => {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <Navigation onCreatePost={() => {}} />
-
       <main className="container mx-auto px-4 pt-24 pb-16 max-w-5xl">
         <header className="mb-6">
           <div className="flex items-center gap-3 mb-2">

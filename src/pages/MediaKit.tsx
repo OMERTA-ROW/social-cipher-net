@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Mail } from "lucide-react";
@@ -70,7 +69,6 @@ const MediaKit = () => {
   if (!kit) {
     return (
       <div className="min-h-screen bg-transparent">
-        <Navigation />
         <div className="container mx-auto px-4 py-16 text-center text-muted-foreground">
           This media kit is not available.
         </div>
@@ -83,7 +81,6 @@ const MediaKit = () => {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
         <header className="flex items-center gap-4">
           {profile?.avatar_url && (
