@@ -67,6 +67,17 @@ export interface AutopilotState {
   legsCompleted: number;
   /** True while the ship is loitering around a point of interest. */
   investigating: boolean;
+  /** Debug/telemetry view of the asteroid avoidance behaviour. */
+  avoidance: {
+    /** Rocks currently pushing on the heading. */
+    rocks: number;
+    /** Combined steering weight applied this frame (0 = clear). */
+    strength: number;
+    /** Surface gap to the closest published rock, or Infinity. */
+    nearestClearance: number;
+    /** Smallest surface gap seen since launch. */
+    minClearance: number;
+  };
 }
 
 const tmpA = new THREE.Vector3();
