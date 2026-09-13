@@ -36,6 +36,8 @@ const surfaceFrag = /* glsl */ `
   precision highp float;
   ${NOISE_GLSL}
 
+  #include <common>
+  #include <logdepthbuf_pars_fragment>
   varying vec3 vPos;
   varying vec3 vNormalW;
   varying vec3 vPosW;
@@ -61,6 +63,7 @@ const surfaceFrag = /* glsl */ `
   }
 
   void main() {
+    #include <logdepthbuf_fragment>
     vec3 n = normalize(vNormalW);
     vec3 V = normalize(cameraPosition - vPosW);
     float mu = clamp(dot(n, V), 0.0, 1.0);
