@@ -31,40 +31,40 @@ const LiveRoom = () => {
     let alive = true;
 
     const load = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (alive) setMeId(user?.id ?? null);
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (alive) setMeId(user?.id ?? null);
 
-      const { data, error } = await supabase
-        .from("live_streams")
-        .select("id, user_id, title, description, section, is_live, started_at, ended_at, viewer_count")
-        .eq("id", streamId)
-        .maybeSingle();
-      if (!alive) return;
-      if (error || !data) {
-        setLoading(false);
-        return;
-      }
-      setStream(data as LiveStreamRecord);
+        const { data, error } = await supabase
+          .from("live_streams")
+          .select("id, user_id, title, description, section, is_live, started_at, ended_at, viewer_count")
+          .eq("id", streamId)
+          .maybeSingle();
+        if (!alive) return;
+        if (error || !data) return;
+        setStream(data as LiveStreamRecord);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, username, display_name, avatar_url, is_verified")
-        .eq("id", data.user_id)
-        .maybeSingle();
-      if (alive) setHost((profile as SocialProfile) ?? null);
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, username, display_name, avatar_url, is_verified")
+          .eq("id", data.user_id)
+          .maybeSingle();
+        if (alive) setHost((profile as SocialProfile) ?? null);
 
-      if (user) await joinLiveStream(streamId);
+        if (user) await joinLiveStream(streamId).catch(() => undefined);
 
-      const { count } = await supabase
-        .from("live_stream_participants")
-        .select("id", { count: "exact", head: true })
-        .eq("stream_id", streamId)
-        .eq("is_active", true);
-      if (alive) {
-        setViewers(count ?? 0);
-        setLoading(false);
+        const { count } = await supabase
+          .from("live_stream_participants")
+          .select("id", { count: "exact", head: true })
+          .eq("stream_id", streamId)
+          .eq("is_active", true);
+        if (alive) setViewers(count ?? 0);
+      } catch (error) {
+        console.error("Could not open the live room:", error);
+      } finally {
+        if (alive) setLoading(false);
       }
     };
 
