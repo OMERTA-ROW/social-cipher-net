@@ -5,7 +5,7 @@ import MiningVessel from "./MiningVessel";
 import { shipTelemetry } from "./shipTelemetry";
 import { ShipAutopilot } from "./shipAutopilot";
 import { asteroidRegistry } from "./asteroidRegistry";
-import { asteroidDebugStats } from "./asteroidDebug";
+import { asteroidDebugStats, isAsteroidDebug } from "./asteroidDebug";
 import { ShipPose } from "./shipPose";
 
 /** Hull scale in the solar view; the chase camera keeps clearance from it. */
