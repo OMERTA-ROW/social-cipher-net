@@ -23,6 +23,7 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
 
   const pilot = useMemo(() => new ShipAutopilot(), []);
   const pose = useMemo(() => new ShipPose(), []);
+  const debug = useRef(isAsteroidDebug());
 
   useFrame((state, delta) => {
     if (!group.current) return;
@@ -63,6 +64,19 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
     asteroidDebugStats.radius = pos.length();
     asteroidDebugStats.destinationKind = pilot.state.destination.kind;
     asteroidDebugStats.legsCompleted = pilot.state.legsCompleted;
+
+    // debug-only: expose the rendered pose so a preview run can measure the
+    // frame-to-frame orientation change and camera clearance directly
+    if (debug.current) {
+      (window as unknown as Record<string, unknown>).__shipPose = {
+        q: pose.quaternion.toArray(),
+        pos: pos.toArray(),
+        nose: new THREE.Vector3(0, 0, 1).applyQuaternion(pose.quaternion).toArray(),
+        forward: pilot.state.forward.toArray(),
+        camDistance: state.camera.position.distanceTo(pos),
+        speed: pilot.state.velocity.length(),
+      };
+    }
 
     if (state.clock.elapsedTime - lastPublished.current > 0.08) {
       lastPublished.current = state.clock.elapsedTime;
