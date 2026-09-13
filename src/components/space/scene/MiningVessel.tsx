@@ -179,9 +179,12 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
           <mesh material={mats.secondary} position={[0, -0.16, 0]} castShadow>
             <boxGeometry args={[1.14, 0.36, 1.1]} />
           </mesh>
-          {/* canopy frame */}
-          <mesh material={mats.dark} position={[0, 0.1, 0.06]} scale={[1.03, 0.64, 1.08]}>
-            <sphereGeometry args={[0.56, 10, 8]} />
+          {/* canopy frame ribs */}
+          <mesh material={mats.dark} position={[0, 0.1, 0.06]} rotation={[Math.PI / 2, 0, 0]} scale={[1.02, 1.06, 1]}>
+            <torusGeometry args={[0.55, 0.02, 8, 40]} />
+          </mesh>
+          <mesh material={mats.dark} position={[0, 0.1, 0.06]} rotation={[0, Math.PI / 2, 0]} scale={[1.06, 0.64, 1]}>
+            <torusGeometry args={[0.55, 0.02, 8, 40]} />
           </mesh>
           <mesh material={mats.glass} position={[0, 0.1, 0.06]} scale={[1, 0.62, 1.05]}>
             <sphereGeometry args={[0.56, 32, 24]} />
