@@ -1,19 +1,20 @@
 import { forwardRef, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { hullMaps, plateMaps } from "./procTextures";
+import { shipHullMaps, shipPlateMaps, shipTrimMaps } from "./procTextures";
 import { CockpitCrew } from "./AlienCrew";
 
 /**
  * The mining vessel: a heavy industrial hauler built from real geometry with
- * procedurally generated worn-hull PBR maps, glowing engines, a glass canopy
- * with a visible alien crew, deployable landing gear and a mining beam rig.
+ * machined-metal PBR maps (panel grid, weld seams, rivet rows, streak
+ * weathering, chipped paint), clear-coated hull shading, glowing engines,
+ * a glass canopy with a visible alien crew and a mining beam rig.
+ *
+ * The craft has no landing gear — it never deploys legs in any view.
  */
 
 interface Props {
   animate?: boolean;
-  /** 0 = gear stowed, 1 = fully deployed */
-  gear?: number;
   /** 0 = engines idle, 1 = full burn */
   throttle?: number;
   /** 0 = beam off, 1 = full extraction beam */
@@ -24,40 +25,63 @@ interface Props {
 }
 
 const useHullMaterials = () => {
-  const hull = useMemo(() => hullMaps(), []);
-  const plate = useMemo(() => plateMaps(), []);
+  const hull = useMemo(() => shipHullMaps(), []);
+  const plate = useMemo(() => shipPlateMaps(), []);
+  const trim = useMemo(() => shipTrimMaps(), []);
 
   return useMemo(() => {
-    const primary = new THREE.MeshStandardMaterial({
+    // Clear-coated, fully map-driven metal: roughness and metalness come from
+    // the textures so light breaks across plates instead of over the whole hull.
+    const primary = new THREE.MeshPhysicalMaterial({
       ...hull,
-      color: new THREE.Color("#9aa3ad"),
-      metalness: 0.92,
-      roughness: 0.52,
-      normalScale: new THREE.Vector2(1.4, 1.4),
-      envMapIntensity: 0.9,
+      color: new THREE.Color("#aeb6c0"),
+      metalness: 1,
+      roughness: 1,
+      normalScale: new THREE.Vector2(1.25, 1.25),
+      envMapIntensity: 1.15,
+      clearcoat: 0.45,
+      clearcoatRoughness: 0.42,
     });
-    const secondary = new THREE.MeshStandardMaterial({
+    const secondary = new THREE.MeshPhysicalMaterial({
       ...plate,
-      color: new THREE.Color("#5d646d"),
-      metalness: 0.88,
-      roughness: 0.66,
-      normalScale: new THREE.Vector2(1.1, 1.1),
+      color: new THREE.Color("#767f8a"),
+      metalness: 1,
+      roughness: 1,
+      normalScale: new THREE.Vector2(1.35, 1.35),
+      envMapIntensity: 0.95,
+      clearcoat: 0.25,
+      clearcoatRoughness: 0.6,
     });
-    const accent = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#c2762a"),
-      metalness: 0.7,
-      roughness: 0.45,
+    const accent = new THREE.MeshPhysicalMaterial({
+      ...trim,
+      color: new THREE.Color("#d08a38"),
+      metalness: 1,
+      roughness: 1,
+      normalScale: new THREE.Vector2(1.1, 1.1),
+      envMapIntensity: 0.9,
+      clearcoat: 0.55,
+      clearcoatRoughness: 0.35,
+    });
+    // Dark heat-soaked metal for nozzles, radiators and greebles.
+    const dark = new THREE.MeshStandardMaterial({
+      ...plate,
+      color: new THREE.Color("#3c4149"),
+      metalness: 1,
+      roughness: 1,
+      normalScale: new THREE.Vector2(1.5, 1.5),
+      envMapIntensity: 0.7,
     });
     const glass = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#0b1a20"),
       metalness: 0,
-      roughness: 0.06,
+      roughness: 0.04,
       transmission: 0.72,
       thickness: 0.35,
       transparent: true,
       opacity: 0.65,
       clearcoat: 1,
-      clearcoatRoughness: 0.04,
+      clearcoatRoughness: 0.02,
+      ior: 1.45,
       side: THREE.DoubleSide,
     });
     const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color("#39e6ff"), toneMapped: false });
@@ -69,23 +93,20 @@ const useHullMaterials = () => {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
-    return { primary, secondary, accent, glass, glow, engineGlow };
-  }, [hull, plate]);
+    return { primary, secondary, accent, dark, glass, glow, engineGlow };
+  }, [hull, plate, trim]);
 };
 
 const MiningVessel = forwardRef<THREE.Group, Props>(
-  ({ animate = true, gear = 0, throttle = 0.5, beam = 0, crew = true, scale = 1 }, ref) => {
+  ({ animate = true, throttle = 0.5, beam = 0, crew = true, scale = 1 }, ref) => {
     const mats = useHullMaterials();
-    const gearL = useRef<THREE.Group>(null);
-    const gearR = useRef<THREE.Group>(null);
-    const gearN = useRef<THREE.Group>(null);
     const plumeA = useRef<THREE.Mesh>(null);
     const plumeB = useRef<THREE.Mesh>(null);
     const beamRef = useRef<THREE.Mesh>(null);
     const beacon = useRef<THREE.PointLight>(null);
     const drill = useRef<THREE.Group>(null);
 
-    useFrame((state, delta) => {
+    useFrame((state) => {
       const t = state.clock.elapsedTime;
       const flicker = 0.88 + Math.sin(t * 24) * 0.06 + Math.sin(t * 7.3) * 0.06;
       const len = 0.6 + throttle * 3.4;
@@ -94,11 +115,6 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
         p.current.scale.set(1, animate ? len * flicker : len, 1);
         p.current.position.z = -2.45 - (len * (animate ? flicker : 1)) * 0.5;
         (p.current.material as THREE.Material).opacity = 0.35 + throttle * 0.55;
-      });
-
-      const angle = -gear * 1.35;
-      [gearL, gearR, gearN].forEach((g) => {
-        if (g.current) g.current.rotation.x = THREE.MathUtils.lerp(g.current.rotation.x, angle, 1 - Math.exp(-6 * delta));
       });
 
       if (beamRef.current) {
@@ -114,25 +130,64 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
     return (
       <group ref={ref} scale={scale}>
         {/* ---- main fuselage ---- */}
-        <mesh material={mats.primary} rotation={[Math.PI / 2, 0, 0]}>
-          <capsuleGeometry args={[0.72, 3.1, 10, 28]} />
+        <mesh material={mats.primary} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+          <capsuleGeometry args={[0.72, 3.1, 12, 40]} />
+        </mesh>
+        {/* hull strakes: raised plating that catches the light along the body */}
+        {[-0.52, 0.52].map((x) => (
+          <mesh key={`strake${x}`} material={mats.secondary} position={[x, 0.18, -0.2]} rotation={[0, 0, x > 0 ? -0.18 : 0.18]} castShadow>
+            <boxGeometry args={[0.16, 0.1, 3.0]} />
+          </mesh>
+        ))}
+        {/* belly keel */}
+        <mesh material={mats.secondary} position={[0, -0.66, -0.35]} castShadow>
+          <boxGeometry args={[0.9, 0.18, 2.6]} />
         </mesh>
         {/* spine / dorsal ridge */}
-        <mesh material={mats.secondary} position={[0, 0.62, -0.3]}>
+        <mesh material={mats.secondary} position={[0, 0.62, -0.3]} castShadow>
           <boxGeometry args={[0.7, 0.34, 2.4]} />
         </mesh>
+        {/* dorsal greebles: avionics boxes and antennae */}
+        {[-0.9, -0.35, 0.25].map((z, i) => (
+          <mesh key={`box${z}`} material={mats.dark} position={[i % 2 ? 0.2 : -0.2, 0.82, z]} castShadow>
+            <boxGeometry args={[0.22, 0.12, 0.34]} />
+          </mesh>
+        ))}
+        <mesh material={mats.dark} position={[0, 1.05, -1.1]} castShadow>
+          <cylinderGeometry args={[0.018, 0.03, 0.7, 8]} />
+        </mesh>
+        {/* radiator fins along the spine */}
+        {[-1.25, -1.0, -0.75].map((z) => (
+          <mesh key={`fin${z}`} material={mats.dark} position={[0, 0.9, z]} castShadow>
+            <boxGeometry args={[1.5, 0.02, 0.12]} />
+          </mesh>
+        ))}
         {/* nose */}
-        <mesh material={mats.primary} position={[0, 0.02, 2.2]} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.72, 1.0, 26]} />
+        <mesh material={mats.primary} position={[0, 0.02, 2.2]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+          <coneGeometry args={[0.72, 1.0, 40]} />
+        </mesh>
+        {/* nose ring and sensor head */}
+        <mesh material={mats.accent} position={[0, 0.02, 1.94]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.7, 0.045, 10, 40]} />
+        </mesh>
+        <mesh material={mats.dark} position={[0, -0.16, 2.5]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.09, 0.12, 0.22, 16]} />
         </mesh>
 
         {/* ---- cockpit ---- */}
         <group position={[0, 0.36, 1.42]}>
-          <mesh material={mats.secondary} position={[0, -0.16, 0]}>
+          <mesh material={mats.secondary} position={[0, -0.16, 0]} castShadow>
             <boxGeometry args={[1.14, 0.36, 1.1]} />
           </mesh>
+          {/* canopy frame ribs */}
+          <mesh material={mats.dark} position={[0, 0.1, 0.06]} rotation={[Math.PI / 2, 0, 0]} scale={[1.02, 1.06, 1]}>
+            <torusGeometry args={[0.55, 0.02, 8, 40]} />
+          </mesh>
+          <mesh material={mats.dark} position={[0, 0.1, 0.06]} rotation={[0, Math.PI / 2, 0]} scale={[1.06, 0.64, 1]}>
+            <torusGeometry args={[0.55, 0.02, 8, 40]} />
+          </mesh>
           <mesh material={mats.glass} position={[0, 0.1, 0.06]} scale={[1, 0.62, 1.05]}>
-            <sphereGeometry args={[0.56, 26, 20]} />
+            <sphereGeometry args={[0.56, 32, 24]} />
           </mesh>
           {crew && (
             <group position={[0, -0.06, -0.06]} scale={0.42}>
@@ -145,14 +200,24 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
         {/* ---- cargo ore pods ---- */}
         {[-1.28, 1.28].map((x) => (
           <group key={x} position={[x, -0.12, -0.5]}>
-            <mesh material={mats.secondary} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.36, 0.36, 2.1, 20]} />
+            <mesh material={mats.secondary} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+              <cylinderGeometry args={[0.36, 0.36, 2.1, 32]} />
             </mesh>
+            {/* banding ribs */}
+            {[-0.6, 0, 0.6].map((z) => (
+              <mesh key={`rib${z}`} material={mats.dark} position={[0, 0, z]} rotation={[Math.PI / 2, 0, 0]}>
+                <torusGeometry args={[0.37, 0.025, 8, 28]} />
+              </mesh>
+            ))}
             <mesh material={mats.accent} position={[0, 0, 0.85]} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.38, 0.38, 0.18, 20]} />
+              <cylinderGeometry args={[0.38, 0.38, 0.18, 32]} />
             </mesh>
-            <mesh material={mats.primary} position={[x > 0 ? -0.5 : 0.5, 0.1, 0.2]}>
+            {/* pylon tying the pod to the hull */}
+            <mesh material={mats.primary} position={[x > 0 ? -0.5 : 0.5, 0.1, 0.2]} castShadow>
               <boxGeometry args={[0.62, 0.16, 0.9]} />
+            </mesh>
+            <mesh material={mats.dark} position={[x > 0 ? -0.5 : 0.5, -0.05, -0.55]} castShadow>
+              <boxGeometry args={[0.5, 0.1, 0.4]} />
             </mesh>
           </group>
         ))}
@@ -160,14 +225,22 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
         {/* ---- engines ---- */}
         {[-0.82, 0.82].map((x, i) => (
           <group key={x} position={[x, -0.05, -1.72]}>
-            <mesh material={mats.primary} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.42, 0.5, 1.3, 22]} />
+            <mesh material={mats.primary} rotation={[Math.PI / 2, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.42, 0.5, 1.3, 32]} />
+            </mesh>
+            {/* cooling shroud */}
+            <mesh material={mats.dark} position={[0, 0, 0.1]} rotation={[Math.PI / 2, 0, 0]}>
+              <torusGeometry args={[0.45, 0.05, 10, 32]} />
+            </mesh>
+            {/* bell nozzle */}
+            <mesh material={mats.dark} position={[0, 0, -0.78]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.5, 0.34, 0.36, 32, 1, true]} />
             </mesh>
             <mesh material={mats.accent} position={[0, 0, -0.68]} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.5, 0.4, 0.16, 22]} />
+              <cylinderGeometry args={[0.5, 0.4, 0.16, 32]} />
             </mesh>
-            <mesh material={mats.glow} position={[0, 0, -0.76]} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.36, 0.36, 0.06, 20]} />
+            <mesh material={mats.glow} position={[0, 0, -0.86]} rotation={[Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.33, 0.33, 0.06, 24]} />
             </mesh>
             {/* exhaust plume */}
             <mesh
@@ -176,36 +249,20 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
               position={[0, 0, -2.45]}
               rotation={[-Math.PI / 2, 0, 0]}
             >
-              <coneGeometry args={[0.3, 1, 18, 1, true]} />
+              <coneGeometry args={[0.3, 1, 20, 1, true]} />
             </mesh>
             <pointLight color="#4fd8ff" intensity={2.2 + throttle * 4} distance={9} position={[0, 0, -1]} />
           </group>
         ))}
 
-        {/* ---- landing gear ---- */}
-        {[
-          { ref: gearL, pos: [-0.86, -0.55, -0.9] as [number, number, number] },
-          { ref: gearR, pos: [0.86, -0.55, -0.9] as [number, number, number] },
-          { ref: gearN, pos: [0, -0.6, 1.35] as [number, number, number] },
-        ].map((g, i) => (
-          <group key={i} ref={g.ref} position={g.pos}>
-            <mesh material={mats.secondary} position={[0, -0.3, 0]}>
-              <cylinderGeometry args={[0.07, 0.07, 0.6, 10]} />
-            </mesh>
-            <mesh material={mats.accent} position={[0, -0.62, 0.02]}>
-              <boxGeometry args={[0.3, 0.1, 0.4]} />
-            </mesh>
-          </group>
-        ))}
-
         {/* ---- mining rig under the belly ---- */}
         <group position={[0, -0.66, 0.55]}>
-          <mesh material={mats.secondary}>
+          <mesh material={mats.secondary} castShadow>
             <boxGeometry args={[0.7, 0.3, 0.9]} />
           </mesh>
           <group ref={drill} position={[0, -0.24, 0]}>
-            <mesh material={mats.accent} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.2, 0.1, 0.42, 12]} />
+            <mesh material={mats.accent} rotation={[Math.PI / 2, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.2, 0.1, 0.42, 20]} />
             </mesh>
           </group>
           {/* extraction beam */}
@@ -225,10 +282,10 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
 
         {/* running lights */}
         <mesh material={mats.glow} position={[-1.66, -0.12, -0.5]}>
-          <sphereGeometry args={[0.055, 10, 10]} />
+          <sphereGeometry args={[0.055, 12, 12]} />
         </mesh>
         <mesh position={[1.66, -0.12, -0.5]}>
-          <sphereGeometry args={[0.055, 10, 10]} />
+          <sphereGeometry args={[0.055, 12, 12]} />
           <meshBasicMaterial color="#ff4d5e" toneMapped={false} />
         </mesh>
         <pointLight ref={beacon} color="#39e6ff" intensity={2} distance={7} position={[0, 0.9, 0.2]} />

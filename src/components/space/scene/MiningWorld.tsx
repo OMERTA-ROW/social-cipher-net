@@ -282,7 +282,6 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
   const ship = useRef<THREE.Group>(null);
   const clock = useRef(0);
   const prev = useRef(new THREE.Vector3());
-  const gear = useRef(0);
   const beam = useRef(0);
   const throttle = useRef(0.6);
   const m = useRef(new THREE.Matrix4());
@@ -351,11 +350,9 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
       }
     }
 
-    const targetGear = ["landing", "docked", "mining"].includes(beat.phase) ? 1 : 0;
     const targetBeam = beat.phase === "mining" ? 1 : 0;
     const targetThrottle =
       beat.phase === "docked" ? 0.06 : beat.phase === "mining" ? 0.3 : beat.phase === "combat" ? 1 : 0.66;
-    gear.current = THREE.MathUtils.lerp(gear.current, targetGear, 1 - Math.exp(-2 * dt));
     beam.current = THREE.MathUtils.lerp(beam.current, targetBeam, 1 - Math.exp(-2 * dt));
     throttle.current = THREE.MathUtils.lerp(throttle.current, targetThrottle, 1 - Math.exp(-2 * dt));
 
@@ -371,7 +368,6 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
     <group ref={ship}>
       <MiningVessel
         animate={animate}
-        gear={gear.current}
         beam={beam.current}
         throttle={throttle.current}
         crew={full}
