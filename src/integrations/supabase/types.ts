@@ -4879,6 +4879,7 @@ export type Database = {
           unlock_time: string
         }[]
       }
+      start_dm_thread: { Args: { _peer: string }; Returns: string }
       user_id_for_email: { Args: { _email: string }; Returns: string }
     }
     Enums: {
