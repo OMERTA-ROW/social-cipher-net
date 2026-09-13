@@ -30,6 +30,12 @@ export const shipTelemetry = {
   throttle: 0.5,
   /** Hull scale of the vessel currently flying; chase clearance scales with it. */
   scale: MINING_SHIP_SCALE,
+  /**
+   * False until the flying vessel has written a real pose this session.
+   * The chase camera waits for it, so it never frames the group at the origin
+   * (which produced a startup position/velocity spike and a flying-in jump).
+   */
+  ready: false,
   phase: "travel" as MissionPhase,
   /** 0..1 progress inside the current phase */
   phaseProgress: 0,
