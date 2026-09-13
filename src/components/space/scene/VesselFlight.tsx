@@ -49,6 +49,7 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
     shipTelemetry.velocity.copy(pose.velocity);
     shipTelemetry.throttle = pilot.state.throttle;
     shipTelemetry.scale = SOLAR_SHIP_SCALE;
+    shipTelemetry.ready = true;
 
     // debug telemetry (cheap plain-number copies; overlay reads it at 10Hz)
     const av = pilot.state.avoidance;

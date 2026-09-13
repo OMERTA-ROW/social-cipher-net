@@ -361,6 +361,7 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
     shipTelemetry.velocity.subVectors(ship.current.position, prev.current);
     shipTelemetry.throttle = throttle.current;
     shipTelemetry.scale = MINING_SHIP_SCALE;
+    shipTelemetry.ready = true;
     shipTelemetry.phase = beat.phase;
     shipTelemetry.phaseProgress = beat.progress;
   });
