@@ -95,6 +95,8 @@ const SpaceScene = ({ full, animate, view = "solar", cameraMode = "galaxy", tier
   const dpr = full ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
 
   return (
+    <>
+    {isAsteroidDebug() && <AsteroidDebugHud />}
     <Canvas
       className="absolute inset-0"
       gl={{ antialias: false, alpha: false, logarithmicDepthBuffer: true, powerPreference: full ? "high-performance" : "low-power" }}
@@ -106,9 +108,9 @@ const SpaceScene = ({ full, animate, view = "solar", cameraMode = "galaxy", tier
         scene.background = new THREE.Color(0x000000);
       }}
     >
-      {isAsteroidDebug() && <AsteroidDebugHud />}
       <SceneContents full={full} animate={animate} dpr={dpr} view={view} cameraMode={cameraMode} tier={tier} />
     </Canvas>
+    </>
   );
 };
 
