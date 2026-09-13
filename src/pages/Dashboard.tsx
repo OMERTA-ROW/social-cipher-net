@@ -243,6 +243,17 @@ const Dashboard = () => {
 
         <TabsContent value="settings" className="mt-4 space-y-4">
           <Card className="p-5 bg-card/70 backdrop-blur-sm border-border/60">
+            <h3 className="font-semibold mb-4">Profile picture</h3>
+            {userId && (
+              <ProfilePictureEditor
+                userId={userId}
+                name={displayName || username}
+                onChange={(url) => setProfile((p) => (p ? { ...p, avatar_url: url } : p))}
+              />
+            )}
+          </Card>
+
+          <Card className="p-5 bg-card/70 backdrop-blur-sm border-border/60">
             <h3 className="font-semibold mb-4">Edit profile</h3>
             <div className="space-y-3">
               <div>
