@@ -3,65 +3,48 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import MiningVessel from "./MiningVessel";
 import { shipTelemetry } from "./shipTelemetry";
+import { ShipAutopilot } from "./shipAutopilot";
 
 /**
- * Solar-system view: the vessel runs a long hauling route through the system.
- * It stays off to one side of the star so the solar system remains the hero —
- * the ship is traffic passing through, never the subject.
+ * Solar-system view: the vessel explores the system on its own.
+ * There is no fixed route — an autopilot picks fresh destinations, avoids the
+ * star and the planets, banks through its turns and stays inside the world.
  */
 const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) => {
   const group = useRef<THREE.Group>(null);
-  const t = useRef(0);
   const prev = useRef(new THREE.Vector3());
   const look = useRef(new THREE.Vector3());
   const m = useRef(new THREE.Matrix4());
   const up = useRef(new THREE.Vector3(0, 1, 0));
   const projected = useRef(new THREE.Vector3());
   const lastPublished = useRef(0);
+  const rollQuat = useRef(new THREE.Quaternion());
+  const targetQuat = useRef(new THREE.Quaternion());
 
-  const curve = useMemo(
-    () =>
-      new THREE.CatmullRomCurve3(
-        [
-          new THREE.Vector3(-1180, 190, 880),
-          new THREE.Vector3(-620, 60, 430),
-          new THREE.Vector3(-140, -240, 240),
-          new THREE.Vector3(320, -120, 700),
-          new THREE.Vector3(880, 60, 350),
-          new THREE.Vector3(1340, 260, -120),
-          new THREE.Vector3(1060, 420, -640),
-          new THREE.Vector3(420, 140, -1020),
-          new THREE.Vector3(-260, -180, -880),
-          new THREE.Vector3(-880, -60, -1180),
-          new THREE.Vector3(-1420, 180, -420),
-        ],
-        true,
-        "catmullrom",
-        0.4,
-      ),
-    [],
-  );
+  const pilot = useMemo(() => new ShipAutopilot(), []);
 
   useFrame((state, delta) => {
     if (!group.current) return;
     const dt = Math.min(delta, 0.05);
-    if (animate) t.current += dt * 0.0048;
-    const u = t.current % 1;
+    if (animate) pilot.step(dt, state.clock.elapsedTime);
 
-    const pos = curve.getPointAt(u);
-    const ahead = curve.getPointAt((u + 0.004) % 1);
-
+    const pos = pilot.state.position;
     prev.current.copy(group.current.position);
     group.current.position.copy(pos);
-    look.current.copy(ahead);
+
+    look.current.copy(pos).add(pilot.state.forward);
     m.current.lookAt(pos, look.current, up.current);
-    group.current.quaternion.setFromRotationMatrix(m.current);
+    targetQuat.current.setFromRotationMatrix(m.current);
+    // bank into the turn around the ship's own forward axis
+    rollQuat.current.setFromAxisAngle(new THREE.Vector3(0, 0, 1), pilot.state.roll);
+    targetQuat.current.multiply(rollQuat.current);
+    group.current.quaternion.slerp(targetQuat.current, animate ? Math.min(1, dt * 3) : 1);
     group.current.rotateY(Math.PI); // model noses along +Z
 
     shipTelemetry.position.copy(pos);
     shipTelemetry.quaternion.copy(group.current.quaternion);
     shipTelemetry.velocity.subVectors(pos, prev.current);
-    shipTelemetry.throttle = 0.62;
+    shipTelemetry.throttle = pilot.state.throttle;
 
     if (state.clock.elapsedTime - lastPublished.current > 0.08) {
       lastPublished.current = state.clock.elapsedTime;
@@ -78,6 +61,7 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
       }));
     }
   });
+
 
   return (
     <group ref={group}>
