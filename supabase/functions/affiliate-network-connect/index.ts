@@ -34,6 +34,10 @@ serve(async (req) => {
     const user = userData.user;
     if (!user) return json({ error: "Sign in required" }, 401);
 
+    // Server-side tier gate: affiliate tooling is a paid-plan feature.
+    const { data: paid } = await admin.rpc("has_paid_plan", { _user_id: user.id });
+    if (!paid) return json({ error: "Affiliate networks require a Plus or Pro plan" }, 403);
+
     const { network, accountLabel, apiKey } = await req.json();
     if (typeof network !== "string" || network.trim().length < 2) {
       return json({ error: "Choose a network" }, 400);
