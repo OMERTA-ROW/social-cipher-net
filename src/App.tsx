@@ -51,6 +51,10 @@ import Advertise from "./pages/Advertise";
 import AffiliateRedirect from "./pages/AffiliateRedirect";
 import AIBotAssistant from "./components/AIBotAssistant";
 import SpaceBackground from "./components/space/SpaceBackground";
+import AppShell from "@/components/layout/AppShell";
+import type { ReactNode } from "react";
+
+const ShellRoute = ({ children }: { children: ReactNode }) => <AppShell>{children}</AppShell>;
 
 const AppContent = () => {
   return (
@@ -58,43 +62,43 @@ const AppContent = () => {
       <SpaceBackground />
       <SecurityMonitor />
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/studio" element={<Studio />} />
+        <Route path="/" element={<ShellRoute><Index /></ShellRoute>} />
+        <Route path="/studio" element={<ShellRoute><Studio /></ShellRoute>} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/affiliate" element={<Affiliate />} />
-        <Route path="/seller-register" element={<SellerRegister />} />
-        <Route path="/seller-dashboard" element={<SellerDashboard />} />
-        <Route path="/monetization" element={<Monetization />} />
-        <Route path="/messages" element={<Messages />} />
+        <Route path="/affiliate" element={<ShellRoute><Affiliate /></ShellRoute>} />
+        <Route path="/seller-register" element={<ShellRoute><SellerRegister /></ShellRoute>} />
+        <Route path="/seller-dashboard" element={<ShellRoute><SellerDashboard /></ShellRoute>} />
+        <Route path="/monetization" element={<ShellRoute><Monetization /></ShellRoute>} />
+        <Route path="/messages" element={<ShellRoute><Messages /></ShellRoute>} />
         <Route path="/cyber-arena" element={<CyberGamers />} />
-        <Route path="/cyber-streamer" element={<CyberStreamer />} />
-        <Route path="/connectors" element={<Connectors />} />
-        <Route path="/theater" element={<Theater />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/product/:productId" element={<ProductDetail />} />
-        <Route path="/store/:slug" element={<StorePage />} />
-        <Route path="/security" element={<Security />} />
-        <Route path="/community-guidelines" element={<CommunityGuidelines />} />
-        <Route path="/verification" element={<Verification />} />
-        <Route path="/verification-success" element={<VerificationSuccess />} />
-        <Route path="/subscription" element={<Subscription />} />
-        <Route path="/affiliate-links" element={<AffiliateLinks />} />
-        <Route path="/cyber-world" element={<CyberWorld />} />
-        <Route path="/miners" element={<Miners />} />
-        <Route path="/profile/:userId" element={<UserProfile />} />
-        <Route path="/token-purchase" element={<TokenPurchase />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/live/:streamId" element={<LiveRoom />} />
-        <Route path="/post/:postId" element={<Thread />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/trading" element={<Trading />} />
-        <Route path="/terminal" element={<Terminal />} />
-        <Route path="/moderation" element={<Moderation />} />
+        <Route path="/cyber-streamer" element={<ShellRoute><CyberStreamer /></ShellRoute>} />
+        <Route path="/connectors" element={<ShellRoute><Connectors /></ShellRoute>} />
+        <Route path="/theater" element={<ShellRoute><Theater /></ShellRoute>} />
+        <Route path="/shop" element={<ShellRoute><Shop /></ShellRoute>} />
+        <Route path="/product/:productId" element={<ShellRoute><ProductDetail /></ShellRoute>} />
+        <Route path="/store/:slug" element={<ShellRoute><StorePage /></ShellRoute>} />
+        <Route path="/security" element={<ShellRoute><Security /></ShellRoute>} />
+        <Route path="/community-guidelines" element={<ShellRoute><CommunityGuidelines /></ShellRoute>} />
+        <Route path="/verification" element={<ShellRoute><Verification /></ShellRoute>} />
+        <Route path="/verification-success" element={<ShellRoute><VerificationSuccess /></ShellRoute>} />
+        <Route path="/subscription" element={<ShellRoute><Subscription /></ShellRoute>} />
+        <Route path="/affiliate-links" element={<ShellRoute><AffiliateLinks /></ShellRoute>} />
+        <Route path="/cyber-world" element={<ShellRoute><CyberWorld /></ShellRoute>} />
+        <Route path="/miners" element={<ShellRoute><Miners /></ShellRoute>} />
+        <Route path="/profile/:userId" element={<ShellRoute><UserProfile /></ShellRoute>} />
+        <Route path="/token-purchase" element={<ShellRoute><TokenPurchase /></ShellRoute>} />
+        <Route path="/profile" element={<ShellRoute><Profile /></ShellRoute>} />
+        <Route path="/live/:streamId" element={<ShellRoute><LiveRoom /></ShellRoute>} />
+        <Route path="/post/:postId" element={<ShellRoute><Thread /></ShellRoute>} />
+        <Route path="/dashboard" element={<ShellRoute><Dashboard /></ShellRoute>} />
+        <Route path="/trading" element={<ShellRoute><Trading /></ShellRoute>} />
+        <Route path="/terminal" element={<ShellRoute><Terminal /></ShellRoute>} />
+        <Route path="/moderation" element={<ShellRoute><Moderation /></ShellRoute>} />
         <Route path="/backgrounds" element={<Backgrounds />} />
-        <Route path="/ceo" element={<CeoPortal />} />
+        <Route path="/ceo" element={<ShellRoute><CeoPortal /></ShellRoute>} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
-        <Route path="/kit/:slug" element={<MediaKit />} />
-        <Route path="/advertise" element={<Advertise />} />
+        <Route path="/kit/:slug" element={<ShellRoute><MediaKit /></ShellRoute>} />
+        <Route path="/advertise" element={<ShellRoute><Advertise /></ShellRoute>} />
         <Route path="/r/:code" element={<AffiliateRedirect />} />
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<NotFound />} />

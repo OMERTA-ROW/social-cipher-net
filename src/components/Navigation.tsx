@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useMiningFeatures } from "@/hooks/useMiningFeatures";
 import { useIsCeo } from "@/hooks/useIsCeo";
+import { useInsideAppShell } from "@/components/layout/AppShell";
 
 interface NavigationProps {
   onCreatePost?: () => void;
@@ -12,6 +13,11 @@ const Navigation = ({ onCreatePost }: NavigationProps) => {
   const navigate = useNavigate();
   const { draco, zozo } = useMiningFeatures();
   const { isCeo } = useIsCeo();
+  const insideAppShell = useInsideAppShell();
+
+  // Legacy pages still render this component while they migrate. The route-level
+  // AppShell owns navigation now, so suppress the duplicate header inside it.
+  if (insideAppShell) return null;
   
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">

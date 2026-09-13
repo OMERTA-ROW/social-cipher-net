@@ -43,7 +43,7 @@ const HyperspacePortal = ({ isOpen, onClose }: HyperspacePortalProps) => {
       description: "Join gaming community",
       icon: Gamepad2,
       color: "from-purple-500 to-blue-500",
-      route: "/cyber-gamers",
+      route: "/cyber-arena",
       action: "gamers"
     },
     {
@@ -52,7 +52,7 @@ const HyperspacePortal = ({ isOpen, onClose }: HyperspacePortalProps) => {
       description: "Browse products",
       icon: ShoppingBag,
       color: "from-cyan-500 to-teal-500",
-      route: "/affiliate",
+      route: "/shop",
       action: "shop"
     },
     {
