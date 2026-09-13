@@ -5,7 +5,7 @@ import * as THREE from "three";
 import MiningVessel from "./MiningVessel";
 import { Draco, Grey } from "./AlienCrew";
 import { oreMaps, plateMaps, rockMaps } from "./procTextures";
-import { missionAt, shipTelemetry } from "./shipTelemetry";
+import { MINING_SHIP_SCALE, missionAt, shipTelemetry } from "./shipTelemetry";
 
 /**
  * The alien mining world: a real-time surface where the vessel travels in,
@@ -372,7 +372,7 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
         beam={beam.current}
         throttle={throttle.current}
         crew={full}
-        scale={2.2}
+        scale={MINING_SHIP_SCALE}
       />
     </group>
   );
