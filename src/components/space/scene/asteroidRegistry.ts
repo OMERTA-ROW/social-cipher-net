@@ -10,5 +10,12 @@ const MAX = 48;
 export const asteroidRegistry = {
   centers: Array.from({ length: MAX }, () => new THREE.Vector3()),
   radii: new Float32Array(MAX),
+  /** Rocks published for avoidance this frame. */
   count: 0,
+  /** Total rocks alive in the pooled field. */
+  alive: 0,
+  /** Rocks recycled to the far side of the box this frame. */
+  recycled: 0,
+  /** Running total of recycles — used by the debug overlay. */
+  recycledTotal: 0,
 };
