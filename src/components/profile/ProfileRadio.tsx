@@ -48,11 +48,15 @@ const ProfileRadio = ({ userId, isOwner = false }: Props) => {
           .select("provider, playlist_url, embed_url, title, is_enabled, route_to_stream")
           .eq("user_id", userId)
           .maybeSingle(),
-        supabase
-          .from("profile_radio_playlists")
-          .select("id, provider, playlist_url, embed_url, title")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false }),
+        // Saved playlists belong to the owner alone — the table is no longer
+        // readable by visitors, so they are only fetched on your own profile.
+        isOwner
+          ? supabase
+              .from("profile_radio_playlists")
+              .select("id, provider, playlist_url, embed_url, title")
+              .eq("user_id", userId)
+              .order("created_at", { ascending: false })
+          : Promise.resolve({ data: [] }),
       ]);
       if (!active) return;
       setPlaylists((saved ?? []) as SavedPlaylist[]);

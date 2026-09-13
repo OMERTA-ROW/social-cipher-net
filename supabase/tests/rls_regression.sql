@@ -46,7 +46,7 @@ BEGIN
 
   -- 3. A viewer cannot promote themselves afterwards either.
   UPDATE public.live_stream_participants
-  SET is_admin = true, is_host = true, is_muted = false
+  SET is_admin = true, is_host = true
   WHERE id = participant_id;
 
   SELECT is_admin INTO flag FROM public.live_stream_participants WHERE id = participant_id;
