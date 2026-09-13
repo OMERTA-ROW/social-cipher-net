@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { useTier } from "@/lib/tiers";
 import { toast } from "sonner";
 import MediaUpload from "@/components/MediaUpload";
 import { Switch } from "@/components/ui/switch";
@@ -223,6 +224,7 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
             
             <MediaUpload onFilesChange={setMediaFiles} maxFiles={10} />
 
+            {canMonetize && (
             <div className="space-y-2">
               <Label htmlFor="monetization" className="text-foreground">Monetization</Label>
               <Select value={monetizationType} onValueChange={setMonetizationType}>
@@ -236,8 +238,9 @@ const CreatePostDialog = ({ open, onOpenChange, onPost }: CreatePostDialogProps)
                 </SelectContent>
               </Select>
             </div>
+            )}
 
-            {monetizationType !== "free" && (
+            {canMonetize && monetizationType !== "free" && (
               <div className="space-y-2">
                 <Label htmlFor="price" className="text-foreground">Price (USD)</Label>
                 <Input

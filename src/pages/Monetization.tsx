@@ -12,12 +12,13 @@ import { money } from "@/hooks/usePlatformFees";
 import { User } from "@supabase/supabase-js";
 import CrossPlatformEarnings from "@/components/CrossPlatformEarnings";
 import AffiliatesTab from "@/components/monetization/AffiliatesTab";
+import { useTier } from "@/lib/tiers";
 import BrandDealsTab from "@/components/monetization/BrandDealsTab";
 
 const Monetization = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentTier, setCurrentTier] = useState("CyberFree");
+  const [currentTier, setCurrentTier] = useState("Free");
   const [earnings, setEarnings] = useState({ 
     tips: 0, 
     subscriptions: 0, 
@@ -31,6 +32,7 @@ const Monetization = () => {
   const [breakdown, setBreakdown] = useState<Array<{ type: string; gross: number; fee: number; net: number; currency: string }>>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tier, isPaid, loading: tierLoading } = useTier();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -204,7 +206,7 @@ const Monetization = () => {
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="text-sm py-1 px-3">
-              {currentTier}
+              {tierLoading ? "…" : currentTier}
             </Badge>
             <Button 
               variant="outline" 
@@ -237,6 +239,7 @@ const Monetization = () => {
                 </CardContent>
               </Card>
 
+              {isPaid && (<>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Pay Per View</CardTitle>
@@ -279,22 +282,36 @@ const Monetization = () => {
                   <p className="text-xs text-muted-foreground">Paid deals, net</p>
                 </CardContent>
               </Card>
+              </>)}
             </div>
 
 
             <Tabs defaultValue="overview" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="affiliates">Affiliates</TabsTrigger>
-                <TabsTrigger value="brand-deals">Brand Deals</TabsTrigger>
+                {isPaid && <TabsTrigger value="affiliates">Affiliates</TabsTrigger>}
+                {isPaid && <TabsTrigger value="brand-deals">Brand Deals</TabsTrigger>}
                 <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
                 <TabsTrigger value="payouts">Payouts</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="affiliates"><AffiliatesTab /></TabsContent>
-              <TabsContent value="brand-deals"><BrandDealsTab /></TabsContent>
+              {isPaid && <TabsContent value="affiliates"><AffiliatesTab /></TabsContent>}
+              {isPaid && <TabsContent value="brand-deals"><BrandDealsTab /></TabsContent>}
 
               <TabsContent value="overview" className="space-y-6">
+                {!isPaid && !tierLoading && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Unlock creator monetization</CardTitle>
+                      <CardDescription>
+                        Pay-per-view and pay-per-click posts, affiliate links and brand deals are part of Plus and Pro.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button onClick={() => navigate("/subscription")}>See plans</Button>
+                    </CardContent>
+                  </Card>
+                )}
                 <Card>
                   <CardHeader>
                     <CardTitle>Earnings breakdown</CardTitle>
