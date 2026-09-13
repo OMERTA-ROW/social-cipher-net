@@ -11,7 +11,7 @@ import { MegaChat } from "@/components/MegaChat";
 import PresenceAvatar from "@/components/profile/PresenceAvatar";
 import { endLiveStream, joinLiveStream, LiveStreamRecord } from "@/lib/live";
 import { displayNameOf, SocialProfile } from "@/lib/social";
-import CommentsPanel from "@/components/social/CommentsPanel";
+import CommentsPanel from "@/components/comments/CommentsPanel";
 
 /**
  * The room a live post opens into. Shows the host, whether the stream is
@@ -128,9 +128,9 @@ const LiveRoom = () => {
               <div className="flex flex-wrap items-center gap-3">
                 {host && (
                   <PresenceAvatar
-                    userId={host.id}
                     src={host.avatar_url ?? undefined}
                     name={displayNameOf(host)}
+                    size={44}
                     isLive={!!stream.is_live}
                   />
                 )}
