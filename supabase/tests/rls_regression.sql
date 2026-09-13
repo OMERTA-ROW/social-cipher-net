@@ -67,6 +67,26 @@ BEGIN
     RAISE EXCEPTION 'FAIL: stream owner could not grant admin';
   END IF;
 
+  -- 5b. The promoted admin CAN record a mute, the row lands against the right
+  --     person, and the decision is audited.
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', attacker_id, 'role', 'authenticated')::text, true);
+  INSERT INTO public.live_stream_moderation (stream_id, user_id, is_muted, muted_by)
+  VALUES (stream_id, owner_id, true, attacker_id);
+
+  IF NOT (SELECT is_muted FROM public.live_stream_moderation
+          WHERE live_stream_moderation.stream_id = stream_id
+            AND live_stream_moderation.user_id = owner_id) THEN
+    RAISE EXCEPTION 'FAIL: stream admin could not record a mute';
+  END IF;
+
+  SELECT count(*) INTO audit_count
+  FROM public.security_audit_log
+  WHERE event_type = 'stream_participant_muted'
+    AND metadata->>'stream_id' = stream_id::text;
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: mute was not written to the audit log';
+  END IF;
+
   -- 6. Ownership of a self-service record cannot be reassigned.
   UPDATE public.live_streams SET user_id = attacker_id WHERE id = stream_id;
   IF (SELECT user_id FROM public.live_streams WHERE id = stream_id) <> owner_id THEN
