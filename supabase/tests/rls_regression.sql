@@ -46,7 +46,7 @@ BEGIN
 
   -- 3. A viewer cannot promote themselves afterwards either.
   UPDATE public.live_stream_participants
-  SET is_admin = true, is_host = true, is_muted = false
+  SET is_admin = true, is_host = true
   WHERE id = participant_id;
 
   SELECT is_admin INTO flag FROM public.live_stream_participants WHERE id = participant_id;
@@ -59,12 +59,46 @@ BEGIN
     RAISE EXCEPTION 'FAIL: is_stream_admin() returned true for a normal viewer';
   END IF;
 
+  -- 4b. Moderation state is its own table now. A normal viewer may not write
+  --     it for anybody, not even for the stream owner.
+  flag := false;
+  BEGIN
+    INSERT INTO public.live_stream_moderation (stream_id, user_id, is_muted, muted_by)
+    VALUES (stream_id, owner_id, true, attacker_id);
+    flag := true;
+  EXCEPTION
+    WHEN insufficient_privilege THEN flag := false;
+  END;
+  IF flag THEN
+    RAISE EXCEPTION 'FAIL: a normal viewer was able to record moderation state';
+  END IF;
+
   -- 5. The stream owner CAN grant admin.
   PERFORM set_config('request.jwt.claims', json_build_object('sub', owner_id, 'role', 'authenticated')::text, true);
   UPDATE public.live_stream_participants SET is_admin = true WHERE id = participant_id;
   SELECT is_admin INTO flag FROM public.live_stream_participants WHERE id = participant_id;
   IF NOT flag THEN
     RAISE EXCEPTION 'FAIL: stream owner could not grant admin';
+  END IF;
+
+  -- 5b. The promoted admin CAN record a mute, the row lands against the right
+  --     person, and the decision is audited.
+  PERFORM set_config('request.jwt.claims', json_build_object('sub', attacker_id, 'role', 'authenticated')::text, true);
+  INSERT INTO public.live_stream_moderation (stream_id, user_id, is_muted, muted_by)
+  VALUES (stream_id, owner_id, true, attacker_id);
+
+  IF NOT (SELECT is_muted FROM public.live_stream_moderation
+          WHERE live_stream_moderation.stream_id = stream_id
+            AND live_stream_moderation.user_id = owner_id) THEN
+    RAISE EXCEPTION 'FAIL: stream admin could not record a mute';
+  END IF;
+
+  SELECT count(*) INTO audit_count
+  FROM public.security_audit_log
+  WHERE event_type = 'stream_participant_muted'
+    AND metadata->>'stream_id' = stream_id::text;
+  IF audit_count < 1 THEN
+    RAISE EXCEPTION 'FAIL: mute was not written to the audit log';
   END IF;
 
   -- 6. Ownership of a self-service record cannot be reassigned.

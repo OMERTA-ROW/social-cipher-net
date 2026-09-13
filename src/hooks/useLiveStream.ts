@@ -101,21 +101,46 @@ export function useLiveStream(section: string = "studio") {
       return;
     }
 
-    // Load profiles separately
-    if (data && data.length > 0) {
-      const userIds = data.map(p => p.user_id);
-      const { data: profiles } = await supabase
+    if (!data || data.length === 0) {
+      setParticipants([]);
+      return;
+    }
+
+    const userIds = data.map((participant) => participant.user_id);
+
+    // Who someone is and whether they have been muted or blocked are two
+    // separate records now. Moderation is only fully visible to stream admins,
+    // so anything missing simply reads as "not muted, not blocked".
+    const [{ data: profiles }, { data: moderation }] = await Promise.all([
+      supabase
         .from("profiles")
         .select("id, username, display_name, avatar_url")
-        .in("id", userIds);
+        .in("id", userIds),
+      supabase
+        .from("live_stream_moderation")
+        .select(
+          "user_id, is_muted, is_blocked, muted_by, blocked_by, muted_at, blocked_at"
+        )
+        .eq("stream_id", currentStream.id),
+    ]);
 
-      const participantsWithProfiles = data.map(participant => ({
+    const moderationBy = new Map((moderation ?? []).map((row) => [row.user_id, row]));
+
+    const merged = data.map((participant) => {
+      const state = moderationBy.get(participant.user_id);
+      return {
         ...participant,
-        profiles: profiles?.find(p => p.id === participant.user_id)
-      }));
+        is_muted: state?.is_muted ?? false,
+        is_blocked: state?.is_blocked ?? false,
+        muted_by: state?.muted_by ?? undefined,
+        blocked_by: state?.blocked_by ?? undefined,
+        muted_at: state?.muted_at ?? undefined,
+        blocked_at: state?.blocked_at ?? undefined,
+        profiles: profiles?.find((profile) => profile.id === participant.user_id),
+      };
+    });
 
-      setParticipants(participantsWithProfiles as Participant[]);
-    }
+    setParticipants(merged as Participant[]);
   };
 
   const loadInvitations = async () => {
@@ -364,21 +389,53 @@ export function useLiveStream(section: string = "studio") {
     });
   };
 
+  /**
+   * Mute and block state lives in `live_stream_moderation`, keyed by stream +
+   * person, instead of sitting on the participation row. Only stream admins
+   * can write it and the database audits every change, so the app has to look
+   * up who the participation row belongs to before recording a decision.
+   */
+  const moderationTarget = async (participantId: string) => {
+    if (!currentStream) return null;
+
+    const { data } = await supabase
+      .from("live_stream_participants")
+      .select("user_id")
+      .eq("id", participantId)
+      .eq("stream_id", currentStream.id)
+      .maybeSingle();
+
+    return data?.user_id ?? null;
+  };
+
   const muteParticipant = async (participantId: string, mute: boolean) => {
     if (!currentStream) return;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const targetUser = await moderationTarget(participantId);
+    if (!targetUser) {
+      toast({
+        title: "Error",
+        description: "Participant not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
-      .from("live_stream_participants")
-      .update({ 
-        is_muted: mute,
-        muted_by: mute ? user.id : null,
-        muted_at: mute ? new Date().toISOString() : null
-      })
-      .eq("id", participantId)
-      .eq("stream_id", currentStream.id);
+      .from("live_stream_moderation")
+      .upsert(
+        {
+          stream_id: currentStream.id,
+          user_id: targetUser,
+          is_muted: mute,
+          muted_by: mute ? user.id : null,
+          muted_at: mute ? new Date().toISOString() : null,
+        },
+        { onConflict: "stream_id,user_id" }
+      );
 
     if (error) {
       toast({
@@ -402,18 +459,38 @@ export function useLiveStream(section: string = "studio") {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    const targetUser = await moderationTarget(participantId);
+    if (!targetUser) {
+      toast({
+        title: "Error",
+        description: "Participant not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase
+      .from("live_stream_moderation")
+      .upsert(
+        {
+          stream_id: currentStream.id,
+          user_id: targetUser,
+          is_blocked: block,
+          blocked_by: block ? user.id : null,
+          blocked_at: block ? new Date().toISOString() : null,
+        },
+        { onConflict: "stream_id,user_id" }
+      );
+
+    // Whether someone is still taking part in the stream stays on the
+    // participation row; only the decision itself is recorded separately.
+    const { error: activeError } = await supabase
       .from("live_stream_participants")
-      .update({ 
-        is_blocked: block,
-        is_active: !block,
-        blocked_by: block ? user.id : null,
-        blocked_at: block ? new Date().toISOString() : null
-      })
+      .update({ is_active: !block })
       .eq("id", participantId)
       .eq("stream_id", currentStream.id);
 
-    if (error) {
+    if (error || activeError) {
       toast({
         title: "Error",
         description: `Failed to ${block ? 'block' : 'unblock'} participant`,

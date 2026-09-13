@@ -1616,55 +1616,81 @@ export type Database = {
           },
         ]
       }
-      live_stream_participants: {
+      live_stream_moderation: {
         Row: {
           blocked_at: string | null
           blocked_by: string | null
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          is_admin: boolean | null
-          is_blocked: boolean | null
-          is_host: boolean | null
-          is_muted: boolean | null
-          joined_at: string | null
-          left_at: string | null
+          is_blocked: boolean
+          is_muted: boolean
           muted_at: string | null
           muted_by: string | null
           stream_id: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           blocked_at?: string | null
           blocked_by?: string | null
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_admin?: boolean | null
-          is_blocked?: boolean | null
-          is_host?: boolean | null
-          is_muted?: boolean | null
-          joined_at?: string | null
-          left_at?: string | null
+          is_blocked?: boolean
+          is_muted?: boolean
           muted_at?: string | null
           muted_by?: string | null
           stream_id: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           blocked_at?: string | null
           blocked_by?: string | null
+          is_blocked?: boolean
+          is_muted?: boolean
+          muted_at?: string | null
+          muted_by?: string | null
+          stream_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_moderation_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_stream_participants: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_admin: boolean | null
+          is_host: boolean | null
+          joined_at: string | null
+          left_at: string | null
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
           is_admin?: boolean | null
-          is_blocked?: boolean | null
           is_host?: boolean | null
-          is_muted?: boolean | null
           joined_at?: string | null
           left_at?: string | null
-          muted_at?: string | null
-          muted_by?: string | null
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_admin?: boolean | null
+          is_host?: boolean | null
+          joined_at?: string | null
+          left_at?: string | null
           stream_id?: string
           user_id?: string
         }
@@ -4826,6 +4852,7 @@ export type Database = {
         }[]
       }
       get_follower_count: { Args: { user_uuid: string }; Returns: number }
+      get_platform_fee: { Args: { _revenue_type: string }; Returns: number }
       get_ranked_feed: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: {
@@ -4873,7 +4900,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      platform_fee_percent: { Args: { _revenue_type: string }; Returns: number }
       profile_connections: {
         Args: { _user: string }
         Returns: {
