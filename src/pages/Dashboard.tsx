@@ -287,7 +287,17 @@ const Dashboard = () => {
             <div className="space-y-3">
               <div>
                 <Label htmlFor="dash-handle">Handle</Label>
-                <Input id="dash-handle" value={username} maxLength={20} onChange={(e) => setUsername(e.target.value)} placeholder="cyber_handle" />
+                <Input
+                  id="dash-handle"
+                  value={username}
+                  maxLength={20}
+                  onChange={(e) => setUsername(normalizeHandle(e.target.value))}
+                  onBlur={(e) => setUsername(normalizeHandle(e.target.value))}
+                  placeholder="cyber_handle"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  3–20 characters: letters, numbers or underscores. People will find you as @{username || "your_handle"}.
+                </p>
               </div>
               <div>
                 <Label htmlFor="dash-name">Display name</Label>
