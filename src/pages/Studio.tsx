@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Send, Zap, Loader2, Video, MessageSquare, BarChart3, UserPlus, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { Radio, Send, Loader2, MessageSquare, BarChart3, UserPlus, Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Carousel,
@@ -41,8 +41,8 @@ import BroadcastPanel from "@/components/studio/BroadcastPanel";
 
 const Studio = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
-  const [isLive, setIsLive] = useState(false);
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const [activePlatforms, setActivePlatforms] = useState<Array<{
     platform: string;
@@ -261,22 +261,6 @@ const Studio = () => {
               </>
             )}
             
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => openWindow("Stream Preview", (
-                <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <Video className="w-16 h-16 mx-auto mb-4 text-primary" />
-                    <p className="text-xl font-bold">Stream Preview</p>
-                  </div>
-                </div>
-              ))}
-            >
-              <Video className="w-4 h-4 mr-2" />
-              Preview
-            </Button>
-            
             {/* Trading Widgets */}
             <Button
               size="sm"
@@ -361,15 +345,8 @@ const Studio = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Live Preview */}
+          {/* Broadcast workspace */}
           <Card className="lg:col-span-2 p-6 bg-card/50 backdrop-blur border-primary/20">
-            <div className="aspect-video bg-muted/20 rounded-lg flex items-center justify-center mb-4 border border-primary/10">
-              <div className="text-center">
-                <Zap className="w-16 h-16 text-primary mx-auto mb-2" />
-                <p className="text-muted-foreground">Camera Preview</p>
-              </div>
-            </div>
-            
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Connected Platforms</h3>
               
@@ -632,7 +609,7 @@ const Studio = () => {
         {/* Creation suite */}
         <div className="mt-8">
           <h2 className="text-2xl font-bold text-primary text-glow mb-4">Creation Suite</h2>
-          <Tabs defaultValue="animation" className="w-full">
+          <Tabs defaultValue={searchParams.get("tab") === "broadcast" ? "broadcast" : "animation"} className="w-full">
             <TabsList className="w-full grid grid-cols-4">
               <TabsTrigger value="animation">Animation</TabsTrigger>
               <TabsTrigger value="assets">Assets</TabsTrigger>
