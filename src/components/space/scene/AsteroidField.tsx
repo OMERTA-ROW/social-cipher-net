@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { asteroidRegistry } from "./asteroidRegistry";
 import { detectDeviceClass, resolveAsteroidConfig, type AsteroidConfig } from "./asteroidConfig";
+import { asteroidDebugStats } from "./asteroidDebug";
 
 /**
  * Real rocks drifting through the scene, replacing the old pale streak
