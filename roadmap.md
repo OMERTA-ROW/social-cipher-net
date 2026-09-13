@@ -126,3 +126,16 @@
 - [ ] Linter floor of 18 findings is intentional: 2 tables deliberately left with
       no access rules, 2 sign-in helpers that must answer before a session
       exists, and 14 helpers that the app or the access rules themselves call
+
+## Navigation, live posting, and hologram headers (Sept 13)
+- [x] Add a central route metadata registry with labels, descriptions, parents, and visibility
+- [x] Use AppShell for normal routes while preserving auth, OAuth, Arena HUD, backgrounds, and voyage flows
+- [x] Add consistent hologram page headings, breadcrumbs/back action, and one-line descriptions
+- [x] Add Home one-click entry points for Dashboard, Profile, Studio, Arena, Cyber World, and Monetization
+- [x] Repair dead `/cyber-gamers` links and the incorrect Marketplace destination
+- [x] Remove fabricated Arena game cards and route real member actions correctly
+- [x] Route product cards and subscription setup to real destinations; remove inactive payout control
+- [x] Unify Studio and composer live creation through the feed-aware live lifecycle
+- [x] Remove static Studio and Streamer preview controls; preserve honest waiting-for-video state
+- [x] Add route-registry and hotspot regression coverage
+- [ ] Live video playback remains blocked until a real ingest/transcoding/playback provider is configured
