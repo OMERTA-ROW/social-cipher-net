@@ -360,6 +360,7 @@ const MissionVessel = ({ animate, full }: { animate: boolean; full: boolean }) =
     shipTelemetry.quaternion.copy(ship.current.quaternion);
     shipTelemetry.velocity.subVectors(ship.current.position, prev.current);
     shipTelemetry.throttle = throttle.current;
+    shipTelemetry.scale = MINING_SHIP_SCALE;
     shipTelemetry.phase = beat.phase;
     shipTelemetry.phaseProgress = beat.progress;
   });

@@ -83,7 +83,7 @@ const VesselFlight = ({ animate, full }: { animate: boolean; full: boolean }) =>
 
   return (
     <group ref={group}>
-      <MiningVessel animate={animate} throttle={0.62} beam={0} crew={full} scale={7.5} />
+      <MiningVessel animate={animate} throttle={0.62} beam={0} crew={full} scale={SOLAR_SHIP_SCALE} />
     </group>
   );
 };
