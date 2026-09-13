@@ -204,8 +204,8 @@ const AsteroidField = ({ count, animate, full }: { count: number; animate: boole
           <meshStandardMaterial
             vertexColors
             color="#9a9086"
-            emissive="#2a2b30"
-            emissiveIntensity={0.75}
+            emissive="#55534f"
+            emissiveIntensity={1.0}
             roughness={0.92}
             metalness={0.03}
             flatShading={!full}
