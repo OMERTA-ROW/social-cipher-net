@@ -45,6 +45,7 @@ import Trading from "./pages/Trading";
 import Terminal from "./pages/Terminal";
 import Moderation from "./pages/Moderation";
 import OAuthConsent from "./pages/OAuthConsent";
+import ShipPreviewTmp from "./pages/ShipPreviewTmp";
 import MediaKit from "./pages/MediaKit";
 import Advertise from "./pages/Advertise";
 import AffiliateRedirect from "./pages/AffiliateRedirect";
@@ -92,7 +93,8 @@ const AppContent = () => {
         <Route path="/ceo" element={<CeoPortal />} />
         <Route path="/voyage" element={<SolarSystemVoyage />} />
         <Route path="/kit/:slug" element={<MediaKit />} />
-        <Route path="/advertise" element={<Advertise />} />
+        <Route path="/__ship" element={<ShipPreviewTmp />} />
+            <Route path="/advertise" element={<Advertise />} />
         <Route path="/r/:code" element={<AffiliateRedirect />} />
         <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
         <Route path="*" element={<NotFound />} />
