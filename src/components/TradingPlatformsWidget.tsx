@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface TradingPlatform {
   name: string;
@@ -91,9 +92,11 @@ export default function TradingPlatformsWidget() {
                 </Badge>
               ))}
             </div>
-            <Button className="w-full" variant="outline" size="sm">
-              <ExternalLink className="w-3 h-3 mr-2" />
-              Connect Platform
+            <Button className="w-full" variant="outline" size="sm" asChild>
+              <Link to="/trading">
+                <ExternalLink className="w-3 h-3 mr-2" />
+                Open Trading
+              </Link>
             </Button>
           </CardContent>
         </Card>
