@@ -112,6 +112,7 @@ export class ShipAutopilot {
       visited: [],
       legsCompleted: 0,
       investigating: false,
+      avoidance: { rocks: 0, strength: 0, nearestClearance: Infinity, minClearance: Infinity },
     };
     this.state.destination = this.pickDestination(0);
   }
