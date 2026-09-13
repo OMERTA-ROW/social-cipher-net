@@ -71,19 +71,24 @@ const useHullMaterials = () => {
       normalScale: new THREE.Vector2(1.5, 1.5),
       envMapIntensity: 0.7,
     });
+    // Canopy glass: transmission handles the see-through look, so the mesh
+    // stays in the opaque pass with a single front face. Rendering it as a
+    // double-sided *transparent* sphere made front/back faces re-sort every
+    // frame, which read as the canopy flashing while the ship manoeuvred.
     const glass = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color("#0b1a20"),
       metalness: 0,
       roughness: 0.04,
       transmission: 0.72,
       thickness: 0.35,
-      transparent: true,
-      opacity: 0.65,
+      transparent: false,
+      opacity: 1,
       clearcoat: 1,
       clearcoatRoughness: 0.02,
       ior: 1.45,
-      side: THREE.DoubleSide,
+      side: THREE.FrontSide,
     });
+
     const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color("#39e6ff"), toneMapped: false });
     const engineGlow = new THREE.MeshBasicMaterial({
       color: new THREE.Color("#63d9ff"),
