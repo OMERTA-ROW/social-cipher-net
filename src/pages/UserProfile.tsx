@@ -323,6 +323,9 @@ const UserProfile = () => {
                     {profile.username && (
                       <p className="text-muted-foreground mb-2">@{profile.username}</p>
                     )}
+
+                    <ConnectedPlatforms userId={profile.id} className="mb-3" />
+                    
                     
                     {profile.bio && (
                       <p className="text-sm mb-4">{profile.bio}</p>
