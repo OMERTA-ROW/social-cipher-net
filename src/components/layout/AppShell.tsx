@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useRef, useState, useCallback } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   LayoutDashboard,
@@ -23,6 +23,10 @@ import {
   Pickaxe,
   TerminalSquare,
   ShoppingBag,
+  ArrowLeft,
+  Shield,
+  FileText,
+  Image,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,6 +36,7 @@ import SidebarAuthButton from "@/components/layout/SidebarAuthButton";
 import ProfileMenu from "@/components/layout/ProfileMenu";
 import AllSeeingEye from "@/components/space/AllSeeingEye";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
+import { getRouteMeta, getRouteMetaByPath } from "@/lib/appRoutes";
 
 interface NavItem {
   title: string;
@@ -82,6 +87,15 @@ const navGroups: NavGroup[] = [
       { title: "Terminal", url: "/terminal", icon: TerminalSquare },
     ],
   },
+  {
+    title: "Support",
+    icon: Shield,
+    items: [
+      { title: "Security", url: "/security", icon: Shield },
+      { title: "Guidelines", url: "/community-guidelines", icon: FileText },
+      { title: "Backgrounds", url: "/backgrounds", icon: Image },
+    ],
+  },
 ];
 
 
@@ -119,6 +133,14 @@ interface AppShellProps {
   onCreatePost?: () => void;
   /** Sticky sub-header rendered above the scrolling feed (e.g. tabs). */
   centerHeader?: ReactNode;
+  /** Override the route registry's page title. */
+  title?: string;
+  /** Override the route registry's one-line description. */
+  description?: string;
+  /** Controls rendered beside the shared page heading. */
+  actions?: ReactNode;
+  /** Hide the shared heading for purpose-built screens that render it themselves. */
+  hidePageHeader?: boolean;
 }
 
 /** One collapsible group of secondary destinations; open state is remembered. */
@@ -164,7 +186,16 @@ const NavGroupBlock = ({ group }: { group: NavGroup }) => {
 const scrollPositions = new Map<string, number>();
 
 
-const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellProps) => {
+const AppShell = ({
+  children,
+  rightRail,
+  onCreatePost,
+  centerHeader,
+  title,
+  description,
+  actions,
+  hidePageHeader = false,
+}: AppShellProps) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -172,6 +203,10 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
   const onSpaceDesktop = desktop === "space";
   const leftPanel = usePanelCollapse("cyberlink:panel-left-collapsed");
   const rightPanel = usePanelCollapse("cyberlink:panel-right-collapsed");
+  const route = getRouteMeta(pathname);
+  const parent = route?.parent ? getRouteMetaByPath(route.parent) : undefined;
+  const pageTitle = title ?? route?.title;
+  const pageDescription = description ?? route?.description;
 
   // Restore the centre column scroll position per route, and remember it on leave.
   useEffect(() => {
@@ -304,7 +339,46 @@ const AppShell = ({ children, rightRail, onCreatePost, centerHeader }: AppShellP
             data-app-scroll
             className="flex-1 min-h-0 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-10"
           >
-            <div className="w-full">{children}</div>
+            <div className="w-full">
+              {!hidePageHeader && pageTitle && (
+                <header className="mb-6 border-b border-border/50 pb-4">
+                  <div className="mb-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                    {pathname !== "/" && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => navigate(-1)}
+                        aria-label="Go back"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Link to="/" className="hover:text-primary">Home</Link>
+                    {parent && parent.path !== "/" && (
+                      <>
+                        <span aria-hidden>/</span>
+                        <Link to={parent.path} className="hover:text-primary">{parent.title}</Link>
+                      </>
+                    )}
+                    {pathname !== "/" && (
+                      <>
+                        <span aria-hidden>/</span>
+                        <span className="truncate text-foreground">{pageTitle}</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <h1 className="hologram-title text-3xl font-bold sm:text-4xl">{pageTitle}</h1>
+                      {pageDescription && <p className="mt-1 text-sm text-muted-foreground">{pageDescription}</p>}
+                    </div>
+                    {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+                  </div>
+                </header>
+              )}
+              {children}
+            </div>
           </main>
         </div>
 

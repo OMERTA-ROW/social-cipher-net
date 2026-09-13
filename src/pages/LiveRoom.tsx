@@ -4,7 +4,7 @@ import AppShell from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Users, Loader2, ArrowLeft } from "lucide-react";
+import { Radio, Users, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MegaChat } from "@/components/MegaChat";
@@ -110,12 +110,11 @@ const LiveRoom = () => {
   };
 
   return (
-    <AppShell>
+    <AppShell
+      title={stream?.title || "Live Room"}
+      description="Watch the live session and join its conversation."
+    >
       <div className="space-y-4">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary">
-          <ArrowLeft className="w-4 h-4" /> Back to the feed
-        </Link>
-
         {loading ? (
           <Card className="p-10 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -135,7 +134,6 @@ const LiveRoom = () => {
                   />
                 )}
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-xl font-semibold truncate">{stream.title}</h1>
                   {host && (
                     <Link to={`/profile/${host.id}`} className="text-sm text-muted-foreground hover:text-primary">
                       {displayNameOf(host)} @{host.username ?? "member"}
@@ -173,7 +171,7 @@ const LiveRoom = () => {
 
               {isHost && stream.is_live && (
                 <Button asChild variant="outline" size="sm">
-                  <Link to={`/studio?section=${encodeURIComponent(stream.section)}`}>Open Studio to broadcast</Link>
+                  <Link to={`/studio?tab=broadcast&section=${encodeURIComponent(stream.section)}`}>Open Studio to broadcast</Link>
                 </Button>
               )}
             </Card>

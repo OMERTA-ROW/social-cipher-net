@@ -426,9 +426,9 @@ const AIBotAssistant = () => {
     const commandMap: Record<string, { path: string; message: string; requiresPremium?: boolean }> = {
       "go live": { path: "/studio", message: "Connecting to Live Studio..." },
       "studio": { path: "/studio", message: "Opening Studio..." },
-      "cyber gamers": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
-      "gamers": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
-      "gaming": { path: "/cyber-gamers", message: "Opening Cyber Gamers..." },
+      "cyber gamers": { path: "/cyber-arena", message: "Opening Cyber Arena..." },
+      "gamers": { path: "/cyber-arena", message: "Opening Cyber Arena..." },
+      "gaming": { path: "/cyber-arena", message: "Opening Cyber Arena..." },
       "cyber streamer": { path: "/cyber-streamer", message: "Opening Cyber Streamer..." },
       "streamer": { path: "/cyber-streamer", message: "Opening Cyber Streamer..." },
       "streaming": { path: "/cyber-streamer", message: "Opening Cyber Streamer..." },

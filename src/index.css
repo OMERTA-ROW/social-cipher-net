@@ -51,6 +51,8 @@ All colors MUST be HSL.
     --glow-primary: 190 95% 55%;
     --glow-accent: 190 95% 55%;
     --glow-purple: 190 95% 55%;
+    --hologram-blue: 195 100% 64%;
+    --hologram-purple: 274 72% 70%;
     --glow-destructive: 0 75% 60%;
   }
 }
@@ -88,6 +90,32 @@ All colors MUST be HSL.
     text-shadow:
       0 0 10px hsl(var(--glow-primary) / 0.5),
       0 0 18px hsl(var(--glow-primary) / 0.22);
+  }
+
+  .hologram-title {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 1px hsl(var(--hologram-blue) / 0.94);
+    paint-order: stroke fill;
+    text-shadow:
+      1px 0 hsl(var(--hologram-purple) / 0.32),
+      0 0 8px hsl(var(--hologram-blue) / 0.55),
+      0 0 18px hsl(var(--hologram-blue) / 0.2);
+    background-image: linear-gradient(
+      100deg,
+      transparent 0%,
+      hsl(var(--hologram-blue) / 0.16) 44%,
+      hsl(var(--hologram-purple) / 0.13) 52%,
+      transparent 62%
+    );
+    background-size: 220% 100%;
+    background-clip: text;
+    animation: hologram-shimmer 7s ease-in-out infinite;
+  }
+
+  @keyframes hologram-shimmer {
+    0%, 72%, 100% { background-position: 150% 0; }
+    86% { background-position: -70% 0; }
   }
 
   .space-depth-light {
@@ -165,6 +193,7 @@ All colors MUST be HSL.
     .star-layer {
       animation: none;
     }
+    .hologram-title { animation: none; }
   }
 
   @media (max-width: 900px) {
