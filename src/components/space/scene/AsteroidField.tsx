@@ -95,6 +95,11 @@ const AsteroidField = ({ animate, full }: { animate: boolean; full: boolean }) =
 
   const cfg: AsteroidConfig = useMemo(() => resolveAsteroidConfig(full, device), [full, device]);
 
+  useEffect(() => {
+    asteroidDebugStats.device = device;
+    asteroidDebugStats.count = cfg.count;
+  }, [device, cfg.count]);
+
   const geometries = useMemo(
     () => [
       makeRockGeometry(9137, cfg.detail),
