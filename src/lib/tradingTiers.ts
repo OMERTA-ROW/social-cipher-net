@@ -6,10 +6,9 @@
  * `user_entitlements`, the same table the rest of the platform uses.
  */
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useTier, type TierKey } from "@/lib/tiers";
 
-export type TierKey = "free" | "plus" | "pro";
+export type { TierKey };
 
 export interface TradingLimits {
   /** how many chart panes may be open at once */
@@ -64,42 +63,9 @@ export const TRADING_LIMITS: Record<TierKey, TradingLimits> = {
 
 const RANK: TierKey[] = ["free", "plus", "pro"];
 
-/** Highest active tier the signed-in user holds. */
+/** Highest active tier the signed-in user holds (shared tier source). */
 export function useTradingTier() {
-  const [tier, setTier] = useState<TierKey>("free");
-  const [loading, setLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-      if (!alive) return;
-      setSignedIn(Boolean(user));
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      const { data } = await supabase
-        .from("user_entitlements")
-        .select("tier_key, status")
-        .eq("user_id", user.id)
-        .eq("status", "active");
-      if (!alive) return;
-      let best: TierKey = "free";
-      for (const row of data ?? []) {
-        const key = String(row.tier_key) as TierKey;
-        if (RANK.includes(key) && RANK.indexOf(key) > RANK.indexOf(best)) best = key;
-      }
-      setTier(best);
-      setLoading(false);
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
-
+  const { tier, loading, signedIn } = useTier();
   return { tier, limits: TRADING_LIMITS[tier], loading, signedIn };
 }
 
