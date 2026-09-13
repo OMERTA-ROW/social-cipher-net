@@ -11,24 +11,40 @@ export type RevenueType =
 export interface FeeRate {
   revenue_type: string;
   percent: number;
-  updated_at: string;
+  updated_at?: string;
 }
+
+const REVENUE_TYPES: RevenueType[] = [
+  "gifts",
+  "tips",
+  "creator_subscriptions",
+  "shop_sales",
+  "affiliate_conversions",
+];
 
 /**
  * Platform fee percentages, configured by the owner in the CEO portal.
- * Never hardcoded in the UI — every breakdown reads these live values.
+ *
+ * Read through the `get_platform_fee` lookup rather than the fee table
+ * directly: the table itself is no longer readable from the browser, so every
+ * read is scoped to one revenue type and recorded in the security audit log.
+ * A type that has no configured rate resolves to 0 rather than a guess.
  */
 export const usePlatformFees = () =>
   useQuery<FeeRate[]>({
     queryKey: ["platform-fee-rates"],
     staleTime: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_fee_rates")
-        .select("revenue_type, percent, updated_at")
-        .order("revenue_type");
-      if (error) throw error;
-      return (data ?? []) as FeeRate[];
+      const results = await Promise.all(
+        REVENUE_TYPES.map(async (type) => {
+          const { data, error } = await supabase.rpc("get_platform_fee", {
+            _revenue_type: type,
+          });
+          if (error) throw error;
+          return { revenue_type: type, percent: Number(data ?? 0) } as FeeRate;
+        })
+      );
+      return results;
     },
   });
 
