@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share2, BadgeCheck, Lock, Repeat2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, BadgeCheck, Lock, Repeat2, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import StoryRing from "@/components/StoryRing";
@@ -42,6 +42,8 @@ interface PostCardProps {
   products?: StoreProduct[];
   /** True only when the card is rendered inside the home feed. */
   shoppable?: boolean;
+  /** Set when this post announces a live stream; shows the join control. */
+  liveStreamId?: string | null;
 }
 
 const PostCard = ({
@@ -69,7 +71,8 @@ const PostCard = ({
   onPaymentRequired,
   onReply,
   products = [],
-  shoppable = false
+  shoppable = false,
+  liveStreamId = null
 }: PostCardProps) => {
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
@@ -237,6 +240,26 @@ const PostCard = ({
           ) : (
             <>
               <p className="text-foreground mb-4 leading-relaxed whitespace-pre-wrap break-words">{content}</p>
+
+              {liveStreamId && (
+                <div className="mb-4 flex items-center gap-3 rounded-lg border border-primary/40 bg-primary/5 p-3">
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                    <Radio className="w-3 h-3" /> LIVE
+                  </span>
+                  <span className="text-sm text-muted-foreground flex-1 min-w-0 truncate">
+                    Streaming now
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/live/${liveStreamId}`);
+                    }}
+                  >
+                    Watch live
+                  </Button>
+                </div>
+              )}
 
               {media.length > 0 && (
                 <div className={`grid gap-2 mb-4 ${
