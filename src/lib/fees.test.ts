@@ -31,19 +31,19 @@ describe("quoteFee", () => {
     const draft = quoteFee({ amountMinor: 10_000, rule: rule({ is_configured: false }), now: NOW });
     expect(missing.ok).toBe(false);
     expect(draft.ok).toBe(false);
-    if (!missing.ok) expect(missing.reason).toBe("unconfigured");
+    if (missing.ok === false) expect(missing.reason).toBe("unconfigured");
   });
 
   it("refuses a configured but switched-off rule", () => {
     const result = quoteFee({ amountMinor: 10_000, rule: rule({ is_active: false }), now: NOW });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe("inactive");
+    if (result.ok === false) expect(result.reason).toBe("inactive");
   });
 
   it("refuses a rule that has not reached its effective date", () => {
     const result = quoteFee({ amountMinor: 10_000, rule: rule({ effective_from: "2026-10-01T00:00:00.000Z" }), now: NOW });
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe("not_yet_effective");
+    if (result.ok === false) expect(result.reason).toBe("not_yet_effective");
   });
 
   it("rejects non-positive and non-integer amounts", () => {
@@ -59,7 +59,7 @@ describe("quoteFee", () => {
       now: NOW,
     });
     expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    if (result.ok === false) return;
     // 123456 * 1.50% = 1851.84 -> 1852, plus a 25 fixed fee.
     expect(result.platformFeeMinor).toBe(1877);
     expect(result.totalMinor).toBe(123_456 + 1877);
@@ -81,7 +81,7 @@ describe("quoteFee", () => {
       networkFeeMinor: 340,
       now: NOW,
     });
-    if (!result.ok) throw new Error("expected a quote");
+    if (result.ok === false) throw new Error("expected a quote");
     expect(result.platformFeeMinor).toBe(50);
     expect(result.providerFeeMinor).toBe(120);
     expect(result.networkFeeMinor).toBe(340);
@@ -95,7 +95,7 @@ describe("quoteFee", () => {
       rule: rule({ category: "bank", operation: "withdrawal", rail: "wire", payer: "receiver", percent_bps: 0, fixed_minor: 2_500 }),
       now: NOW,
     });
-    if (!result.ok) throw new Error("expected a quote");
+    if (result.ok === false) throw new Error("expected a quote");
     expect(result.totalMinor).toBe(20_000);
     expect(result.netReceivedMinor).toBe(17_500);
   });
@@ -106,13 +106,13 @@ describe("quoteFee", () => {
       rule: rule({ payer: "receiver", percent_bps: 0, fixed_minor: 5_000 }),
       now: NOW,
     });
-    if (!result.ok) throw new Error("expected a quote");
+    if (result.ok === false) throw new Error("expected a quote");
     expect(result.netReceivedMinor).toBe(0);
   });
 
   it("stamps an expiry from the rule's quote lifetime", () => {
     const result = quoteFee({ amountMinor: 1_000, rule: rule({ quote_ttl_seconds: 30 }), now: NOW });
-    if (!result.ok) throw new Error("expected a quote");
+    if (result.ok === false) throw new Error("expected a quote");
     expect(result.expiresAt).toBe("2026-09-14T08:00:30.000Z");
     expect(isQuoteExpired(result, NOW)).toBe(false);
     expect(isQuoteExpired(result, new Date("2026-09-14T08:00:31.000Z"))).toBe(true);
