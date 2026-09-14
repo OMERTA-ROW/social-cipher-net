@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import MarketSourceBadge from "@/components/market/MarketSourceBadge";
 import MarketUnavailable from "@/components/market/MarketUnavailable";
+import ChartFrame from "@/components/charts/ChartFrame";
 import TradingChart, { type ChartType, type IndicatorKey, type TradingChartHandle } from "./TradingChart";
 import { TIMEFRAMES, type Timeframe } from "@/services/marketData";
 import { useCandles, useQuotes } from "@/hooks/useMarketData";
@@ -227,7 +228,7 @@ const ChartPane = ({ pane, limits, height, pinned = false, onPin, onDragStart, o
         </div>
       </div>
 
-      <div className="flex-1 p-2">
+      <div className="min-h-[220px] flex-1 p-2">
         {candles.loading && !candles.data ? (
           <Skeleton className="w-full" style={{ height }} />
         ) : candles.error || !candles.data?.length ? (
@@ -236,13 +237,17 @@ const ChartPane = ({ pane, limits, height, pinned = false, onPin, onDragStart, o
             onRetry={candles.refresh}
           />
         ) : (
-          <TradingChart
-            ref={chartRef}
-            candles={candles.data}
-            chartType={pane.chartType}
-            indicators={pane.indicators}
-            height={height}
-          />
+          <ChartFrame id={`pane-${resolved.symbol}`} title={`${resolved.symbol} ${pane.timeframe}`} fill>
+            {(frameHeight) => (
+              <TradingChart
+                ref={chartRef}
+                candles={candles.data ?? []}
+                chartType={pane.chartType}
+                indicators={pane.indicators}
+                height={Math.max(frameHeight, 160)}
+              />
+            )}
+          </ChartFrame>
         )}
       </div>
 

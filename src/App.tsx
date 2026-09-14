@@ -47,6 +47,7 @@ import Exchange from "./pages/Exchange";
 import Terminal from "./pages/Terminal";
 import Moderation from "./pages/Moderation";
 import OAuthConsent from "./pages/OAuthConsent";
+import Onboarding from "./pages/Onboarding";
 import MediaKit from "./pages/MediaKit";
 import Advertise from "./pages/Advertise";
 import AffiliateRedirect from "./pages/AffiliateRedirect";
@@ -66,6 +67,7 @@ const AppContent = () => {
         <Route path="/" element={<Index />} />
         <Route path="/studio" element={<ShellRoute><Studio /></ShellRoute>} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/onboarding" element={<ShellRoute><Onboarding /></ShellRoute>} />
         <Route path="/affiliate" element={<ShellRoute><Affiliate /></ShellRoute>} />
         <Route path="/seller-register" element={<ShellRoute><SellerRegister /></ShellRoute>} />
         <Route path="/seller-dashboard" element={<ShellRoute><SellerDashboard /></ShellRoute>} />

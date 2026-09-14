@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Lock } from "lucide-react";
 import ScrollDatePicker from "@/components/ScrollDatePicker";
 import { safeReturnPath } from "@/lib/authRedirect";
+import { fetchOnboardingComplete } from "@/hooks/useOnboarding";
 
 type RecoveryState = "none" | "pending" | "ready" | "expired";
 
@@ -126,6 +127,19 @@ const Auth = () => {
   useEffect(() => {
     let active = true;
 
+    // Where a signed-in member goes: their welcome setup the first time,
+    // otherwise the page they came from. A read failure never traps anyone.
+    const continueSignedIn = async (userId: string) => {
+      let done = true;
+      try {
+        done = await fetchOnboardingComplete(userId);
+      } catch {
+        done = true;
+      }
+      if (!active) return;
+      navigate(done ? nextPath : "/onboarding", { replace: true });
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!active) return;
       if (!session) {
@@ -140,7 +154,7 @@ const Auth = () => {
         setRecovery("ready");
         return;
       }
-      if (recovery === "none") navigate(nextPath);
+      if (recovery === "none") continueSignedIn(session.user.id);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -151,7 +165,7 @@ const Auth = () => {
       }
       if (!session) return;
       if (recovery !== "none") return;
-      navigate(nextPath);
+      continueSignedIn(session.user.id);
     });
 
     return () => {

@@ -27,6 +27,7 @@ import {
   Shield,
   FileText,
   Image,
+  ArrowLeftRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Shop", url: "/shop", icon: ShoppingBag },
       { title: "Trading", url: "/trading", icon: LineChart },
+      { title: "Exchange", url: "/exchange", icon: ArrowLeftRight },
       { title: "Monetization", url: "/monetization", icon: DollarSign },
       { title: "Miners", url: "/miners", icon: Pickaxe },
     ],
