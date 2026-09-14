@@ -30,6 +30,7 @@ const ChartWindow = ({ symbol = "BTC", onClose }: Props) => {
         pane={pane}
         limits={limits}
         height={240}
+        fillHeight
         onChange={setPane}
         onRemove={() => onClose?.()}
         onUpgradeNeeded={(reason) => toast.info(reason)}
