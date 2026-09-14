@@ -150,11 +150,12 @@
 - [ ] OAuth provider credentials and the Stripe webhook signing secret still need owner-supplied values
 
 ## Linked accounts, CyberLink Exchange, configurable fees (Sept 14)
-- [ ] Multi-account connection manager: several accounts per provider, active-account
+- [x] Multi-account connection manager: several accounts per provider, active-account
       selection, connect/reconnect/disconnect states, per-user isolation, server-only credentials
-- [ ] Exchange area with navigation entry point, using existing real market data only
-- [ ] Server-validated fee model: exchange / wallet / bank categories, percent + fixed,
+- [x] Exchange area with navigation entry point, using existing real market data only
+- [x] Server-validated fee model: exchange / wallet / bank categories, percent + fixed,
       min/max, currency, payer, provider+network fees separate, minor-unit maths, quote expiry
-- [ ] Admin fee settings protected by server-enforced roles; live transactions disabled until configured
-- [ ] Draft fee template + linked provider reference section (labelled examples, never active rates)
+- [x] Admin fee settings protected by server-enforced roles; live transactions disabled until configured
+- [x] Draft fee template + linked provider reference section (labelled examples, never active rates)
 - [ ] Blocked: providers not selected, actual CyberLink rates unset, no exchange/bank integration
+      (owner must choose providers, supply their credentials, and enter real rates)
