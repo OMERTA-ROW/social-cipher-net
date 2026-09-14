@@ -240,7 +240,13 @@ const ChartPane = ({ pane, limits, height, pinned = false, onPin, onDragStart, f
             onRetry={candles.refresh}
           />
         ) : (
-          <ChartFrame id={`pane-${resolved.symbol}`} title={`${resolved.symbol} ${pane.timeframe}`} fill>
+          <ChartFrame
+            id={`pane-${resolved.symbol}`}
+            title={`${resolved.symbol} ${pane.timeframe}`}
+            defaultHeight={Math.max(height, 220)}
+            minHeight={200}
+            fill={fillMode}
+          >
             {(frameHeight) => (
               <TradingChart
                 ref={chartRef}
