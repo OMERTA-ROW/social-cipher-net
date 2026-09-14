@@ -154,7 +154,13 @@ export async function getStockCandles(
   symbol: string,
   timeframe: Timeframe,
 ): Promise<Sourced<{ symbol: string; timeframe: Timeframe; candles: Candle[] }>> {
-  return call("get-stock-market", { action: "candles", symbol, timeframe }, `sc:${symbol}:${timeframe}`, 60_000);
+  const result = await call<Sourced<{ symbol: string; timeframe: Timeframe; candles: Candle[] }>>(
+    "get-stock-market",
+    { action: "candles", symbol, timeframe },
+    `sc:${symbol}:${timeframe}`,
+    60_000,
+  );
+  return { ...result, candles: sanitizeCandles(result.candles) };
 }
 
 export async function getMarketStatus(): Promise<Sourced<{ market: MarketStatus }>> {
