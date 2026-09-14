@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import MarketSourceBadge from "@/components/market/MarketSourceBadge";
+import ChartFrame from "@/components/charts/ChartFrame";
 import MarketUnavailable from "@/components/market/MarketUnavailable";
 import TradingDisclaimer from "@/components/market/TradingDisclaimer";
 import { useCandles, useQuotes } from "@/hooks/useMarketData";
@@ -143,45 +144,47 @@ export default function CryptoMarketChart() {
                       onRetry={candles.refresh}
                     />
                   ) : (
-                    <div className="relative">
-                      <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart data={chartData}>
-                          <defs>
-                            <linearGradient id={`gradient-${crypto.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                          <XAxis dataKey="time" className="text-xs" minTickGap={40} />
-                          <YAxis
-                            className="text-xs"
-                            width={72}
-                            domain={["dataMin", "dataMax"]}
-                            tickFormatter={(v: number) =>
-                              `$${v.toLocaleString(undefined, { maximumFractionDigits: v < 10 ? 4 : 2 })}`
-                            }
-                          />
-                          <Tooltip
-                            formatter={(v: number) => [
-                              `$${v.toLocaleString(undefined, { maximumFractionDigits: v < 10 ? 6 : 2 })}`,
-                              crypto.symbol,
-                            ]}
-                            contentStyle={{
-                              backgroundColor: 'hsl(var(--background))',
-                              border: '1px solid hsl(var(--border))'
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="price"
-                            stroke="hsl(var(--primary))"
-                            fillOpacity={1}
-                            fill={`url(#gradient-${crypto.symbol})`}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
+                    <ChartFrame id={`crypto-${crypto.symbol}`} title={`${crypto.name} price`}>
+                      {(height) => (
+                        <ResponsiveContainer width="100%" height={height}>
+                          <AreaChart data={chartData}>
+                            <defs>
+                              <linearGradient id={`gradient-${crypto.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                            <XAxis dataKey="time" className="text-xs" minTickGap={40} />
+                            <YAxis
+                              className="text-xs"
+                              width={72}
+                              domain={["dataMin", "dataMax"]}
+                              tickFormatter={(v: number) =>
+                                `$${v.toLocaleString(undefined, { maximumFractionDigits: v < 10 ? 4 : 2 })}`
+                              }
+                            />
+                            <Tooltip
+                              formatter={(v: number) => [
+                                `$${v.toLocaleString(undefined, { maximumFractionDigits: v < 10 ? 6 : 2 })}`,
+                                crypto.symbol,
+                              ]}
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--background))',
+                                border: '1px solid hsl(var(--border))'
+                              }}
+                            />
+                            <Area
+                              type="monotone"
+                              dataKey="price"
+                              stroke="hsl(var(--primary))"
+                              fillOpacity={1}
+                              fill={`url(#gradient-${crypto.symbol})`}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      )}
+                    </ChartFrame>
                   )}
                   <TradingDisclaimer className="pt-3" />
                 </CardContent>

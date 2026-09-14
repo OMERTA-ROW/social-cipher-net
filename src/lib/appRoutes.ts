@@ -46,6 +46,7 @@ export const APP_ROUTES: AppRouteMeta[] = [
   { path: "/kit/:slug", title: "Media Kit", description: "A creator's public audience and collaboration profile.", parent: "/monetization" },
   { path: "/token-purchase", title: "Token Purchase", description: "Complete a token purchase with explicit confirmation.", parent: "/" },
   { path: "/auth", title: "Sign In", description: "Access or create your Cyber Link account.", navigation: "hidden", system: true },
+  { path: "/onboarding", title: "Welcome Setup", description: "Finish setting up your Cyber Link account.", navigation: "hidden", system: true },
   { path: "/verification-success", title: "Verification Result", description: "Confirmation of your verification request.", navigation: "hidden", system: true },
   { path: "/r/:code", title: "Affiliate Redirect", description: "A verified affiliate-link redirect.", navigation: "hidden", system: true },
   { path: "/.lovable/oauth/consent", title: "App Authorization", description: "Review an external app access request.", navigation: "hidden", system: true },

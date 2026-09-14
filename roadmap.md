@@ -159,3 +159,12 @@
 - [x] Draft fee template + linked provider reference section (labelled examples, never active rates)
 - [ ] Blocked: providers not selected, actual CyberLink rates unset, no exchange/bank integration
       (owner must choose providers, supply their credentials, and enter real rates)
+
+## Auth/onboarding, chart sizing, data accuracy (Sept 14)
+- [x] First-login welcome flow with per-member saved progress, resume, back, skip, completion routing
+- [x] Sign-in sends first-time members to the welcome flow, everyone else back where they came from
+- [x] Shared chart container: drag handle, keyboard size controls, reset, full-screen expand
+- [x] Exchange added to the sidebar (page existed with no way to reach it)
+- [x] Market data validated before drawing: bad rows dropped, bars ordered oldest-first, duplicates collapsed
+- [x] Binance quotes labelled as USDT pairs instead of USD
+- [ ] Exchange/wallet/bank providers still unchosen — fees stay unset, trades and transfers stay off

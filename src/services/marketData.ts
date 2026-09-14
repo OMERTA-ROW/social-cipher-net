@@ -9,6 +9,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeCandles } from "@/lib/candles";
 
 export type Timeframe = "1m" | "5m" | "15m" | "1h" | "4h" | "1D" | "1W";
 export const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1D", "1W"];
@@ -135,12 +136,13 @@ export async function getCryptoCandles(
   timeframe: Timeframe,
   limit = 200,
 ): Promise<Sourced<{ symbol: string; timeframe: Timeframe; candles: Candle[] }>> {
-  return call(
+  const result = await call<Sourced<{ symbol: string; timeframe: Timeframe; candles: Candle[] }>>(
     "get-crypto-prices",
     { action: "candles", symbol, timeframe, limit },
     `cc:${symbol}:${timeframe}:${limit}`,
     timeframe === "1m" ? 15_000 : 45_000,
   );
+  return { ...result, candles: sanitizeCandles(result.candles) };
 }
 
 export async function getStockQuotes(symbols: string[]): Promise<Sourced<{ quotes: Quote[] }>> {
@@ -152,7 +154,13 @@ export async function getStockCandles(
   symbol: string,
   timeframe: Timeframe,
 ): Promise<Sourced<{ symbol: string; timeframe: Timeframe; candles: Candle[] }>> {
-  return call("get-stock-market", { action: "candles", symbol, timeframe }, `sc:${symbol}:${timeframe}`, 60_000);
+  const result = await call<Sourced<{ symbol: string; timeframe: Timeframe; candles: Candle[] }>>(
+    "get-stock-market",
+    { action: "candles", symbol, timeframe },
+    `sc:${symbol}:${timeframe}`,
+    60_000,
+  );
+  return { ...result, candles: sanitizeCandles(result.candles) };
 }
 
 export async function getMarketStatus(): Promise<Sourced<{ market: MarketStatus }>> {
