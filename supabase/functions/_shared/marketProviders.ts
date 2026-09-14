@@ -157,9 +157,10 @@ export async function binanceQuotes(symbols: string[]): Promise<Quote[]> {
     changeAbs: Number(t.priceChange),
     high24h: Number(t.highPrice),
     low24h: Number(t.lowPrice),
+    // Binance spot pairs settle in USDT, not USD — label the unit honestly.
     volume24h: Number(t.quoteVolume),
-    currency: "USD",
-    source: "Binance spot",
+    currency: "USDT",
+    source: "Binance spot (USDT pair)",
     latency: "realtime" as const,
     asOf,
   }));
@@ -285,6 +286,30 @@ async function coingeckoCandles(symbol: string, timeframe: string, limit: number
   }));
 }
 
+/**
+ * Provider responses are validated before they reach a chart: rows with
+ * missing or non-numeric values are dropped, duplicate timestamps collapse to
+ * the newest row, and the series is always oldest-first in UTC milliseconds.
+ */
+export function normalizeCandles(rows: Candle[]): Candle[] {
+  const byTime = new Map<number, Candle>();
+  for (const row of rows) {
+    const time = Number(row?.time);
+    const values = [row?.open, row?.high, row?.low, row?.close].map(Number);
+    if (!Number.isFinite(time) || time <= 0) continue;
+    if (values.some((v) => !Number.isFinite(v) || v <= 0)) continue;
+    byTime.set(time, {
+      time,
+      open: values[0],
+      high: Math.max(values[1], values[0], values[3]),
+      low: Math.min(values[2], values[0], values[3]),
+      close: values[3],
+      volume: Number.isFinite(Number(row?.volume)) ? Math.max(0, Number(row.volume)) : 0,
+    });
+  }
+  return [...byTime.values()].sort((a, b) => a.time - b.time);
+}
+
 export type CandleSeries = { candles: Candle[]; source: string; latency: "realtime" | "delayed" };
 
 /**
@@ -329,7 +354,7 @@ export async function cryptoCandleSeries(
     const failures: string[] = [];
     for (const attempt of attempts) {
       try {
-        const candles = await attempt.run();
+        const candles = normalizeCandles(await attempt.run());
         if (!candles.length) throw new Error("No candle data available");
         if (failures.length) {
           reportProviderEvent({
