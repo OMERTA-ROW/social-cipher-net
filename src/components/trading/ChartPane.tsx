@@ -62,12 +62,15 @@ interface Props {
   pinned?: boolean;
   onPin?: () => void;
   onDragStart?: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  /** True when the parent already controls the height (floating window / draggable pane). */
+  fillHeight?: boolean;
   onChange: (pane: PaneConfig) => void;
   onRemove: () => void;
   onUpgradeNeeded: (reason: string) => void;
 }
 
-const ChartPane = ({ pane, limits, height, pinned = false, onPin, onDragStart, onChange, onRemove, onUpgradeNeeded }: Props) => {
+const ChartPane = ({ pane, limits, height, pinned = false, onPin, onDragStart, fillHeight, onChange, onRemove, onUpgradeNeeded }: Props) => {
+  const fillMode = fillHeight ?? Boolean(onDragStart);
   const [draft, setDraft] = useState(pane.symbol);
   const [posting, setPosting] = useState(false);
   const chartRef = useRef<TradingChartHandle | null>(null);
