@@ -43,6 +43,7 @@ import LiveRoom from "./pages/LiveRoom";
 import Thread from "./pages/Thread";
 import Dashboard from "./pages/Dashboard";
 import Trading from "./pages/Trading";
+import Exchange from "./pages/Exchange";
 import Terminal from "./pages/Terminal";
 import Moderation from "./pages/Moderation";
 import OAuthConsent from "./pages/OAuthConsent";
@@ -92,6 +93,7 @@ const AppContent = () => {
         <Route path="/post/:postId" element={<Thread />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/trading" element={<Trading />} />
+        <Route path="/exchange" element={<ShellRoute><Exchange /></ShellRoute>} />
         <Route path="/terminal" element={<Terminal />} />
         <Route path="/moderation" element={<ShellRoute><Moderation /></ShellRoute>} />
         <Route path="/backgrounds" element={<Backgrounds />} />

@@ -10,6 +10,7 @@ import { Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsCeo } from "@/hooks/useIsCeo";
+import { signInPath } from "@/lib/authRedirect";
 
 type Review = {
   id: string;
@@ -58,7 +59,7 @@ const Moderation = () => {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate("/auth");
+      if (!session) navigate(signInPath());
     });
   }, [navigate]);
 
@@ -150,13 +151,10 @@ const Moderation = () => {
       <main className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
         <header className="mb-6 flex items-center gap-3">
           <ShieldAlert className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-2xl font-bold">Review queue</h1>
-            <p className="text-sm text-muted-foreground">
-              Reports raised by people on Cyber Link. Approving records the decision; it never
-              removes content or suspends an account on its own.
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Reports raised by people on Cyber Link. Approving records the decision; it never
+            removes content or suspends an account on its own.
+          </p>
         </header>
 
         <Tabs value={status} onValueChange={(v) => setStatus(v as typeof status)}>

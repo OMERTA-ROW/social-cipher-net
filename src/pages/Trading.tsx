@@ -45,6 +45,7 @@ import { useQuotes } from "@/hooks/useMarketData";
 import { resolveSymbol, SYMBOL_SUGGESTIONS } from "@/lib/symbols";
 import { useTradingTier, nextTierAbove } from "@/lib/tradingTiers";
 import type { Timeframe } from "@/services/marketData";
+import { signInPath } from "@/lib/authRedirect";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -232,12 +233,12 @@ const Trading = () => {
     <AppShell>
       <div className="space-y-4">
         <header className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold">Trading workspace</h1>
+          <h2 className="text-xl font-semibold">Workspace</h2>
           <Badge variant="outline" className="text-[10px] uppercase">
             {limits.label} plan
           </Badge>
           {!signedIn && (
-            <Link to="/auth" className="text-xs text-primary underline">
+            <Link to={signInPath()} className="text-xs text-primary underline">
               Sign in to save layouts
             </Link>
           )}

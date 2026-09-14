@@ -56,7 +56,7 @@ const ProductDetail = () => {
   }
 
   return (
-    <AppShell>
+    <AppShell title={product.title} description={store?.business_name ? `Sold by ${store.business_name}` : undefined}>
       <div className="grid md:grid-cols-2 gap-8">
         <div className="space-y-3">
           <div className="aspect-square rounded-lg overflow-hidden border border-border bg-secondary/40">
@@ -100,7 +100,6 @@ const ProductDetail = () => {
                 {store.business_name}
               </Link>
             )}
-            <h1 className="text-3xl font-bold">{product.title}</h1>
             {product.category && (
               <Badge variant="secondary" className="mt-2">
                 {product.category}

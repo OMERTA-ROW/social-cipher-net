@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Wallet, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { GiftGallery } from "@/components/GiftGallery";
+import { signInPath } from "@/lib/authRedirect";
 
 // Conversion rate: $1 = 1000 tokens, $1000 = 1,000,000 tokens
 const USD_TO_TOKENS = 1000;
@@ -108,7 +109,7 @@ export default function TokenPurchase() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast.error("Please sign in to purchase tokens");
-      navigate("/auth");
+      navigate(signInPath());
       return;
     }
 

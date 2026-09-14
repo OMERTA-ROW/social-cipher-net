@@ -14,6 +14,7 @@ import CrossPlatformEarnings from "@/components/CrossPlatformEarnings";
 import AffiliatesTab from "@/components/monetization/AffiliatesTab";
 import { useTier } from "@/lib/tiers";
 import BrandDealsTab from "@/components/monetization/BrandDealsTab";
+import { signInPath } from "@/lib/authRedirect";
 
 const Monetization = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -37,7 +38,7 @@ const Monetization = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }
@@ -45,7 +46,7 @@ const Monetization = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }
@@ -190,13 +191,7 @@ const Monetization = () => {
     <div className="min-h-screen bg-transparent">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Monetization Dashboard</h1>
-            <p className="text-muted-foreground">
-              Manage your earnings and payment settings
-            </p>
-          </div>
+        <div className="flex justify-end items-center mb-8">
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="text-sm py-1 px-3">
               {tierLoading ? "…" : currentTier}

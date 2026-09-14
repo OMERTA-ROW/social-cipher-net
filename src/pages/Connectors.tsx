@@ -28,6 +28,7 @@ import AiAgentsPanel from "@/components/connectors/AiAgentsPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MulticastPanel from "@/components/connectors/MulticastPanel";
 import PlatformComposer from "@/components/connectors/PlatformComposer";
+import { signInPath } from "@/lib/authRedirect";
 
 const Connectors = () => {
   const navigate = useNavigate();
@@ -42,12 +43,12 @@ const Connectors = () => {
   // Auth guard
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate("/auth");
+      if (!session) navigate(signInPath());
     });
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) navigate("/auth");
+      if (!session) navigate(signInPath());
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
@@ -176,10 +177,6 @@ const Connectors = () => {
     <div className="min-h-screen bg-transparent">
       <main className="container mx-auto px-4 pt-24 pb-16 max-w-5xl">
         <header className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Plug className="w-9 h-9 text-primary text-glow" />
-            <h1 className="text-4xl font-bold text-primary text-glow">Connectors</h1>
-          </div>
           <p className="text-muted-foreground">
             One place to link every service you use — then post, comment, read your
             feeds and stream out to all of them from inside Cyber Link.

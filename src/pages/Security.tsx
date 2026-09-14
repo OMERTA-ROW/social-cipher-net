@@ -10,6 +10,7 @@ import { Shield, Lock, Eye, Bell, History } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { signInPath } from "@/lib/authRedirect";
 
 const Security = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const Security = () => {
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      navigate("/auth");
+      navigate(signInPath());
       return;
     }
     loadData(session.user.id);

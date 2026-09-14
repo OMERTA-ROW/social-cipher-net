@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { getQuotes } from "@/services/marketData";
 import { resolveSymbol } from "@/lib/symbols";
+import { signInPath } from "@/lib/authRedirect";
 
 type Line = { kind: "in" | "out" | "err"; text: string };
 
@@ -299,9 +300,9 @@ const Terminal = () => {
     <AppShell>
       <div className="space-y-4">
         <header className="flex flex-wrap items-center gap-3">
-          <h1 className="flex items-center gap-2 text-xl font-semibold">
-            <TerminalSquare className="h-5 w-5" /> Terminal
-          </h1>
+          <h2 className="flex items-center gap-2 text-xl font-semibold">
+            <TerminalSquare className="h-5 w-5" /> Session
+          </h2>
           <Badge variant="outline" className="text-[10px] uppercase">
             sandboxed
           </Badge>
@@ -337,7 +338,7 @@ const Terminal = () => {
                 <Button size="sm">See plans</Button>
               </Link>
               {!signedIn && (
-                <Link to="/auth">
+                <Link to={signInPath()}>
                   <Button size="sm" variant="outline">
                     Sign in
                   </Button>

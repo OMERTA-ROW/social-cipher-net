@@ -36,6 +36,7 @@ import AnimationStudio from "@/components/studio/AnimationStudio";
 import AssetLibrary from "@/components/studio/AssetLibrary";
 import ConnectedAccountsPanel from "@/components/studio/ConnectedAccountsPanel";
 import BroadcastPanel from "@/components/studio/BroadcastPanel";
+import { signInPath } from "@/lib/authRedirect";
 
 
 const Studio = () => {
@@ -109,7 +110,7 @@ const Studio = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
         return;
       }
       setUserId(session.user.id);
@@ -117,7 +118,7 @@ const Studio = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
         return;
       }
       setUserId(session.user.id);
@@ -201,12 +202,7 @@ const Studio = () => {
       {currentStream && <OmegaChat streamId={currentStream.id} streamerId={currentStream.user_id} />}
       
       <main className="container mx-auto px-4 pt-20 pb-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-primary text-glow mb-2">Live Studio</h1>
-            <p className="text-muted-foreground">Stream to multiple platforms simultaneously</p>
-          </div>
-          
+        <div className="flex items-center justify-end mb-8">
           <div className="flex items-center gap-4 flex-wrap">
             {currentStream && (
               <>

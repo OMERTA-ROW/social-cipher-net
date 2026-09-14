@@ -59,9 +59,12 @@ export default function StockMarketWidget() {
         extra={quotes.market ? `market ${quotes.market.state}${quotes.market.localTime ? ` · ${quotes.market.localTime}` : ""}` : null}
       />
 
-      {quotes.error && !quotes.data ? (
+      {quotes.loading && !quotes.data ? (
+        <div className="py-8 text-center text-sm text-muted-foreground">Loading stock quotes…</div>
+      ) : quotes.error && !quotes.data ? (
         <MarketUnavailable message={quotes.error} onRetry={quotes.refresh} />
       ) : (
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {MAJOR_STOCKS.map((stock) => {
             const q = quotes.data?.find((item) => item.symbol === stock.symbol);

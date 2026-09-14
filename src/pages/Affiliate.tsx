@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Store, Package } from "lucide-react";
 import { User } from "@supabase/supabase-js";
+import { signInPath } from "@/lib/authRedirect";
 
 const Affiliate = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -21,7 +22,7 @@ const Affiliate = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }
@@ -29,7 +30,7 @@ const Affiliate = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }
@@ -76,13 +77,7 @@ const Affiliate = () => {
     <div className="min-h-screen bg-transparent">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">CyberLink Marketplace</h1>
-            <p className="text-muted-foreground">
-              Connect with sellers and grow your business
-            </p>
-          </div>
+        <div className="flex justify-end items-center mb-8">
           <Button onClick={handleBecomeSellerClick} size="lg">
             <Store className="mr-2 h-5 w-5" />
             Become a Seller

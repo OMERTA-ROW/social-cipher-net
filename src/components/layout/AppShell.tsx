@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import { ReactNode, createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -145,8 +145,32 @@ interface AppShellProps {
   hidePageHeader?: boolean;
 }
 
-const AppShellContext = createContext(false);
-export const useInsideAppShell = () => useContext(AppShellContext);
+interface PageHeaderOverride {
+  title?: string;
+  description?: string;
+}
+
+interface AppShellContextValue {
+  inside: boolean;
+  setHeader: (value: PageHeaderOverride) => void;
+}
+
+const AppShellContext = createContext<AppShellContextValue>({ inside: false, setHeader: () => {} });
+export const useInsideAppShell = () => useContext(AppShellContext).inside;
+
+/**
+ * Lets a page rendered inside the shared shell supply the one primary heading
+ * (used for dynamic titles such as a product, store or member name) instead of
+ * printing a second heading of its own.
+ */
+export const usePageHeader = (title?: string, description?: string) => {
+  const { setHeader } = useContext(AppShellContext);
+  useEffect(() => {
+    setHeader({ title, description });
+    return () => setHeader({});
+  }, [setHeader, title, description]);
+};
+
 
 /** One collapsible group of secondary destinations; open state is remembered. */
 const NavGroupBlock = ({ group }: { group: NavGroup }) => {
@@ -210,8 +234,12 @@ const AppShellFrame = ({
   const rightPanel = usePanelCollapse("cyberlink:panel-right-collapsed");
   const route = getRouteMeta(pathname);
   const parent = route?.parent ? getRouteMetaByPath(route.parent) : undefined;
-  const pageTitle = title ?? route?.title;
-  const pageDescription = description ?? route?.description;
+  const [override, setOverride] = useState<PageHeaderOverride>({});
+  const setHeader = useCallback((value: PageHeaderOverride) => setOverride(value), []);
+  const shellContext = useMemo(() => ({ inside: true, setHeader }), [setHeader]);
+  const pageTitle = title ?? override.title ?? route?.title;
+  const pageDescription = description ?? override.description ?? route?.description;
+
 
   // Restore the centre column scroll position per route, and remember it on leave.
   useEffect(() => {
@@ -227,7 +255,7 @@ const AppShellFrame = ({
   }, [pathname]);
 
   return (
-    <AppShellContext.Provider value>
+    <AppShellContext.Provider value={shellContext}>
     <div className="h-[100dvh] flex flex-col overflow-hidden bg-transparent">
       {/* Fixed top header */}
       <header className="h-16 shrink-0 z-40 border-b border-border/60 bg-card/60 backdrop-blur-xl">

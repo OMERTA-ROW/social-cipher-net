@@ -223,13 +223,17 @@ Deno.serve(async (req) => {
           {
             user_id: state.user_id,
             service_id: state.service_id,
+            // One row per linked account. The slot travels in the signed state
+            // so a second account never overwrites the first.
+            account_key: String(state.account_key ?? "default"),
+            account_label: state.account_label ? String(state.account_label) : null,
             method: "oauth",
             status: "connected",
             scopes: config.scope.split(/[ ,]/).filter(Boolean),
             last_error: null,
             updated_at: new Date().toISOString(),
           },
-          { onConflict: "user_id,service_id" },
+          { onConflict: "user_id,service_id,account_key" },
         )
         .select("id")
         .single();
@@ -324,6 +328,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         user_id: user.id,
         service_id: serviceId,
+        account_key: String(body.account_key ?? "default").slice(0, 64),
+        account_label: typeof body.account_label === "string" ? body.account_label.slice(0, 120) : null,
         provider,
         redirect_uri: redirectUri,
         exp: Date.now() + 10 * 60 * 1000,

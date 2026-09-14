@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMiningFeatures } from "@/hooks/useMiningFeatures";
 import { Pickaxe, ExternalLink, Zap } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { signInPath } from "@/lib/authRedirect";
 
 const Miners = () => {
   const [user, setUser] = useState<any>(null);
@@ -18,7 +19,7 @@ const Miners = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }
@@ -26,7 +27,7 @@ const Miners = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }
@@ -60,15 +61,6 @@ const Miners = () => {
       
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Pickaxe className="w-12 h-12 text-primary text-glow" />
-              <h1 className="text-4xl md:text-5xl font-bold text-glow">Miners Hub</h1>
-            </div>
-            <p className="text-muted-foreground text-lg">
-              Premium Mining Features - Unlocked
-            </p>
-          </div>
 
           <Alert className="mb-6 border-primary/50 bg-primary/10">
             <Zap className="h-4 w-4 text-primary" />

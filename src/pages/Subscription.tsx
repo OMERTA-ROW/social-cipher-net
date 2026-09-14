@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Loader2, Wallet, CreditCard, TerminalSquare as TerminalIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { signInPath } from "@/lib/authRedirect";
 import {
   TIERS,
   TIER_ORDER,
@@ -37,7 +38,7 @@ const Subscription = () => {
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) navigate("/auth");
+    if (!session) navigate(signInPath());
   };
 
   // Mirrors live Stripe subscriptions into entitlements, then reflects them here.

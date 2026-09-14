@@ -1244,6 +1244,72 @@ export type Database = {
         }
         Relationships: []
       }
+      exchange_quotes: {
+        Row: {
+          amount_minor: number
+          asset: string | null
+          breakdown: Json
+          category: string
+          created_at: string
+          currency: string
+          expires_at: string
+          id: string
+          minor_unit_scale: number
+          net_received_minor: number
+          network_fee_minor: number
+          operation: string
+          payer: string
+          platform_fee_minor: number
+          provider_fee_minor: number
+          rail: string | null
+          status: string
+          total_minor: number
+          user_id: string
+        }
+        Insert: {
+          amount_minor: number
+          asset?: string | null
+          breakdown?: Json
+          category: string
+          created_at?: string
+          currency: string
+          expires_at: string
+          id?: string
+          minor_unit_scale?: number
+          net_received_minor: number
+          network_fee_minor?: number
+          operation: string
+          payer: string
+          platform_fee_minor?: number
+          provider_fee_minor?: number
+          rail?: string | null
+          status?: string
+          total_minor: number
+          user_id: string
+        }
+        Update: {
+          amount_minor?: number
+          asset?: string | null
+          breakdown?: Json
+          category?: string
+          created_at?: string
+          currency?: string
+          expires_at?: string
+          id?: string
+          minor_unit_scale?: number
+          net_received_minor?: number
+          network_fee_minor?: number
+          operation?: string
+          payer?: string
+          platform_fee_minor?: number
+          provider_fee_minor?: number
+          rail?: string | null
+          status?: string
+          total_minor?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       external_affiliate_clicks: {
         Row: {
           clicker_id: string | null
@@ -1439,6 +1505,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fee_settings: {
+        Row: {
+          asset: string | null
+          category: string
+          created_at: string
+          currency: string
+          effective_from: string | null
+          fixed_minor: number | null
+          id: string
+          is_active: boolean
+          is_configured: boolean
+          max_fee_minor: number | null
+          min_fee_minor: number | null
+          minor_unit_scale: number
+          notes: string | null
+          operation: string
+          payer: string
+          percent_bps: number | null
+          provider_id: string | null
+          quote_ttl_seconds: number
+          rail: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset?: string | null
+          category: string
+          created_at?: string
+          currency?: string
+          effective_from?: string | null
+          fixed_minor?: number | null
+          id?: string
+          is_active?: boolean
+          is_configured?: boolean
+          max_fee_minor?: number | null
+          min_fee_minor?: number | null
+          minor_unit_scale?: number
+          notes?: string | null
+          operation: string
+          payer?: string
+          percent_bps?: number | null
+          provider_id?: string | null
+          quote_ttl_seconds?: number
+          rail?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset?: string | null
+          category?: string
+          created_at?: string
+          currency?: string
+          effective_from?: string | null
+          fixed_minor?: number | null
+          id?: string
+          is_active?: boolean
+          is_configured?: boolean
+          max_fee_minor?: number | null
+          min_fee_minor?: number | null
+          minor_unit_scale?: number
+          notes?: string | null
+          operation?: string
+          payer?: string
+          percent_bps?: number | null
+          provider_id?: string | null
+          quote_ttl_seconds?: number
+          rail?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       followers: {
         Row: {
@@ -4385,12 +4520,14 @@ export type Database = {
       }
       trading_accounts: {
         Row: {
+          account_label: string | null
           account_username: string | null
           api_key: string | null
           api_secret: string | null
           created_at: string
           id: string
           is_active: boolean
+          is_active_account: boolean
           metadata: Json | null
           platform_name: string
           platform_type: string
@@ -4398,12 +4535,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_label?: string | null
           account_username?: string | null
           api_key?: string | null
           api_secret?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          is_active_account?: boolean
           metadata?: Json | null
           platform_name: string
           platform_type: string
@@ -4411,12 +4550,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_label?: string | null
           account_username?: string | null
           api_key?: string | null
           api_secret?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
+          is_active_account?: boolean
           metadata?: Json | null
           platform_name?: string
           platform_type?: string
@@ -4539,12 +4680,15 @@ export type Database = {
       user_connections: {
         Row: {
           account_handle: string | null
+          account_key: string
+          account_label: string | null
           account_name: string | null
           connected_at: string
           expires_at: string | null
           failure_count: number
           health: string
           id: string
+          is_active_account: boolean
           last_error: string | null
           last_synced_at: string | null
           metadata: Json
@@ -4558,12 +4702,15 @@ export type Database = {
         }
         Insert: {
           account_handle?: string | null
+          account_key?: string
+          account_label?: string | null
           account_name?: string | null
           connected_at?: string
           expires_at?: string | null
           failure_count?: number
           health?: string
           id?: string
+          is_active_account?: boolean
           last_error?: string | null
           last_synced_at?: string | null
           metadata?: Json
@@ -4577,12 +4724,15 @@ export type Database = {
         }
         Update: {
           account_handle?: string | null
+          account_key?: string
+          account_label?: string | null
           account_name?: string | null
           connected_at?: string
           expires_at?: string | null
           failure_count?: number
           health?: string
           id?: string
+          is_active_account?: boolean
           last_error?: string | null
           last_synced_at?: string | null
           metadata?: Json

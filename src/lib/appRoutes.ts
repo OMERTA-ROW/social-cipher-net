@@ -18,6 +18,7 @@ export const APP_ROUTES: AppRouteMeta[] = [
   { path: "/connectors", title: "Connectors", description: "Link the services and tools you use with Cyber Link.", navigation: "create" },
   { path: "/shop", title: "Shop", description: "Browse every active Cyber Link storefront in one place.", navigation: "markets" },
   { path: "/trading", title: "Trading", description: "Monitor real markets and manage your saved chart workspace.", navigation: "markets" },
+  { path: "/exchange", title: "Exchange", description: "Check fees, link exchange accounts, and follow live markets.", navigation: "markets" },
   { path: "/monetization", title: "Monetization", description: "Track earnings, affiliate links, brand deals, and payouts.", navigation: "markets" },
   { path: "/miners", title: "Miners", description: "Manage eligible mining tools and subscription access.", navigation: "markets" },
   { path: "/cyber-arena", title: "Arena", description: "Organize saved tools, token pools, and your gaming network.", navigation: "worlds" },

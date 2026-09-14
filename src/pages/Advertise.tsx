@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
 import { money } from "@/hooks/usePlatformFees";
+import { signInPath } from "@/lib/authRedirect";
 
 const PLACEMENTS = ["feed", "discovery", "shop", "market", "stream", "theater"];
 
@@ -52,7 +53,7 @@ const Advertise = () => {
   const load = useCallback(async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { navigate("/auth"); return; }
+    if (!user) { navigate(signInPath()); return; }
 
     const { data: adv } = await supabase.from("ad_advertisers").select("*").eq("user_id", user.id).maybeSingle();
     setAdvertiser(adv);

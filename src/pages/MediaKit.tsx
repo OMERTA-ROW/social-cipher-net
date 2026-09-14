@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Mail } from "lucide-react";
+import { usePageHeader } from "@/components/layout/AppShell";
 
 interface Stats {
   followers: number;
@@ -24,6 +25,11 @@ const MediaKit = () => {
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [topPosts, setTopPosts] = useState<any[]>([]);
+
+  usePageHeader(
+    profile?.display_name || profile?.username || undefined,
+    profile?.username ? `@${profile.username}` : undefined,
+  );
 
   useEffect(() => {
     let alive = true;
@@ -88,7 +94,6 @@ const MediaKit = () => {
               className="h-20 w-20 rounded-full object-cover" />
           )}
           <div>
-            <h1 className="text-3xl font-bold">{profile?.display_name || profile?.username || "Creator"}</h1>
             {profile?.username && <p className="text-muted-foreground">@{profile.username}</p>}
             {kit.niche && <Badge variant="outline" className="mt-2">{kit.niche}</Badge>}
           </div>

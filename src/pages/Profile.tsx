@@ -15,6 +15,7 @@ import ProfileMedia from "@/components/profile/ProfileMedia";
 import ProfileRadio from "@/components/profile/ProfileRadio";
 import ProfilePosts from "@/components/profile/ProfilePosts";
 import PostComposer from "@/components/post/PostComposer";
+import { signInPath } from "@/lib/authRedirect";
 
 interface ProfileData {
   id: string;
@@ -53,7 +54,7 @@ const Profile = () => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/auth");
+        navigate(signInPath());
         return;
       }
       const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();

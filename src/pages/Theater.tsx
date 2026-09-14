@@ -170,12 +170,6 @@ const Theater = () => {
       <main className="container mx-auto px-4 pt-24 pb-16 max-w-5xl">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Clapperboard className="w-9 h-9 text-primary text-glow" />
-              <h1 className="text-4xl font-bold text-primary text-glow">
-                Movie Theater
-              </h1>
-            </div>
             <p className="text-muted-foreground">
               Host a watch-along, podcast or live discussion, watch together in
               sync, and chat beside the picture. Open to every account.

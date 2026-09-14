@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       const { data, error } = await admin
         .from("user_connections")
         .select(
-          "id, service_id, status, method, health, account_name, account_handle, scopes, expires_at, last_synced_at, last_error, failure_count, connected_at, updated_at",
+          "id, service_id, account_key, account_label, is_active_account, status, method, health, account_name, account_handle, scopes, expires_at, last_synced_at, last_error, failure_count, connected_at, updated_at",
         )
         .eq("user_id", user.id);
       if (error) return json({ error: error.message }, 400);
@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
         typeof body.account_name === "string"
           ? body.account_name.slice(0, 120)
           : null;
+      const accountKey = String(body.account_key ?? "default").slice(0, 64) || "default";
+      const accountLabel =
+        typeof body.account_label === "string" ? body.account_label.slice(0, 120) : null;
 
       const entries = Object.entries(credentials).filter(
         ([, v]) => typeof v === "string" && v.trim().length > 0,
@@ -88,6 +91,8 @@ Deno.serve(async (req) => {
           {
             user_id: user.id,
             service_id: serviceId,
+            account_key: accountKey,
+            account_label: accountLabel,
             method: definition?.methods.includes("app_password")
               ? "app_password"
               : "api_key",
@@ -98,7 +103,7 @@ Deno.serve(async (req) => {
             last_error: null,
             updated_at: new Date().toISOString(),
           },
-          { onConflict: "user_id,service_id" },
+          { onConflict: "user_id,service_id,account_key" },
         )
         .select("id")
         .single();
@@ -131,18 +136,24 @@ Deno.serve(async (req) => {
 
     /* --------------------------- disconnect ----------------------------- */
     if (action === "disconnect") {
-      const { data: existing } = await admin
+      // A single linked account when an id is given, otherwise every account
+      // this member has for the service.
+      const connectionId = typeof body.connection_id === "string" ? body.connection_id : null;
+      let query = admin
         .from("user_connections")
         .select("id")
         .eq("user_id", user.id)
-        .eq("service_id", serviceId)
-        .maybeSingle();
+        .eq("service_id", serviceId);
+      if (connectionId) query = query.eq("id", connectionId);
+      const { data: existing } = await query;
 
-      const { error } = await admin
+      let del = admin
         .from("user_connections")
         .delete()
         .eq("user_id", user.id)
         .eq("service_id", serviceId);
+      if (connectionId) del = del.eq("id", connectionId);
+      const { error } = await del;
       if (error) return json({ error: error.message }, 400);
 
       await audit(admin, {
@@ -151,9 +162,65 @@ Deno.serve(async (req) => {
         serviceId,
         action: "disconnect",
         status: "ok",
-        detail: existing ? "Connection and stored credentials removed" : "Nothing to remove",
+        detail: existing?.length
+          ? `${existing.length} linked account(s) and their stored credentials removed`
+          : "Nothing to remove",
       });
 
+      return json({ ok: true });
+    }
+
+    /* ------------------- choose the active account ---------------------- */
+    if (action === "set_active") {
+      const connectionId = String(body.connection_id ?? "");
+      if (!connectionId) return json({ error: "Missing account" }, 400);
+
+      // Ownership is re-checked on the server; the browser only sends an id.
+      const { data: target } = await admin
+        .from("user_connections")
+        .select("id")
+        .eq("id", connectionId)
+        .eq("user_id", user.id)
+        .eq("service_id", serviceId)
+        .maybeSingle();
+      if (!target) return json({ error: "Account not found" }, 404);
+
+      await admin
+        .from("user_connections")
+        .update({ is_active_account: false })
+        .eq("user_id", user.id)
+        .eq("service_id", serviceId);
+
+      const { error } = await admin
+        .from("user_connections")
+        .update({ is_active_account: true })
+        .eq("id", connectionId)
+        .eq("user_id", user.id);
+      if (error) return json({ error: error.message }, 400);
+
+      await audit(admin, {
+        userId: user.id,
+        connectionId,
+        serviceId,
+        action: "set_active_account",
+        status: "ok",
+      });
+      return json({ ok: true });
+    }
+
+    /* -------------------------- rename an account ----------------------- */
+    if (action === "rename") {
+      const connectionId = String(body.connection_id ?? "");
+      const label = typeof body.account_label === "string" ? body.account_label.slice(0, 120) : null;
+      if (!connectionId) return json({ error: "Missing account" }, 400);
+
+      const { error } = await admin
+        .from("user_connections")
+        .update({ account_label: label })
+        .eq("id", connectionId)
+        .eq("user_id", user.id)
+        .eq("service_id", serviceId);
+      if (error) return json({ error: error.message }, 400);
       return json({ ok: true });
     }
 
@@ -162,12 +229,13 @@ Deno.serve(async (req) => {
       const { data } = await admin
         .from("user_connections")
         .select(
-          "id, service_id, status, method, health, account_name, scopes, expires_at, last_synced_at, last_error, updated_at",
+          "id, service_id, account_key, account_label, is_active_account, status, method, health, account_name, scopes, expires_at, last_synced_at, last_error, updated_at",
         )
         .eq("user_id", user.id)
         .eq("service_id", serviceId)
-        .maybeSingle();
-      return json({ ok: true, connection: data ?? null });
+        .order("is_active_account", { ascending: false })
+        .limit(1);
+      return json({ ok: true, connection: data?.[0] ?? null });
     }
 
     /* ---------------------------- activity ------------------------------ */

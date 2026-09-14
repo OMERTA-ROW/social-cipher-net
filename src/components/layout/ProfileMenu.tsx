@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEngagementStats } from "@/hooks/useEngagementStats";
 import { supabase } from "@/integrations/supabase/client";
+import { signInPath } from "@/lib/authRedirect";
 
 interface AccountProfile {
   display_name: string | null;
@@ -43,7 +44,7 @@ const ProfileMenu = () => {
 
   if (!userId) {
     return (
-      <Button variant="ghost" size="icon" title="Log in" onClick={() => navigate("/auth")}>
+      <Button variant="ghost" size="icon" title="Log in" onClick={() => navigate(signInPath())}>
         <User className="h-5 w-5" />
       </Button>
     );
@@ -63,7 +64,7 @@ const ProfileMenu = () => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate(signInPath());
   };
 
   return (
