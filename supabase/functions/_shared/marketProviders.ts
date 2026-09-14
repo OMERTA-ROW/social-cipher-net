@@ -474,8 +474,9 @@ export async function stockCandles(symbol: string, timeframe: string): Promise<C
     });
   }
   // 4h buckets are aggregated from hourly bars (Yahoo has no native 4h).
-  if (timeframe === "4h") return aggregate(candles, 4);
-  return candles;
+  const clean = normalizeCandles(candles);
+  if (timeframe === "4h") return normalizeCandles(aggregate(clean, 4));
+  return clean;
 }
 
 function aggregate(candles: Candle[], factor: number): Candle[] {
