@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
+import { signInPath } from "@/lib/authRedirect";
 
 const SellerRegister = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -22,7 +23,7 @@ const SellerRegister = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
         checkExistingSeller(session.user.id);
@@ -31,7 +32,7 @@ const SellerRegister = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BadgeCheck, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { signInPath } from "@/lib/authRedirect";
 
 const VerificationSuccess = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const VerificationSuccess = () => {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/auth");
+        navigate(signInPath());
         return;
       }
 
@@ -73,13 +74,13 @@ const VerificationSuccess = () => {
           {verifying ? (
             <>
               <Loader2 className="w-16 h-16 text-primary mx-auto mb-4 animate-spin" />
-              <h1 className="text-3xl font-bold mb-4 text-foreground">Processing Verification...</h1>
+              <h2 className="text-3xl font-bold mb-4 text-foreground">Processing Verification...</h2>
               <p className="text-muted-foreground">Please wait while we verify your payment.</p>
             </>
           ) : (
             <>
               <BadgeCheck className="w-16 h-16 text-primary mx-auto mb-4 fill-current" />
-              <h1 className="text-3xl font-bold mb-4 text-foreground">You're Verified!</h1>
+              <h2 className="text-3xl font-bold mb-4 text-foreground">You're Verified!</h2>
               <p className="text-muted-foreground mb-6">
                 Your account now has a verification badge. It will appear next to your name on all your posts.
               </p>

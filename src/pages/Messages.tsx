@@ -216,7 +216,7 @@ const Messages = () => {
     return (
       <AppShell>
         <Card className="p-8 text-center bg-background/80 border-border/50">
-          <h1 className="text-xl font-semibold mb-2">Messages</h1>
+          <h2 className="text-xl font-semibold mb-2">Messages</h2>
           <p className="text-muted-foreground">Sign in to see your inbox.</p>
         </Card>
       </AppShell>
@@ -228,7 +228,7 @@ const Messages = () => {
       <div className="grid gap-4 lg:grid-cols-[minmax(260px,32%)_1fr]">
         <Card className="p-3 bg-background/80 backdrop-blur-sm border-border/50">
           <div className="flex items-center justify-between gap-2 px-2 py-1">
-            <h1 className="text-lg font-semibold">Inbox</h1>
+            <h2 className="text-lg font-semibold">Inbox</h2>
             <Button size="sm" className="gap-1" onClick={() => setComposeOpen(true)}>
               <Send className="h-3 w-3" /> New
             </Button>

@@ -38,6 +38,7 @@ import TrendingPanel from "@/components/cyberworld/TrendingPanel";
 import CreatorsPanel from "@/components/cyberworld/CreatorsPanel";
 import CommunityPanel from "@/components/cyberworld/CommunityPanel";
 import TradingDisclaimer from "@/components/market/TradingDisclaimer";
+import { signInPath } from "@/lib/authRedirect";
 
 const CHART_TICKERS = ["BTC", "ETH", "SOL", "AAPL", "TSLA", "SPY"];
 
@@ -52,12 +53,12 @@ const CyberWorld = () => {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate("/auth");
+      if (!session) navigate(signInPath());
       else setUser(session.user);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) navigate("/auth");
+      if (!session) navigate(signInPath());
       else setUser(session.user);
     });
 
@@ -114,14 +115,6 @@ const CyberWorld = () => {
         {/* Hero Section */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-                CyberWorld
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                Your central hub for the digital universe
-              </p>
-            </div>
             <Badge variant="outline" className="text-lg px-4 py-2">
               <Globe className="w-5 h-5 mr-2" />
               Global Network

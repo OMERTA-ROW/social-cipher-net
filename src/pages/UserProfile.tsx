@@ -29,6 +29,7 @@ import ConnectedPlatforms from "@/components/profile/ConnectedPlatforms";
 import ProfileRadio from "@/components/profile/ProfileRadio";
 import { resolvePaidAccess } from "@/lib/paymentAccess";
 import { reportIssue } from "@/lib/monitoring";
+import { usePageHeader } from "@/components/layout/AppShell";
 
 interface Post {
   id: string;
@@ -79,6 +80,11 @@ const UserProfile = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  usePageHeader(
+    profile?.display_name || profile?.username || undefined,
+    profile?.username ? `@${profile.username}` : undefined,
+  );
 
   useEffect(() => {
     checkUser();
@@ -307,9 +313,6 @@ const UserProfile = () => {
                   
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h1 className="text-2xl font-bold">
-                        {profile.display_name || profile.username || 'Anonymous'}
-                      </h1>
                       {profile.is_verified && (
                         <Badge variant="secondary" className="gap-1">
                           <CheckCircle2 className="h-3 w-3" />

@@ -14,6 +14,7 @@ import { Loader2, Plus, Package, DollarSign, ShieldAlert } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 import StoreSettingsCard from "@/components/shop/StoreSettingsCard";
 import ProductOptionsDialog from "@/components/shop/ProductOptionsDialog";
+import { signInPath } from "@/lib/authRedirect";
 
 const SellerDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -38,7 +39,7 @@ const SellerDashboard = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }
@@ -46,7 +47,7 @@ const SellerDashboard = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate("/auth");
+        navigate(signInPath());
       } else {
         setUser(session.user);
       }
@@ -174,10 +175,7 @@ const SellerDashboard = () => {
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Seller Dashboard</h1>
-            <p className="text-muted-foreground">{sellerProfile?.business_name}</p>
-          </div>
+          <p className="text-muted-foreground">{sellerProfile?.business_name}</p>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="lg">

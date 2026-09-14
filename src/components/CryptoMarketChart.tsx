@@ -133,8 +133,15 @@ export default function CryptoMarketChart() {
                   />
                 </CardHeader>
                 <CardContent className="relative">
-                  {candles.error && !candles.data ? (
-                    <MarketUnavailable message={candles.error} onRetry={candles.refresh} />
+                  {candles.loading && !candles.data ? (
+                    <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+                      Loading {crypto.name} candles…
+                    </div>
+                  ) : candles.error || !chartData.length ? (
+                    <MarketUnavailable
+                      message={candles.error ?? `No live candles available for ${crypto.symbol} on the ${timeframe} timeframe.`}
+                      onRetry={candles.refresh}
+                    />
                   ) : (
                     <div className="relative">
                       <ResponsiveContainer width="100%" height={300}>
@@ -147,8 +154,19 @@ export default function CryptoMarketChart() {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                           <XAxis dataKey="time" className="text-xs" minTickGap={40} />
-                          <YAxis className="text-xs" domain={["dataMin", "dataMax"]} />
+                          <YAxis
+                            className="text-xs"
+                            width={72}
+                            domain={["dataMin", "dataMax"]}
+                            tickFormatter={(v: number) =>
+                              `$${v.toLocaleString(undefined, { maximumFractionDigits: v < 10 ? 4 : 2 })}`
+                            }
+                          />
                           <Tooltip
+                            formatter={(v: number) => [
+                              `$${v.toLocaleString(undefined, { maximumFractionDigits: v < 10 ? 6 : 2 })}`,
+                              crypto.symbol,
+                            ]}
                             contentStyle={{
                               backgroundColor: 'hsl(var(--background))',
                               border: '1px solid hsl(var(--border))'

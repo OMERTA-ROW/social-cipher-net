@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BadgeCheck, Users, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { signInPath } from "@/lib/authRedirect";
 
 const Verification = () => {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ const Verification = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/auth");
+        navigate(signInPath());
         return;
       }
 
@@ -129,7 +130,7 @@ const Verification = () => {
         <div className="container mx-auto px-4 py-8">
           <Card className="max-w-2xl mx-auto p-8 text-center bg-card border-border">
             <BadgeCheck className="w-16 h-16 text-primary mx-auto mb-4 fill-current" />
-            <h1 className="text-3xl font-bold mb-4 text-foreground">Already Verified</h1>
+            <h2 className="text-3xl font-bold mb-4 text-foreground">Already Verified</h2>
             <p className="text-muted-foreground mb-4">
               Your account was verified via {profile.verification_method} on{" "}
               {new Date(profile.verified_at).toLocaleDateString()}.
@@ -148,7 +149,7 @@ const Verification = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <BadgeCheck className="w-16 h-16 text-primary mx-auto mb-4" />
-            <h1 className="text-4xl font-bold mb-4 text-foreground">Get Verified</h1>
+            <h2 className="text-4xl font-bold mb-4 text-foreground">Get Verified</h2>
             <p className="text-muted-foreground text-lg">
               Stand out with a verification badge next to your name
             </p>

@@ -47,7 +47,7 @@ const StorePage = () => {
   }
 
   return (
-    <AppShell>
+    <AppShell title={store.business_name} description={store.tagline ?? undefined}>
       <Card className="overflow-hidden">
         <div className="h-40 bg-gradient-to-r from-primary/25 via-background to-accent/20">
           {store.banner_url && (
@@ -62,10 +62,6 @@ const StorePage = () => {
               className="w-16 h-16 rounded-lg object-cover border border-border -mt-12 bg-background"
             />
           )}
-          <div>
-            <h1 className="text-2xl font-bold">{store.business_name}</h1>
-            {store.tagline && <p className="text-sm text-muted-foreground">{store.tagline}</p>}
-          </div>
         </div>
       </Card>
 

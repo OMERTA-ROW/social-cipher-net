@@ -139,3 +139,22 @@
 - [x] Remove static Studio and Streamer preview controls; preserve honest waiting-for-video state
 - [x] Add route-registry and hotspot regression coverage
 - [ ] Live video playback remains blocked until a real ingest/transcoding/playback provider is configured
+
+## Repair pass: links, charts, headings, auth (Sept 14)
+- [x] Add safe same-origin sign-in return paths across all sign-in entry points
+- [x] Add recovery/new-password handling on /auth with pending, expired, and error states
+- [x] Remove duplicate page headings via a shared AppShell header override
+- [x] Fix the trading chart rebuilding (and losing zoom) on every data refresh
+- [x] Add loading/empty/error states and axis+tooltip formatting to crypto and stock charts
+- [x] Regression tests for return-path safety; full test suite and production build pass
+- [ ] OAuth provider credentials and the Stripe webhook signing secret still need owner-supplied values
+
+## Linked accounts, CyberLink Exchange, configurable fees (Sept 14)
+- [ ] Multi-account connection manager: several accounts per provider, active-account
+      selection, connect/reconnect/disconnect states, per-user isolation, server-only credentials
+- [ ] Exchange area with navigation entry point, using existing real market data only
+- [ ] Server-validated fee model: exchange / wallet / bank categories, percent + fixed,
+      min/max, currency, payer, provider+network fees separate, minor-unit maths, quote expiry
+- [ ] Admin fee settings protected by server-enforced roles; live transactions disabled until configured
+- [ ] Draft fee template + linked provider reference section (labelled examples, never active rates)
+- [ ] Blocked: providers not selected, actual CyberLink rates unset, no exchange/bank integration

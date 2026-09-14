@@ -8,6 +8,7 @@ import { Shield } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { signInPath } from "@/lib/authRedirect";
 
 export default function AffiliateLinks() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function AffiliateLinks() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      navigate("/auth");
+      navigate(signInPath());
       return;
     }
 

@@ -34,6 +34,7 @@ import {
   Instagram
 } from "lucide-react";
 import { toast } from "sonner";
+import { signInPath } from "@/lib/authRedirect";
 
 interface StreamStats {
   viewers: number;
@@ -118,7 +119,7 @@ const CyberStreamer = () => {
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      navigate("/auth");
+      navigate(signInPath());
       return;
     }
     await loadPlatformConnections();
@@ -301,11 +302,7 @@ const CyberStreamer = () => {
         )}
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-4xl font-bold text-glow mb-2">Streaming Command Center</h1>
-              <p className="text-muted-foreground">Monitor, stream, and chat - all in one place</p>
-            </div>
+          <div className="flex items-center justify-end mb-4">
             <div className="flex gap-3">
               <Button
                 size="sm"

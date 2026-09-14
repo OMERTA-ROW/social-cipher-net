@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LogIn, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { signInPath } from "@/lib/authRedirect";
 
 /**
  * Sidebar session control. Reads the live auth state so the label always
@@ -25,7 +26,7 @@ const SidebarAuthButton = ({ collapsed }: { collapsed?: boolean }) => {
       await supabase.auth.signOut();
       navigate("/");
     } else {
-      navigate("/auth");
+      navigate(signInPath());
     }
   };
 

@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, Lock } from "lucide-react";
 import ScrollDatePicker from "@/components/ScrollDatePicker";
+import { safeReturnPath } from "@/lib/authRedirect";
+
+type RecoveryState = "none" | "pending" | "ready" | "expired";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -30,10 +33,30 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
+  // Password-recovery state. While a recovery link is being processed we must
+  // never bounce the user to the app: they have not chosen a new password yet.
+  const [recovery, setRecovery] = useState<RecoveryState>(() => {
+    if (typeof window === "undefined") return "none";
+    const hash = window.location.hash ?? "";
+    const requested =
+      new URLSearchParams(window.location.search).get("reset") === "true" ||
+      hash.includes("type=recovery") ||
+      hash.includes("error=");
+    if (!requested) return "none";
+    return hash.includes("error=") ? "expired" : "pending";
+  });
+  const [recoveryError, setRecoveryError] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const hash = new URLSearchParams((window.location.hash ?? "").replace(/^#/, ""));
+    const description = hash.get("error_description");
+    return description ? description.replace(/\+/g, " ") : null;
+  });
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   // Same-origin relative path to return to after auth (used by the OAuth consent flow).
-  const rawNext = searchParams.get("next") ?? "";
-  const nextPath =
-    rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  const nextPath = safeReturnPath(searchParams.get("next"));
+  const inRecovery = recovery !== "none";
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,21 +93,73 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleSetNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (newPassword.length < 6) {
+      toast({ title: "Error", description: "Use at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Error", description: "Both passwords must match.", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setLoading(false);
+
+    if (error) {
+      setRecoveryError(error.message);
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Password updated", description: "You are signed in with your new password." });
+    setNewPassword("");
+    setConfirmPassword("");
+    setRecovery("none");
+    window.history.replaceState(null, "", `${window.location.pathname}`);
+    navigate(nextPath);
+  };
+
   useEffect(() => {
+    let active = true;
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate(nextPath);
+      if (!active) return;
+      if (!session) {
+        // A recovery link that produced no session is expired or already used.
+        if (recovery === "pending") {
+          setRecovery("expired");
+          setRecoveryError((prev) => prev ?? "This reset link is no longer valid. Request a new one.");
+        }
+        return;
       }
+      if (recovery === "pending") {
+        setRecovery("ready");
+        return;
+      }
+      if (recovery === "none") navigate(nextPath);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate(nextPath);
+      if (!active) return;
+      if (event === "PASSWORD_RECOVERY") {
+        setRecovery("ready");
+        return;
       }
+      if (!session) return;
+      if (recovery !== "none") return;
+      navigate(nextPath);
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate, nextPath]);
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [navigate, nextPath, recovery]);
+
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,14 +355,81 @@ const Auth = () => {
       <Card className="w-full max-w-md relative z-10 bg-card/95 backdrop-blur-xl border-primary/20 shadow-2xl shadow-primary/10 animate-fade-in">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-            Welcome to CyberLink
+            {inRecovery ? "Choose a new password" : "Welcome to CyberLink"}
           </CardTitle>
           <CardDescription className="text-base">
-            Enter the digital universe
+            {inRecovery ? "Finish resetting your account password" : "Enter the digital universe"}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {inRecovery ? (
+            <div className="space-y-4">
+              {recovery === "pending" && (
+                <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Checking your reset link…
+                </div>
+              )}
+
+              {recovery === "expired" && (
+                <div className="space-y-4">
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
+                    <Lock className="mx-auto mb-2 h-7 w-7 text-destructive" />
+                    <p className="font-semibold text-destructive">Reset link not valid</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {recoveryError ?? "This reset link has expired or was already used."}
+                    </p>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      setRecovery("none");
+                      setRecoveryError(null);
+                      setShowForgotPassword(true);
+                      window.history.replaceState(null, "", "/auth");
+                    }}
+                  >
+                    Request a new reset link
+                  </Button>
+                </div>
+              )}
+
+              {recovery === "ready" && (
+                <form onSubmit={handleSetNewPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password" className="text-foreground">New password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="bg-background/50 border-primary/30 focus:border-primary transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password" className="text-foreground">Confirm new password</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="bg-background/50 border-primary/30 focus:border-primary transition-all"
+                    />
+                  </div>
+                  {recoveryError && <p className="text-sm text-destructive">{recoveryError}</p>}
+                  <Button type="submit" className="w-full glow-primary" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save new password
+                  </Button>
+                </form>
+              )}
+            </div>
+          ) : (
           <Tabs defaultValue="signin" className="w-full">
+
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
                 Sign In
@@ -507,7 +649,9 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          )}
         </CardContent>
+
       </Card>
     </div>
   );

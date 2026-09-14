@@ -21,6 +21,7 @@ import {
 } from "@/lib/social";
 import ProfilePictureEditor from "@/components/profile/ProfilePictureEditor";
 import { DollarSign, Home, Loader2 } from "lucide-react";
+import { signInPath } from "@/lib/authRedirect";
 
 interface NotificationPrefs {
   notify_likes: boolean;
@@ -63,7 +64,7 @@ const Dashboard = () => {
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      navigate("/auth");
+      navigate(signInPath());
       return;
     }
     setUserId(user.id);
@@ -217,8 +218,6 @@ const Dashboard = () => {
 
   return (
     <AppShell>
-      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
         <p className="text-sm text-muted-foreground">Your creative programs and site activity in one place.</p>
         <div className="flex flex-wrap items-center gap-2">

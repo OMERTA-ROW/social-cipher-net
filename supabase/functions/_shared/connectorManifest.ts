@@ -17,7 +17,8 @@ export type ConnectorCategory =
   | "commerce"
   | "storage"
   | "publishing"
-  | "music";
+  | "music"
+  | "trading";
 
 export type ConnectorMethod =
   | "oauth"
@@ -52,7 +53,8 @@ export type Availability =
   | "review_required" // needs platform app review / business verification
   | "paid_api" // needs a paid API tier
   | "partner_only" // needs a partner agreement
-  | "manual_only"; // no usable API — we prepare a package, the user uploads
+  | "manual_only" // no usable API — we prepare a package, the user uploads
+  | "integration_pending"; // credentials can be stored, the live integration is not built yet
 
 export interface CredentialField {
   key: string;
@@ -618,6 +620,86 @@ export const CONNECTOR_MANIFEST: ConnectorDefinition[] = [
     },
     ratePolicy: light,
     sortOrder: 122,
+  },
+
+  // ---------------- Trading ----------------
+  {
+    id: "kraken_account",
+    name: "Kraken",
+    category: "trading",
+    blurb: "Link a Kraken account with a read-only API key.",
+    glyph: "🐙",
+    methods: ["api_key"],
+    fields: [
+      { key: "api_key", label: "API key", secret: true, helper: "Create a key with query permissions only." },
+      { key: "api_secret", label: "Private key", secret: true },
+    ],
+    capabilities: ["read_analytics"],
+    availability: "integration_pending",
+    availabilityNote:
+      "Keys are stored encrypted on our servers. Balance reading and trading stay switched off until the exchange integration is finished.",
+    ratePolicy: light,
+    docsUrl: "https://docs.kraken.com/rest/",
+    sortOrder: 10,
+  },
+  {
+    id: "coinbase_account",
+    name: "Coinbase Exchange",
+    category: "trading",
+    blurb: "Link a Coinbase Exchange account with a read-only API key.",
+    glyph: "🔷",
+    methods: ["api_key"],
+    fields: [
+      { key: "api_key", label: "API key", secret: true, helper: "Use a view-only key." },
+      { key: "api_secret", label: "API secret", secret: true },
+      { key: "passphrase", label: "Passphrase", secret: true },
+    ],
+    capabilities: ["read_analytics"],
+    availability: "integration_pending",
+    availabilityNote:
+      "Keys are stored encrypted on our servers. Balance reading and trading stay switched off until the exchange integration is finished.",
+    ratePolicy: light,
+    docsUrl: "https://docs.cdp.coinbase.com/exchange/docs/welcome",
+    sortOrder: 11,
+  },
+  {
+    id: "kucoin_account",
+    name: "KuCoin",
+    category: "trading",
+    blurb: "Link a KuCoin account with a read-only API key.",
+    glyph: "🟩",
+    methods: ["api_key"],
+    fields: [
+      { key: "api_key", label: "API key", secret: true },
+      { key: "api_secret", label: "API secret", secret: true },
+      { key: "passphrase", label: "Passphrase", secret: true },
+    ],
+    capabilities: ["read_analytics"],
+    availability: "integration_pending",
+    availabilityNote:
+      "Keys are stored encrypted on our servers. Balance reading and trading stay switched off until the exchange integration is finished.",
+    ratePolicy: light,
+    docsUrl: "https://www.kucoin.com/docs",
+    sortOrder: 12,
+  },
+  {
+    id: "bybit_account",
+    name: "Bybit",
+    category: "trading",
+    blurb: "Link a Bybit account with a read-only API key.",
+    glyph: "🟨",
+    methods: ["api_key"],
+    fields: [
+      { key: "api_key", label: "API key", secret: true },
+      { key: "api_secret", label: "API secret", secret: true },
+    ],
+    capabilities: ["read_analytics"],
+    availability: "integration_pending",
+    availabilityNote:
+      "Keys are stored encrypted on our servers. Balance reading and trading stay switched off until the exchange integration is finished.",
+    ratePolicy: light,
+    docsUrl: "https://bybit-exchange.github.io/docs/",
+    sortOrder: 13,
   },
 ];
 

@@ -69,13 +69,20 @@ const toHeikin = (candles: Candle[]): Candle[] => {
 const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candles, chartType, indicators, height = 260 }, ref) => {
   const holder = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  // Live polling replaces the candle array every refresh. Applying the new data
+  // through this callback keeps the user's pan/zoom instead of rebuilding.
+  const applyRef = useRef<((candles: Candle[]) => void) | null>(null);
+  const fittedRef = useRef(false);
+  const indicatorKey = [...indicators].sort().join(",");
 
   useImperativeHandle(ref, () => ({
     takeScreenshot: () => chartRef.current?.takeScreenshot(true, false) ?? null,
   }), []);
 
+  // Build the chart and its series once per chart type / indicator selection.
   useEffect(() => {
-    if (!holder.current || !candles.length) return;
+    if (!holder.current) return;
+    const activeIndicators = indicatorKey ? (indicatorKey.split(",") as IndicatorKey[]) : [];
     const text = css("--muted-foreground", "#94a3b8");
     const grid = "rgba(148,163,184,0.12)";
     const up = css("--primary", "#38bdf8");
@@ -94,99 +101,124 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
       handleScroll: true,
     });
     chartRef.current = chart;
+    fittedRef.current = false;
 
-    const source = chartType === "heikin" ? toHeikin(candles) : candles;
     const t = (ms: number) => (ms / 1000) as Time;
 
-    if (chartType === "line") {
-      const s = chart.addSeries(LineSeries, { color: up, lineWidth: 2 });
-      s.setData(source.map((c) => ({ time: t(c.time), value: c.close })));
-    } else if (chartType === "bars") {
-      const s = chart.addSeries(BarSeries, { upColor: up, downColor: down });
-      s.setData(source.map((c) => ({ time: t(c.time), open: c.open, high: c.high, low: c.low, close: c.close })));
-    } else {
-      const s = chart.addSeries(CandlestickSeries, {
-        upColor: up,
-        downColor: down,
-        borderUpColor: up,
-        borderDownColor: down,
-        wickUpColor: up,
-        wickDownColor: down,
-      });
-      s.setData(source.map((c) => ({ time: t(c.time), open: c.open, high: c.high, low: c.low, close: c.close })));
-    }
+    const main =
+      chartType === "line"
+        ? chart.addSeries(LineSeries, { color: up, lineWidth: 2 })
+        : chartType === "bars"
+          ? chart.addSeries(BarSeries, { upColor: up, downColor: down })
+          : chart.addSeries(CandlestickSeries, {
+              upColor: up,
+              downColor: down,
+              borderUpColor: up,
+              borderDownColor: down,
+              wickUpColor: up,
+              wickDownColor: down,
+            });
 
-    const closes = source.map((c) => c.close);
+    const overlaySeries = (color: string, width: 1 | 2 = 1) =>
+      chart.addSeries(LineSeries, { color, lineWidth: width, priceLineVisible: false, lastValueVisible: false });
 
-    const overlay = (values: (number | null)[], color: string, width: 1 | 2 = 1) => {
-      const s = chart.addSeries(LineSeries, { color, lineWidth: width, priceLineVisible: false, lastValueVisible: false });
-      s.setData(
+    const sma20 = activeIndicators.includes("sma20") ? overlaySeries("#a78bfa") : null;
+    const sma50 = activeIndicators.includes("sma50") ? overlaySeries("#60a5fa") : null;
+    const ema20 = activeIndicators.includes("ema20") ? overlaySeries("#22d3ee") : null;
+    const bbUpper = activeIndicators.includes("bollinger") ? overlaySeries("rgba(167,139,250,0.55)") : null;
+    const bbLower = activeIndicators.includes("bollinger") ? overlaySeries("rgba(167,139,250,0.55)") : null;
+    const fibSeries = activeIndicators.includes("fib")
+      ? chart.addSeries(LineSeries, { color: "transparent", lastValueVisible: false, priceLineVisible: false })
+      : null;
+    const volume = activeIndicators.includes("volume")
+      ? chart.addSeries(HistogramSeries, {
+          priceFormat: { type: "volume" },
+          priceScaleId: "vol",
+          color: "rgba(56,189,248,0.35)",
+        })
+      : null;
+    if (volume) chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+
+    let fibLines: ReturnType<NonNullable<typeof fibSeries>["createPriceLine"]>[] = [];
+
+    const setOverlay = (series: ReturnType<typeof overlaySeries> | null, source: Candle[], values: (number | null)[]) => {
+      if (!series) return;
+      series.setData(
         values
           .map((v, i) => (v == null ? null : { time: t(source[i].time), value: v }))
           .filter(Boolean) as { time: Time; value: number }[],
       );
     };
 
-    if (indicators.includes("sma20")) overlay(smaSeries(closes, 20), "#a78bfa");
-    if (indicators.includes("sma50")) overlay(smaSeries(closes, 50), "#60a5fa");
-    if (indicators.includes("ema20")) {
-      const e = emaSeries(closes, 20);
-      overlay(closes.map((_, i) => (i < 19 ? null : e[i] ?? null)), "#22d3ee");
-    }
-    if (indicators.includes("bollinger")) {
-      const period = 20;
-      const mid = smaSeries(closes, period);
-      const upper: (number | null)[] = [];
-      const lower: (number | null)[] = [];
-      closes.forEach((_, i) => {
-        const m = mid[i];
-        if (m == null) {
-          upper.push(null);
-          lower.push(null);
-          return;
-        }
-        const slice = closes.slice(i + 1 - period, i + 1);
-        const sd = Math.sqrt(slice.reduce((a, v) => a + (v - m) ** 2, 0) / period);
-        upper.push(m + 2 * sd);
-        lower.push(m - 2 * sd);
-      });
-      overlay(upper, "rgba(167,139,250,0.55)");
-      overlay(lower, "rgba(167,139,250,0.55)");
-    }
-    if (indicators.includes("fib")) {
-      const look = source.slice(-120);
-      const hi = Math.max(...look.map((c) => c.high));
-      const lo = Math.min(...look.map((c) => c.low));
-      const s = chart.addSeries(LineSeries, { color: "transparent", lastValueVisible: false, priceLineVisible: false });
-      s.setData([{ time: t(source[0].time), value: hi }]);
-      [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1].forEach((level) => {
-        s.createPriceLine({
-          price: hi - (hi - lo) * level,
-          color: "rgba(96,165,250,0.45)",
-          lineWidth: 1,
-          lineStyle: 2,
-          axisLabelVisible: true,
-          title: `${(level * 100).toFixed(1)}%`,
-        });
-      });
-    }
-    if (indicators.includes("volume")) {
-      const v = chart.addSeries(HistogramSeries, {
-        priceFormat: { type: "volume" },
-        priceScaleId: "vol",
-        color: "rgba(56,189,248,0.35)",
-      });
-      chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
-      v.setData(
-        source.map((c) => ({
-          time: t(c.time),
-          value: c.volume,
-          color: c.close >= c.open ? "rgba(56,189,248,0.35)" : "rgba(239,68,68,0.35)",
-        })),
-      );
-    }
+    applyRef.current = (next: Candle[]) => {
+      if (!next.length) return;
+      const source = chartType === "heikin" ? toHeikin(next) : next;
 
-    chart.timeScale().fitContent();
+      if (chartType === "line") {
+        main.setData(source.map((c) => ({ time: t(c.time), value: c.close })));
+      } else {
+        main.setData(source.map((c) => ({ time: t(c.time), open: c.open, high: c.high, low: c.low, close: c.close })));
+      }
+
+      const closes = source.map((c) => c.close);
+      setOverlay(sma20, source, smaSeries(closes, 20));
+      setOverlay(sma50, source, smaSeries(closes, 50));
+      if (ema20) {
+        const e = emaSeries(closes, 20);
+        setOverlay(ema20, source, closes.map((_, i) => (i < 19 ? null : e[i] ?? null)));
+      }
+      if (bbUpper && bbLower) {
+        const period = 20;
+        const mid = smaSeries(closes, period);
+        const upper: (number | null)[] = [];
+        const lower: (number | null)[] = [];
+        closes.forEach((_, i) => {
+          const m = mid[i];
+          if (m == null) {
+            upper.push(null);
+            lower.push(null);
+            return;
+          }
+          const slice = closes.slice(i + 1 - period, i + 1);
+          const sd = Math.sqrt(slice.reduce((a, v) => a + (v - m) ** 2, 0) / period);
+          upper.push(m + 2 * sd);
+          lower.push(m - 2 * sd);
+        });
+        setOverlay(bbUpper, source, upper);
+        setOverlay(bbLower, source, lower);
+      }
+      if (fibSeries) {
+        const look = source.slice(-120);
+        const hi = Math.max(...look.map((c) => c.high));
+        const lo = Math.min(...look.map((c) => c.low));
+        fibLines.forEach((line) => fibSeries.removePriceLine(line));
+        fibSeries.setData([{ time: t(source[0].time), value: hi }]);
+        fibLines = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1].map((level) =>
+          fibSeries.createPriceLine({
+            price: hi - (hi - lo) * level,
+            color: "rgba(96,165,250,0.45)",
+            lineWidth: 1,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: `${(level * 100).toFixed(1)}%`,
+          }),
+        );
+      }
+      if (volume) {
+        volume.setData(
+          source.map((c) => ({
+            time: t(c.time),
+            value: c.volume,
+            color: c.close >= c.open ? "rgba(56,189,248,0.35)" : "rgba(239,68,68,0.35)",
+          })),
+        );
+      }
+
+      if (!fittedRef.current) {
+        chart.timeScale().fitContent();
+        fittedRef.current = true;
+      }
+    };
 
     let redrawFrame = 0;
     // Resize through the chart API. Chromium can leave the library's backing
@@ -216,7 +248,6 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
           chart.resize(Math.max(1, w - 1), h, true);
           requestAnimationFrame(() => {
             chart.resize(w, h, true);
-            chart.timeScale().fitContent();
           });
         });
       }
@@ -229,14 +260,20 @@ const TradingChart = forwardRef<TradingChartHandle, TradingChartProps>(({ candle
       cancelAnimationFrame(raf);
       cancelAnimationFrame(redrawFrame);
       ro.disconnect();
+      applyRef.current = null;
       chart.remove();
       chartRef.current = null;
     };
+  }, [chartType, indicatorKey, height]);
 
-  }, [candles, chartType, indicators]);
+  // Feed live data in without tearing the chart down.
+  useEffect(() => {
+    applyRef.current?.(candles);
+  }, [candles, chartType, indicatorKey]);
 
   return <div ref={holder} className="w-full" style={{ height }} />;
 });
+
 
 TradingChart.displayName = "TradingChart";
 
