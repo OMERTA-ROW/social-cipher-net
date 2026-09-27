@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import FeedShopTab from "@/components/feed/FeedShopTab";
 import FeedMarketTab from "@/components/feed/FeedMarketTab";
 
