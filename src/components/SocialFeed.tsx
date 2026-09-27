@@ -59,6 +59,10 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Sign-in, sign-out and session restore all resolve auth; a changed
+      // user id re-runs the feed effect, so the feed loads automatically.
+      // Token refreshes keep the same id and don't trigger a reload.
+      setAuthReady(true);
       setUserId(session?.user?.id ?? null);
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
