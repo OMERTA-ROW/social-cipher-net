@@ -14,16 +14,16 @@ describe("provider fee registry", () => {
   it("never resolves a dynamic cost to zero", () => {
     const result = resolveProviderFee("kraken.crypto_withdrawal");
     expect(result.resolved).toBe(false);
-    if (!result.resolved) {
-      expect(result.missing.length).toBeGreaterThan(0);
-      expect(result.missing.join(" ")).toMatch(/quote|asset|network/i);
-    }
+    if (result.resolved) throw new Error("expected the dynamic cost to stay unresolved");
+    expect(result.missing.length).toBeGreaterThan(0);
+    expect(result.missing.join(" ")).toMatch(/quote|asset|network/i);
   });
 
   it("stays unresolved for Stripe until the business country is known", () => {
     const result = resolveProviderFee("stripe.checkout.subscriptions", { currency: "USD" });
     expect(result.resolved).toBe(false);
-    if (!result.resolved) expect(result.missing.join(" ")).toMatch(/country/i);
+    if (result.resolved) throw new Error("expected the Stripe fee to stay unresolved");
+    expect(result.missing.join(" ")).toMatch(/country/i);
   });
 
   it("lets an authenticated quote override the published schedule", () => {
