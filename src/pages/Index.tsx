@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
 import CreatePostDialog from "@/components/CreatePostDialog";
+import PostComposer from "@/components/post/PostComposer";
 import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import { QualificationProgress } from "@/components/QualificationProgress";
 import StoriesBar from "@/components/StoriesBar";
@@ -201,9 +202,8 @@ const Index = () => {
             </div>
           )}
           
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-foreground mb-2">Feed</h2>
-            <p className="text-muted-foreground">Stay connected with the cyber community</p>
+          <div className="mb-6">
+            <PostComposer onPublished={() => setFeedRefreshKey((k) => k + 1)} />
           </div>
 
           <SocialFeed refreshKey={feedRefreshKey} />

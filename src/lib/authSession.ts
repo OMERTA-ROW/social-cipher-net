@@ -62,5 +62,5 @@ export function feedLoadAction(authReady: boolean, userId: string | null, tab: F
 export function feedErrorMessage(paging = false): string {
   return paging
     ? "Couldn't load more posts. Please try again in a moment."
-    : "Couldn't load the feed. Please try again in a moment.";
+    : "Couldn't load posts. Please try again in a moment.";
 }

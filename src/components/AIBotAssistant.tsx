@@ -444,7 +444,7 @@ const AIBotAssistant = () => {
       "security": { path: "/security", message: "Opening Security Center..." },
       "privacy": { path: "/security", message: "Opening Security Center..." },
       "home": { path: "/", message: "Going to Home..." },
-      "feed": { path: "/", message: "Going to Feed..." }
+      "feed": { path: "/", message: "Going Home..." }
     };
 
     const command = Object.keys(commandMap).find(cmd => 

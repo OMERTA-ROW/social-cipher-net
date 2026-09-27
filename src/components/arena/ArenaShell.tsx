@@ -31,7 +31,7 @@ interface ArenaShellProps {
 }
 
 const EXITS = [
-  { label: "Feed", to: "/", icon: <Home className="w-4 h-4" /> },
+  { label: "Home", to: "/", icon: <Home className="w-4 h-4" /> },
   { label: "Studio", to: "/studio", icon: <Radio className="w-4 h-4" /> },
   { label: "Theater", to: "/theater", icon: <Clapperboard className="w-4 h-4" /> },
   { label: "Connectors", to: "/connectors", icon: <Plug className="w-4 h-4" /> },
