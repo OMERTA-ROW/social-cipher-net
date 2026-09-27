@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FeedShopTab from "@/components/feed/FeedShopTab";
 import FeedMarketTab from "@/components/feed/FeedMarketTab";
@@ -32,6 +33,11 @@ interface SocialFeedProps {
 const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const [tab, setTab] = useState<FeedTab>("for-you");
   const [userId, setUserId] = useState<string | null>(null);
+  // True once the auth session has been restored (or confirmed absent).
+  // The first feed load waits for this — the ranked-feed function is
+  // signed-in-only, and firing it before the session is restored (or as
+  // anon) is rejected by the database with a permission error.
+  const [authReady, setAuthReady] = useState(false);
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -48,7 +54,16 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   const { data: ads } = useAdSlot(tab === "discover" ? "discovery" : tab === "shop" ? "shop" : tab === "market" ? "market" : "feed");
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUserId(user?.id ?? null));
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthReady(true);
+      setUserId(session?.user?.id ?? null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const isPostTab = tab === "for-you" || tab === "following" || tab === "discover";
@@ -99,14 +114,21 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       await applyProducts(page.posts);
     } catch (error: any) {
       reportIssue("feed_load_failed", error, { surface: "social_feed", tab });
-      toast.error(error.message || "Failed to load feed");
+      toast.error("Couldn't load the feed. Please try again in a moment.");
     } finally {
       setLoading(false);
     }
   }, [applyAccess, applyProducts, applyReposts, tab, userId]);
 
 
-  useEffect(() => { load(); }, [load, refreshKey]);
+  useEffect(() => {
+    if (!authReady) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    load();
+  }, [authReady, userId, load, refreshKey]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || !isPostTab) return;
@@ -133,7 +155,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       await applyProducts(page.posts);
     } catch (error: any) {
       reportIssue("feed_load_failed", error, { surface: "social_feed", tab, paging: true });
-      toast.error(error.message || "Failed to load more posts");
+      toast.error("Couldn't load more posts. Please try again in a moment.");
     } finally {
       setLoadingMore(false);
     }
@@ -173,6 +195,16 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
           <PostCardSkeleton />
           <PostCardSkeleton />
           <PostCardSkeleton />
+        </div>
+      );
+    }
+    if (!userId) {
+      return (
+        <div className="text-center py-12 space-y-3 border border-dashed border-border rounded-lg">
+          <p className="text-muted-foreground">Sign in to see your feed.</p>
+          <Button asChild size="sm">
+            <Link to="/auth">Sign in</Link>
+          </Button>
         </div>
       );
     }
