@@ -167,7 +167,7 @@ const Theater = () => {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <main className="container mx-auto px-4 pt-24 pb-16 max-w-5xl">
+      <main className="container mx-auto px-4 pb-16 max-w-5xl">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-muted-foreground">

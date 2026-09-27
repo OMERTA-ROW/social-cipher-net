@@ -285,7 +285,7 @@ const CyberStreamer = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-transparent">
-        <div className="container mx-auto px-4 pt-24 pb-12">
+        <div className="container mx-auto px-4 pb-12">
           <div className="text-center">Loading...</div>
         </div>
       </div>
@@ -294,7 +294,7 @@ const CyberStreamer = () => {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <div className="container mx-auto px-4 pt-24 pb-12 max-w-7xl">
+      <div className="container mx-auto px-4 pb-12 max-w-7xl">
         {!adsSuppressed && streamAds?.[0] && (
           <div className="mb-6">
             <SponsoredCard creative={streamAds[0]} placement="stream" />

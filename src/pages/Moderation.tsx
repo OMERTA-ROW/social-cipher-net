@@ -120,7 +120,7 @@ const Moderation = () => {
     return (
       <div className="min-h-screen bg-transparent">
         <Navigation />
-        <main className="container mx-auto px-4 pt-24 flex justify-center">
+        <main className="container mx-auto px-4 flex justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </main>
       </div>
@@ -131,7 +131,7 @@ const Moderation = () => {
     return (
       <div className="min-h-screen bg-transparent">
         <Navigation />
-        <main className="container mx-auto px-4 pt-24 max-w-xl">
+        <main className="container mx-auto px-4 max-w-xl">
           <Card>
             <CardHeader>
               <CardTitle>Reviewers only</CardTitle>
@@ -148,7 +148,7 @@ const Moderation = () => {
   return (
     <div className="min-h-screen bg-transparent">
       <Navigation />
-      <main className="container mx-auto px-4 pt-24 pb-16 max-w-4xl">
+      <main className="container mx-auto px-4 pb-16 max-w-4xl">
         <header className="mb-6 flex items-center gap-3">
           <ShieldAlert className="h-8 w-8 text-primary" />
           <p className="text-sm text-muted-foreground">
