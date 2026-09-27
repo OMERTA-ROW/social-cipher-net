@@ -210,7 +210,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
     if (!userId) {
       return (
         <div className="text-center py-12 space-y-3 border border-dashed border-border rounded-lg">
-          <p className="text-muted-foreground">Sign in to see your feed.</p>
+          <p className="text-muted-foreground">Sign in to see posts.</p>
           <Button asChild size="sm">
             <Link to="/auth">Sign in</Link>
           </Button>
@@ -221,7 +221,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       return (
         <div className="text-center py-12 text-muted-foreground border border-dashed border-border rounded-lg">
           {tab === "following"
-            ? "Your signal is quiet. Follow creators from Discover to fill this feed."
+            ? "Your signal is quiet. Follow creators from Discovery to see their posts here."
             : "No transmissions yet. Be the first to post."}
         </div>
       );
