@@ -14,6 +14,7 @@ import { resolvePaidAccess } from "@/lib/paymentAccess";
 import SponsoredCard from "@/components/ads/SponsoredCard";
 import { useAdSlot, useAdsSuppressed, type AdPlacement } from "@/hooks/useAdSlot";
 import { reportIssue } from "@/lib/monitoring";
+import { feedErrorMessage, feedLoadAction } from "@/lib/authSession";
 import { fetchPostProducts, type StoreProduct } from "@/lib/commerce";
 import {
   SocialPost,
@@ -115,7 +116,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       await applyProducts(page.posts);
     } catch (error: any) {
       reportIssue("feed_load_failed", error, { surface: "social_feed", tab });
-      toast.error("Couldn't load the feed. Please try again in a moment.");
+      toast.error(feedErrorMessage());
     } finally {
       setLoading(false);
     }
@@ -123,16 +124,19 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
 
 
   useEffect(() => {
-    if (!authReady) return;
-    if (!userId) {
+    const action = feedLoadAction(authReady, userId, tab);
+    if (action === "wait" || action === "skip") return;
+    if (action === "prompt-sign-in") {
+      setPosts([]);
+      setHasMore(false);
       setLoading(false);
       return;
     }
     load();
-  }, [authReady, userId, load, refreshKey]);
+  }, [authReady, userId, tab, load, refreshKey]);
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore || !isPostTab) return;
+    if (loadingMore || !hasMore || !isPostTab || !userId) return;
     setLoadingMore(true);
     try {
       let page: { posts: SocialPost[]; nextCursor?: string | null; hasMore: boolean };
@@ -156,7 +160,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
       await applyProducts(page.posts);
     } catch (error: any) {
       reportIssue("feed_load_failed", error, { surface: "social_feed", tab, paging: true });
-      toast.error("Couldn't load more posts. Please try again in a moment.");
+      toast.error(feedErrorMessage(true));
     } finally {
       setLoadingMore(false);
     }
