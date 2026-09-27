@@ -1,4 +1,5 @@
 import { ReactNode, createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from "react";
+import GlobalComposer from "@/components/layout/GlobalComposer";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -413,7 +414,10 @@ const AppShellFrame = ({
                   </div>
                 </header>
               )}
-              <div className="app-shell-page-body">{children}</div>
+              <div className="app-shell-page-body">
+                <GlobalComposer />
+                {children}
+              </div>
             </div>
           </main>
         </div>
