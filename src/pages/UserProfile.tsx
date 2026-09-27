@@ -253,7 +253,7 @@ const UserProfile = () => {
     <div className="min-h-screen">
       <MatrixOverlay />
       <SnipeLayer targetUserId={profile?.id} />
-      <div className="container mx-auto px-4 pt-20 pb-8">
+      <div className="container mx-auto px-4 pb-8">
         <div className="flex gap-6">
           {/* Friends Sidebar */}
           <aside className="hidden lg:block w-64 space-y-4">

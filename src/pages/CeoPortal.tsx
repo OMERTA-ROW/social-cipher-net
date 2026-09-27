@@ -22,7 +22,7 @@ const CeoPortal = () => {
   if (!isCeo) return <Navigate to="/" replace />;
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
+    <div className="min-h-screen pb-16">
       <div className="max-w-7xl mx-auto px-4 space-y-6">
         <PlatformRevenueDashboard />
         <CyberLinkBrainDashboard />

@@ -46,7 +46,7 @@ const Miners = () => {
     return (
       <div className="min-h-screen bg-transparent">
         <Navigation />
-        <div className="container mx-auto px-4 pt-24">
+        <div className="container mx-auto px-4">
           <div className="text-center">
             <p className="text-muted-foreground">Loading...</p>
           </div>
@@ -59,7 +59,7 @@ const Miners = () => {
     <div className="min-h-screen bg-transparent">
       <Navigation />
       
-      <div className="container mx-auto px-4 pt-24 pb-12">
+      <div className="container mx-auto px-4 pb-12">
         <div className="max-w-7xl mx-auto">
 
           <Alert className="mb-6 border-primary/50 bg-primary/10">

@@ -149,7 +149,6 @@ const Verification = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <BadgeCheck className="w-16 h-16 text-primary mx-auto mb-4" />
-            <h2 className="text-4xl font-bold mb-4 text-foreground">Get Verified</h2>
             <p className="text-muted-foreground text-lg">
               Stand out with a verification badge next to your name
             </p>

@@ -108,7 +108,7 @@ const Security = () => {
     return (
       <div className="min-h-screen bg-transparent">
         <Navigation />
-        <div className="container mx-auto px-4 pt-24 pb-12">
+        <div className="container mx-auto px-4 pb-12">
           <div className="text-center">Loading...</div>
         </div>
       </div>
@@ -118,11 +118,7 @@ const Security = () => {
   return (
     <div className="min-h-screen bg-transparent">
       <Navigation />
-      <div className="container mx-auto px-4 pt-24 pb-12 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-glow mb-2">Security Center</h1>
-          <p className="text-muted-foreground">Manage your account security and privacy</p>
-        </div>
+      <div className="container mx-auto px-4 pb-12 max-w-4xl">
 
         <Tabs defaultValue="security" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">

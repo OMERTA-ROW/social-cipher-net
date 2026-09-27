@@ -146,12 +146,9 @@ const Advertise = () => {
     <div className="min-h-screen bg-transparent">
       <Navigation />
       <div className="container mx-auto px-4 py-8 space-y-6">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">Advertise on Cyber Link</h1>
-          <p className="text-muted-foreground">
-            Native placements in the feed, Discovery, Shop, Market, live streams and the movie theater.
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Native placements in the feed, Discovery, Shop, Market, live streams and the movie theater.
+        </p>
 
         {!advertiser ? (
           <Card className="max-w-xl">

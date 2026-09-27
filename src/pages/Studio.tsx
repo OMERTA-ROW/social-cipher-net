@@ -201,7 +201,7 @@ const Studio = () => {
     <div className="min-h-screen bg-transparent">
       {currentStream && <OmegaChat streamId={currentStream.id} streamerId={currentStream.user_id} />}
       
-      <main className="container mx-auto px-4 pt-20 pb-8">
+      <main className="container mx-auto px-4 pb-8">
         <div className="flex items-center justify-end mb-8">
           <div className="flex items-center gap-4 flex-wrap">
             {currentStream && (
