@@ -11,6 +11,7 @@ import GoLiveButton from "@/components/live/GoLiveButton";
 import LinkPreview from "@/components/post/LinkPreview";
 import { extractUrls } from "@/lib/links";
 import { attachProductToPost } from "@/lib/commerce";
+import { clearDraft, loadDraft, saveDraft } from "@/lib/postDraft";
 
 interface Props {
   avatarUrl?: string | null;
@@ -24,11 +25,16 @@ interface Props {
  * separate section beneath it. Publishes straight to the public feed.
  */
 const PostComposer = ({ avatarUrl, displayName, onPublished }: Props) => {
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(() => loadDraft().content);
   const [posting, setPosting] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<
     Array<{ file: File; preview: string; type: "image" | "video" }>
-  >([]);
+  >(() => loadDraft().media);
+
+  // Keep the unfinished post so it survives moving between pages.
+  useEffect(() => {
+    saveDraft({ content, media: mediaFiles });
+  }, [content, mediaFiles]);
 
   const [myProducts, setMyProducts] = useState<Array<{ id: string; title: string }>>([]);
   const [productId, setProductId] = useState<string>("");
@@ -119,6 +125,7 @@ const PostComposer = ({ avatarUrl, displayName, onPublished }: Props) => {
 
       setContent("");
       setMediaFiles([]);
+      clearDraft();
       setProductId("");
       toast.success("Posted to your feed");
       onPublished?.(post.id);
@@ -153,6 +160,7 @@ const PostComposer = ({ avatarUrl, displayName, onPublished }: Props) => {
           {/* Media upload stays its own section, as before. */}
           <div className="border-t border-border/40 pt-3">
             <MediaUpload
+              value={mediaFiles}
               onFilesChange={setMediaFiles}
               maxFiles={6}
               extraActions={<GoLiveButton section="main" />}
@@ -180,7 +188,10 @@ const PostComposer = ({ avatarUrl, displayName, onPublished }: Props) => {
             </div>
           )}
 
-          <div className="flex justify-end">
+          <div className="flex items-center justify-end gap-3">
+            {(content.trim() || mediaFiles.length > 0) && (
+              <span className="text-xs text-muted-foreground">Draft saved</span>
+            )}
             <Button onClick={publish} disabled={posting} className="gap-2 glow-primary">
               {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Post
