@@ -67,6 +67,10 @@
 - [ ] Inline post cart appears on home feed only; posts in their own sections stay plain.
 - [ ] Movie Theater community: hosted watch sessions + host live stream, open posting, comments, feeds into home feed, drag/pin/scroll windows, format-agnostic (movies, podcasts, discussions).
 
+## Composer media + draft persistence (Sept 28)
+- [ ] Add image and video attachments to the post composer on every page
+- [ ] Persist an unfinished post draft while navigating between pages so it can be published later
+
 ## Dashboard and profile menu update (Sept 12)
 - [x] Remove duplicated dashboard/header counters and move live totals into the account dropdown
 - [x] Remove email from the account dropdown; keep name, handle, profile, settings, and sign out
