@@ -140,7 +140,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
   }, [authReady, userId, tab, load, refreshKey]);
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore || !isPostTab || !userId) return;
+    if (loadingMore || !hasMore || !isPostTab || (!userId && tab !== "discover")) return;
     setLoadingMore(true);
     try {
       let page: { posts: SocialPost[]; nextCursor?: string | null; hasMore: boolean };
@@ -207,7 +207,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
         </div>
       );
     }
-    if (!userId) {
+    if (!userId && tab !== "discover") {
       return (
         <div className="text-center py-12 space-y-3 border border-dashed border-border rounded-lg">
           <p className="text-muted-foreground">Sign in to see posts.</p>

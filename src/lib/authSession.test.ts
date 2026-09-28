@@ -48,6 +48,8 @@ describe("For You feed gating", () => {
   });
   it("skips the ranked RPC for signed-out visitors and prompts sign-in", () => {
     expect(feedLoadAction(true, null, "for-you")).toBe("prompt-sign-in");
+    expect(feedLoadAction(true, null, "following")).toBe("prompt-sign-in");
+    expect(feedLoadAction(true, null, "discover")).toBe("load");
   });
   it("loads once a session exists", () => {
     expect(feedLoadAction(true, "u1", "for-you")).toBe("load");

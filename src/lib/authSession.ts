@@ -54,7 +54,8 @@ export type FeedAction = "wait" | "prompt-sign-in" | "load" | "skip";
 export function feedLoadAction(authReady: boolean, userId: string | null, tab: FeedTabKind): FeedAction {
   if (tab === "shop" || tab === "market") return "skip";
   if (!authReady) return "wait";
-  if (!userId) return "prompt-sign-in";
+  // Discovery is a public feed; only For You (ranked RPC) and Following need a session.
+  if (!userId) return tab === "discover" ? "load" : "prompt-sign-in";
   return "load";
 }
 
