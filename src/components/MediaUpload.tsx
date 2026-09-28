@@ -14,10 +14,14 @@ interface MediaUploadProps {
   maxFiles?: number;
   /** Extra buttons rendered in the same action row (e.g. Go Live). */
   extraActions?: ReactNode;
+  /** Optional controlled value (lets a parent restore or clear attachments). */
+  value?: MediaFile[];
 }
 
-const MediaUpload = ({ onFilesChange, maxFiles = 10, extraActions }: MediaUploadProps) => {
-  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+const MediaUpload = ({ onFilesChange, maxFiles = 10, extraActions, value }: MediaUploadProps) => {
+  const [internalFiles, setInternalFiles] = useState<MediaFile[]>([]);
+  const mediaFiles = value ?? internalFiles;
+  const setMediaFiles = (f: MediaFile[]) => { if (!value) setInternalFiles(f); };
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,7 +31,7 @@ const MediaUpload = ({ onFilesChange, maxFiles = 10, extraActions }: MediaUpload
     const newFiles: MediaFile[] = [];
     const allowedTypes = type === 'image' 
       ? ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-      : ['video/mp4', 'video/webm', 'video/ogg'];
+      : ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
 
     Array.from(files).forEach((file) => {
       if (!allowedTypes.includes(file.type)) {
@@ -69,7 +73,7 @@ const MediaUpload = ({ onFilesChange, maxFiles = 10, extraActions }: MediaUpload
         <input
           ref={videoInputRef}
           type="file"
-          accept="video/mp4,video/webm,video/ogg"
+          accept="video/mp4,video/webm,video/ogg,video/quicktime"
           multiple
           className="hidden"
           onChange={(e) => handleFileSelect(e.target.files, 'video')}
