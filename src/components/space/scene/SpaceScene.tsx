@@ -69,7 +69,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
         <>
           <Galaxy full={full} boost={boost} />
           <DeepSky full={full} />
-          <Starfield full={full} dpr={dpr} boost={boost} />
+          <Starfield full={full} dpr={dpr} boost={boost} animate={animate} />
           <AsteroidField animate={animate} full={full} />
           {debug && <AsteroidDebug />}
           <Planets full={full} animate={animate} />

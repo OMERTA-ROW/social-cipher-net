@@ -6,6 +6,11 @@ import MiningVessel from "./MiningVessel";
 import { Draco, Grey } from "./AlienCrew";
 import { oreMaps, plateMaps, rockMaps } from "./procTextures";
 import { MINING_SHIP_SCALE, missionAt, shipTelemetry } from "./shipTelemetry";
+import Starfield from "./Starfield";
+import DeepSky from "./DeepSky";
+import Sun from "./Sun";
+import CosmicAnomalies, { SolarFlares } from "../CosmicAnomalies";
+import { SPACE_TEXTURE_URLS, useLazyTexture } from "../realTextures";
 
 /**
  * The alien mining world: a real-time surface where the vessel travels in,
@@ -416,8 +421,9 @@ const skyMaterial = () =>
     `,
   });
 
-const AlienSky = () => {
+const AlienSky = ({ animate, full }: { animate: boolean; full: boolean }) => {
   const mat = useMemo(skyMaterial, []);
+  const giantMap = useLazyTexture(SPACE_TEXTURE_URLS.Jupiter, { delay: full ? 220 : 500, anisotropy: full ? 4 : 1 });
   return (
     <group>
       <mesh material={mat} renderOrder={-1}>
@@ -426,13 +432,12 @@ const AlienSky = () => {
       {/* gas giant hanging over the horizon */}
       <mesh position={[-900, 300, -1500]}>
         <sphereGeometry args={[300, 48, 32]} />
-        <meshStandardMaterial color="#7a5238" emissive="#40230f" emissiveIntensity={0.7} roughness={1} fog={false} />
+        <meshStandardMaterial map={giantMap ?? undefined} color={giantMap ? "#ffffff" : "#7a5238"} roughness={0.82} metalness={0} fog={false} />
       </mesh>
-      {/* distant sun */}
-      <mesh position={[1000, 420, -1400]}>
-        <sphereGeometry args={[60, 24, 18]} />
-        <meshBasicMaterial color="#ffe3b4" toneMapped={false} fog={false} />
-      </mesh>
+      <group position={[1000, 420, -1400]} scale={3.75}>
+        <Sun full={full} animate={animate} />
+        <SolarFlares radius={16} animate={animate} full={full} />
+      </group>
     </group>
   );
 };
@@ -472,7 +477,10 @@ const MiningWorld = ({ animate, full }: { animate: boolean; full: boolean }) => 
   return (
     <group>
       <SceneEnvironment />
-      <AlienSky />
+      <DeepSky full={full} />
+      <Starfield full={full} dpr={full ? 1.5 : 1} boost={0.7} animate={animate} />
+      <CosmicAnomalies scale={2.5} animate={animate} full={full} local={false} />
+      <AlienSky animate={animate} full={full} />
       <hemisphereLight args={["#6e7f9c", "#3a2b1e", 1.15]} />
       <directionalLight position={[900, 420, -600]} intensity={2.6} color="#ffdcb4" castShadow={false} />
       <ambientLight intensity={0.35} />

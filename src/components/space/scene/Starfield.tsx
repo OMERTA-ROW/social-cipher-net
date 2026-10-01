@@ -119,6 +119,7 @@ const Shell = ({
   spin,
   dpr,
   boost,
+  animate,
 }: {
   count: number;
   inner: number;
@@ -127,6 +128,7 @@ const Shell = ({
   spin: number;
   dpr: number;
   boost: number;
+  animate: boolean;
 }) => {
   const mat = useRef<THREE.ShaderMaterial>(null);
   const group = useRef<THREE.Points>(null);
@@ -143,12 +145,14 @@ const Shell = ({
   );
   uniforms.uPixelRatio.value = dpr;
 
-  useFrame((state, delta) => {
+  const time = useRef(0);
+  useFrame((_, delta) => {
+    if (animate) time.current += Math.min(delta, 0.05);
     if (mat.current) {
-      mat.current.uniforms.uTime.value = state.clock.elapsedTime;
+      mat.current.uniforms.uTime.value = time.current;
       mat.current.uniforms.uBoost.value = boost;
     }
-    if (group.current) group.current.rotation.y += delta * spin;
+    if (animate && group.current) group.current.rotation.y += Math.min(delta, 0.05) * spin;
   });
 
   return (
@@ -166,16 +170,16 @@ const Shell = ({
   );
 };
 
-const Starfield = ({ full, dpr, boost }: { full: boolean; dpr: number; boost: number }) => {
+const Starfield = ({ full, dpr, boost, animate = true }: { full: boolean; dpr: number; boost: number; animate?: boolean }) => {
   const scale = full ? 1 : 0.2;
   return (
     <group>
       {/* near field: physically inside the flight volume, so travel gives real parallax */}
-      <Shell count={Math.round(7000 * scale)} inner={260} outer={620} sizeScale={1.32} spin={0.00065} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(11000 * scale)} inner={900} outer={1900} sizeScale={1.02} spin={0.0003} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(13000 * scale)} inner={2500} outer={4400} sizeScale={0.82} spin={0.00013} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(13000 * scale)} inner={5800} outer={9000} sizeScale={0.7} spin={0.00005} dpr={dpr} boost={boost} />
-      <Shell count={Math.round(11000 * scale)} inner={12000} outer={18000} sizeScale={0.62} spin={0.00002} dpr={dpr} boost={boost} />
+      <Shell count={Math.round(7000 * scale)} inner={260} outer={620} sizeScale={1.32} spin={0.00065} dpr={dpr} boost={boost} animate={animate} />
+      <Shell count={Math.round(11000 * scale)} inner={900} outer={1900} sizeScale={1.02} spin={0.0003} dpr={dpr} boost={boost} animate={animate} />
+      <Shell count={Math.round(13000 * scale)} inner={2500} outer={4400} sizeScale={0.82} spin={0.00013} dpr={dpr} boost={boost} animate={animate} />
+      <Shell count={Math.round(13000 * scale)} inner={5800} outer={9000} sizeScale={0.7} spin={0.00005} dpr={dpr} boost={boost} animate={animate} />
+      <Shell count={Math.round(11000 * scale)} inner={12000} outer={18000} sizeScale={0.62} spin={0.00002} dpr={dpr} boost={boost} animate={animate} />
     </group>
   );
 };
