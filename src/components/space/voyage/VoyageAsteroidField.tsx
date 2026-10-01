@@ -117,7 +117,7 @@ const AsteroidBatch = ({ count, offset }: AsteroidBatchProps) => {
       instanced.setColorAt(index, color);
     }
     instanced.instanceMatrix.needsUpdate = true;
-    instanced.instanceColor?.needsUpdate = true;
+    if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true;
   }, [count, offset]);
 
   useEffect(() => () => {
