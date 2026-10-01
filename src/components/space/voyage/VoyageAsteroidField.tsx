@@ -1,6 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { asteroidMaps } from "../scene/procTextures";
 
 const BELT_RADIUS = 38;
 const VARIANTS = 4;
@@ -11,49 +12,6 @@ const seeded = (seed: number) => {
     value = (value * 1664525 + 1013904223) >>> 0;
     return value / 4294967296;
   };
-};
-
-const makeRegolithMap = (seed: number) => {
-  const random = seeded(seed);
-  const size = 256;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const context = canvas.getContext("2d");
-  if (!context) return null;
-
-  const base = 74 + Math.floor(random() * 20);
-  context.fillStyle = `rgb(${base + 7},${base + 3},${base})`;
-  context.fillRect(0, 0, size, size);
-  for (let index = 0; index < 3400; index += 1) {
-    const shade = Math.floor(35 + random() * 90);
-    const alpha = 0.08 + random() * 0.22;
-    context.fillStyle = `rgba(${shade + 8},${shade + 5},${shade},${alpha})`;
-    const radius = 0.3 + random() * 2.4;
-    context.beginPath();
-    context.arc(random() * size, random() * size, radius, 0, Math.PI * 2);
-    context.fill();
-  }
-  for (let index = 0; index < 34; index += 1) {
-    const x = random() * size;
-    const y = random() * size;
-    const radius = 2 + random() * 13;
-    const crater = context.createRadialGradient(x, y, radius * 0.1, x, y, radius);
-    crater.addColorStop(0, "rgba(15,14,13,0.62)");
-    crater.addColorStop(0.68, "rgba(35,32,29,0.35)");
-    crater.addColorStop(0.84, "rgba(155,145,132,0.20)");
-    crater.addColorStop(1, "rgba(0,0,0,0)");
-    context.fillStyle = crater;
-    context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2);
-    context.fill();
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.anisotropy = 4;
-  return texture;
 };
 
 const makeRockGeometry = (seed: number) => {
@@ -91,7 +49,7 @@ interface AsteroidBatchProps {
 const AsteroidBatch = ({ count, offset }: AsteroidBatchProps) => {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const geometry = useMemo(() => makeRockGeometry(811 + offset * 97), [offset]);
-  const map = useMemo(() => makeRegolithMap(1291 + offset * 131), [offset]);
+  const maps = useMemo(() => asteroidMaps(offset), [offset]);
 
   useEffect(() => {
     const instanced = mesh.current;
@@ -112,7 +70,7 @@ const AsteroidBatch = ({ count, offset }: AsteroidBatchProps) => {
       transform.scale.set(scale * (0.72 + random() * 0.7), scale * (0.68 + random() * 0.55), scale);
       transform.updateMatrix();
       instanced.setMatrixAt(index, transform.matrix);
-      const value = 0.34 + random() * 0.23;
+      const value = 0.7 + random() * 0.3;
       color.setRGB(value * 1.04, value, value * 0.94);
       instanced.setColorAt(index, color);
     }
@@ -122,19 +80,19 @@ const AsteroidBatch = ({ count, offset }: AsteroidBatchProps) => {
 
   useEffect(() => () => {
     geometry.dispose();
-    map?.dispose();
-  }, [geometry, map]);
+  }, [geometry]);
 
   return (
     <instancedMesh ref={mesh} args={[geometry, undefined, count]} castShadow receiveShadow>
       <meshStandardMaterial
-        map={map ?? undefined}
-        color="#b0aaa2"
+        map={maps.map}
+        normalMap={maps.normalMap}
+        normalScale={new THREE.Vector2(1.4, 1.4)}
+        roughnessMap={maps.roughnessMap}
+        color="#ffffff"
         vertexColors
-        roughness={0.98}
-        metalness={0}
-        bumpMap={map ?? undefined}
-        bumpScale={0.055}
+        roughness={1}
+        metalness={0.02}
       />
     </instancedMesh>
   );
