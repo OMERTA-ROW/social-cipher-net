@@ -421,7 +421,7 @@ const SolarSystemVoyage = () => {
             />
           ))}
           <VoyageAsteroidField count={preset.asteroids} animate={sceneAnimated} />
-          <CosmicAnomalies scale={10} animate={!reducedMotion} full={activeTier !== "low"} />
+          <CosmicAnomalies scale={10} animate={sceneAnimated} full={activeTier !== "low"} />
 
           {/* Harvester fleet */}
           <HarvesterBot offset={0} color="#8fb4c9" personaLabel="Zozo-01" animate={sceneAnimated} />
