@@ -1,6 +1,6 @@
 import { Suspense, useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { Html, OrbitControls } from "@react-three/drei";
 import { Bloom, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
@@ -363,6 +363,15 @@ const SolarSystemVoyage = () => {
   const effectiveIntensity: IntensityName =
     autoIntensity ? (speed > 3 ? "hyper" : preset.intensity) : preset.intensity;
 
+  const reducedMotion = useMemo(prefersReducedMotion, []);
+  const sceneAnimated = travelling && !reducedMotion;
+  const paletteVeil = {
+    cosmic: "bg-primary/5",
+    draco: "bg-destructive/5",
+    brain: "bg-accent/5",
+    solar: "bg-secondary/5",
+  }[palette];
+
 
   const tRef = useRef(0);
   const speedRef = useRef(1);
@@ -404,33 +413,35 @@ const SolarSystemVoyage = () => {
   };
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
-      <RealisticSpaceBackground
-        palette={palette}
-        intensity={effectiveIntensity}
-        starDensity={effStarDensity}
-        parallax={effParallax}
-        interactive={effInteractive}
-      />
+    <div className="fixed inset-0 overflow-hidden bg-background">
+      <div className={`pointer-events-none absolute inset-0 ${paletteVeil}`} />
 
       <Canvas
-        camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 500 }}
+        camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 50000 }}
         dpr={preset.dpr}
         className="!absolute inset-0"
+        gl={{ antialias: false, alpha: false, logarithmicDepthBuffer: true, powerPreference: activeTier === "low" ? "low-power" : "high-performance" }}
+        onCreated={({ gl, scene }) => {
+          gl.setClearColor(0x000000, 1);
+          scene.background = new THREE.Color(0x000000);
+        }}
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={0.25} />
-          <Stars key={activeTier} radius={200} depth={60} count={preset.bgStars} factor={4} fade speed={activeTier === "low" ? 0.2 : 0.5} />
-          <Sun />
+          <ambientLight intensity={0.14} />
+          <DeepSky full={activeTier === "high"} />
+          <Starfield full={activeTier !== "low"} dpr={preset.dpr} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
+          <VoyageSun full={activeTier === "high"} />
           {PLANETS.map((p) => <OrbitRing key={p.name} r={p.distance} />)}
           <OrbitRing r={ASTEROID_BELT_R} />
           {PLANETS.map((p) => (
-            <Planet
+            <VoyageCelestialBody
               key={p.name}
-              def={p}
+              definition={p}
+              full={activeTier === "high"}
+              animate={sceneAnimated}
               focused={focusedPlanet === p.name}
               registerRef={(m) => { planetRefs.current[p.name] = m; }}
-              onClick={() => { selectFocus(p.name); }}
+              onSelect={() => { selectFocus(p.name); }}
             />
           ))}
           <AsteroidField count={preset.asteroids} />
@@ -457,19 +468,27 @@ const SolarSystemVoyage = () => {
               <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} targetOrbitSpeed={orbitSpeed} />
             </>
           )}
+          {activeTier === "high" && !reducedMotion && (
+            <EffectComposer multisampling={0}>
+              <Bloom intensity={0.42} luminanceThreshold={0.58} luminanceSmoothing={0.32} mipmapBlur />
+              <Noise premultiply opacity={0.018} blendFunction={BlendFunction.OVERLAY} />
+              <Vignette eskil={false} offset={0.25} darkness={0.72} />
+            </EffectComposer>
+          )}
         </Suspense>
       </Canvas>
 
       {/* Top-right view switcher */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 pointer-events-auto">
-        <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-2 flex flex-col gap-1 min-w-[180px]">
+      <div className="absolute right-2 top-2 z-10 flex max-h-[calc(100dvh-8rem)] w-[min(15rem,calc(100vw-1rem))] flex-col gap-2 overflow-y-auto pointer-events-auto sm:right-4 sm:top-4 sm:max-h-[calc(100dvh-2rem)]">
+        <div className="rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-2 shadow-[0_0_24px_hsl(var(--primary)/0.1)]">
           <div className="text-xs uppercase tracking-wider text-muted-foreground px-1 mb-1">View Mode</div>
+          <div className="grid grid-cols-3 gap-1 sm:grid-cols-2">
           {VIEW_MODES.map((v, i) => (
             <Button
               key={v.key}
               size="sm"
               variant={mode === v.key ? "default" : "ghost"}
-              className="justify-start h-8 text-xs"
+              className="justify-start h-8 text-[11px]"
               onClick={() => setMode(v.key)}
               title={v.hint}
             >
@@ -477,10 +496,11 @@ const SolarSystemVoyage = () => {
               {v.label}
             </Button>
           ))}
+          </div>
         </div>
 
         {/* Planet focus selector */}
-        <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-2 min-w-[180px]">
+        <div className="rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-2">
           <div className="text-xs uppercase tracking-wider text-muted-foreground px-1 mb-1">Focus Planet</div>
           <div className="grid grid-cols-2 gap-1">
             <Button
@@ -502,8 +522,7 @@ const SolarSystemVoyage = () => {
                 title={`Orbit ${p.name}`}
               >
                 <span
-                  className="inline-block h-2 w-2 rounded-full mr-1.5"
-                  style={{ background: p.color }}
+                  className="inline-block h-2 w-2 rounded-full mr-1.5 bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.75)]"
                 />
                 {p.name}
               </Button>
@@ -540,14 +559,16 @@ const SolarSystemVoyage = () => {
         </div>
 
         {/* Background engagement controls */}
-        <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-2 min-w-[220px]">
-          <button
-            className="w-full flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground px-1 mb-1 hover:text-foreground"
+        <div className="rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-full flex items-center justify-between text-xs uppercase tracking-wider text-muted-foreground px-1 mb-1"
             onClick={() => setShowControls((s) => !s)}
           >
             <span className="flex items-center gap-1.5"><Settings2 className="h-3 w-3" /> Background</span>
             {showControls ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          </button>
+          </Button>
           {showControls && (
             <div className="space-y-3 p-1">
               {/* Quality tier */}
@@ -650,8 +671,8 @@ const SolarSystemVoyage = () => {
 
 
       {/* Bottom warp + HUD */}
-      <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-3 items-end z-10 pointer-events-auto">
-        <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-3 min-w-[260px]">
+      <div className="absolute bottom-2 left-2 z-10 flex max-w-[calc(100vw-1rem)] flex-wrap items-end gap-2 pointer-events-auto sm:bottom-4 sm:left-4 sm:gap-3">
+        <div className="w-[min(17rem,calc(100vw-1rem))] rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-3">
           <div className="text-xs text-muted-foreground mb-2">Warp Speed: {speed.toFixed(2)}×</div>
           <Slider
             value={[speed]}
@@ -670,7 +691,7 @@ const SolarSystemVoyage = () => {
           </Button>
         </div>
 
-        <div className="rounded-lg bg-background/70 backdrop-blur border border-border p-3 text-xs space-y-1">
+        <div className="hidden rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-3 text-xs space-y-1 md:block">
           <div className="uppercase tracking-wider text-muted-foreground">Harvest Ops</div>
           <div>Fleet: <Badge variant="secondary">2× Zozo</Badge> <Badge variant="destructive">2× Draco</Badge> <Badge>1× Hauler</Badge></div>
           <div>Resources: <span className="text-primary font-mono">{resources.toLocaleString()}</span> ◈</div>
@@ -678,7 +699,7 @@ const SolarSystemVoyage = () => {
         </div>
 
         {focusedDef && mode === "closeup" && (
-          <div className="rounded-lg bg-background/70 backdrop-blur border border-primary p-3 text-xs">
+          <div className="rounded-md bg-background/75 backdrop-blur-xl border border-primary p-3 text-xs">
             <div className="uppercase tracking-wider text-primary">{focusedDef.name}</div>
             <div>Orbit radius: {focusedDef.distance}</div>
             <div>Radius: {focusedDef.radius}</div>
@@ -690,12 +711,12 @@ const SolarSystemVoyage = () => {
       </div>
 
       {/* Title */}
-      <div className="absolute top-4 left-4 z-10">
+      <div className="absolute left-2 top-2 z-10 max-w-[calc(100vw-16.5rem)] sm:left-4 sm:top-4">
         <Button variant="ghost" size="sm" asChild className="mb-2 bg-background/60 backdrop-blur-xl">
           <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Home</Link>
         </Button>
-        <h1 className="hologram-title text-2xl font-bold">Solar System Voyage</h1>
-        <p className="text-xs text-muted-foreground">Keys 1–6 switch views · Space pauses travel</p>
+        <h1 className="hologram-title text-xl font-bold sm:text-2xl">Solar System Voyage</h1>
+        <p className="hidden text-xs text-muted-foreground sm:block">Keys 1–6 switch views · Space pauses travel</p>
       </div>
     </div>
   );
