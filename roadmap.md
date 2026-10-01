@@ -178,3 +178,7 @@
 - [x] Refine Voyage planets and asteroid belt for photorealistic NASA-sourced appearance
 - [x] Give the sun a real fiery (NASA) texture
 - [x] Voyage: remove animated lines, blend naturally with background
+
+## Complete astronomical visual integration (Oct 1)
+- [ ] Apply the shared NASA-inspired astronomical effects consistently across site backdrop, Voyage, mining, and descent/world scenes
+- [ ] Verify pause/reduced-motion, quality scaling, cleanup, builds, focused tests, and bounded desktop/mobile previews
