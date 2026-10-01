@@ -445,6 +445,9 @@ const Quasar = ({ position, size, animate, detail }: { position: V3; size: numbe
 
 export const SolarFlares = ({ radius, animate }: { radius: number; animate: boolean }) => {
   const group = useRef<THREE.Group>(null);
+  const corona = useRef<THREE.ShaderMaterial>(null);
+  const cme = useRef<THREE.Points>(null);
+  const cmeMaterial = useRef<THREE.ShaderMaterial>(null);
   const loops = useMemo(() => {
     const random = seeded(77);
     return Array.from({ length: 7 }, () => ({
@@ -453,28 +456,115 @@ export const SolarFlares = ({ radius, animate }: { radius: number; animate: bool
       phase: random() * Math.PI * 2,
     }));
   }, [radius]);
+  const cmeGeometry = useMemo(
+    () => makePointGeometry(96, 7721, (random) => {
+      const cone = Math.pow(random(), 0.55);
+      const angle = random() * Math.PI * 2;
+      const spread = cone * radius * 0.42;
+      return [radius * (1.02 + cone * 1.8), Math.cos(angle) * spread, Math.sin(angle) * spread];
+    }),
+    [radius],
+  );
+  useDisposableGeometry(cmeGeometry);
+  const cmeUniforms = useMemo(
+    () => ({
+      uColor: { value: new THREE.Color("#ff9b4f") },
+      uSize: { value: radius * 0.12 },
+      uOpacity: { value: 0 },
+    }),
+    [radius],
+  );
+  const coronaUniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uOpacity: { value: 0.16 },
+    }),
+    [],
+  );
   const time = useRef(0);
   useFrame((_, delta) => {
-    if (!animate || !group.current) return;
-    time.current += Math.min(delta, 0.05);
+    if (!group.current) return;
+    if (animate) time.current += Math.min(delta, 0.05);
+    if (corona.current) corona.current.uniforms.uTime.value = time.current;
     group.current.children.forEach((child, index) => {
       const loop = loops[index];
       if (!loop) return;
       child.scale.setScalar(0.85 + 0.25 * Math.sin(time.current * 0.6 + loop.phase));
     });
+    const cycle = (time.current * 0.035) % 1;
+    const active = smoothPulse(cycle, 0.08, 0.72);
+    if (cme.current) {
+      cme.current.scale.setScalar(0.72 + cycle * 0.85);
+      cme.current.rotation.x = Math.sin(time.current * 0.025) * 0.18;
+    }
+    if (cmeMaterial.current) cmeMaterial.current.uniforms.uOpacity.value = active * 0.3;
   });
   return (
     <group ref={group}>
+      <mesh scale={1.13} renderOrder={-1}>
+        <sphereGeometry args={[radius, 48, 24]} />
+        <shaderMaterial
+          ref={corona}
+          uniforms={coronaUniforms}
+          vertexShader={/* glsl */ `
+            varying vec3 vNormalW;
+            varying vec3 vPositionW;
+            void main() {
+              vec4 world = modelMatrix * vec4(position, 1.0);
+              vPositionW = world.xyz;
+              vNormalW = normalize(mat3(modelMatrix) * normal);
+              gl_Position = projectionMatrix * viewMatrix * world;
+            }
+          `}
+          fragmentShader={/* glsl */ `
+            uniform float uTime;
+            uniform float uOpacity;
+            varying vec3 vNormalW;
+            varying vec3 vPositionW;
+            void main() {
+              vec3 viewDir = normalize(cameraPosition - vPositionW);
+              float rim = pow(1.0 - max(dot(normalize(vNormalW), viewDir), 0.0), 4.2);
+              float filament = 0.82 + 0.18 * sin(vPositionW.y * 0.23 + vPositionW.x * 0.11 + uTime * 0.08);
+              float alpha = rim * filament * uOpacity;
+              if (alpha < 0.004) discard;
+              gl_FragColor = vec4(vec3(1.0, 0.48, 0.16), alpha);
+            }
+          `}
+          transparent
+          depthWrite={false}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </mesh>
       {loops.map((loop, index) => (
         <group key={index} rotation={loop.rotation}>
           <mesh position={[0, radius * 0.98, 0]}>
             <torusGeometry args={[loop.radius, loop.radius * 0.08, 8, 48, Math.PI]} />
-            <meshBasicMaterial color="#ff8a3a" transparent opacity={0.75} blending={THREE.AdditiveBlending} depthWrite={false} />
+            <meshBasicMaterial color="#ff8a3a" transparent opacity={0.42} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
           </mesh>
         </group>
       ))}
+      <points ref={cme} geometry={cmeGeometry} rotation={[0.35, -0.5, 0.2]} frustumCulled={false}>
+        <shaderMaterial
+          ref={cmeMaterial}
+          uniforms={cmeUniforms}
+          vertexShader={SOFT_POINT_VERTEX_SHADER}
+          fragmentShader={SOFT_POINT_FRAGMENT_SHADER}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
+        />
+      </points>
     </group>
   );
+};
+
+const smoothPulse = (phase: number, rise: number, fall: number) => {
+  if (phase <= rise) return THREE.MathUtils.smoothstep(phase, 0, rise);
+  if (phase >= fall) return 0;
+  return 1 - THREE.MathUtils.smoothstep(phase, rise, fall);
 };
 
 export interface CosmicAnomaliesProps {

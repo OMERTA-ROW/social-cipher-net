@@ -8,6 +8,7 @@ import {
   useLazyTexture,
 } from "../realTextures";
 import Sun from "./Sun";
+import { SolarFlares } from "../CosmicAnomalies";
 import { WORLD_SCALE } from "../worldScale";
 
 /**
@@ -225,7 +226,7 @@ const PlanetMesh = ({ body, full, segments, index }: { body: Body; full: boolean
 };
 
 
-const Planets = ({ full }: { full: boolean }) => {
+const Planets = ({ full, animate }: { full: boolean; animate: boolean }) => {
   const segments = full ? 96 : 40;
   const bodies = full ? BODIES : BODIES.slice(0, 4);
 
@@ -234,6 +235,7 @@ const Planets = ({ full }: { full: boolean }) => {
       {/* local star: the single light source for every body */}
       <pointLight position={[0, 0, 0]} intensity={3} distance={0} decay={0} color="#fff3d8" />
       <Sun full={full} />
+      <SolarFlares radius={16} animate={animate} />
 
       {bodies.map((b, i) => (
         <PlanetMesh key={b.name} body={b} full={full} segments={segments} index={i} />

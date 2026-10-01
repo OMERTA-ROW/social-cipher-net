@@ -409,7 +409,7 @@ const SolarSystemVoyage = () => {
           <ambientLight intensity={0.075} />
           <DeepSky full={activeTier === "high"} />
           <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
-          <VoyageSun full={activeTier === "high"} animate={!reducedMotion} />
+          <VoyageSun full={activeTier === "high"} animate={sceneAnimated} />
           {PLANETS.map((p) => (
             <VoyageCelestialBody
               key={p.name}

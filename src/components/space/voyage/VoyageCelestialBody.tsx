@@ -171,6 +171,7 @@ const VoyageCelestialBody = ({
               transparent
               opacity={definition.name === "Venus" ? 0.92 : 0.78}
               roughness={1}
+              alphaTest={0.015}
               depthWrite={false}
             />
           </mesh>
