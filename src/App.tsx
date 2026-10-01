@@ -11,6 +11,7 @@ import CartSheet from "@/components/shop/CartSheet";
 import { SecurityMonitor } from "@/components/SecurityMonitor";
 import Index from "./pages/Index";
 import Studio from "./pages/Studio";
+import AuthCallback from "./pages/AuthCallback";
 import Auth from "./pages/Auth";
 import Affiliate from "./pages/Affiliate";
 import SellerRegister from "./pages/SellerRegister";
@@ -69,6 +70,7 @@ const AppContent = () => {
         <Route path="/" element={<Index />} />
         <Route path="/studio" element={<ShellRoute><Studio /></ShellRoute>} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/signup" element={<Auth />} />
         <Route path="/forgot-password" element={<Auth />} />
