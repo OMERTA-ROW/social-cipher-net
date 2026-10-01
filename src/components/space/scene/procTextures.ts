@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import asteroidSurfaceUrl from "@/assets/asteroid-surface.jpg";
 
 /**
  * Canvas-generated PBR maps for the mining vessel and its crew.
@@ -641,5 +642,17 @@ const ASTEROID_TINTS: [number, number, number][] = [
 ];
 export const asteroidMaps = (variant: number) => {
   const v = ((variant % ASTEROID_TINTS.length) + ASTEROID_TINTS.length) % ASTEROID_TINTS.length;
-  return cached(`asteroid-${v}`, () => build(asteroidCanvases(311 + v * 97, ASTEROID_TINTS[v]), 9.0, 1));
+  return cached(`asteroid-${v}`, () => {
+    const maps = build(asteroidCanvases(311 + v * 97, ASTEROID_TINTS[v]), 9.0, 1);
+    // photoreal regolith albedo layered over the procedural relief
+    const photo = new THREE.TextureLoader().load(asteroidSurfaceUrl);
+    photo.colorSpace = THREE.SRGBColorSpace;
+    photo.wrapS = photo.wrapT = THREE.RepeatWrapping;
+    photo.anisotropy = 8;
+    photo.repeat.set(1 + (v % 2), 1 + (v % 2));
+    photo.rotation = v * 0.9;
+    maps.map.dispose();
+    maps.map = photo;
+    return maps;
+  });
 };
