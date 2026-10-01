@@ -10,6 +10,7 @@ describe("safeReturnPath", () => {
     expect(safeReturnPath("//evil.example.com")).toBe("/");
     expect(safeReturnPath("https://evil.example.com")).toBe("/");
     expect(safeReturnPath("javascript:alert(1)")).toBe("/");
+    expect(safeReturnPath("/\\evil.example.com")).toBe("/");
   });
 
   it("falls back to home for empty values", () => {
@@ -21,15 +22,16 @@ describe("safeReturnPath", () => {
 
 describe("signInPath", () => {
   it("encodes a return path", () => {
-    expect(signInPath("/trading")).toBe("/auth?next=%2Ftrading");
+    expect(signInPath("/trading")).toBe("/login?next=%2Ftrading");
   });
 
   it("does not loop back onto the auth page or home", () => {
-    expect(signInPath("/")).toBe("/auth");
-    expect(signInPath("/auth?next=%2F")).toBe("/auth");
+    expect(signInPath("/")).toBe("/login");
+    expect(signInPath("/auth?next=%2F")).toBe("/login");
+    expect(signInPath("/reset-password")).toBe("/login");
   });
 
   it("drops unsafe destinations", () => {
-    expect(signInPath("https://evil.example.com")).toBe("/auth");
+    expect(signInPath("https://evil.example.com")).toBe("/login");
   });
 });

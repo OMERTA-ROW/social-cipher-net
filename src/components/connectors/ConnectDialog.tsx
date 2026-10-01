@@ -7,10 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Loader2, KeyRound, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { ConnectorService } from "@/lib/connectors/registry";
@@ -28,11 +25,9 @@ const ConnectDialog = ({
   onOpenChange,
   onConnected,
 }: ConnectDialogProps) => {
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [accountName, setAccountName] = useState("");
-  const [saving, setSaving] = useState(false);
   const [starting, setStarting] = useState(false);
   const [configured, setConfigured] = useState<string[] | null>(null);
+  const [statusResolved, setStatusResolved] = useState(false);
 
   // Which services already have their developer app set up on the server.
   useEffect(() => {
@@ -42,9 +37,13 @@ const ConnectDialog = ({
       .invoke("connector-oauth", { body: { action: "status" } })
       .then(({ data }) => {
         if (alive && Array.isArray(data?.configured)) setConfigured(data.configured);
+        if (alive) setStatusResolved(true);
       })
       .catch(() => {
-        if (alive) setConfigured(null);
+        if (alive) {
+          setConfigured([]);
+          setStatusResolved(true);
+        }
       });
     return () => {
       alive = false;
@@ -55,8 +54,7 @@ const ConnectDialog = ({
 
 
   const supportsOauth = service.methods.includes("oauth") && service.oauthProvider;
-  const oauthReady =
-    configured === null ? true : configured.includes(String(service.oauthProvider));
+  const oauthReady = statusResolved && (configured ?? []).includes(String(service.oauthProvider));
 
   const startOauth = async () => {
     setStarting(true);
@@ -66,7 +64,7 @@ const ConnectDialog = ({
           action: "start",
           provider: service.oauthProvider,
           service_id: service.id,
-          redirect_uri: `${window.location.origin}/connectors`,
+          redirect_uri: `${window.location.origin}/integrations`,
         },
       });
       // A refused start comes back as a non-2xx, so read the real reason out of it.
@@ -116,34 +114,6 @@ const ConnectDialog = ({
     }
   };
 
-  const saveKeys = async () => {
-    setSaving(true);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "connector-credentials",
-        {
-          body: {
-            action: "save",
-            service_id: service.id,
-            account_name: accountName || null,
-            credentials: values,
-          },
-        },
-      );
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast.success(`${service.name} connected`);
-      setValues({});
-      setAccountName("");
-      onConnected();
-      onOpenChange(false);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
@@ -160,75 +130,29 @@ const ConnectDialog = ({
             <Button
               className="w-full glow-primary"
               onClick={startOauth}
-              disabled={starting || !oauthReady}
+              disabled={starting || !oauthReady || !statusResolved}
             >
               {starting ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <ShieldCheck className="w-4 h-4 mr-2" />
               )}
-              {oauthReady ? `Authorize with ${service.name}` : "Setup needed"}
+              {!statusResolved ? "Checking setup…" : oauthReady ? `Authorize with ${service.name}` : "Setup required"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
               {oauthReady
                 ? `You sign in on ${service.name} — Cyber Link never sees your password.`
-                : `One-click sign-in for ${service.name} is waiting on its developer app details. You can still connect with your own keys below.`}
+                : `Cyber Link must register a ${service.name} developer app, store its client ID and secret server-side, approve the requested scopes, and allow this site's /integrations callback.`}
             </p>
-            {service.fields?.length ? (
-              <div className="flex items-center gap-3 py-1">
-                <Separator className="flex-1" />
-                <span className="text-xs text-muted-foreground">or</span>
-                <Separator className="flex-1" />
-              </div>
-            ) : null}
           </div>
         )}
 
-        {service.fields?.length ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <KeyRound className="w-4 h-4 text-primary" />
-              Enter your keys manually
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="account-name">Label (optional)</Label>
-              <Input
-                id="account-name"
-                value={accountName}
-                onChange={(e) => setAccountName(e.target.value)}
-                placeholder="My main channel"
-              />
-            </div>
-
-            {service.fields.map((field) => (
-              <div key={field.key} className="space-y-1">
-                <Label htmlFor={field.key}>{field.label}</Label>
-                <Input
-                  id={field.key}
-                  type={field.secret ? "password" : "text"}
-                  autoComplete="off"
-                  placeholder={field.placeholder}
-                  value={values[field.key] ?? ""}
-                  onChange={(e) =>
-                    setValues((v) => ({ ...v, [field.key]: e.target.value }))
-                  }
-                />
-                {field.helper && (
-                  <p className="text-xs text-muted-foreground">{field.helper}</p>
-                )}
-              </div>
-            ))}
-
-            <Button className="w-full" onClick={saveKeys} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Save securely
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Keys are stored server-side only and are never sent back to your browser.
-            </p>
+        {!supportsOauth && (
+          <div className="flex gap-3 rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p>This connection is unavailable until Cyber Link adds a verified provider integration. Never enter a password, private key, or recovery phrase here.</p>
           </div>
-        ) : null}
+        )}
 
         {service.docsUrl && (
           <a

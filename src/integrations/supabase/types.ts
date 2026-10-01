@@ -866,6 +866,51 @@ export type Database = {
         }
         Relationships: []
       }
+      connector_oauth_attempts: {
+        Row: {
+          account_key: string
+          account_label: string | null
+          code_verifier: string | null
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          provider: string
+          redirect_uri: string
+          service_id: string
+          state_hash: string
+          user_id: string
+        }
+        Insert: {
+          account_key?: string
+          account_label?: string | null
+          code_verifier?: string | null
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          provider: string
+          redirect_uri: string
+          service_id: string
+          state_hash: string
+          user_id: string
+        }
+        Update: {
+          account_key?: string
+          account_label?: string | null
+          code_verifier?: string | null
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          provider?: string
+          redirect_uri?: string
+          service_id?: string
+          state_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       connector_rate_state: {
         Row: {
           blocked_until: string | null

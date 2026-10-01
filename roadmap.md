@@ -13,6 +13,7 @@
 - [x] Sniper gift ($1000) with cinematic strike + persistent crack
 
 ## Current build
+- [ ] Complete auth and account-integration repair: canonical routes, protected-route gate, one-time OAuth state/PKCE, provider verification, safe disconnect, regression and browser checks
 - [ ] Arena: dedicated layout/environment
 - [x] Studio: animation suite, asset libraries, creative account imports (wired into Studio tabs, Zod-validated saves)
 - [ ] Movie Theater: events, synced playback, live chat

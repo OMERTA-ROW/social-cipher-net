@@ -67,7 +67,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: "Studio", url: "/studio", icon: Radio },
       { title: "Movie Theater", url: "/theater", icon: Clapperboard },
-      { title: "Connectors", url: "/connectors", icon: Plug },
+      { title: "Connections", url: "/integrations", icon: Plug },
     ],
   },
   {

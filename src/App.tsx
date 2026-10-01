@@ -54,9 +54,11 @@ import AffiliateRedirect from "./pages/AffiliateRedirect";
 import AIBotAssistant from "./components/AIBotAssistant";
 import SpaceBackground from "./components/space/SpaceBackground";
 import AppShell from "@/components/layout/AppShell";
+import RequireAuth from "@/components/auth/RequireAuth";
 import type { ReactNode } from "react";
 
 const ShellRoute = ({ children }: { children: ReactNode }) => <AppShell>{children}</AppShell>;
+const PrivateRoute = ({ children }: { children: ReactNode }) => <RequireAuth>{children}</RequireAuth>;
 
 const AppContent = () => {
   return (
@@ -67,6 +69,10 @@ const AppContent = () => {
         <Route path="/" element={<Index />} />
         <Route path="/studio" element={<ShellRoute><Studio /></ShellRoute>} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/signup" element={<Auth />} />
+        <Route path="/forgot-password" element={<Auth />} />
+        <Route path="/reset-password" element={<Auth />} />
         <Route path="/onboarding" element={<ShellRoute><Onboarding /></ShellRoute>} />
         <Route path="/affiliate" element={<ShellRoute><Affiliate /></ShellRoute>} />
         <Route path="/seller-register" element={<ShellRoute><SellerRegister /></ShellRoute>} />
@@ -75,7 +81,8 @@ const AppContent = () => {
         <Route path="/messages" element={<Messages />} />
         <Route path="/cyber-arena" element={<CyberGamers />} />
         <Route path="/cyber-streamer" element={<ShellRoute><CyberStreamer /></ShellRoute>} />
-        <Route path="/connectors" element={<ShellRoute><Connectors /></ShellRoute>} />
+        <Route path="/connectors" element={<PrivateRoute><ShellRoute><Connectors /></ShellRoute></PrivateRoute>} />
+        <Route path="/integrations" element={<PrivateRoute><ShellRoute><Connectors /></ShellRoute></PrivateRoute>} />
         <Route path="/theater" element={<ShellRoute><Theater /></ShellRoute>} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
@@ -90,10 +97,11 @@ const AppContent = () => {
         <Route path="/miners" element={<ShellRoute><Miners /></ShellRoute>} />
         <Route path="/profile/:userId" element={<ShellRoute><UserProfile /></ShellRoute>} />
         <Route path="/token-purchase" element={<ShellRoute><TokenPurchase /></ShellRoute>} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
         <Route path="/live/:streamId" element={<LiveRoom />} />
         <Route path="/post/:postId" element={<Thread />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/settings" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/trading" element={<Trading />} />
         <Route path="/exchange" element={<ShellRoute><Exchange /></ShellRoute>} />
         <Route path="/terminal" element={<Terminal />} />

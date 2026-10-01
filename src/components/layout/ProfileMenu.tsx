@@ -12,6 +12,7 @@ import {
 import { useEngagementStats } from "@/hooks/useEngagementStats";
 import { supabase } from "@/integrations/supabase/client";
 import { signInPath } from "@/lib/authRedirect";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AccountProfile {
   display_name: string | null;
@@ -20,6 +21,7 @@ interface AccountProfile {
 
 const ProfileMenu = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { stats, userId } = useEngagementStats();
   const [profile, setProfile] = useState<AccountProfile | null>(null);
 
@@ -64,6 +66,7 @@ const ProfileMenu = () => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    queryClient.clear();
     navigate(signInPath());
   };
 
@@ -92,7 +95,7 @@ const ProfileMenu = () => {
         <DropdownMenuItem onSelect={() => navigate(`/profile/${userId}`)} className="mt-1 gap-2">
           <User className="h-4 w-4" /> View profile
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => navigate("/dashboard?tab=settings")} className="gap-2">
+        <DropdownMenuItem onSelect={() => navigate("/settings")} className="gap-2">
           <Settings className="h-4 w-4" /> Account settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
