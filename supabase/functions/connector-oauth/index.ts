@@ -419,7 +419,7 @@ Deno.serve(async (req) => {
     const serviceId = String(body.service_id ?? "");
     const redirectUri = trustedOAuthRedirect(req.headers.get("Origin"));
     const config = PROVIDERS[provider];
-    if (!config) return json({ error: "Unsupported service" }, 400);
+    if (!config || !config.identity) return json({ error: "Unsupported service" }, 400);
     const definition = getDefinition(serviceId);
     if (!definition || definition.oauthProvider !== provider) {
       return json({ error: "Provider does not match this service" }, 400);
@@ -429,7 +429,8 @@ Deno.serve(async (req) => {
     }
 
     const clientId = Deno.env.get(envKey(provider, "CLIENT_ID"));
-    if (!clientId) {
+    const clientSecret = Deno.env.get(envKey(provider, "CLIENT_SECRET"));
+    if (!clientId || !clientSecret) {
       return json(
         {
           error: "not_configured",
