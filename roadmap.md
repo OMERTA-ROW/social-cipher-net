@@ -172,3 +172,4 @@
 - [x] Market data validated before drawing: bad rows dropped, bars ordered oldest-first, duplicates collapsed
 - [x] Binance quotes labelled as USDT pairs instead of USD
 - [ ] Exchange/wallet/bank providers still unchosen — fees stay unset, trades and transfers stay off
+- [x] Complete approved Voyage visual integration and validate desktop/mobile without publishing
