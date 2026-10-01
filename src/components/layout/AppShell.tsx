@@ -30,9 +30,11 @@ import {
   Image,
   ArrowLeftRight,
   Megaphone,
+  Menu,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import RightRail from "@/components/layout/RightRail";
 import SidebarAuthButton from "@/components/layout/SidebarAuthButton";
@@ -240,6 +242,7 @@ const AppShellFrame = ({
   const route = getRouteMeta(pathname);
   const parent = route?.parent ? getRouteMetaByPath(route.parent) : undefined;
   const [override, setOverride] = useState<PageHeaderOverride>({});
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const setHeader = useCallback((value: PageHeaderOverride) => setOverride(value), []);
   const shellContext = useMemo(() => ({ inside: true, setHeader }), [setHeader]);
   const pageTitle = title ?? override.title ?? route?.title;
@@ -474,6 +477,49 @@ const AppShellFrame = ({
             Post
           </button>
         )}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <button
+              aria-label="Open menu"
+              className="flex flex-col items-center gap-0.5 text-[11px] px-3 py-1.5 rounded-md text-muted-foreground"
+            >
+              <Menu className="w-5 h-5" />
+              More
+            </button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[85vw] max-w-sm overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
+            <nav aria-label="Mobile menu" className="mt-4 flex flex-col gap-4">
+              {[{ title: "Main", icon: Home, items: primaryNav }, ...navGroups].map((group) => (
+                <div key={group.title}>
+                  <p className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.title}</p>
+                  {group.items.map((item) => (
+                    <NavLink
+                      key={item.url}
+                      to={item.url}
+                      end={item.url === "/"}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-3 rounded-lg px-2 py-2 text-sm",
+                          isActive ? "text-primary" : "text-foreground hover:text-primary",
+                        )
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.title}
+                    </NavLink>
+                  ))}
+                </div>
+              ))}
+              <div onClick={() => setMobileMenuOpen(false)}>
+                <SidebarAuthButton />
+              </div>
+            </nav>
+          </SheetContent>
+        </Sheet>
       </nav>
     </div>
     </AppShellContext.Provider>
