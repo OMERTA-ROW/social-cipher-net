@@ -118,9 +118,14 @@ const FocusFollower = ({
       focusedMesh.getWorldPosition(tmp);
       if (previousFocus.current !== focusedPlanet) {
         const radius = focusedRadius ?? 1;
-        const viewDirection = controls.object.position.clone().sub(tmp).normalize();
-        if (viewDirection.lengthSq() < 0.5) viewDirection.set(0.7, 0.35, 1).normalize();
-        controls.object.position.copy(tmp).add(viewDirection.multiplyScalar(Math.max(radius * 4.2, 2.4)));
+        const distance = Math.max(radius * 4.2, 2.4);
+        const sunward = tmp.clone().multiplyScalar(-1).normalize();
+        const tangent = new THREE.Vector3(-sunward.z, 0, sunward.x).normalize();
+        const viewDirection = sunward.multiplyScalar(0.82)
+          .add(tangent.multiplyScalar(0.42))
+          .add(new THREE.Vector3(0, 0.24, 0))
+          .normalize();
+        controls.object.position.copy(tmp).add(viewDirection.multiplyScalar(distance));
       }
       controls.target.lerp(tmp, 0.2);
     } else {
