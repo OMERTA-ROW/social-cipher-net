@@ -443,27 +443,27 @@ const Quasar = ({ position, size, animate, detail }: { position: V3; size: numbe
   );
 };
 
-export const SolarFlares = ({ radius, animate }: { radius: number; animate: boolean }) => {
+export const SolarFlares = ({ radius, animate, full = true }: { radius: number; animate: boolean; full?: boolean }) => {
   const group = useRef<THREE.Group>(null);
   const corona = useRef<THREE.ShaderMaterial>(null);
   const cme = useRef<THREE.Points>(null);
   const cmeMaterial = useRef<THREE.ShaderMaterial>(null);
   const loops = useMemo(() => {
     const random = seeded(77);
-    return Array.from({ length: 7 }, () => ({
+    return Array.from({ length: full ? 7 : 4 }, () => ({
       rotation: [random() * Math.PI * 2, random() * Math.PI * 2, random() * Math.PI * 2] as V3,
       radius: radius * (0.18 + random() * 0.25),
       phase: random() * Math.PI * 2,
     }));
-  }, [radius]);
+  }, [full, radius]);
   const cmeGeometry = useMemo(
-    () => makePointGeometry(96, 7721, (random) => {
+    () => makePointGeometry(full ? 96 : 48, 7721, (random) => {
       const cone = Math.pow(random(), 0.55);
       const angle = random() * Math.PI * 2;
       const spread = cone * radius * 0.42;
       return [radius * (1.02 + cone * 1.8), Math.cos(angle) * spread, Math.sin(angle) * spread];
     }),
-    [radius],
+    [full, radius],
   );
   useDisposableGeometry(cmeGeometry);
   const cmeUniforms = useMemo(

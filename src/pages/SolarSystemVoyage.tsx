@@ -69,7 +69,7 @@ const VoyageSun = ({ full, animate }: { full: boolean; animate: boolean }) => {
     <group>
       <group scale={0.1375}>
         <SharedSun full={full} animate={animate} />
-        <SolarFlares radius={SUN_PHOTO_RADIUS} animate={animate} />
+        <SolarFlares radius={SUN_PHOTO_RADIUS} animate={animate} full={full} />
       </group>
       <pointLight color="#fff4dc" intensity={6200} distance={0} decay={2} />
     </group>
