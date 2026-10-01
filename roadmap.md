@@ -181,4 +181,4 @@
 
 ## Complete astronomical visual integration (Oct 1)
 - [x] Apply the shared NASA-inspired astronomical effects consistently across site backdrop, Voyage, mining, and descent/world scenes
-- [ ] Verify pause/reduced-motion, quality scaling, cleanup, builds, focused tests, and bounded desktop/mobile previews
+- [x] Verify pause/reduced-motion, quality scaling, cleanup, builds, focused tests, and bounded desktop/mobile previews
