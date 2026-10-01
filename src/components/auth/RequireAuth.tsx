@@ -16,14 +16,17 @@ const RequireAuth = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      setUserId(data.user?.id ?? null);
-      setResolved(true);
-    });
+    let revision = 0;
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
+      revision += 1;
       setUserId(session?.user.id ?? null);
+      setResolved(true);
+    });
+    const requestRevision = revision;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active || requestRevision !== revision) return;
+      setUserId(data.user?.id ?? null);
       setResolved(true);
     });
     return () => {
