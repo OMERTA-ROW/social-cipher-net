@@ -12,7 +12,7 @@ export const createOAuthState = (): string => base64Url(crypto.getRandomValues(n
 
 export const createCodeVerifier = (): string => base64Url(crypto.getRandomValues(new Uint8Array(48)));
 
-export const oauthRedirectIsAllowed = (raw: string, requestOrigin: string | null): boolean => {
+export const oauthRedirectIsAllowed = (raw: string): boolean => {
   try {
     const url = new URL(raw);
     const allowedOrigins = new Set([
@@ -22,7 +22,6 @@ export const oauthRedirectIsAllowed = (raw: string, requestOrigin: string | null
       "https://id-preview--f6447429-4027-45e0-bfb6-e09c4b149510.lovable.app",
       "http://localhost:8080",
     ]);
-    if (requestOrigin) allowedOrigins.add(requestOrigin);
     return allowedOrigins.has(url.origin) && ["/integrations", "/connectors"].includes(url.pathname);
   } catch {
     return false;

@@ -328,7 +328,7 @@ Deno.serve(async (req) => {
     const redirectUri = String(body.redirect_uri ?? "");
     const config = PROVIDERS[provider];
     if (!config) return json({ error: "Unsupported service" }, 400);
-    if (!oauthRedirectIsAllowed(redirectUri, req.headers.get("origin"))) {
+    if (!oauthRedirectIsAllowed(redirectUri)) {
       return json({ error: "Invalid callback address" }, 400);
     }
 

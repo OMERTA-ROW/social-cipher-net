@@ -221,7 +221,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}${nextPath}`,
+          emailRedirectTo: window.location.origin,
           data: {
             birthdate: birthdate,
             username: username.trim(),
