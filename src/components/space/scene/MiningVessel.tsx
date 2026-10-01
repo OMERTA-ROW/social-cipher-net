@@ -90,13 +90,53 @@ const useHullMaterials = () => {
     });
 
     const glow = new THREE.MeshBasicMaterial({ color: new THREE.Color("#39e6ff"), toneMapped: false });
-    const engineGlow = new THREE.MeshBasicMaterial({
-      color: new THREE.Color("#63d9ff"),
-      toneMapped: false,
+    // Physically-styled exhaust: white-hot core with shock diamonds near the
+    // nozzle, turbulent flame body cooling to amber and red at the tail,
+    // soft view-dependent edges so the plume reads as gas, not a cone.
+    const engineGlow = new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uThrottle: { value: 0.5 }, uOpacity: { value: 0.9 } },
+      vertexShader: `
+        varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+        void main(){
+          vUv = uv;
+          vec4 mv = modelViewMatrix * vec4(position,1.0);
+          vN = normalize(normalMatrix * normal);
+          vV = normalize(-mv.xyz);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform float uTime; uniform float uThrottle; uniform float uOpacity;
+        varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+        float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+        float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+          return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
+        float fbm(vec2 p){ float v=0.0, a=0.5; for(int i=0;i<4;i++){ v+=a*n(p); p*=2.03; a*=0.5; } return v; }
+        void main(){
+          float a = clamp(vUv.y, 0.0, 1.0);           // 0 at nozzle -> 1 at tail
+          vec2 q = vec2(vUv.x * 10.0, a * 5.0 - uTime * 6.0);
+          float turb = fbm(q + fbm(q * 1.7 + uTime * 0.8));
+          float rim = pow(abs(dot(normalize(vN), normalize(vV))), 1.6); // soft gas edges
+          float core = exp(-a * 5.0);
+          float diamonds = (0.5 + 0.5 * cos(a * 34.0)) * exp(-a * 6.0) * uThrottle;
+          float heat = clamp(core * 1.2 + diamonds * 0.6 + (1.0 - a) * 0.35 * turb, 0.0, 1.0);
+          vec3 red = vec3(0.55, 0.08, 0.02);
+          vec3 orange = vec3(1.0, 0.42, 0.08);
+          vec3 yellow = vec3(1.0, 0.78, 0.36);
+          vec3 white = vec3(1.0, 0.97, 0.9);
+          vec3 col = mix(red, orange, smoothstep(0.05, 0.35, heat));
+          col = mix(col, yellow, smoothstep(0.35, 0.65, heat));
+          col = mix(col, white, smoothstep(0.65, 0.95, heat));
+          // faint blue combustion zone right at the nozzle exit
+          col = mix(col, vec3(0.55, 0.75, 1.0), exp(-a * 22.0) * 0.5);
+          float alpha = rim * (1.0 - smoothstep(0.55, 1.0, a + (turb - 0.5) * 0.35));
+          alpha *= 0.55 + turb * 0.65;
+          gl_FragColor = vec4(col * (1.0 + heat * 1.5), clamp(alpha * uOpacity, 0.0, 1.0));
+        }`,
       transparent: true,
-      opacity: 0.9,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
+      side: THREE.DoubleSide,
+      toneMapped: false,
     });
     return { primary, secondary, accent, dark, glass, glow, engineGlow };
   }, [hull, plate, trim]);
@@ -115,11 +155,14 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
       const t = state.clock.elapsedTime;
       const flicker = 0.88 + Math.sin(t * 24) * 0.06 + Math.sin(t * 7.3) * 0.06;
       const len = 0.6 + throttle * 3.4;
+      const fu = mats.engineGlow.uniforms;
+      if (animate) fu.uTime.value = t;
+      fu.uThrottle.value = throttle;
+      fu.uOpacity.value = 0.45 + throttle * 0.55;
       [plumeA, plumeB].forEach((p) => {
         if (!p.current) return;
         p.current.scale.set(1, animate ? len * flicker : len, 1);
         p.current.position.z = -2.45 - (len * (animate ? flicker : 1)) * 0.5;
-        (p.current.material as THREE.Material).opacity = 0.35 + throttle * 0.55;
       });
 
       if (beamRef.current) {
@@ -257,9 +300,9 @@ const MiningVessel = forwardRef<THREE.Group, Props>(
               position={[0, 0, -2.45]}
               rotation={[-Math.PI / 2, 0, 0]}
             >
-              <coneGeometry args={[0.3, 1, 20, 1, true]} />
+              <coneGeometry args={[0.34, 1, 32, 16, true]} />
             </mesh>
-            <pointLight color="#4fd8ff" intensity={2.2 + throttle * 4} distance={9} position={[0, 0, -1]} />
+            <pointLight color="#ffa04a" intensity={2.2 + throttle * 4} distance={9} position={[0, 0, -1]} />
           </group>
         ))}
 
