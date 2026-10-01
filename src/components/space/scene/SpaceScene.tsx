@@ -21,6 +21,7 @@ import DeepSky from "./DeepSky";
 import AsteroidDebug from "./AsteroidDebug";
 import AsteroidDebugHud from "./AsteroidDebugHud";
 import { isAsteroidDebug } from "./asteroidDebug";
+import CosmicAnomalies from "../CosmicAnomalies";
 import { CAMERA_FAR, CAMERA_NEAR, WORLD_SCALE } from "../worldScale";
 
 interface Props {
@@ -72,6 +73,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
           <AsteroidField animate={animate} full={full} />
           {debug && <AsteroidDebug />}
           <Planets full={full} />
+          <CosmicAnomalies scale={20} animate={animate} full={full} local={false} />
           <MarketComets animate={animate} />
           <VesselFlight animate={animate} full={full} />
         </>

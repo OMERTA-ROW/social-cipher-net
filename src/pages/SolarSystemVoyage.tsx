@@ -19,6 +19,7 @@ import SharedSun from "@/components/space/scene/Sun";
 import MiningVessel from "@/components/space/scene/MiningVessel";
 import VoyageCelestialBody, { type VoyagePlanetDef } from "@/components/space/voyage/VoyageCelestialBody";
 import VoyageAsteroidField from "@/components/space/voyage/VoyageAsteroidField";
+import CosmicAnomalies, { SolarFlares } from "@/components/space/CosmicAnomalies";
 import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
 
 interface VoyagePreset {
@@ -62,11 +63,12 @@ const PLANETS: VoyagePlanetDef[] = [
 const ASTEROID_BELT_R = 38;
 
 // ---------- Scene pieces ----------
-const VoyageSun = ({ full }: { full: boolean }) => {
+const VoyageSun = ({ full, animate }: { full: boolean; animate: boolean }) => {
   return (
     <group>
       <group scale={0.1375}>
         <SharedSun full={full} />
+        <SolarFlares radius={SUN_PHOTO_RADIUS} animate={animate} />
       </group>
       <pointLight color="#fff4dc" intensity={6200} distance={0} decay={2} />
     </group>
@@ -393,7 +395,7 @@ const SolarSystemVoyage = () => {
       <div className={`pointer-events-none absolute inset-0 ${paletteVeil}`} />
 
       <Canvas
-        camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 50000 }}
+        camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 5000000 }}
         dpr={preset.dpr}
         className="!absolute inset-0"
         gl={{ antialias: false, alpha: false, logarithmicDepthBuffer: true, powerPreference: activeTier === "low" ? "low-power" : "high-performance" }}
@@ -406,7 +408,7 @@ const SolarSystemVoyage = () => {
           <ambientLight intensity={0.075} />
           <DeepSky full={activeTier === "high"} />
           <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
-          <VoyageSun full={activeTier === "high"} />
+          <VoyageSun full={activeTier === "high"} animate={!reducedMotion} />
           {PLANETS.map((p) => (
             <VoyageCelestialBody
               key={p.name}
@@ -419,6 +421,7 @@ const SolarSystemVoyage = () => {
             />
           ))}
           <VoyageAsteroidField count={preset.asteroids} animate={sceneAnimated} />
+          <CosmicAnomalies scale={10} animate={!reducedMotion} full={activeTier !== "low"} />
 
           {/* Harvester fleet */}
           <HarvesterBot offset={0} color="#8fb4c9" personaLabel="Zozo-01" animate={sceneAnimated} />
@@ -437,7 +440,7 @@ const SolarSystemVoyage = () => {
                 ref={controlsRef}
                 enablePan={mode === "orbital" && !focusedPlanet}
                 minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
-                maxDistance={120}
+                maxDistance={120000}
               />
               <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} focusedRadius={focusedDef?.radius} targetOrbitSpeed={orbitSpeed} />
             </>
