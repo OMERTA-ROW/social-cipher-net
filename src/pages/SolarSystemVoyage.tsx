@@ -156,10 +156,11 @@ const AsteroidField = ({ count = 80 }: { count?: number }) => {
   );
 };
 
-const HarvesterBot = ({ offset, color, personaLabel }: { offset: number; color: string; personaLabel: string }) => {
+const HarvesterBot = ({ offset, color, personaLabel, animate }: { offset: number; color: string; personaLabel: string; animate: boolean }) => {
   const ref = useRef<THREE.Group>(null);
   const beamRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
+    if (!animate) return;
     const t = clock.getElapsedTime() * 0.4 + offset;
     const r = ASTEROID_BELT_R + Math.sin(t * 1.3) * 1.2;
     if (ref.current) {
@@ -173,15 +174,27 @@ const HarvesterBot = ({ offset, color, personaLabel }: { offset: number; color: 
   });
   return (
     <group ref={ref}>
-      {/* Saucer body */}
-      <mesh>
-        <sphereGeometry args={[0.28, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+      {/* Compact industrial mining drone */}
+      <mesh castShadow>
+        <boxGeometry args={[0.5, 0.24, 0.72]} />
         <meshStandardMaterial color={color} metalness={0.7} roughness={0.3} emissive={color} emissiveIntensity={0.4} />
       </mesh>
-      <mesh position={[0, -0.05, 0]}>
-        <cylinderGeometry args={[0.32, 0.32, 0.06, 20]} />
-        <meshStandardMaterial color="#111" metalness={0.9} roughness={0.2} />
+      <mesh position={[0, 0.08, 0.4]} rotation={[Math.PI / 2, 0, 0]}>
+        <coneGeometry args={[0.16, 0.34, 8]} />
+        <meshStandardMaterial color="#536779" metalness={0.9} roughness={0.24} />
       </mesh>
+      {[-1, 1].map((side) => (
+        <group key={side} position={[side * 0.36, 0, 0]}>
+          <mesh rotation={[0, 0, side * 0.45]}>
+            <boxGeometry args={[0.32, 0.07, 0.1]} />
+            <meshStandardMaterial color="#536779" metalness={0.85} roughness={0.32} />
+          </mesh>
+          <mesh position={[side * 0.18, -0.1, 0]}>
+            <sphereGeometry args={[0.07, 10, 8]} />
+            <meshBasicMaterial color={color} toneMapped={false} />
+          </mesh>
+        </group>
+      ))}
       {/* Mining beam */}
       <mesh ref={beamRef} position={[0, -0.7, 0]}>
         <cylinderGeometry args={[0.02, 0.14, 1.2, 8, 1, true]} />
@@ -442,11 +455,11 @@ const SolarSystemVoyage = () => {
           <AsteroidField count={preset.asteroids} />
 
           {/* Harvester fleet */}
-          <HarvesterBot offset={0}     color="#8fb4c9" personaLabel="Zozo-01" />
-          <HarvesterBot offset={2.1}   color="#8fb4c9" personaLabel="Zozo-02" />
-          <HarvesterBot offset={4.2}   color="#ff5533" personaLabel="Draco-01" />
-          <HarvesterBot offset={5.7}   color="#ff5533" personaLabel="Draco-02" />
-          <HarvesterBot offset={1.1}   color="#ffb347" personaLabel="Hauler" />
+          <HarvesterBot offset={0} color="#8fb4c9" personaLabel="Zozo-01" animate={sceneAnimated} />
+          <HarvesterBot offset={2.1} color="#8fb4c9" personaLabel="Zozo-02" animate={sceneAnimated} />
+          <HarvesterBot offset={4.2} color="#ff5533" personaLabel="Draco-01" animate={sceneAnimated} />
+          <HarvesterBot offset={5.7} color="#ff5533" personaLabel="Draco-02" animate={sceneAnimated} />
+          <HarvesterBot offset={1.1} color="#ffb347" personaLabel="Hauler" animate={sceneAnimated} />
 
           <Ship tRef={tRef} speedRef={speedRef} shipRef={shipRef} />
 
