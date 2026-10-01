@@ -141,7 +141,7 @@ const Ring = ({ inner, outer, delay }: { inner: number; outer: number; delay: nu
   );
 };
 
-const PlanetMesh = ({ body, full, segments, index }: { body: Body; full: boolean; segments: number; index: number }) => {
+const PlanetMesh = ({ body, full, animate, segments, index }: { body: Body; full: boolean; animate: boolean; segments: number; index: number }) => {
   const group = useRef<THREE.Group>(null);
   const mesh = useRef<THREE.Mesh>(null);
   const clouds = useRef<THREE.Mesh>(null);
@@ -239,7 +239,7 @@ const Planets = ({ full, animate }: { full: boolean; animate: boolean }) => {
       <SolarFlares radius={16} animate={animate} full={full} />
 
       {bodies.map((b, i) => (
-        <PlanetMesh key={b.name} body={b} full={full} segments={segments} index={i} />
+        <PlanetMesh key={b.name} body={b} full={full} animate={animate} segments={segments} index={i} />
       ))}
     </group>
   );
