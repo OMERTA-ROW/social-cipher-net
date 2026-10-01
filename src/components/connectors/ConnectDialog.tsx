@@ -64,7 +64,6 @@ const ConnectDialog = ({
           action: "start",
           provider: service.oauthProvider,
           service_id: service.id,
-          redirect_uri: `${window.location.origin}/integrations`,
         },
       });
       // A refused start comes back as a non-2xx, so read the real reason out of it.

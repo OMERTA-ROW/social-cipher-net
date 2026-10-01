@@ -9,6 +9,7 @@ import {
   OAUTH_ATTEMPT_TTL_MS,
   sanitizeOAuthError,
   sha256,
+  trustedOAuthRedirect,
 } from "../_shared/connectorOAuthSecurity.ts";
 
 const corsHeaders = {
@@ -30,7 +31,20 @@ const json = (body: unknown, status = 200) =>
  */
 const PROVIDERS: Record<
   string,
-  { authorizeUrl: string; tokenUrl: string; scope: string; pkce?: boolean }
+  {
+    authorizeUrl: string;
+    tokenUrl: string;
+    scope: string;
+    pkce?: boolean;
+    identity?: {
+      url: string;
+      method?: "GET" | "POST";
+      id: string[];
+      name: string[];
+      handle?: string[];
+      clientIdHeader?: boolean;
+    };
+  }
 > = {
   google: {
     authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
@@ -38,28 +52,33 @@ const PROVIDERS: Record<
     scope:
       "https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/youtube.upload",
     pkce: true,
+    identity: { url: "https://openidconnect.googleapis.com/v1/userinfo", id: ["sub"], name: ["name", "email"], handle: ["email"] },
   },
   facebook: {
     authorizeUrl: "https://www.facebook.com/v21.0/dialog/oauth",
     tokenUrl: "https://graph.facebook.com/v21.0/oauth/access_token",
     scope: "pages_manage_posts,pages_read_engagement,publish_video",
+    identity: { url: "https://graph.facebook.com/v21.0/me?fields=id,name,email", id: ["id"], name: ["name", "email"], handle: ["email"] },
   },
   instagram: {
     authorizeUrl: "https://www.facebook.com/v21.0/dialog/oauth",
     tokenUrl: "https://graph.facebook.com/v21.0/oauth/access_token",
     scope: "instagram_basic,instagram_content_publish,pages_show_list",
+    identity: { url: "https://graph.instagram.com/me?fields=id,username", id: ["id"], name: ["username"], handle: ["username"] },
   },
   tiktok: {
     authorizeUrl: "https://www.tiktok.com/v2/auth/authorize/",
     tokenUrl: "https://open.tiktokapis.com/v2/oauth/token/",
     scope: "user.info.basic,video.publish,video.list",
     pkce: true,
+    identity: { url: "https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name,username", id: ["data", "user", "open_id"], name: ["data", "user", "display_name"], handle: ["data", "user", "username"] },
   },
   x: {
     authorizeUrl: "https://twitter.com/i/oauth2/authorize",
     tokenUrl: "https://api.twitter.com/2/oauth2/token",
     scope: "tweet.read tweet.write users.read offline.access",
     pkce: true,
+    identity: { url: "https://api.twitter.com/2/users/me", id: ["data", "id"], name: ["data", "name"], handle: ["data", "username"] },
   },
   snapchat: {
     authorizeUrl: "https://accounts.snapchat.com/accounts/oauth2/auth",
@@ -70,6 +89,7 @@ const PROVIDERS: Record<
     authorizeUrl: "https://id.twitch.tv/oauth2/authorize",
     tokenUrl: "https://id.twitch.tv/oauth2/token",
     scope: "channel:manage:broadcast chat:read chat:edit",
+    identity: { url: "https://api.twitch.tv/helix/users", id: ["data", "0", "id"], name: ["data", "0", "display_name"], handle: ["data", "0", "login"], clientIdHeader: true },
   },
   kick: {
     authorizeUrl: "https://id.kick.com/oauth/authorize",
@@ -108,34 +128,40 @@ const PROVIDERS: Record<
     tokenUrl: "https://www.reddit.com/api/v1/access_token",
     scope: "identity read submit history",
     pkce: true,
+    identity: { url: "https://oauth.reddit.com/api/v1/me", id: ["id"], name: ["name"], handle: ["name"] },
   },
   linkedin: {
     authorizeUrl: "https://www.linkedin.com/oauth/v2/authorization",
     tokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
     scope: "openid profile w_member_social",
     pkce: true,
+    identity: { url: "https://api.linkedin.com/v2/userinfo", id: ["sub"], name: ["name"], handle: ["email"] },
   },
   discord: {
     authorizeUrl: "https://discord.com/oauth2/authorize",
     tokenUrl: "https://discord.com/api/oauth2/token",
     scope: "identify guilds messages.read",
     pkce: true,
+    identity: { url: "https://discord.com/api/users/@me", id: ["id"], name: ["global_name", "username"], handle: ["username"] },
   },
   spotify: {
     authorizeUrl: "https://accounts.spotify.com/authorize",
     tokenUrl: "https://accounts.spotify.com/api/token",
     scope: "user-read-private user-read-email user-top-read",
     pkce: true,
+    identity: { url: "https://api.spotify.com/v1/me", id: ["id"], name: ["display_name", "email"], handle: ["email"] },
   },
   soundcloud: {
     authorizeUrl: "https://secure.soundcloud.com/authorize",
     tokenUrl: "https://secure.soundcloud.com/oauth/token",
     scope: "non-expiring",
+    identity: { url: "https://api.soundcloud.com/me", id: ["id"], name: ["username"], handle: ["permalink"] },
   },
   figma: {
     authorizeUrl: "https://www.figma.com/oauth",
     tokenUrl: "https://api.figma.com/v1/oauth/token",
     scope: "file_read",
+    identity: { url: "https://api.figma.com/v1/me", id: ["id"], name: ["handle", "email"], handle: ["email"] },
   },
   google_drive: {
     authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
@@ -147,6 +173,7 @@ const PROVIDERS: Record<
     tokenUrl: "https://api.dropboxapi.com/oauth2/token",
     scope: "files.content.read files.metadata.read",
     pkce: true,
+    identity: { url: "https://api.dropboxapi.com/2/users/get_current_account", method: "POST", id: ["account_id"], name: ["name", "display_name"], handle: ["email"] },
   },
   etsy: {
     authorizeUrl: "https://www.etsy.com/oauth/connect",
@@ -154,6 +181,50 @@ const PROVIDERS: Record<
     scope: "listings_r transactions_r shops_r",
     pkce: true,
   },
+};
+
+const readPath = (value: unknown, path: string[]): unknown => {
+  let current = value;
+  for (const segment of path) {
+    if (Array.isArray(current) && /^\d+$/.test(segment)) current = current[Number(segment)];
+    else if (current && typeof current === "object") current = (current as Record<string, unknown>)[segment];
+    else return undefined;
+  }
+  return current;
+};
+
+const firstText = (value: unknown, paths: string[][]): string | null => {
+  for (const path of paths) {
+    const candidate = readPath(value, path);
+    if (typeof candidate === "string" && candidate.trim()) return candidate.trim().slice(0, 255);
+    if (typeof candidate === "number") return String(candidate);
+  }
+  return null;
+};
+
+const fetchProviderIdentity = async (
+  config: (typeof PROVIDERS)[string],
+  accessToken: string,
+  clientId: string,
+) => {
+  if (!config.identity) return null;
+  const headers: Record<string, string> = { Authorization: `Bearer ${accessToken}` };
+  if (config.identity.clientIdHeader) headers["Client-Id"] = clientId;
+  const response = await fetch(config.identity.url, {
+    method: config.identity.method ?? "GET",
+    headers,
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok || !body) return null;
+  const id = firstText(body, [config.identity.id]);
+  if (!id) return null;
+  return {
+    id,
+    name: firstText(body, config.identity.name.map((key) => [key]).concat([config.identity.name])),
+    handle: config.identity.handle
+      ? firstText(body, config.identity.handle.map((key) => [key]).concat([config.identity.handle]))
+      : null,
+  };
 };
 
 const envKey = (provider: string, suffix: string) =>
@@ -239,6 +310,11 @@ Deno.serve(async (req) => {
         );
       }
 
+      const identity = await fetchProviderIdentity(config, String(tokenBody.access_token), clientId);
+      if (!identity) {
+        return json({ error: "The provider account identity could not be verified. Your existing connection was not changed." }, 400);
+      }
+
       // Create an isolated pending row first. A reconnect must never alter a
       // working connection until the replacement credentials are encrypted.
       const { data: connection, error: connError } = await admin
@@ -290,17 +366,19 @@ Deno.serve(async (req) => {
         return json({ error: "Authorization succeeded, but its credentials could not be stored securely. Your existing connection was not changed." }, 500);
       }
 
-      const { error: activateError } = await admin
-        .from("user_connections")
-        .update({
-          status: "connected",
-          expires_at: expiresAt,
-          health: "healthy",
-          failure_count: 0,
-        })
-        .eq("id", connection.id)
-        .eq("user_id", user.id);
-      if (activateError) {
+      const { data: activated, error: activateError } = await admin.rpc(
+        "activate_verified_oauth_connection",
+        {
+          _connection_id: connection.id,
+          _user_id: user.id,
+          _service_id: attempt.service_id,
+          _provider_account_id: identity.id,
+          _account_name: identity.name ?? "",
+          _account_handle: identity.handle ?? "",
+          _expires_at: expiresAt,
+        },
+      );
+      if (activateError || activated !== true) {
         await admin.from("user_connections").delete().eq("id", connection.id).eq("user_id", user.id);
         return json({ error: "The connection could not be activated. Your existing connection was not changed." }, 500);
       }
@@ -313,14 +391,14 @@ Deno.serve(async (req) => {
         status: "ok",
       });
 
-      return json({ ok: true, service_id: attempt.service_id });
+       return json({ ok: true, service_id: attempt.service_id, account_name: identity.name ?? identity.handle });
     }
 
     // ---- start: build the provider authorize URL ----
     // ---- status: which services already have their developer app set up ----
     if (action === "status") {
       const configured = Object.keys(PROVIDERS).filter((p) =>
-        Boolean(Deno.env.get(envKey(p, "CLIENT_ID")) && Deno.env.get(envKey(p, "CLIENT_SECRET")))
+        Boolean(PROVIDERS[p].identity && Deno.env.get(envKey(p, "CLIENT_ID")) && Deno.env.get(envKey(p, "CLIENT_SECRET")))
       );
       return json({
         ok: true,
@@ -338,14 +416,14 @@ Deno.serve(async (req) => {
 
     const provider = String(body.provider ?? "");
     const serviceId = String(body.service_id ?? "");
-    const redirectUri = String(body.redirect_uri ?? "");
+    const redirectUri = trustedOAuthRedirect(req.headers.get("Origin"));
     const config = PROVIDERS[provider];
     if (!config) return json({ error: "Unsupported service" }, 400);
     const definition = getDefinition(serviceId);
     if (!definition || definition.oauthProvider !== provider) {
       return json({ error: "Provider does not match this service" }, 400);
     }
-    if (!oauthRedirectIsAllowed(redirectUri)) {
+    if (!redirectUri || !oauthRedirectIsAllowed(redirectUri)) {
       return json({ error: "Invalid callback address" }, 400);
     }
 
