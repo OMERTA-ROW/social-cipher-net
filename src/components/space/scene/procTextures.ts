@@ -544,3 +544,102 @@ export const shipPlateMaps = () =>
 /** Painted hazard-orange trim, still metal underneath. */
 export const shipTrimMaps = () =>
   cached("shipTrim", () => buildHull(9091, [164, 104, 42], 72, 3.2, 3)) as HullSurfaceMaps;
+
+/* ------------------------------------------------------------------ *
+ * Realistic asteroid regolith (procedurally generated, not NASA imagery).
+ * Tileable multi-octave noise for albedo, raised-rim craters with ejecta,
+ * fine grit and boulders, baked into colour + normal + roughness maps.
+ * ------------------------------------------------------------------ */
+const asteroidCanvases = (seed: number, tint: [number, number, number]) => {
+  const size = 512;
+  const rnd = rand(seed);
+  // tileable value-noise lattice
+  const lattice = (period: number) => {
+    const g = new Float32Array(period * period);
+    for (let i = 0; i < g.length; i++) g[i] = rnd();
+    return (x: number, y: number) => {
+      const fx = (x / size) * period;
+      const fy = (y / size) * period;
+      const x0 = Math.floor(fx), y0 = Math.floor(fy);
+      const tx = fx - x0, ty = fy - y0;
+      const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+      const at = (a: number, b: number) => g[((b % period + period) % period) * period + ((a % period + period) % period)];
+      const a = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * sx;
+      const b = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * sx;
+      return a + (b - a) * sy;
+    };
+  };
+  const octaves = [4, 8, 16, 32, 64, 128].map(lattice);
+  const H = new Float32Array(size * size);
+  const A = new Float32Array(size * size);
+  const albedoNoise = [3, 6, 12].map(lattice);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      let h = 0, amp = 0.5;
+      for (const o of octaves) { h += o(x, y) * amp; amp *= 0.52; }
+      let a = 0; amp = 0.55;
+      for (const o of albedoNoise) { a += o(x, y) * amp; amp *= 0.5; }
+      H[y * size + x] = h;
+      A[y * size + x] = a;
+    }
+  }
+  // craters with raised rims, wrapped so the map tiles
+  const crater = (cx: number, cy: number, r: number, depth: number) => {
+    const R = Math.ceil(r * 1.8);
+    for (let dy = -R; dy <= R; dy++) {
+      for (let dx = -R; dx <= R; dx++) {
+        const d = Math.sqrt(dx * dx + dy * dy) / r;
+        if (d > 1.8) continue;
+        const x = ((Math.floor(cx) + dx) % size + size) % size;
+        const y = ((Math.floor(cy) + dy) % size + size) % size;
+        const i = y * size + x;
+        let delta: number;
+        if (d < 1) delta = -depth * (1 - d * d) + depth * 0.25;
+        else delta = depth * 0.35 * Math.exp(-((d - 1) * (d - 1)) / 0.08);
+        H[i] += delta;
+        // fresh ejecta slightly brighter, crater floors darker
+        A[i] += d < 0.9 ? -0.05 * depth * 8 : d < 1.6 ? 0.035 * depth * 8 : 0;
+      }
+    }
+  };
+  for (let i = 0; i < 6; i++) crater(rnd() * size, rnd() * size, 30 + rnd() * 45, 0.12);
+  for (let i = 0; i < 40; i++) crater(rnd() * size, rnd() * size, 8 + rnd() * 20, 0.08);
+  for (let i = 0; i < 260; i++) crater(rnd() * size, rnd() * size, 1.5 + rnd() * 5, 0.05);
+
+  const colour = makeCanvas(size), height = makeCanvas(size), rough = makeCanvas(size);
+  const ci = colour.getContext("2d")!.createImageData(size, size);
+  const hi = height.getContext("2d")!.createImageData(size, size);
+  const ri = rough.getContext("2d")!.createImageData(size, size);
+  let mn = Infinity, mx = -Infinity;
+  for (const v of H) { if (v < mn) mn = v; if (v > mx) mx = v; }
+  for (let i = 0; i < size * size; i++) {
+    const h = (H[i] - mn) / (mx - mn);
+    const grit = (rnd() - 0.5) * 0.12;
+    const shade = Math.max(0.25, Math.min(1.25, 0.55 + (A[i] - 0.5) * 0.9 + h * 0.25 + grit));
+    const p = i * 4;
+    ci.data[p] = Math.min(255, tint[0] * shade);
+    ci.data[p + 1] = Math.min(255, tint[1] * shade);
+    ci.data[p + 2] = Math.min(255, tint[2] * shade);
+    ci.data[p + 3] = 255;
+    const hv = Math.min(255, Math.max(0, (h + grit * 0.4) * 255));
+    hi.data[p] = hi.data[p + 1] = hi.data[p + 2] = hv; hi.data[p + 3] = 255;
+    const rv = 200 + (1 - h) * 40 + grit * 60;
+    ri.data[p] = ri.data[p + 1] = ri.data[p + 2] = Math.min(255, rv); ri.data[p + 3] = 255;
+  }
+  colour.getContext("2d")!.putImageData(ci, 0, 0);
+  height.getContext("2d")!.putImageData(hi, 0, 0);
+  rough.getContext("2d")!.putImageData(ri, 0, 0);
+  return { colour, height, rough };
+};
+
+/** Asteroid tints: grey-brown chondrite, darker carbonaceous, warmer stony, cool metallic grey. */
+const ASTEROID_TINTS: [number, number, number][] = [
+  [128, 118, 106],
+  [92, 88, 84],
+  [140, 120, 98],
+  [118, 120, 124],
+];
+export const asteroidMaps = (variant: number) => {
+  const v = ((variant % ASTEROID_TINTS.length) + ASTEROID_TINTS.length) % ASTEROID_TINTS.length;
+  return cached(`asteroid-${v}`, () => build(asteroidCanvases(311 + v * 97, ASTEROID_TINTS[v]), 9.0, 1));
+};

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { asteroidRegistry } from "./asteroidRegistry";
 import { detectDeviceClass, resolveAsteroidConfig, type AsteroidConfig } from "./asteroidConfig";
 import { asteroidDebugStats } from "./asteroidDebug";
+import { asteroidMaps } from "./procTextures";
 
 /**
  * Real rocks drifting through the scene, replacing the old pale streak
@@ -243,10 +244,13 @@ const AsteroidField = ({ animate, full }: { animate: boolean; full: boolean }) =
         >
           <meshStandardMaterial
             vertexColors
-            color="#9a9086"
-            emissive="#55534f"
-            emissiveIntensity={1.0}
-            roughness={0.92}
+            map={asteroidMaps(i).map}
+            normalMap={asteroidMaps(i).normalMap}
+            roughnessMap={asteroidMaps(i).roughnessMap}
+            color="#d6d0c8"
+            emissive="#3a3835"
+            emissiveIntensity={0.6}
+            roughness={1}
             metalness={0.03}
             flatShading={cfg.flatShading}
           />
