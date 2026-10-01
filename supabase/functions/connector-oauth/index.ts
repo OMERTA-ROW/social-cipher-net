@@ -328,6 +328,7 @@ Deno.serve(async (req) => {
             method: "oauth",
             status: "pending",
             health: "checking",
+            is_active_account: false,
             scopes: config.scope.split(/[ ,]/).filter(Boolean),
             last_error: null,
             updated_at: new Date().toISOString(),
