@@ -212,7 +212,7 @@ const Nebula = ({ position, size, colors, seed, animate, full, detail }: { posit
   });
   return (
     <group ref={group} position={position} rotation={[seed * 0.13, seed * 0.07, seed * 0.11]}>
-      <AnimatedPoints geometry={geometry} color={colors[0]} size={size * 0.028} opacity={0.34} animate={animate} spin={0.002} />
+      <AnimatedPoints geometry={geometry} color={colors[0]} size={size * 0.034} opacity={0.38} animate={animate} spin={0.002} />
       <mesh scale={[1, 0.42, 0.72]}>
         <sphereGeometry args={[size * 0.78, 24, 16]} />
         <meshBasicMaterial map={detail} color={colors[1]} side={THREE.DoubleSide} transparent opacity={0.1} depthWrite={false} blending={THREE.AdditiveBlending} />
@@ -471,9 +471,9 @@ const CosmicAnomalies = ({ scale, animate, full, local = true }: CosmicAnomalies
       <Nebula position={at([120, 30, 140], scale)} size={45 * scale} colors={["#4388ff", "#6ebdff", "#8065d5"]} seed={3} animate={animate} full={full} detail={textures.nebula} />
       <Nebula position={at([-180, -40, -60], scale)} size={60 * scale} colors={["#e76546", "#f0a36b", "#4b8fd8"]} seed={9} animate={animate} full={full} detail={textures.nebula} />
       {full && <Nebula position={at([60, 80, -260], scale)} size={70 * scale} colors={["#47b9b5", "#5a91df", "#8b76c9"]} seed={17} animate={animate} full detail={textures.nebula} />}
-      <SpiralGalaxy position={at([-400, 120, 500], scale)} size={120 * scale} seed={5} tilt={[0.6, 0, 0.3]} count={full ? 3200 : 900} animate={animate} detail={textures.galaxy} />
-      <SpiralGalaxy position={at([700, -200, -500], scale)} size={180 * scale} seed={11} tilt={[1.1, 0.4, 0]} count={full ? 3200 : 900} animate={animate} detail={textures.galaxy} />
-      {full && <SpiralGalaxy position={at([-200, -500, -900], scale)} size={220 * scale} seed={23} tilt={[0.2, 0.8, 0.5]} count={2400} animate={animate} detail={textures.galaxy} />}
+      <SpiralGalaxy position={at([-400, 120, 500], scale)} size={120 * scale} seed={5} tilt={[0.6, 0, 0.3]} count={full ? 1800 : 520} animate={animate} detail={textures.galaxy} />
+      <SpiralGalaxy position={at([700, -200, -500], scale)} size={180 * scale} seed={11} tilt={[1.1, 0.4, 0]} count={full ? 1800 : 520} animate={animate} detail={textures.galaxy} />
+      {full && <SpiralGalaxy position={at([-200, -500, -900], scale)} size={220 * scale} seed={23} tilt={[0.2, 0.8, 0.5]} count={1400} animate={animate} detail={textures.galaxy} />}
       <Quasar position={at([900, 300, 400], scale)} size={8 * scale} animate={animate} detail={textures.quasar} />
       {full && <BlackHole position={at([-650, 60, -300], scale)} size={30 * scale} animate={animate} detail={textures.blackhole} />}
     </group>
