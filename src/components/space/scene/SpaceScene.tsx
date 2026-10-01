@@ -21,8 +21,8 @@ import DeepSky from "./DeepSky";
 import AsteroidDebug from "./AsteroidDebug";
 import AsteroidDebugHud from "./AsteroidDebugHud";
 import { isAsteroidDebug } from "./asteroidDebug";
-import CosmicAnomalies from "../CosmicAnomalies";
-import { CAMERA_FAR, CAMERA_NEAR, WORLD_SCALE } from "../worldScale";
+import CosmicAnomalies, { SkyPhotos } from "../CosmicAnomalies";
+import { CAMERA_FAR, CAMERA_NEAR, SKY_RADIUS, WORLD_SCALE } from "../worldScale";
 
 interface Props {
   /** false = reduced particle counts / no post-processing (mobile, low power) */
@@ -74,6 +74,7 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
           {debug && <AsteroidDebug />}
           <Planets full={full} />
           <CosmicAnomalies scale={20} animate={animate} full={full} local={false} />
+          <SkyPhotos radius={SKY_RADIUS * 0.8} />
           <MarketComets animate={animate} />
           <VesselFlight animate={animate} full={full} />
         </>

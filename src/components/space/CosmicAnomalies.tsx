@@ -301,3 +301,36 @@ const CosmicAnomalies = ({ scale: s, animate, full, local = true }: CosmicAnomal
 };
 
 export default CosmicAnomalies;
+
+/**
+ * Wraps the realistic deep-space images around the whole sky so some are
+ * always in view from the site background, wherever the camera looks.
+ */
+export const SkyPhotos = ({ radius }: { radius: number }) => {
+  const items = useMemo(() => {
+    const urls = [nebulaUrl, galaxyUrl, supernovaUrl, blackholeUrl, wormholeUrl, pulsarUrl, quasarUrl, nebulaUrl, galaxyUrl, nebulaUrl, supernovaUrl, galaxyUrl];
+    const rnd = seeded(2027);
+    const n = urls.length;
+    return urls.map((url, i) => {
+      // even spread over the sphere (Fibonacci), kept away from the poles
+      const y = 0.75 - (i / (n - 1)) * 1.5;
+      const r = Math.sqrt(1 - y * y);
+      const phi = i * 2.399963 + rnd() * 0.3;
+      const d = radius * (0.7 + rnd() * 0.25);
+      return {
+        url,
+        pos: [Math.cos(phi) * r * d, y * d, Math.sin(phi) * r * d] as V3,
+        size: radius * (0.18 + rnd() * 0.16),
+        rot: rnd() * Math.PI * 2,
+        opacity: 0.55 + rnd() * 0.25,
+      };
+    });
+  }, [radius]);
+  return (
+    <group>
+      {items.map((it, i) => (
+        <PhotoSprite key={i} url={it.url} position={it.pos} size={it.size} rotation={it.rot} opacity={it.opacity} />
+      ))}
+    </group>
+  );
+};
