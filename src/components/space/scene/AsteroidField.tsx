@@ -252,7 +252,7 @@ const AsteroidField = ({ animate, full }: { animate: boolean; full: boolean }) =
             emissive="#171614"
             emissiveIntensity={0.18}
             roughness={1}
-            metalness={i === 3 ? 0.08 : 0.015}
+            metalness={i === 2 ? 0.08 : 0.015}
             flatShading={cfg.flatShading}
           />
         </instancedMesh>

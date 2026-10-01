@@ -487,7 +487,7 @@ export const SolarFlares = ({ radius, animate }: { radius: number; animate: bool
     if (animate) time.current += Math.min(delta, 0.05);
     if (corona.current) corona.current.uniforms.uTime.value = time.current;
     group.current.children.forEach((child, index) => {
-      const loop = loops[index];
+      const loop = loops[index - 1];
       if (!loop) return;
       child.scale.setScalar(0.85 + 0.25 * Math.sin(time.current * 0.6 + loop.phase));
     });
