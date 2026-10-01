@@ -68,7 +68,7 @@ const VoyageSun = ({ full }: { full: boolean }) => {
       <group scale={0.1375}>
         <SharedSun full={full} />
       </group>
-      <pointLight color="#fff3d8" intensity={4.2} distance={110} decay={1.15} />
+      <pointLight color="#fff4dc" intensity={6200} distance={0} decay={2} />
     </group>
   );
 };
@@ -98,21 +98,30 @@ const FocusFollower = ({
   controlsRef,
   planetRefs,
   focusedPlanet,
+  focusedRadius,
   targetOrbitSpeed,
 }: {
   controlsRef: React.MutableRefObject<any>;
   planetRefs: React.MutableRefObject<Record<string, THREE.Mesh | null>>;
   focusedPlanet: string | null;
+  focusedRadius: number | undefined;
   targetOrbitSpeed: number;
 }) => {
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const currentSpeed = useRef(0);
+  const previousFocus = useRef<string | null>(null);
   useFrame((_, dt) => {
     const controls = controlsRef.current;
     if (!controls) return;
     const focusedMesh = focusedPlanet ? planetRefs.current[focusedPlanet] : null;
     if (focusedMesh) {
       focusedMesh.getWorldPosition(tmp);
+      if (previousFocus.current !== focusedPlanet) {
+        const radius = focusedRadius ?? 1;
+        const viewDirection = controls.object.position.clone().sub(tmp).normalize();
+        if (viewDirection.lengthSq() < 0.5) viewDirection.set(0.7, 0.35, 1).normalize();
+        controls.object.position.copy(tmp).add(viewDirection.multiplyScalar(Math.max(radius * 4.2, 2.4)));
+      }
       controls.target.lerp(tmp, 0.2);
     } else {
       controls.target.lerp(tmp.set(0, 0, 0), 0.1);
@@ -125,6 +134,7 @@ const FocusFollower = ({
     controls.autoRotate = Math.abs(applied) > 0.01;
     controls.autoRotateSpeed = applied;
     controls.update();
+    previousFocus.current = focusedPlanet;
   });
   return null;
 };
@@ -446,7 +456,7 @@ const SolarSystemVoyage = () => {
                 minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
                 maxDistance={120}
               />
-              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} targetOrbitSpeed={orbitSpeed} />
+              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} focusedRadius={focusedDef?.radius} targetOrbitSpeed={orbitSpeed} />
             </>
           )}
           {activeTier === "high" && !reducedMotion && (

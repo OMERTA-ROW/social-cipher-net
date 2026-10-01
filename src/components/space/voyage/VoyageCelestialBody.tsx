@@ -154,7 +154,7 @@ const VoyageCelestialBody = ({
           <sphereGeometry args={[definition.radius, segments, segments / 2]} />
           <meshStandardMaterial
             map={map ?? undefined}
-            color={map ? "#ffffff" : new THREE.Color(...definition.atmosphere)}
+            color={map ? "#ffffff" : "#4b4a47"}
             bumpMap={bump ?? undefined}
             bumpScale={bump ? definition.bump * definition.radius : 0}
             roughness={definition.roughness}
