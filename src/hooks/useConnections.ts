@@ -57,6 +57,7 @@ export const useConnections = () => {
   }, [load]);
 
   const byService = (serviceId: string) =>
+    connections.find((c) => c.service_id === serviceId && c.status === "connected") ??
     connections.find((c) => c.service_id === serviceId) ?? null;
 
   const isConnected = (serviceId: string) =>

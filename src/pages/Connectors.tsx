@@ -57,7 +57,8 @@ const Connectors = () => {
   useEffect(() => {
     const code = params.get("code");
     const state = params.get("state");
-    if (!code || !state) return;
+    const providerError = params.get("error");
+    if ((!code && !providerError) || !state) return;
 
     setFinishing(true);
     // When the provider sent us back inside a popup, hand the result to the
@@ -65,7 +66,7 @@ const Connectors = () => {
     const inPopup = !!window.opener && window.opener !== window;
 
     supabase.functions
-      .invoke("connector-oauth", { body: { action: "callback", code, state } })
+      .invoke("connector-oauth", { body: { action: "callback", code, state, error: providerError } })
       .then(({ data, error }) => {
         const failed = !!(error || data?.error);
         const message = data?.error ?? error?.message ?? "Authorization failed";
