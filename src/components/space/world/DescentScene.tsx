@@ -2,6 +2,10 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import Starfield from "../scene/Starfield";
+import Galaxy from "../scene/Galaxy";
+import DeepSky from "../scene/DeepSky";
+import CosmicAnomalies from "../CosmicAnomalies";
+import { CLOUD_TEXTURE_URLS, SPACE_TEXTURE_URLS, useLazyTexture } from "../realTextures";
 import { MAX_ALTITUDE, MIN_ALTITUDE, PLANET_RADIUS } from "./altitude";
 import { LodProvider, useLod } from "./lodManager";
 import type { QualityTier } from "./qualityTiers";
@@ -95,17 +99,19 @@ const DescentCamera = ({
 
 /* ------------------------------------------------------------------- globe */
 
-const Globe = () => {
+const Globe = ({ animate }: { animate: boolean }) => {
   const { cfg, weights } = useLod();
   const size = cfg.texture;
-  const day = useMemo(() => planetDayMap(size, cfg.anisotropy), [size, cfg.anisotropy]);
+  const fallbackDay = useMemo(() => planetDayMap(size, cfg.anisotropy), [size, cfg.anisotropy]);
   const night = useMemo(() => planetNightMap(size, cfg.anisotropy), [size, cfg.anisotropy]);
-  const clouds = useMemo(() => cloudAlphaMap(size, cfg.anisotropy), [size, cfg.anisotropy]);
+  const fallbackClouds = useMemo(() => cloudAlphaMap(size, cfg.anisotropy), [size, cfg.anisotropy]);
+  const day = useLazyTexture(SPACE_TEXTURE_URLS.Earth, { delay: 120, anisotropy: cfg.anisotropy }) ?? fallbackDay;
+  const clouds = useLazyTexture(CLOUD_TEXTURE_URLS.Earth, { delay: 280, anisotropy: cfg.anisotropy }) ?? fallbackClouds;
   const cloudRef = useRef<THREE.Mesh>(null);
   const segs = cfg.texture >= 1024 ? 128 : cfg.texture >= 512 ? 96 : 48;
 
   useFrame((_, delta) => {
-    if (cloudRef.current) cloudRef.current.rotation.y += Math.min(delta, 0.05) * 0.004;
+    if (animate && cloudRef.current) cloudRef.current.rotation.y += Math.min(delta, 0.05) * 0.004;
   });
 
   // the ground patch takes over below the atmosphere, so fade the globe out
@@ -307,7 +313,7 @@ const Lighting = () => {
 
 /* ------------------------------------------------------------------- scene */
 
-const Contents = ({ full, dpr }: { full: boolean; dpr: number }) => {
+const Contents = ({ full, dpr, animate }: { full: boolean; dpr: number; animate: boolean }) => {
   const { weights, resident, progress } = useLod();
   const { scene } = useThree();
 
@@ -332,9 +338,14 @@ const Contents = ({ full, dpr }: { full: boolean; dpr: number }) => {
     <>
       <Lighting />
       {resident("deep") && weights.street < 0.5 && (
-        <Starfield full={full} dpr={dpr} boost={1} />
+        <>
+          <Galaxy full={full} boost={0.75} />
+          <DeepSky full={full} />
+          <Starfield full={full} dpr={dpr} boost={1} animate={animate} />
+          <CosmicAnomalies scale={5} animate={animate} full={full} local={false} />
+        </>
       )}
-      <Globe />
+      <Globe animate={animate} />
       {(resident("atmosphere") || resident("rooftop") || resident("street")) && <CityBlocks />}
       {(resident("rooftop") || resident("street")) && <GroundPatch />}
 
@@ -357,7 +368,7 @@ const DescentScene = ({ full, animate, tier, dpr }: Props) => {
   return (
     <LodProvider tier={tier} altitudeRef={altitudeRef} animate={animate}>
       <DescentCamera altitudeRef={altitudeRef} animate={animate} />
-      <Contents full={full} dpr={dpr} />
+      <Contents full={full} dpr={dpr} animate={animate} />
     </LodProvider>
   );
 };

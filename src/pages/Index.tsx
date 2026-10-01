@@ -4,7 +4,7 @@ import AppShell from "@/components/layout/AppShell";
 import { PlatformEarningsCard } from "@/components/PlatformEarningsCard";
 import CreatePostDialog from "@/components/CreatePostDialog";
 import PostComposer from "@/components/post/PostComposer";
-import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
+import SpaceBackground from "@/components/space/SpaceBackground";
 import { QualificationProgress } from "@/components/QualificationProgress";
 import StoriesBar from "@/components/StoriesBar";
 import { WalletCard } from "@/components/WalletCard";
@@ -187,7 +187,7 @@ const Index = () => {
                       variant="outline"
                       onClick={() => {
                         setShowSpaceBackground(false);
-                        openWindow("All Seeing Eye - Multiverse Explorer", <RealisticSpaceBackground />, 900, 700);
+                        openWindow("All Seeing Eye - Multiverse Explorer", <SpaceBackground />, 900, 700);
                       }}
                     >
                       <Eye className="w-4 h-4 mr-2" />
