@@ -723,8 +723,10 @@ const SolarSystemVoyage = () => {
         <Button variant="ghost" size="sm" asChild className="mb-2 bg-background/60 backdrop-blur-xl">
           <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Home</Link>
         </Button>
-        <h1 className="hidden hologram-title text-xl font-bold sm:block sm:text-2xl">Solar System Voyage</h1>
-        <p className="hidden text-xs text-muted-foreground sm:block">Keys 1–6 switch views · Space pauses travel</p>
+        <div className="hidden sm:block">
+          <h1 className="hologram-title text-xl font-bold sm:text-2xl">Solar System Voyage</h1>
+          <p className="text-xs text-muted-foreground">Keys 1–6 switch views · Space pauses travel</p>
+        </div>
       </div>
     </div>
   );
