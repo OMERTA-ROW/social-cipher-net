@@ -1,6 +1,7 @@
 import { Suspense, useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Bloom, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
 import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
@@ -83,7 +84,7 @@ const FocusFollower = ({
   focusedRadius,
   targetOrbitSpeed,
 }: {
-  controlsRef: React.MutableRefObject<any>;
+  controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
   planetRefs: React.MutableRefObject<Record<string, THREE.Mesh | null>>;
   focusedPlanet: string | null;
   focusedRadius: number | undefined;
@@ -383,7 +384,7 @@ const SolarSystemVoyage = () => {
 
   const focusedDef = PLANETS.find((p) => p.name === focusedPlanet);
   const planetRefs = useRef<Record<string, THREE.Mesh | null>>({});
-  const controlsRef = useRef<any>(null);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
 
   const selectFocus = (name: string | null) => {
     setFocusedPlanet(name);
@@ -421,7 +422,7 @@ const SolarSystemVoyage = () => {
             />
           ))}
           <VoyageAsteroidField count={preset.asteroids} animate={sceneAnimated} />
-          <CosmicAnomalies scale={10} animate={!reducedMotion} full={activeTier !== "low"} />
+          <CosmicAnomalies scale={10} animate={sceneAnimated} full={activeTier !== "low"} />
 
           {/* Harvester fleet */}
           <HarvesterBot offset={0} color="#8fb4c9" personaLabel="Zozo-01" animate={sceneAnimated} />
