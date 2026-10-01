@@ -284,12 +284,13 @@ const SolarSystemVoyage = () => {
   const [focusedPlanet, setFocusedPlanet] = useState<string | null>(null);
   const [orbitSpeed, setOrbitSpeed] = useState(1);
   const [cinematicIdx, setCinematicIdx] = useState(0);
-  const [resources, setResources] = useState(0);
 
   // Background engagement controls
   const [palette, setPalette] = useState<PaletteName>("solar");
   const [autoIntensity, setAutoIntensity] = useState(true);
-  const [showControls, setShowControls] = useState(true);
+  const [showControls, setShowControls] = useState(() =>
+    typeof window === "undefined" ? false : window.matchMedia("(min-width: 900px)").matches,
+  );
 
   // Named presets (persisted)
   const [presets, setPresets] = useState<VoyagePreset[]>(() => {
@@ -386,12 +387,6 @@ const SolarSystemVoyage = () => {
     return () => clearInterval(id);
   }, [mode]);
 
-  // Resource ticker (visual)
-  useEffect(() => {
-    const id = setInterval(() => setResources((r) => r + Math.floor(Math.random() * 4 + 2)), 800);
-    return () => clearInterval(id);
-  }, []);
-
   // Keyboard controls
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -427,7 +422,7 @@ const SolarSystemVoyage = () => {
         }}
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={0.14} />
+          <ambientLight intensity={0.42} />
           <DeepSky full={activeTier === "high"} />
           <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
           <VoyageSun full={activeTier === "high"} />
@@ -479,7 +474,7 @@ const SolarSystemVoyage = () => {
       </Canvas>
 
       {/* Top-right view switcher */}
-      <div className="absolute right-2 top-2 z-10 flex max-h-[calc(100dvh-8rem)] w-[min(15rem,calc(100vw-1rem))] flex-col gap-2 overflow-y-auto pointer-events-auto sm:right-4 sm:top-4 sm:max-h-[calc(100dvh-2rem)]">
+      <div className="absolute right-2 top-2 z-10 flex max-h-[calc(100dvh-7rem)] w-[min(15rem,calc(100vw-4.5rem))] flex-col gap-2 overflow-y-auto pointer-events-auto sm:right-4 sm:top-4 sm:max-h-[calc(100dvh-2rem)] sm:w-60">
         <div className="rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-2 shadow-[0_0_24px_hsl(var(--primary)/0.1)]">
           <div className="text-xs uppercase tracking-wider text-muted-foreground px-1 mb-1">View Mode</div>
           <div className="grid grid-cols-3 gap-1 sm:grid-cols-2">
@@ -691,10 +686,10 @@ const SolarSystemVoyage = () => {
           </Button>
         </div>
 
-        <div className="hidden rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-3 text-xs space-y-1 md:block">
+        <div className="hidden rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-3 text-xs space-y-1 min-[900px]:block">
           <div className="uppercase tracking-wider text-muted-foreground">Harvest Ops</div>
           <div>Fleet: <Badge variant="secondary">2× Zozo</Badge> <Badge variant="destructive">2× Draco</Badge> <Badge>1× Hauler</Badge></div>
-          <div>Resources: <span className="text-primary font-mono">{resources.toLocaleString()}</span> ◈</div>
+          <div>Resources: <span className="text-muted-foreground">Telemetry unavailable</span></div>
           <div>Target: Asteroid Belt (R {ASTEROID_BELT_R})</div>
         </div>
 
@@ -711,11 +706,11 @@ const SolarSystemVoyage = () => {
       </div>
 
       {/* Title */}
-      <div className="absolute left-2 top-2 z-10 max-w-[calc(100vw-16.5rem)] sm:left-4 sm:top-4">
+      <div className="absolute left-2 top-2 z-10 sm:left-4 sm:top-4 sm:max-w-[calc(100vw-17rem)]">
         <Button variant="ghost" size="sm" asChild className="mb-2 bg-background/60 backdrop-blur-xl">
           <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Home</Link>
         </Button>
-        <h1 className="hologram-title text-xl font-bold sm:text-2xl">Solar System Voyage</h1>
+        <h1 className="hidden hologram-title text-xl font-bold sm:block sm:text-2xl">Solar System Voyage</h1>
         <p className="hidden text-xs text-muted-foreground sm:block">Keys 1–6 switch views · Space pauses travel</p>
       </div>
     </div>
