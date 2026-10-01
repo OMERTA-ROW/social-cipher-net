@@ -99,6 +99,8 @@ const Connectors = () => {
         setFinishing(false);
         params.delete("code");
         params.delete("state");
+        params.delete("error");
+        params.delete("error_description");
         setParams(params, { replace: true });
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps

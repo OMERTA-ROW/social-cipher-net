@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { putSecret } from "../_shared/connectorVault.ts";
 import { audit } from "../_shared/connectorEngine.ts";
+import { getDefinition } from "../_shared/connectorManifest.ts";
 import {
   createCodeVerifier,
   createOAuthState,
@@ -328,6 +329,10 @@ Deno.serve(async (req) => {
     const redirectUri = String(body.redirect_uri ?? "");
     const config = PROVIDERS[provider];
     if (!config) return json({ error: "Unsupported service" }, 400);
+    const definition = getDefinition(serviceId);
+    if (!definition || definition.oauthProvider !== provider) {
+      return json({ error: "Provider does not match this service" }, 400);
+    }
     if (!oauthRedirectIsAllowed(redirectUri)) {
       return json({ error: "Invalid callback address" }, 400);
     }
