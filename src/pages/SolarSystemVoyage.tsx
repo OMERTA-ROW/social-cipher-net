@@ -73,26 +73,6 @@ const VoyageSun = ({ full }: { full: boolean }) => {
   );
 };
 
-const OrbitRing = ({ r }: { r: number }) => {
-  const geo = useMemo(() => {
-    const g = new THREE.BufferGeometry();
-    const seg = 128;
-    const pts: number[] = [];
-    for (let i = 0; i <= seg; i++) {
-      const a = (i / seg) * Math.PI * 2;
-      pts.push(Math.cos(a) * r, 0, Math.sin(a) * r);
-    }
-    g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-    return g;
-  }, [r]);
-  return (
-    <line>
-      <primitive object={geo} attach="geometry" />
-      <lineBasicMaterial color="#ffffff" transparent opacity={0.12} />
-    </line>
-  );
-};
-
 // Keeps OrbitControls target locked to the focused planet's world position each frame.
 const FocusFollower = ({
   controlsRef,
