@@ -83,6 +83,31 @@ const useDisposableGeometry = (geometry: THREE.BufferGeometry) => {
   useEffect(() => () => geometry.dispose(), [geometry]);
 };
 
+const SOFT_POINT_VERTEX_SHADER = /* glsl */ `
+  uniform float uSize;
+
+  void main() {
+    vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = max(1.0, uSize * (300.0 / max(1.0, -viewPosition.z)));
+    gl_Position = projectionMatrix * viewPosition;
+  }
+`;
+
+const SOFT_POINT_FRAGMENT_SHADER = /* glsl */ `
+  uniform vec3 uColor;
+  uniform float uOpacity;
+
+  void main() {
+    float radius = length(gl_PointCoord - vec2(0.5));
+    float alpha = 1.0 - smoothstep(0.12, 0.5, radius);
+    if (alpha < 0.015) discard;
+
+    float luminousCore = 1.0 - smoothstep(0.0, 0.24, radius);
+    vec3 color = uColor * (0.82 + luminousCore * 0.38);
+    gl_FragColor = vec4(color, alpha * uOpacity);
+  }
+`;
+
 const AnimatedPoints = ({
   geometry,
   color,
@@ -101,18 +126,25 @@ const AnimatedPoints = ({
   rotation?: V3;
 }) => {
   const points = useRef<THREE.Points>(null);
+  const uniforms = useMemo(
+    () => ({
+      uColor: { value: new THREE.Color(color) },
+      uSize: { value: size },
+      uOpacity: { value: opacity },
+    }),
+    [color, opacity, size],
+  );
   useFrame((_, delta) => {
     if (!animate || !points.current) return;
     points.current.rotation.y += Math.min(delta, 0.05) * spin;
   });
   return (
     <points ref={points} geometry={geometry} rotation={rotation} frustumCulled={false}>
-      <pointsMaterial
-        color={color}
-        size={size}
-        sizeAttenuation
+      <shaderMaterial
+        uniforms={uniforms}
+        vertexShader={SOFT_POINT_VERTEX_SHADER}
+        fragmentShader={SOFT_POINT_FRAGMENT_SHADER}
         transparent
-        opacity={opacity}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
         toneMapped={false}
