@@ -1,8 +1,9 @@
 import { Suspense, useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Stars, Html } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
+import { Bloom, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
+import { BlendFunction } from "postprocessing";
 import * as THREE from "three";
-import RealisticSpaceBackground from "@/components/RealisticSpaceBackground";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,12 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Settings2, ChevronDown, ChevronUp, Save, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
+import DeepSky from "@/components/space/scene/DeepSky";
+import Starfield from "@/components/space/scene/Starfield";
+import SharedSun from "@/components/space/scene/Sun";
+import MiningVessel from "@/components/space/scene/MiningVessel";
+import VoyageCelestialBody, { type VoyagePlanetDef } from "@/components/space/voyage/VoyageCelestialBody";
+import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
 
 interface VoyagePreset {
   name: string;
@@ -40,40 +47,28 @@ const QUALITY_PRESETS: Record<Exclude<Quality, "auto">, QualityPreset> = {
   high:   { starDensity: 1.6, intensity: "vivid",  parallax: true,  interactive: true,  bgStars: 3500, asteroids: 100, dpr: [1, 2] },
 };
 
-interface PlanetDef {
-  name: string;
-  radius: number;
-  distance: number;
-  color: string;
-  speed: number;
-  emissive?: string;
-}
-
-const PLANETS: PlanetDef[] = [
-  { name: "Mercury", radius: 0.35, distance: 6,  color: "#a9a29b", speed: 0.9 },
-  { name: "Venus",   radius: 0.55, distance: 8,  color: "#e8c07d", speed: 0.75 },
-  { name: "Earth",   radius: 0.6,  distance: 11, color: "#3a7bd5", speed: 0.6, emissive: "#0a2540" },
-  { name: "Mars",    radius: 0.45, distance: 14, color: "#c1440e", speed: 0.5 },
-  { name: "Jupiter", radius: 1.4,  distance: 19, color: "#d1a066", speed: 0.35 },
-  { name: "Saturn",  radius: 1.15, distance: 24, color: "#e6d3a3", speed: 0.28 },
-  { name: "Uranus",  radius: 0.85, distance: 29, color: "#7fd4e0", speed: 0.22 },
-  { name: "Neptune", radius: 0.85, distance: 33, color: "#3d5afe", speed: 0.18 },
+const PLANETS: VoyagePlanetDef[] = [
+  { name: "Mercury", radius: 0.35, distance: 6, speed: 0.9, tilt: 0.03, atmosphere: [0.55, 0.51, 0.47], atmosphereStrength: 0.1, roughness: 1, bump: 0.08 },
+  { name: "Venus", radius: 0.55, distance: 8, speed: 0.75, tilt: 0.05, atmosphere: [0.95, 0.68, 0.3], atmosphereStrength: 0.55, roughness: 0.9, bump: 0.035 },
+  { name: "Earth", radius: 0.6, distance: 11, speed: 0.6, tilt: 0.41, atmosphere: [0.3, 0.55, 1], atmosphereStrength: 0.9, roughness: 0.72, bump: 0.05 },
+  { name: "Mars", radius: 0.45, distance: 14, speed: 0.5, tilt: 0.44, atmosphere: [0.75, 0.4, 0.28], atmosphereStrength: 0.28, roughness: 0.94, bump: 0.07 },
+  { name: "Jupiter", radius: 1.4, distance: 19, speed: 0.35, tilt: 0.05, atmosphere: [0.8, 0.66, 0.45], atmosphereStrength: 0.42, roughness: 0.62, bump: 0.012 },
+  { name: "Saturn", radius: 1.15, distance: 24, speed: 0.28, tilt: 0.47, atmosphere: [0.85, 0.78, 0.55], atmosphereStrength: 0.38, roughness: 0.62, bump: 0.01 },
+  { name: "Uranus", radius: 0.85, distance: 29, speed: 0.22, tilt: 1.6, atmosphere: [0.45, 0.8, 0.95], atmosphereStrength: 0.5, roughness: 0.56, bump: 0.008 },
+  { name: "Neptune", radius: 0.85, distance: 33, speed: 0.18, tilt: 0.49, atmosphere: [0.25, 0.42, 1], atmosphereStrength: 0.58, roughness: 0.55, bump: 0.008 },
 ];
 
 const ASTEROID_BELT_R = 38;
 
 // ---------- Scene pieces ----------
-const Sun = () => {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((_, dt) => {
-    if (ref.current) ref.current.rotation.y += dt * 0.1;
-  });
+const VoyageSun = ({ full }: { full: boolean }) => {
   return (
-    <mesh ref={ref}>
-      <sphereGeometry args={[2.2, 48, 48]} />
-      <meshBasicMaterial color="#ffb347" />
-      <pointLight color="#fff2c2" intensity={3.5} distance={80} decay={1.2} />
-    </mesh>
+    <group>
+      <group scale={0.1375}>
+        <SharedSun full={full} />
+      </group>
+      <pointLight color="#fff3d8" intensity={4.2} distance={110} decay={1.15} />
+    </group>
   );
 };
 
@@ -97,47 +92,6 @@ const OrbitRing = ({ r }: { r: number }) => {
   );
 };
 
-const Planet = ({ def, onClick, focused, registerRef }: { def: PlanetDef; onClick: () => void; focused: boolean; registerRef?: (m: THREE.Mesh | null) => void }) => {
-  const ref = useRef<THREE.Mesh>(null);
-  const angleRef = useRef(Math.random() * Math.PI * 2);
-  useFrame((_, dt) => {
-    angleRef.current += dt * def.speed * 0.15;
-    if (ref.current) {
-      ref.current.position.x = Math.cos(angleRef.current) * def.distance;
-      ref.current.position.z = Math.sin(angleRef.current) * def.distance;
-      ref.current.rotation.y += dt * 0.3;
-    }
-  });
-  return (
-    <mesh
-      ref={(m) => { ref.current = m; registerRef?.(m); }}
-      onClick={onClick}
-    >
-      <sphereGeometry args={[def.radius, 32, 32]} />
-      <meshStandardMaterial
-        color={def.color}
-        emissive={def.emissive || "#000"}
-        emissiveIntensity={focused ? 0.4 : 0.1}
-        roughness={0.75}
-        metalness={0.1}
-      />
-      {def.name === "Saturn" && (
-        <mesh rotation={[Math.PI / 2.2, 0, 0]}>
-          <ringGeometry args={[def.radius * 1.4, def.radius * 2.1, 64]} />
-          <meshBasicMaterial color="#e6d3a3" side={THREE.DoubleSide} transparent opacity={0.55} />
-        </mesh>
-      )}
-      {focused && (
-        <Html center distanceFactor={12}>
-          <div className="px-2 py-0.5 rounded bg-background/70 border border-primary text-xs text-primary whitespace-nowrap">
-            {def.name}
-          </div>
-        </Html>
-      )}
-    </mesh>
-  );
-};
-
 // Keeps OrbitControls target locked to the focused planet's world position each frame.
 const FocusFollower = ({
   controlsRef,
@@ -155,8 +109,9 @@ const FocusFollower = ({
   useFrame((_, dt) => {
     const controls = controlsRef.current;
     if (!controls) return;
-    if (focusedPlanet && planetRefs.current[focusedPlanet]) {
-      planetRefs.current[focusedPlanet]!.getWorldPosition(tmp);
+    const focusedMesh = focusedPlanet ? planetRefs.current[focusedPlanet] : null;
+    if (focusedMesh) {
+      focusedMesh.getWorldPosition(tmp);
       controls.target.lerp(tmp, 0.2);
     } else {
       controls.target.lerp(tmp.set(0, 0, 0), 0.1);
@@ -268,14 +223,7 @@ const Ship = ({ tRef, speedRef, shipRef }: {
 
   return (
     <group ref={shipRef}>
-      <mesh>
-        <coneGeometry args={[0.25, 0.9, 12]} />
-        <meshStandardMaterial color="#c5e3ff" metalness={0.8} roughness={0.2} emissive="#3aa0ff" emissiveIntensity={0.3} />
-      </mesh>
-      <mesh position={[0, 0, -0.5]}>
-        <sphereGeometry args={[0.18, 12, 8]} />
-        <meshBasicMaterial color="#7fd4ff" />
-      </mesh>
+      <MiningVessel animate={speedRef.current > 0} throttle={Math.min(1, speedRef.current / 4)} beam={0} crew scale={0.22} />
     </group>
   );
 };
