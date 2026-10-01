@@ -173,3 +173,4 @@
 - [x] Binance quotes labelled as USDT pairs instead of USD
 - [ ] Exchange/wallet/bank providers still unchosen — fees stay unset, trades and transfers stay off
 - [x] Complete approved Voyage visual integration and validate desktop/mobile without publishing
+- [x] Refine Voyage planets and asteroid belt for photorealistic NASA-sourced appearance

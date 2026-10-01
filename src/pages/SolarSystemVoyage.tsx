@@ -18,6 +18,7 @@ import Starfield from "@/components/space/scene/Starfield";
 import SharedSun from "@/components/space/scene/Sun";
 import MiningVessel from "@/components/space/scene/MiningVessel";
 import VoyageCelestialBody, { type VoyagePlanetDef } from "@/components/space/voyage/VoyageCelestialBody";
+import VoyageAsteroidField from "@/components/space/voyage/VoyageAsteroidField";
 import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
 
 interface VoyagePreset {
@@ -67,7 +68,7 @@ const VoyageSun = ({ full }: { full: boolean }) => {
       <group scale={0.1375}>
         <SharedSun full={full} />
       </group>
-      <pointLight color="#fff3d8" intensity={4.2} distance={110} decay={1.15} />
+      <pointLight color="#fff4dc" intensity={6200} distance={0} decay={2} />
     </group>
   );
 };
@@ -97,21 +98,35 @@ const FocusFollower = ({
   controlsRef,
   planetRefs,
   focusedPlanet,
+  focusedRadius,
   targetOrbitSpeed,
 }: {
   controlsRef: React.MutableRefObject<any>;
   planetRefs: React.MutableRefObject<Record<string, THREE.Mesh | null>>;
   focusedPlanet: string | null;
+  focusedRadius: number | undefined;
   targetOrbitSpeed: number;
 }) => {
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const currentSpeed = useRef(0);
+  const previousFocus = useRef<string | null>(null);
   useFrame((_, dt) => {
     const controls = controlsRef.current;
     if (!controls) return;
     const focusedMesh = focusedPlanet ? planetRefs.current[focusedPlanet] : null;
     if (focusedMesh) {
       focusedMesh.getWorldPosition(tmp);
+      if (previousFocus.current !== focusedPlanet) {
+        const radius = focusedRadius ?? 1;
+        const distance = Math.max(radius * 4.2, 2.4);
+        const sunward = tmp.clone().multiplyScalar(-1).normalize();
+        const tangent = new THREE.Vector3(-sunward.z, 0, sunward.x).normalize();
+        const viewDirection = sunward.multiplyScalar(0.82)
+          .add(tangent.multiplyScalar(0.42))
+          .add(new THREE.Vector3(0, 0.24, 0))
+          .normalize();
+        controls.object.position.copy(tmp).add(viewDirection.multiplyScalar(distance));
+      }
       controls.target.lerp(tmp, 0.2);
     } else {
       controls.target.lerp(tmp.set(0, 0, 0), 0.1);
@@ -124,36 +139,9 @@ const FocusFollower = ({
     controls.autoRotate = Math.abs(applied) > 0.01;
     controls.autoRotateSpeed = applied;
     controls.update();
+    previousFocus.current = focusedPlanet;
   });
   return null;
-};
-
-const AsteroidField = ({ count = 80 }: { count?: number }) => {
-  const rocks = useMemo(() => {
-    return Array.from({ length: count }, () => {
-      const a = Math.random() * Math.PI * 2;
-      const r = ASTEROID_BELT_R + (Math.random() - 0.5) * 3;
-      return {
-        pos: [Math.cos(a) * r, (Math.random() - 0.5) * 0.6, Math.sin(a) * r] as [number, number, number],
-        s: Math.random() * 0.25 + 0.1,
-        rot: [Math.random(), Math.random(), Math.random()] as [number, number, number],
-      };
-    });
-  }, [count]);
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((_, dt) => {
-    if (groupRef.current) groupRef.current.rotation.y += dt * 0.02;
-  });
-  return (
-    <group ref={groupRef}>
-      {rocks.map((r, i) => (
-        <mesh key={i} position={r.pos} rotation={r.rot}>
-          <dodecahedronGeometry args={[r.s, 0]} />
-          <meshStandardMaterial color="#6b6255" roughness={1} />
-        </mesh>
-      ))}
-    </group>
-  );
 };
 
 const HarvesterBot = ({ offset, color, personaLabel, animate }: { offset: number; color: string; personaLabel: string; animate: boolean }) => {
@@ -435,7 +423,7 @@ const SolarSystemVoyage = () => {
         }}
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={0.42} />
+          <ambientLight intensity={0.075} />
           <DeepSky full={activeTier === "high"} />
           <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
           <VoyageSun full={activeTier === "high"} />
@@ -452,7 +440,7 @@ const SolarSystemVoyage = () => {
               onSelect={() => { selectFocus(p.name); }}
             />
           ))}
-          <AsteroidField count={preset.asteroids} />
+          <VoyageAsteroidField count={preset.asteroids} animate={sceneAnimated} />
 
           {/* Harvester fleet */}
           <HarvesterBot offset={0} color="#8fb4c9" personaLabel="Zozo-01" animate={sceneAnimated} />
@@ -473,7 +461,7 @@ const SolarSystemVoyage = () => {
                 minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
                 maxDistance={120}
               />
-              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} targetOrbitSpeed={orbitSpeed} />
+              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} focusedRadius={focusedDef?.radius} targetOrbitSpeed={orbitSpeed} />
             </>
           )}
           {activeTier === "high" && !reducedMotion && (

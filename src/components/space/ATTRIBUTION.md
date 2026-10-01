@@ -3,6 +3,11 @@
 All astronomical imagery used by the solar-system view is NASA-derived,
 public domain, or CC BY 4.0. No image is generated or fabricated.
 
+Voyage planets use these maps directly as spherical surface imagery. Its asteroid
+regolith maps are deterministic procedural materials created in-app and are not
+NASA imagery; they are intentionally identified separately here to avoid false
+source attribution.
+
 | Asset | Subject | Source | Licence |
 | --- | --- | --- | --- |
 | `stars_8k.jpg`, `stars_milky_way.jpg` | All-sky Milky Way survey mosaic (equirectangular) | Solar System Scope texture set, derived from ESO / NASA all-sky imagery | CC BY 4.0 |
@@ -19,6 +24,7 @@ public domain, or CC BY 4.0. No image is generated or fabricated.
 | `nebula_carina.jpg` | Carina Nebula "Cosmic Cliffs" | NASA / ESA / CSA JWST | Public domain |
 | `nebula_eagle.jpg` | Eagle Nebula "Pillars of Creation" | NASA / ESA Hubble | Public domain |
 | `nebula_horsehead.jpg` | Horsehead Nebula (B33) | NASA / ESA Hubble | Public domain |
+| In-app procedural asteroid regolith | Asteroid albedo/bump variation and crater relief | Generated locally by CyberLink Social; no external image source | Project code |
 
 Files are stored as CDN asset pointers under `src/assets/space/` and are
 loaded lazily after first paint (`useLazyTexture`), with the low-resolution

@@ -44,8 +44,9 @@ const atmosphereFragment = /* glsl */ `
     vec3 lightDirection = normalize(-vPositionWorld);
     float fresnel = pow(1.0 - max(dot(normal, viewDirection), 0.0), 3.1);
     float daylight = smoothstep(-0.35, 0.7, dot(normal, lightDirection));
-    float alpha = fresnel * daylight * uStrength;
-    gl_FragColor = vec4(uColor, clamp(alpha, 0.0, 1.0));
+    float twilight = smoothstep(-0.22, 0.22, dot(normal, lightDirection));
+    float alpha = fresnel * daylight * twilight * uStrength * 0.68;
+    gl_FragColor = vec4(uColor * 0.82, clamp(alpha, 0.0, 0.62));
   }
 `;
 
@@ -104,7 +105,7 @@ const VoyageCelestialBody = ({
   const clouds = useRef<THREE.Mesh>(null);
   const angle = useRef((definition.distance * 0.731) % (Math.PI * 2));
   const map = useLazyTexture(SPACE_TEXTURE_URLS[definition.name], { delay: 180 + definition.distance * 18 });
-  const bump = useLazyTexture(full ? SPACE_TEXTURE_URLS[definition.name] : undefined, {
+  const bump = useLazyTexture(full && ["Mercury", "Venus", "Earth", "Mars"].includes(definition.name) ? SPACE_TEXTURE_URLS[definition.name] : undefined, {
     srgb: false,
     delay: 520 + definition.distance * 18,
   });
@@ -133,7 +134,7 @@ const VoyageCelestialBody = ({
     if (clouds.current && animate) clouds.current.rotation.y += dt * 0.22;
   });
 
-  const segments = full ? 64 : 32;
+  const segments = full ? 96 : 48;
 
   return (
     <group ref={group}>
@@ -153,11 +154,11 @@ const VoyageCelestialBody = ({
           <sphereGeometry args={[definition.radius, segments, segments / 2]} />
           <meshStandardMaterial
             map={map ?? undefined}
-            color={map ? "#ffffff" : new THREE.Color(...definition.atmosphere)}
+            color={map ? "#ffffff" : "#4b4a47"}
             bumpMap={bump ?? undefined}
             bumpScale={bump ? definition.bump * definition.radius : 0}
             roughness={definition.roughness}
-            metalness={0.02}
+            metalness={0}
           />
         </mesh>
 
@@ -168,7 +169,7 @@ const VoyageCelestialBody = ({
               map={cloudMap}
               alphaMap={cloudMap}
               transparent
-              opacity={0.82}
+              opacity={definition.name === "Venus" ? 0.92 : 0.78}
               roughness={1}
               depthWrite={false}
             />
