@@ -15,7 +15,7 @@ import { Link } from "react-router-dom";
 import type { PaletteName, IntensityName } from "@/lib/spacePalettes";
 import DeepSky from "@/components/space/scene/DeepSky";
 import Starfield from "@/components/space/scene/Starfield";
-import SharedSun from "@/components/space/scene/Sun";
+import SharedSun, { PHOTO_RADIUS as SUN_PHOTO_RADIUS } from "@/components/space/scene/Sun";
 import MiningVessel from "@/components/space/scene/MiningVessel";
 import VoyageCelestialBody, { type VoyagePlanetDef } from "@/components/space/voyage/VoyageCelestialBody";
 import VoyageAsteroidField from "@/components/space/voyage/VoyageAsteroidField";
