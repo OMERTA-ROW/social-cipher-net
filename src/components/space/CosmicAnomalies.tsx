@@ -36,215 +36,116 @@ const glowTexture = (() => {
   };
 })();
 
-const cloudTexture = (seed: number) => {
-  const rnd = seeded(seed);
-  const c = document.createElement("canvas");
-  c.width = c.height = 256;
-  const g = c.getContext("2d")!;
-  for (let i = 0; i < 90; i++) {
-    const x = 128 + (rnd() - 0.5) * 150;
-    const y = 128 + (rnd() - 0.5) * 150;
-    const r = 20 + rnd() * 70;
-    const grad = g.createRadialGradient(x, y, 0, x, y, r);
-    const a = 0.05 + rnd() * 0.08;
-    grad.addColorStop(0, `rgba(255,255,255,${a})`);
-    grad.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = grad;
-    g.fillRect(0, 0, 256, 256);
-  }
-  // soft circular falloff so no square edges show
-  g.globalCompositeOperation = "destination-in";
-  const mask = g.createRadialGradient(128, 128, 40, 128, 128, 128);
-  mask.addColorStop(0, "rgba(0,0,0,1)");
-  mask.addColorStop(1, "rgba(0,0,0,0)");
-  g.fillStyle = mask;
-  g.fillRect(0, 0, 256, 256);
-  return new THREE.CanvasTexture(c);
-};
 
 type V3 = [number, number, number];
+import nebulaUrl from "@/assets/space/nebula.jpg";
+import galaxyUrl from "@/assets/space/galaxy.jpg";
+import supernovaUrl from "@/assets/space/supernova.jpg";
+import blackholeUrl from "@/assets/space/blackhole.jpg";
+import wormholeUrl from "@/assets/space/wormhole.jpg";
+import cometUrl from "@/assets/space/comet.jpg";
+import pulsarUrl from "@/assets/space/pulsar.jpg";
+import quasarUrl from "@/assets/space/quasar.jpg";
+
+/** Photo-style images (AI-generated, not telescope photos) on pure black,
+ *  blended additively so the black disappears into the starfield. */
+const texCache = new Map<string, THREE.Texture>();
+const photo = (url: string) => {
+  let t = texCache.get(url);
+  if (!t) {
+    t = new THREE.TextureLoader().load(url);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    texCache.set(url, t);
+  }
+  return t;
+};
+/** Soft radial mask so square image edges never show. */
+const edgeMask = (() => {
+  let tex: THREE.CanvasTexture | null = null;
+  return () => {
+    if (tex) return tex;
+    const c = document.createElement("canvas");
+    c.width = c.height = 256;
+    const g = c.getContext("2d")!;
+    const grad = g.createRadialGradient(128, 128, 70, 128, 128, 128);
+    grad.addColorStop(0, "#fff");
+    grad.addColorStop(1, "#000");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 256, 256);
+    tex = new THREE.CanvasTexture(c);
+    return tex;
+  };
+})();
+const PhotoSprite = ({ url, size, rotation = 0, opacity = 1, position }: { url: string; size: number; rotation?: number; opacity?: number; position?: V3 }) => (
+  <sprite position={position} scale={[size, size, 1]}>
+    <spriteMaterial map={photo(url)} alphaMap={edgeMask()} rotation={rotation} transparent opacity={opacity} depthWrite={false} blending={THREE.AdditiveBlending} />
+  </sprite>
+);
+
 const at = (p: V3, s: number): V3 => [p[0] * s, p[1] * s, p[2] * s];
 
-/* ---------------- Black hole with lensed accretion disk ---------------- */
-const diskShader = {
-  uniforms: { uTime: { value: 0 } },
-  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0);} `,
-  fragmentShader: `
-    uniform float uTime; varying vec2 vUv;
-    float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
-    float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
-      return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y); }
-    void main(){
-      vec2 p = vUv*2.-1.; float r = length(p); if(r>1.||r<0.32) discard;
-      float a = atan(p.y,p.x);
-      float swirl = n(vec2(a*4.0 + uTime*0.6 - r*9.0, r*14.0));
-      float t = smoothstep(1.0,0.32,r);
-      vec3 hot = mix(vec3(1.0,0.35,0.08), vec3(1.0,0.92,0.75), t*t);
-      float beam = 0.75 + 0.5*cos(a - 0.6); // doppler brightening on one side
-      float alpha = t * (0.45 + 0.75*swirl) * smoothstep(0.32,0.38,r);
-      gl_FragColor = vec4(hot * beam * (0.8+swirl), alpha);
-    }`,
-};
 
-const BlackHole = ({ position, size, animate }: { position: V3; size: number; animate: boolean }) => {
-  const mat = useRef<THREE.ShaderMaterial>(null);
-  const uniforms = useMemo(() => THREE.UniformsUtils.clone(diskShader.uniforms), []);
-  useFrame((_, d) => { if (animate && mat.current) mat.current.uniforms.uTime.value += Math.min(d, 0.05); });
-  return (
-    <group position={position} rotation={[0.35, 0.4, 0.15]}>
-      <mesh>
-        <sphereGeometry args={[size * 0.3, 48, 48]} />
-        <meshBasicMaterial color="#000000" />
-      </mesh>
-      {/* photon ring */}
-      <mesh>
-        <torusGeometry args={[size * 0.33, size * 0.012, 8, 96]} />
-        <meshBasicMaterial color="#ffd9a8" transparent opacity={0.9} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
-      {[0, Math.PI / 2].map((rx) => (
-        <mesh key={rx} rotation={[rx === 0 ? -Math.PI / 2 : 0, 0, 0]} scale={rx === 0 ? 1 : [0.75, 0.75, 0.75]}>
-          <planeGeometry args={[size * 2, size * 2]} />
-          <shaderMaterial
-            ref={rx === 0 ? mat : undefined}
-            args={[{ ...diskShader, uniforms }]}
-            transparent
-            depthWrite={false}
-            side={THREE.DoubleSide}
-            blending={THREE.AdditiveBlending}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
-};
+const BlackHole = ({ position, size }: { position: V3; size: number; animate?: boolean }) => (
+  <group position={position}>
+    <mesh>
+      <sphereGeometry args={[size * 0.3, 32, 32]} />
+      <meshBasicMaterial color="#000000" />
+    </mesh>
+    <PhotoSprite url={blackholeUrl} size={size * 2.2} />
+  </group>
+);
 
 /* ---------------- Wormhole: swirling tunnel mouth ---------------- */
-const wormShader = {
-  vertexShader: diskShader.vertexShader,
-  fragmentShader: `
-    uniform float uTime; varying vec2 vUv;
-    void main(){
-      vec2 p = vUv*2.-1.; float r = length(p); if(r>1.) discard;
-      float a = atan(p.y,p.x);
-      float spiral = 0.5+0.5*sin(a*5.0 + log(r+0.02)*10.0 - uTime*1.5);
-      vec3 col = mix(vec3(0.15,0.55,1.0), vec3(0.55,0.35,1.0), spiral);
-      float core = smoothstep(0.25,0.0,r);
-      float alpha = smoothstep(1.0,0.4,r) * (0.35+0.65*spiral) ;
-      gl_FragColor = vec4(col*(1.0+core*3.0) + core, alpha);
-    }`,
-};
 const Wormhole = ({ position, size, animate }: { position: V3; size: number; animate: boolean }) => {
-  const mat = useRef<THREE.ShaderMaterial>(null);
-  const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
-  useFrame((_, d) => { if (animate && mat.current) mat.current.uniforms.uTime.value += Math.min(d, 0.05); });
+  const m = useRef<THREE.SpriteMaterial>(null);
+  useFrame((_, d) => { if (animate && m.current) m.current.rotation += Math.min(d, 0.05) * 0.05; });
   return (
-    <group position={position}>
-      <mesh rotation={[0.2, -0.6, 0]}>
-        <circleGeometry args={[size, 64]} />
-        <shaderMaterial ref={mat} args={[{ ...wormShader, uniforms }]} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
-      </mesh>
-      <mesh rotation={[0.2, -0.6, 0]}>
-        <torusGeometry args={[size, size * 0.03, 8, 96]} />
-        <meshBasicMaterial color="#7cc4ff" transparent opacity={0.7} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
-    </group>
+    <sprite position={position} scale={[size * 2.4, size * 2.4, 1]}>
+      <spriteMaterial ref={m} map={photo(wormholeUrl)} alphaMap={edgeMask()} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+    </sprite>
   );
 };
 
 /* ---------------- Nebula: layered gas sprites ---------------- */
-const Nebula = ({ position, size, colors, seed }: { position: V3; size: number; colors: string[]; seed: number }) => {
-  const layers = useMemo(() => {
-    const rnd = seeded(seed);
-    return Array.from({ length: 9 }, (_, i) => ({
-      tex: cloudTexture(seed * 13 + i),
-      pos: [(rnd() - 0.5) * size, (rnd() - 0.5) * size * 0.6, (rnd() - 0.5) * size] as V3,
-      scale: size * (0.8 + rnd() * 1.2),
-      color: colors[i % colors.length],
-      rot: rnd() * Math.PI * 2,
-    }));
-  }, [seed, size, colors]);
-  return (
-    <group position={position}>
-      {layers.map((l, i) => (
-        <sprite key={i} position={l.pos} scale={[l.scale, l.scale, 1]}>
-          <spriteMaterial map={l.tex} color={l.color} rotation={l.rot} transparent opacity={0.55} depthWrite={false} blending={THREE.AdditiveBlending} />
-        </sprite>
-      ))}
-    </group>
-  );
-};
+const Nebula = ({ position, size, seed }: { position: V3; size: number; colors?: string[]; seed: number }) => (
+  <PhotoSprite url={nebulaUrl} position={position} size={size * 2.2} rotation={seed * 0.7} opacity={0.9} />
+);
 
 /* ---------------- Spiral galaxy point cloud ---------------- */
-const SpiralGalaxy = ({ position, size, seed, tilt, count }: { position: V3; size: number; seed: number; tilt: V3; count: number }) => {
-  const geo = useMemo(() => {
-    const rnd = seeded(seed);
-    const pos = new Float32Array(count * 3);
-    const col = new Float32Array(count * 3);
-    const inner = new THREE.Color("#ffe2b0");
-    const outer = new THREE.Color("#7fb6ff");
-    const c = new THREE.Color();
-    const arms = 2 + Math.floor(rnd() * 3);
-    for (let i = 0; i < count; i++) {
-      const r = Math.pow(rnd(), 1.6);
-      const arm = (Math.floor(rnd() * arms) / arms) * Math.PI * 2;
-      const a = arm + r * 6.5 + (rnd() - 0.5) * 0.6 * (1 - r * 0.5);
-      const spread = (rnd() - 0.5) * 0.12 * size;
-      pos[i * 3] = Math.cos(a) * r * size + spread;
-      pos[i * 3 + 1] = (rnd() - 0.5) * size * 0.05 * (1 - r);
-      pos[i * 3 + 2] = Math.sin(a) * r * size + spread;
-      c.copy(inner).lerp(outer, r);
-      col.set([c.r, c.g, c.b], i * 3);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
-    return g;
-  }, [seed, size, count]);
-  return (
-    <group position={position} rotation={tilt}>
-      <points geometry={geo}>
-        <pointsMaterial size={size * 0.012} map={glowTexture()} vertexColors transparent opacity={0.85} depthWrite={false} blending={THREE.AdditiveBlending} sizeAttenuation />
-      </points>
-      <sprite scale={[size * 0.5, size * 0.5, 1]}>
-        <spriteMaterial map={glowTexture()} color="#ffd9a0" transparent opacity={0.8} depthWrite={false} blending={THREE.AdditiveBlending} />
-      </sprite>
-    </group>
-  );
-};
+const SpiralGalaxy = ({ position, size, tilt }: { position: V3; size: number; seed?: number; tilt: V3; count?: number }) => (
+  <mesh position={position} rotation={tilt}>
+    <planeGeometry args={[size * 2.2, size * 2.2]} />
+    <meshBasicMaterial map={photo(galaxyUrl)} alphaMap={edgeMask()} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+  </mesh>
+);
 
 /* ---------------- Comet: nucleus, coma and sun-facing-away tail ---------------- */
 const Comet = ({ orbit, size, speed, phase, animate }: { orbit: [number, number, number]; size: number; speed: number; phase: number; animate: boolean }) => {
   const g = useRef<THREE.Group>(null);
   const t = useRef(phase);
+  const p = useMemo(() => new THREE.Vector3(), []);
+  const away = useMemo(() => new THREE.Vector3(), []);
   useFrame((_, d) => {
     if (animate) t.current += Math.min(d, 0.05) * speed;
     const [a, b, tilt] = orbit;
-    const x = Math.cos(t.current) * a;
     const z = Math.sin(t.current) * b;
-    const p = new THREE.Vector3(x, z * Math.sin(tilt), z * Math.cos(tilt));
+    p.set(Math.cos(t.current) * a, z * Math.sin(tilt), z * Math.cos(tilt));
     if (!g.current) return;
     g.current.position.copy(p);
-    // tail always points away from the sun (origin)
-    g.current.lookAt(p.clone().multiplyScalar(2));
+    g.current.lookAt(away.copy(p).multiplyScalar(2)); // tail points away from the sun
   });
+  const w = size * 120;
   return (
     <group ref={g}>
-      <mesh>
-        <icosahedronGeometry args={[size, 1]} />
-        <meshStandardMaterial color="#8a8580" roughness={1} />
-      </mesh>
-      <sprite scale={[size * 10, size * 10, 1]}>
-        <spriteMaterial map={glowTexture()} color="#bfe6ff" transparent opacity={0.7} depthWrite={false} blending={THREE.AdditiveBlending} />
-      </sprite>
-      {/* dust + ion tails */}
-      <mesh position={[0, 0, size * 30]} rotation={[-Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[size * 5, size * 60, 24, 1, true]} />
-        <meshBasicMaterial color="#d8ecff" transparent opacity={0.16} depthWrite={false} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[size * 2, 0, size * 45]} rotation={[-Math.PI / 2, 0, 0.08]}>
-        <coneGeometry args={[size * 1.6, size * 90, 16, 1, true]} />
-        <meshBasicMaterial color="#6fb8ff" transparent opacity={0.22} depthWrite={false} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
-      </mesh>
+      {[0, Math.PI / 2].map((rz) => (
+        <group key={rz} rotation={[0, 0, rz]}>
+          <mesh position={[0, 0, w * 0.37]} rotation={[0, -Math.PI / 2, 0]}>
+            <planeGeometry args={[w, w / 2]} />
+            <meshBasicMaterial map={photo(cometUrl)} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 };
@@ -283,77 +184,33 @@ const MeteorShower = ({ center, spread, count, animate }: { center: V3; spread: 
 
 /* ---------------- Pulsar: neutron star with sweeping beams ---------------- */
 const Pulsar = ({ position, size, animate }: { position: V3; size: number; animate: boolean }) => {
-  const g = useRef<THREE.Group>(null);
-  useFrame((_, d) => { if (animate && g.current) g.current.rotation.y += Math.min(d, 0.05) * 4; });
+  const m = useRef<THREE.SpriteMaterial>(null);
+  useFrame((_, d) => { if (animate && m.current) m.current.rotation += Math.min(d, 0.05) * 1.5; });
   return (
-    <group position={position}>
-      <sprite scale={[size * 3, size * 3, 1]}>
-        <spriteMaterial map={glowTexture()} color="#bfe0ff" transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-      </sprite>
-      <group ref={g} rotation={[0, 0, 0.5]}>
-        {[1, -1].map((s) => (
-          <mesh key={s} position={[0, s * size * 6, 0]} rotation={[s > 0 ? Math.PI : 0, 0, 0]}>
-            <coneGeometry args={[size * 1.2, size * 12, 20, 1, true]} />
-            <meshBasicMaterial color="#8fc8ff" transparent opacity={0.28} depthWrite={false} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
-          </mesh>
-        ))}
-      </group>
-    </group>
+    <sprite position={position} scale={[size * 14, size * 14, 1]}>
+      <spriteMaterial ref={m} map={photo(pulsarUrl)} alphaMap={edgeMask()} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+    </sprite>
   );
 };
 
 /* ---------------- Supernova remnant: expanding filament shell ---------------- */
 const Supernova = ({ position, size, animate }: { position: V3; size: number; animate: boolean }) => {
-  const pts = useRef<THREE.Points>(null);
-  const t = useRef(0.4);
-  const geo = useMemo(() => {
-    const rnd = seeded(4421);
-    const n = 2600;
-    const pos = new Float32Array(n * 3);
-    const col = new Float32Array(n * 3);
-    const c = new THREE.Color();
-    for (let i = 0; i < n; i++) {
-      const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2;
-      const s = Math.sqrt(1 - u * u);
-      const r = 0.85 + rnd() * 0.25;
-      pos.set([s * Math.cos(th) * r, u * r, s * Math.sin(th) * r], i * 3);
-      c.set(rnd() > 0.5 ? "#ff7a45" : "#5fb2ff");
-      col.set([c.r, c.g, c.b], i * 3);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
-    return g;
-  }, []);
+  const sp = useRef<THREE.Sprite>(null);
+  const t = useRef(1);
   useFrame((_, d) => {
-    if (animate) t.current = t.current > 1.6 ? 0.4 : t.current + Math.min(d, 0.05) * 0.03;
-    pts.current?.scale.setScalar(size * t.current);
+    if (animate) t.current = t.current > 1.4 ? 0.8 : t.current + Math.min(d, 0.05) * 0.01;
+    sp.current?.scale.set(size * 2.4 * t.current, size * 2.4 * t.current, 1);
   });
   return (
-    <group position={position}>
-      <points ref={pts} geometry={geo}>
-        <pointsMaterial size={size * 0.025} map={glowTexture()} vertexColors transparent opacity={0.8} depthWrite={false} blending={THREE.AdditiveBlending} />
-      </points>
-      <sprite scale={[size * 0.4, size * 0.4, 1]}>
-        <spriteMaterial map={glowTexture()} color="#ffffff" transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-      </sprite>
-    </group>
+    <sprite ref={sp} position={position}>
+      <spriteMaterial map={photo(supernovaUrl)} alphaMap={edgeMask()} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+    </sprite>
   );
 };
 
 /* ---------------- Quasar: blazing core with relativistic jets ---------------- */
 const Quasar = ({ position, size }: { position: V3; size: number }) => (
-  <group position={position} rotation={[0.3, 0, -0.4]}>
-    <sprite scale={[size * 2, size * 2, 1]}>
-      <spriteMaterial map={glowTexture()} color="#e6f2ff" transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-    </sprite>
-    {[1, -1].map((s) => (
-      <mesh key={s} position={[0, s * size * 5, 0]} rotation={[s > 0 ? Math.PI : 0, 0, 0]}>
-        <coneGeometry args={[size * 0.35, size * 10, 12, 1, true]} />
-        <meshBasicMaterial color="#9fd0ff" transparent opacity={0.35} depthWrite={false} blending={THREE.AdditiveBlending} side={THREE.DoubleSide} />
-      </mesh>
-    ))}
-  </group>
+  <PhotoSprite url={quasarUrl} position={position} size={size * 14} />
 );
 
 /* ---------------- Solar flares / prominence loops on the sun ---------------- */
