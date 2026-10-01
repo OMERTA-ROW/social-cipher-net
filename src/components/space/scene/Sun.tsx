@@ -11,7 +11,7 @@ import { SUN_TEXTURE_URL, useLazyTexture } from "../realTextures";
  * and limb prominences. Radius, position and overall size are unchanged.
  */
 
-const PHOTO_RADIUS = 16;
+export const PHOTO_RADIUS = 16;
 
 const surfaceVert = /* glsl */ `
   #include <common>
