@@ -64,7 +64,9 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // Same-origin relative path to return to after auth (used by the OAuth consent flow).
-  const nextPath = safeReturnPath(searchParams.get("next"));
+  const rawNext = searchParams.get("next");
+  const nextPath = rawNext ? safeReturnPath(rawNext) : "/dashboard";
+  const [checkEmailFor, setCheckEmailFor] = useState<string | null>(null);
   const inRecovery = recovery !== "none";
   const initialTab = location.pathname === "/signup" ? "signup" : "signin";
 
@@ -231,7 +233,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             birthdate: birthdate,
             username: username.trim(),
@@ -243,12 +245,8 @@ const Auth = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("User creation failed");
 
-      toast({
-        title: authData.session ? "Account created" : "Check your email",
-        description: authData.session
-          ? "Your account is ready."
-          : "Use the confirmation link we sent before signing in.",
-      });
+      if (!authData.session) setCheckEmailFor(email);
+      else toast({ title: "Account created", description: "Your account is ready." });
       
       setEmail("");
       setPassword("");
