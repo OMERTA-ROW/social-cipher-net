@@ -175,3 +175,5 @@
 - [ ] Exchange/wallet/bank providers still unchosen — fees stay unset, trades and transfers stay off
 - [x] Complete approved Voyage visual integration and validate desktop/mobile without publishing
 - [x] Refine Voyage planets and asteroid belt for photorealistic NASA-sourced appearance
+- [x] Give the sun a real fiery (NASA) texture
+- [x] Voyage: remove animated lines, blend naturally with background
