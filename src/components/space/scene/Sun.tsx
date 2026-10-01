@@ -105,6 +105,10 @@ const surfaceFrag = /* glsl */ `
     col += vec3(1.0, 0.72, 0.30) * fac * (0.10 + (1.0 - mu) * 0.42);
     col *= 1.0 - spot * 0.92;
 
+    // real solar photosphere imagery leads; procedural granulation adds fine fire detail
+    vec3 fiery = pow(mapc, vec3(0.9)) * vec3(1.25, 0.95, 0.7) * (0.8 + fine * 0.35 + micro * 0.15);
+    col = mix(col, fiery, uHasMap * 0.8);
+
     // limb darkening (Eddington-style): edges markedly darker & redder
     float ld = 0.32 + 0.68 * pow(mu, 0.62);
     col *= ld;
@@ -120,7 +124,7 @@ const surfaceFrag = /* glsl */ `
 const Sun = ({ full }: { full: boolean }) => {
   const mesh = useRef<THREE.Mesh>(null);
   const surfMat = useRef<THREE.ShaderMaterial>(null);
-  const map = useLazyTexture(full ? SUN_TEXTURE_URL : undefined, { delay: 160 });
+  const map = useLazyTexture(SUN_TEXTURE_URL, { delay: full ? 160 : 400 });
 
   const surfUniforms = useMemo(
     () => ({
