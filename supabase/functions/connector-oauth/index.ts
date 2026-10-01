@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { putSecret } from "../_shared/connectorVault.ts";
 import { audit } from "../_shared/connectorEngine.ts";
+import { getDefinition } from "../_shared/connectorManifest.ts";
 import {
   createCodeVerifier,
   createOAuthState,
@@ -238,59 +239,71 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Create an isolated pending row first. A reconnect must never alter a
+      // working connection until the replacement credentials are encrypted.
       const { data: connection, error: connError } = await admin
         .from("user_connections")
-        .upsert(
+        .insert(
           {
-             user_id: user.id,
-             service_id: attempt.service_id,
-            // One row per linked account. The slot travels in the signed state
-            // so a second account never overwrites the first.
-             account_key: String(attempt.account_key),
-             account_label: attempt.account_label ? String(attempt.account_label) : null,
+            user_id: user.id,
+            service_id: attempt.service_id,
+            account_key: String(attempt.account_key),
+            account_label: attempt.account_label ? String(attempt.account_label) : null,
             method: "oauth",
-            status: "connected",
+            status: "pending",
+            health: "checking",
             scopes: config.scope.split(/[ ,]/).filter(Boolean),
             last_error: null,
             updated_at: new Date().toISOString(),
           },
-          { onConflict: "user_id,service_id,account_key" },
         )
         .select("id")
         .single();
       if (connError || !connection) {
-        return json({ error: connError?.message ?? "Could not save" }, 400);
+        return json({ error: "The authorized account could not be saved. Your existing connection was not changed." }, 400);
       }
 
       const expiresAt = tokenBody.expires_in
         ? new Date(Date.now() + Number(tokenBody.expires_in) * 1000).toISOString()
         : null;
 
-      await putSecret(admin, {
+      const accessFailure = await putSecret(admin, {
         connectionId: connection.id,
-         userId: user.id,
+        userId: user.id,
         type: "access_token",
         value: String(tokenBody.access_token),
         expiresAt,
       });
 
+      let refreshFailure: string | null = null;
       if (tokenBody.refresh_token) {
-        await putSecret(admin, {
+        refreshFailure = await putSecret(admin, {
           connectionId: connection.id,
-           userId: user.id,
+          userId: user.id,
           type: "refresh_token",
           value: String(tokenBody.refresh_token),
         });
       }
 
-      await admin
+      if (accessFailure || refreshFailure) {
+        await admin.from("user_connections").delete().eq("id", connection.id).eq("user_id", user.id);
+        return json({ error: "Authorization succeeded, but its credentials could not be stored securely. Your existing connection was not changed." }, 500);
+      }
+
+      const { error: activateError } = await admin
         .from("user_connections")
         .update({
+          status: "connected",
           expires_at: expiresAt,
           health: "healthy",
           failure_count: 0,
         })
-        .eq("id", connection.id);
+        .eq("id", connection.id)
+        .eq("user_id", user.id);
+      if (activateError) {
+        await admin.from("user_connections").delete().eq("id", connection.id).eq("user_id", user.id);
+        return json({ error: "The connection could not be activated. Your existing connection was not changed." }, 500);
+      }
 
       await audit(admin, {
          userId: user.id,
@@ -300,7 +313,7 @@ Deno.serve(async (req) => {
         status: "ok",
       });
 
-       return json({ ok: true, service_id: attempt.service_id });
+      return json({ ok: true, service_id: attempt.service_id });
     }
 
     // ---- start: build the provider authorize URL ----
@@ -328,7 +341,11 @@ Deno.serve(async (req) => {
     const redirectUri = String(body.redirect_uri ?? "");
     const config = PROVIDERS[provider];
     if (!config) return json({ error: "Unsupported service" }, 400);
-    if (!oauthRedirectIsAllowed(redirectUri, req.headers.get("origin"))) {
+    const definition = getDefinition(serviceId);
+    if (!definition || definition.oauthProvider !== provider) {
+      return json({ error: "Provider does not match this service" }, 400);
+    }
+    if (!oauthRedirectIsAllowed(redirectUri)) {
       return json({ error: "Invalid callback address" }, 400);
     }
 
@@ -372,7 +389,7 @@ Deno.serve(async (req) => {
     }
 
     return json({ ok: true, authorize_url: url.toString() });
-  } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Unexpected error" }, 500);
+  } catch {
+    return json({ error: "The authorization service could not complete this request. Please try again." }, 500);
   }
 });

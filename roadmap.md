@@ -13,7 +13,7 @@
 - [x] Sniper gift ($1000) with cinematic strike + persistent crack
 
 ## Current build
-- [ ] Complete auth and account-integration repair: canonical routes, protected-route gate, one-time OAuth state/PKCE, provider verification, safe disconnect, regression and browser checks
+- [x] Complete auth and account-integration repair: secure app flows and preview regression checks complete
 - [ ] Arena: dedicated layout/environment
 - [x] Studio: animation suite, asset libraries, creative account imports (wired into Studio tabs, Zod-validated saves)
 - [ ] Movie Theater: events, synced playback, live chat
@@ -25,7 +25,7 @@
 - [ ] Shopify store: previous development store expired and cannot be claimed.
       Waiting on user's go-ahead to create a fresh store to claim.
 - [ ] Provider OAuth apps: each social/streaming provider needs developer app
-      credentials before its OAuth button goes live.
+      credentials, approved scopes, and registered callbacks before its OAuth button goes live.
 
 ## Reliability & security hardening
 - [x] Monitoring/alerts for post_payments permission denials and feed-load failures

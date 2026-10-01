@@ -14,6 +14,15 @@ import { fetchOnboardingComplete } from "@/hooks/useOnboarding";
 
 type RecoveryState = "none" | "pending" | "ready" | "expired";
 
+const friendlyAuthError = (error: unknown, fallback: string) => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  if (/invalid login credentials/i.test(message)) return "The email or password is incorrect.";
+  if (/email not confirmed/i.test(message)) return "Confirm your email before signing in.";
+  if (/rate limit|too many requests/i.test(message)) return "Too many attempts. Please wait and try again.";
+  if (/expired|invalid.*token|session.*missing/i.test(message)) return "This link has expired or was already used.";
+  return fallback;
+};
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,7 +58,7 @@ const Auth = () => {
     if (typeof window === "undefined") return null;
     const hash = new URLSearchParams((window.location.hash ?? "").replace(/^#/, ""));
     const description = hash.get("error_description");
-    return description ? description.replace(/\+/g, " ") : null;
+    return description ? friendlyAuthError(description.replace(/\+/g, " "), "This reset link is no longer valid.") : null;
   });
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -80,7 +89,7 @@ const Auth = () => {
     if (error) {
       toast({
         title: "Error",
-        description: error.message,
+        description: friendlyAuthError(error, "We could not send the reset email. Please try again."),
         variant: "destructive",
       });
     } else {
@@ -111,8 +120,9 @@ const Auth = () => {
     setLoading(false);
 
     if (error) {
-      setRecoveryError(error.message);
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      const message = friendlyAuthError(error, "We could not update your password. Please request a new reset link.");
+      setRecoveryError(message);
+      toast({ title: "Error", description: message, variant: "destructive" });
       return;
     }
 
@@ -221,7 +231,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}${nextPath}`,
+          emailRedirectTo: window.location.origin,
           data: {
             birthdate: birthdate,
             username: username.trim(),
@@ -245,10 +255,10 @@ const Auth = () => {
       setBirthdate("");
       setUsername("");
       setDisplayName("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message,
+        description: friendlyAuthError(error, "We could not create your account. Check your details and try again."),
         variant: "destructive",
       });
     }
@@ -285,14 +295,14 @@ const Auth = () => {
           setRemainingAttempts(remaining);
           toast({
             title: "Error",
-            description: `${error.message}. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account lockout.`,
+            description: `${friendlyAuthError(error, "Sign-in failed.")} ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining before account lockout.`,
             variant: "destructive",
           });
         }
       } else {
         toast({
           title: "Error",
-          description: error.message,
+          description: friendlyAuthError(error, "Sign-in failed. Check your details and try again."),
           variant: "destructive",
         });
       }

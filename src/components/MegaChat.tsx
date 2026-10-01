@@ -72,10 +72,10 @@ export function MegaChat({ streamId }: MegaChatProps) {
     if (!user) return;
 
     const { data, error } = await supabase
-      .from("platform_connections")
-      .select("platform")
+      .from("user_connections")
+      .select("service_id")
       .eq("user_id", user.id)
-      .eq("is_active", true);
+      .eq("status", "connected");
 
     if (error) {
       console.error("Failed to load platforms:", error);
@@ -83,7 +83,7 @@ export function MegaChat({ streamId }: MegaChatProps) {
     }
 
     if (data) {
-      setConnectedPlatforms(data.map(p => p.platform));
+      setConnectedPlatforms(data.map(p => p.service_id));
     }
   };
 
@@ -111,13 +111,13 @@ export function MegaChat({ streamId }: MegaChatProps) {
 
   const setupPlatformConnectionsSubscription = () => {
     const channel = supabase
-      .channel('platform-connections-updates')
+      .channel('user-connections-updates')
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: "platform_connections",
+          table: "user_connections",
         },
         () => {
           loadConnectedPlatforms();

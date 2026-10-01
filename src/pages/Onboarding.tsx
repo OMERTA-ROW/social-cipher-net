@@ -163,7 +163,7 @@ const Onboarding = () => {
                 services without a configured provider are shown as setup required.
               </p>
               <Button asChild variant="outline" className="hover:text-primary">
-                <Link to="/connectors">Open the connections page</Link>
+                <Link to="/integrations">Open the connections page</Link>
               </Button>
               <p className="text-xs">You can come back to this at any time from your account menu.</p>
             </div>

@@ -10,9 +10,9 @@ Deno.test("OAuth state is random and hashable", async () => {
 });
 
 Deno.test("OAuth redirect allowlist rejects external and malformed routes", () => {
-  assert(oauthRedirectIsAllowed("http://localhost:8080/integrations", "http://localhost:8080"));
-  assertEquals(oauthRedirectIsAllowed("https://evil.example/integrations", "http://localhost:8080"), false);
-  assertEquals(oauthRedirectIsAllowed("http://localhost:8080/admin", "http://localhost:8080"), false);
+  assert(oauthRedirectIsAllowed("http://localhost:8080/integrations"));
+  assertEquals(oauthRedirectIsAllowed("https://evil.example/integrations"), false);
+  assertEquals(oauthRedirectIsAllowed("http://localhost:8080/admin"), false);
 });
 
 Deno.test("OAuth errors are sanitized", () => {

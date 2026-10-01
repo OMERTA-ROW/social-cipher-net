@@ -212,7 +212,7 @@ const SocialFeed = ({ refreshKey = 0 }: SocialFeedProps) => {
         <div className="text-center py-12 space-y-3 border border-dashed border-border rounded-lg">
           <p className="text-muted-foreground">Sign in to see posts.</p>
           <Button asChild size="sm">
-            <Link to="/auth">Sign in</Link>
+            <Link to="/login">Sign in</Link>
           </Button>
         </div>
       );

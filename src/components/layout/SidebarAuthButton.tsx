@@ -4,6 +4,8 @@ import { LogIn, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { signInPath } from "@/lib/authRedirect";
+import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Sidebar session control. Reads the live auth state so the label always
@@ -11,6 +13,7 @@ import { signInPath } from "@/lib/authRedirect";
  */
 const SidebarAuthButton = ({ collapsed }: { collapsed?: boolean }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -24,6 +27,7 @@ const SidebarAuthButton = ({ collapsed }: { collapsed?: boolean }) => {
   const onClick = async () => {
     if (signedIn) {
       await supabase.auth.signOut();
+      queryClient.clear();
       navigate("/");
     } else {
       navigate(signInPath());
@@ -33,7 +37,9 @@ const SidebarAuthButton = ({ collapsed }: { collapsed?: boolean }) => {
   const Icon = signedIn ? LogOut : LogIn;
 
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
       onClick={onClick}
       className={cn(
         "mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors",
@@ -44,7 +50,7 @@ const SidebarAuthButton = ({ collapsed }: { collapsed?: boolean }) => {
     >
       <Icon className="h-5 w-5 shrink-0" />
       <span className="hidden xl:inline">{signedIn ? "Log Out" : "Log In"}</span>
-    </button>
+    </Button>
   );
 };
 
