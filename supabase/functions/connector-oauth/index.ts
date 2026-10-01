@@ -1,6 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { putSecret } from "../_shared/connectorVault.ts";
 import { audit } from "../_shared/connectorEngine.ts";
+import {
+  createCodeVerifier,
+  createOAuthState,
+  oauthRedirectIsAllowed,
+  OAUTH_ATTEMPT_TTL_MS,
+  sanitizeOAuthError,
+  sha256,
+} from "../_shared/connectorOAuthSecurity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,13 +29,14 @@ const json = (body: unknown, status = 200) =>
  */
 const PROVIDERS: Record<
   string,
-  { authorizeUrl: string; tokenUrl: string; scope: string }
+  { authorizeUrl: string; tokenUrl: string; scope: string; pkce?: boolean }
 > = {
   google: {
     authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     scope:
       "https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/youtube.upload",
+    pkce: true,
   },
   facebook: {
     authorizeUrl: "https://www.facebook.com/v21.0/dialog/oauth",
@@ -43,11 +52,13 @@ const PROVIDERS: Record<
     authorizeUrl: "https://www.tiktok.com/v2/auth/authorize/",
     tokenUrl: "https://open.tiktokapis.com/v2/oauth/token/",
     scope: "user.info.basic,video.publish,video.list",
+    pkce: true,
   },
   x: {
     authorizeUrl: "https://twitter.com/i/oauth2/authorize",
     tokenUrl: "https://api.twitter.com/2/oauth2/token",
     scope: "tweet.read tweet.write users.read offline.access",
+    pkce: true,
   },
   snapchat: {
     authorizeUrl: "https://accounts.snapchat.com/accounts/oauth2/auth",
@@ -63,6 +74,7 @@ const PROVIDERS: Record<
     authorizeUrl: "https://id.kick.com/oauth/authorize",
     tokenUrl: "https://id.kick.com/oauth/token",
     scope: "user:read channel:read chat:write",
+    pkce: true,
   },
   restream: {
     authorizeUrl: "https://api.restream.io/login",
@@ -88,26 +100,31 @@ const PROVIDERS: Record<
     authorizeUrl: "https://www.canva.com/api/oauth/authorize",
     tokenUrl: "https://api.canva.com/rest/v1/oauth/token",
     scope: "design:meta:read asset:read folder:read",
+    pkce: true,
   },
   reddit: {
     authorizeUrl: "https://www.reddit.com/api/v1/authorize",
     tokenUrl: "https://www.reddit.com/api/v1/access_token",
     scope: "identity read submit history",
+    pkce: true,
   },
   linkedin: {
     authorizeUrl: "https://www.linkedin.com/oauth/v2/authorization",
     tokenUrl: "https://www.linkedin.com/oauth/v2/accessToken",
     scope: "openid profile w_member_social",
+    pkce: true,
   },
   discord: {
     authorizeUrl: "https://discord.com/oauth2/authorize",
     tokenUrl: "https://discord.com/api/oauth2/token",
     scope: "identify guilds messages.read",
+    pkce: true,
   },
   spotify: {
     authorizeUrl: "https://accounts.spotify.com/authorize",
     tokenUrl: "https://accounts.spotify.com/api/token",
     scope: "user-read-private user-read-email user-top-read",
+    pkce: true,
   },
   soundcloud: {
     authorizeUrl: "https://secure.soundcloud.com/authorize",
@@ -128,37 +145,18 @@ const PROVIDERS: Record<
     authorizeUrl: "https://www.dropbox.com/oauth2/authorize",
     tokenUrl: "https://api.dropboxapi.com/oauth2/token",
     scope: "files.content.read files.metadata.read",
+    pkce: true,
   },
   etsy: {
     authorizeUrl: "https://www.etsy.com/oauth/connect",
     tokenUrl: "https://api.etsy.com/v3/public/oauth/token",
     scope: "listings_r transactions_r shops_r",
+    pkce: true,
   },
 };
 
 const envKey = (provider: string, suffix: string) =>
   `${provider.toUpperCase()}_${suffix}`;
-
-const signState = async (payload: string) => {
-  const secret = Deno.env.get("CONNECTOR_STATE_SECRET") ??
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(payload),
-  );
-  return btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -174,23 +172,45 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const action = String(body.action ?? "");
 
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return json({ error: "Sign in required" }, 401);
+    }
+    const { data: { user }, error: authError } = await admin.auth.getUser(
+      authHeader.replace("Bearer ", ""),
+    );
+    if (authError || !user) return json({ error: "Sign in required" }, 401);
+
     // ---- callback: exchange the code, store the token server-side ----
     if (action === "callback") {
       const rawState = String(body.state ?? "");
       const code = String(body.code ?? "");
-      const [encoded, signature] = rawState.split(".");
-      if (!encoded || !signature || !code) {
+      if (!rawState) {
         return json({ error: "Invalid authorization response" }, 400);
       }
-      if ((await signState(encoded)) !== signature) {
-        return json({ error: "Authorization could not be verified" }, 400);
-      }
-      const state = JSON.parse(atob(encoded.replace(/-/g, "+").replace(/_/g, "/")));
-      if (Date.now() > Number(state.exp)) {
-        return json({ error: "Authorization link expired, try again" }, 400);
-      }
 
-      const provider = String(state.provider);
+      const stateHash = await sha256(rawState);
+      const { data: attempt } = await admin
+        .from("connector_oauth_attempts")
+        .select("id,user_id,service_id,provider,account_key,account_label,code_verifier,redirect_uri,expires_at,consumed_at")
+        .eq("state_hash", stateHash)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!attempt || attempt.consumed_at || Date.parse(attempt.expires_at) <= Date.now()) {
+        return json({ error: "This authorization attempt expired or was already used. Please try again." }, 400);
+      }
+      const consumedAt = new Date().toISOString();
+      const { data: consumed } = await admin
+        .from("connector_oauth_attempts")
+        .update({ consumed_at: consumedAt })
+        .eq("id", attempt.id)
+        .is("consumed_at", null)
+        .select("id")
+        .maybeSingle();
+      if (!consumed) return json({ error: "This authorization attempt was already used. Please try again." }, 409);
+      if (body.error || !code) return json({ error: sanitizeOAuthError(body.error) }, 400);
+
+      const provider = String(attempt.provider);
       const config = PROVIDERS[provider];
       const clientId = Deno.env.get(envKey(provider, "CLIENT_ID"));
       const clientSecret = Deno.env.get(envKey(provider, "CLIENT_SECRET"));
@@ -206,13 +226,14 @@ Deno.serve(async (req) => {
           code,
           client_id: clientId,
           client_secret: clientSecret,
-          redirect_uri: String(state.redirect_uri),
+           redirect_uri: String(attempt.redirect_uri),
+           ...(attempt.code_verifier ? { code_verifier: String(attempt.code_verifier) } : {}),
         }),
       });
       const tokenBody = await tokenRes.json().catch(() => ({}));
       if (!tokenRes.ok || !tokenBody.access_token) {
         return json(
-          { error: tokenBody.error_description ?? "Authorization failed" },
+          { error: sanitizeOAuthError(tokenBody.error_description ?? tokenBody.error) },
           400,
         );
       }
@@ -221,12 +242,12 @@ Deno.serve(async (req) => {
         .from("user_connections")
         .upsert(
           {
-            user_id: state.user_id,
-            service_id: state.service_id,
+             user_id: user.id,
+             service_id: attempt.service_id,
             // One row per linked account. The slot travels in the signed state
             // so a second account never overwrites the first.
-            account_key: String(state.account_key ?? "default"),
-            account_label: state.account_label ? String(state.account_label) : null,
+             account_key: String(attempt.account_key),
+             account_label: attempt.account_label ? String(attempt.account_label) : null,
             method: "oauth",
             status: "connected",
             scopes: config.scope.split(/[ ,]/).filter(Boolean),
@@ -247,7 +268,7 @@ Deno.serve(async (req) => {
 
       await putSecret(admin, {
         connectionId: connection.id,
-        userId: state.user_id,
+         userId: user.id,
         type: "access_token",
         value: String(tokenBody.access_token),
         expiresAt,
@@ -256,7 +277,7 @@ Deno.serve(async (req) => {
       if (tokenBody.refresh_token) {
         await putSecret(admin, {
           connectionId: connection.id,
-          userId: state.user_id,
+           userId: user.id,
           type: "refresh_token",
           value: String(tokenBody.refresh_token),
         });
@@ -272,26 +293,17 @@ Deno.serve(async (req) => {
         .eq("id", connection.id);
 
       await audit(admin, {
-        userId: state.user_id,
+         userId: user.id,
         connectionId: connection.id,
-        serviceId: state.service_id,
+         serviceId: attempt.service_id,
         action: "oauth_connect",
         status: "ok",
       });
 
-      return json({ ok: true, service_id: state.service_id });
+       return json({ ok: true, service_id: attempt.service_id });
     }
 
     // ---- start: build the provider authorize URL ----
-    const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader.startsWith("Bearer ")) {
-      return json({ error: "Sign in required" }, 401);
-    }
-    const {
-      data: { user },
-    } = await admin.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (!user) return json({ error: "Sign in required" }, 401);
-
     // ---- status: which services already have their developer app set up ----
     if (action === "status") {
       const configured = Object.keys(PROVIDERS).filter((p) =>
@@ -301,6 +313,11 @@ Deno.serve(async (req) => {
         ok: true,
         configured,
         all: Object.keys(PROVIDERS),
+        requirements: {
+          client_id: "Set PROVIDER_CLIENT_ID in server function secrets",
+          client_secret: "Set PROVIDER_CLIENT_SECRET in server function secrets",
+          callback: "Register the exact /integrations URL for each deployed origin",
+        },
       });
     }
 
@@ -311,6 +328,9 @@ Deno.serve(async (req) => {
     const redirectUri = String(body.redirect_uri ?? "");
     const config = PROVIDERS[provider];
     if (!config) return json({ error: "Unsupported service" }, 400);
+    if (!oauthRedirectIsAllowed(redirectUri, req.headers.get("origin"))) {
+      return json({ error: "Invalid callback address" }, 400);
+    }
 
     const clientId = Deno.env.get(envKey(provider, "CLIENT_ID"));
     if (!clientId) {
@@ -324,22 +344,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    const payload = btoa(
-      JSON.stringify({
-        user_id: user.id,
-        service_id: serviceId,
-        account_key: String(body.account_key ?? "default").slice(0, 64),
-        account_label: typeof body.account_label === "string" ? body.account_label.slice(0, 120) : null,
-        provider,
-        redirect_uri: redirectUri,
-        exp: Date.now() + 10 * 60 * 1000,
-        nonce: crypto.randomUUID(),
-      }),
-    )
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
-    const state = `${payload}.${await signState(payload)}`;
+    const state = createOAuthState();
+    const verifier = config.pkce ? createCodeVerifier() : null;
+    const accountKey = String(body.account_key ?? crypto.randomUUID()).slice(0, 64);
+    const { error: attemptError } = await admin.from("connector_oauth_attempts").insert({
+      user_id: user.id,
+      service_id: serviceId,
+      provider,
+      account_key: accountKey,
+      account_label: typeof body.account_label === "string" ? body.account_label.slice(0, 120) : null,
+      state_hash: await sha256(state),
+      code_verifier: verifier,
+      redirect_uri: redirectUri,
+      expires_at: new Date(Date.now() + OAUTH_ATTEMPT_TTL_MS).toISOString(),
+    });
+    if (attemptError) return json({ error: "Could not start authorization" }, 500);
 
     const url = new URL(config.authorizeUrl);
     url.searchParams.set("client_id", clientId);
@@ -347,6 +366,10 @@ Deno.serve(async (req) => {
     url.searchParams.set("response_type", "code");
     url.searchParams.set("scope", config.scope);
     url.searchParams.set("state", state);
+    if (verifier) {
+      url.searchParams.set("code_challenge", await sha256(verifier));
+      url.searchParams.set("code_challenge_method", "S256");
+    }
 
     return json({ ok: true, authorize_url: url.toString() });
   } catch (e) {
