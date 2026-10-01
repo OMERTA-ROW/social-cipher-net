@@ -32,7 +32,7 @@ export const APP_ROUTES: AppRouteMeta[] = [
   { path: "/subscription", title: "Subscriptions", description: "Compare Cyber Link plans and recurring access.", parent: "/monetization" },
   { path: "/seller-register", title: "Seller Registration", description: "Create the storefront profile used to sell on Cyber Link.", parent: "/shop" },
   { path: "/seller-dashboard", title: "Seller Dashboard", description: "Manage your storefront, products, stock, and options.", parent: "/shop" },
-  { path: "/advertise", title: "Advertise", description: "Create and manage native advertising campaigns.", parent: "/monetization" },
+  { path: "/advertise", title: "Advertise", description: "Create and manage native advertising campaigns.", parent: "/monetization", navigation: "markets" },
   { path: "/security", title: "Security", description: "Review account security, sessions, and protection settings.", navigation: "support" },
   { path: "/community-guidelines", title: "Community Guidelines", description: "The safety and conduct standards for Cyber Link.", navigation: "support" },
   { path: "/verification", title: "Verification", description: "Review or submit your account verification.", navigation: "support" },
