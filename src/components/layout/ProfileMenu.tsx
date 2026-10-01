@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Settings, User } from "lucide-react";
+import { LayoutDashboard, LogOut, Plug, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -92,15 +92,21 @@ const ProfileMenu = () => {
             ))}
           </div>
         )}
-        <DropdownMenuItem onSelect={() => navigate(`/profile/${userId}`)} className="mt-1 gap-2">
-          <User className="h-4 w-4" /> View profile
+        <DropdownMenuItem onSelect={() => navigate("/dashboard")} className="mt-1 gap-2">
+          <LayoutDashboard className="h-4 w-4" /> Dashboard
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate("/settings")} className="gap-2">
-          <Settings className="h-4 w-4" /> Account settings
+          <Settings className="h-4 w-4" /> Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate("/integrations")} className="gap-2">
+          <Plug className="h-4 w-4" /> Integrations
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate(`/profile/${userId}`)} className="gap-2">
+          <User className="h-4 w-4" /> View profile
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={signOut} className="gap-2">
-          <LogOut className="h-4 w-4" /> Sign out
+          <LogOut className="h-4 w-4" /> Log Out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

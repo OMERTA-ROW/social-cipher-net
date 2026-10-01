@@ -64,7 +64,9 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // Same-origin relative path to return to after auth (used by the OAuth consent flow).
-  const nextPath = safeReturnPath(searchParams.get("next"));
+  const rawNext = searchParams.get("next");
+  const nextPath = rawNext ? safeReturnPath(rawNext) : "/dashboard";
+  const [checkEmailFor, setCheckEmailFor] = useState<string | null>(null);
   const inRecovery = recovery !== "none";
   const initialTab = location.pathname === "/signup" ? "signup" : "signin";
 
@@ -231,7 +233,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
           data: {
             birthdate: birthdate,
             username: username.trim(),
@@ -243,12 +245,8 @@ const Auth = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("User creation failed");
 
-      toast({
-        title: authData.session ? "Account created" : "Check your email",
-        description: authData.session
-          ? "Your account is ready."
-          : "Use the confirmation link we sent before signing in.",
-      });
+      if (!authData.session) setCheckEmailFor(email);
+      else toast({ title: "Account created", description: "Your account is ready." });
       
       setEmail("");
       setPassword("");
@@ -394,8 +392,18 @@ const Auth = () => {
                 </form>
               )}
             </div>
+          ) : checkEmailFor ? (
+            <div className="space-y-4 text-center" role="status">
+              <h3 className="text-lg font-semibold text-foreground">Check your email to confirm your account</h3>
+              <p className="text-sm text-muted-foreground">
+                We sent a confirmation link to <span className="text-foreground">{checkEmailFor}</span>. Open it to activate your account, then sign in.
+              </p>
+              <Button variant="outline" className="w-full" onClick={() => { setCheckEmailFor(null); navigate("/login"); }}>
+                Back to sign in
+              </Button>
+            </div>
           ) : (
-          <Tabs defaultValue={initialTab} className="w-full">
+          <Tabs key={location.pathname} defaultValue={initialTab} className="w-full">
 
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
@@ -502,6 +510,12 @@ const Auth = () => {
                   >
                     Forgot Password?
                   </Button>
+                  <p className="text-center text-sm text-muted-foreground">
+                    New here?{" "}
+                    <Link to={`/signup${rawNext ? `?next=${encodeURIComponent(nextPath)}` : ""}`} className="font-medium text-primary hover:underline">
+                      Create Account
+                    </Link>
+                  </p>
                 </form>
               )}
             </TabsContent>
