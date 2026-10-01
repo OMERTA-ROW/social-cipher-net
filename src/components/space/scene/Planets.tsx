@@ -234,7 +234,7 @@ const Planets = ({ full, animate }: { full: boolean; animate: boolean }) => {
     <group>
       {/* local star: the single light source for every body */}
       <pointLight position={[0, 0, 0]} intensity={3} distance={0} decay={0} color="#fff3d8" />
-      <Sun full={full} />
+      <Sun full={full} animate={animate} />
       <SolarFlares radius={16} animate={animate} />
 
       {bodies.map((b, i) => (
