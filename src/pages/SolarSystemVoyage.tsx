@@ -18,6 +18,7 @@ import Starfield from "@/components/space/scene/Starfield";
 import SharedSun from "@/components/space/scene/Sun";
 import MiningVessel from "@/components/space/scene/MiningVessel";
 import VoyageCelestialBody, { type VoyagePlanetDef } from "@/components/space/voyage/VoyageCelestialBody";
+import VoyageAsteroidField from "@/components/space/voyage/VoyageAsteroidField";
 import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
 
 interface VoyagePreset {
@@ -126,34 +127,6 @@ const FocusFollower = ({
     controls.update();
   });
   return null;
-};
-
-const AsteroidField = ({ count = 80 }: { count?: number }) => {
-  const rocks = useMemo(() => {
-    return Array.from({ length: count }, () => {
-      const a = Math.random() * Math.PI * 2;
-      const r = ASTEROID_BELT_R + (Math.random() - 0.5) * 3;
-      return {
-        pos: [Math.cos(a) * r, (Math.random() - 0.5) * 0.6, Math.sin(a) * r] as [number, number, number],
-        s: Math.random() * 0.25 + 0.1,
-        rot: [Math.random(), Math.random(), Math.random()] as [number, number, number],
-      };
-    });
-  }, [count]);
-  const groupRef = useRef<THREE.Group>(null);
-  useFrame((_, dt) => {
-    if (groupRef.current) groupRef.current.rotation.y += dt * 0.02;
-  });
-  return (
-    <group ref={groupRef}>
-      {rocks.map((r, i) => (
-        <mesh key={i} position={r.pos} rotation={r.rot}>
-          <dodecahedronGeometry args={[r.s, 0]} />
-          <meshStandardMaterial color="#6b6255" roughness={1} />
-        </mesh>
-      ))}
-    </group>
-  );
 };
 
 const HarvesterBot = ({ offset, color, personaLabel, animate }: { offset: number; color: string; personaLabel: string; animate: boolean }) => {
@@ -435,7 +408,7 @@ const SolarSystemVoyage = () => {
         }}
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={0.42} />
+          <ambientLight intensity={0.075} />
           <DeepSky full={activeTier === "high"} />
           <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
           <VoyageSun full={activeTier === "high"} />
@@ -452,7 +425,7 @@ const SolarSystemVoyage = () => {
               onSelect={() => { selectFocus(p.name); }}
             />
           ))}
-          <AsteroidField count={preset.asteroids} />
+          <VoyageAsteroidField count={preset.asteroids} animate={sceneAnimated} />
 
           {/* Harvester fleet */}
           <HarvesterBot offset={0} color="#8fb4c9" personaLabel="Zozo-01" animate={sceneAnimated} />
