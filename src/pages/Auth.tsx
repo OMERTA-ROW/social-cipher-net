@@ -392,8 +392,18 @@ const Auth = () => {
                 </form>
               )}
             </div>
+          ) : checkEmailFor ? (
+            <div className="space-y-4 text-center" role="status">
+              <h3 className="text-lg font-semibold text-foreground">Check your email to confirm your account</h3>
+              <p className="text-sm text-muted-foreground">
+                We sent a confirmation link to <span className="text-foreground">{checkEmailFor}</span>. Open it to activate your account, then sign in.
+              </p>
+              <Button variant="outline" className="w-full" onClick={() => { setCheckEmailFor(null); navigate("/login"); }}>
+                Back to sign in
+              </Button>
+            </div>
           ) : (
-          <Tabs defaultValue={initialTab} className="w-full">
+          <Tabs key={location.pathname} defaultValue={initialTab} className="w-full">
 
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
@@ -500,6 +510,12 @@ const Auth = () => {
                   >
                     Forgot Password?
                   </Button>
+                  <p className="text-center text-sm text-muted-foreground">
+                    New here?{" "}
+                    <Link to={`/signup${rawNext ? `?next=${encodeURIComponent(nextPath)}` : ""}`} className="font-medium text-primary hover:underline">
+                      Create Account
+                    </Link>
+                  </p>
                 </form>
               )}
             </TabsContent>
