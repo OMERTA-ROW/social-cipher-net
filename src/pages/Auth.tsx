@@ -350,7 +350,7 @@ const Auth = () => {
                       setRecovery("none");
                       setRecoveryError(null);
                       setShowForgotPassword(true);
-                      window.history.replaceState(null, "", "/auth");
+                      window.history.replaceState(null, "", "/login");
                     }}
                   >
                     Request a new reset link
