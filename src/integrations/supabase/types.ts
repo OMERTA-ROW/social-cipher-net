@@ -4768,6 +4768,7 @@ export type Database = {
           last_synced_at: string | null
           metadata: Json
           method: string
+          provider_account_id: string | null
           scopes: string[] | null
           service_id: string
           show_on_profile: boolean
@@ -4790,6 +4791,7 @@ export type Database = {
           last_synced_at?: string | null
           metadata?: Json
           method?: string
+          provider_account_id?: string | null
           scopes?: string[] | null
           service_id: string
           show_on_profile?: boolean
@@ -4812,6 +4814,7 @@ export type Database = {
           last_synced_at?: string | null
           metadata?: Json
           method?: string
+          provider_account_id?: string | null
           scopes?: string[] | null
           service_id?: string
           show_on_profile?: boolean
@@ -5051,6 +5054,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_verified_oauth_connection: {
+        Args: {
+          _account_handle: string
+          _account_name: string
+          _connection_id: string
+          _expires_at: string
+          _provider_account_id: string
+          _service_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       calculate_mining_multiplier: {
         Args: { tokens_paid: number }
         Returns: number
