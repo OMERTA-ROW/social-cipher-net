@@ -176,3 +176,4 @@
 - [x] Complete approved Voyage visual integration and validate desktop/mobile without publishing
 - [x] Refine Voyage planets and asteroid belt for photorealistic NASA-sourced appearance
 - [ ] Give the sun a real fiery (NASA) texture
+- [ ] Voyage: remove animated lines, blend naturally with background
