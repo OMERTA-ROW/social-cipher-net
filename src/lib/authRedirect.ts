@@ -8,6 +8,7 @@
 export const safeReturnPath = (raw: string | null | undefined): string => {
   if (!raw) return "/";
   if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  if (raw.includes("\\") || /[\u0000-\u001f]/.test(raw)) return "/";
   return raw;
 };
 
@@ -21,6 +22,6 @@ export const currentReturnPath = (): string => {
 /** `/auth` with a same-origin return path attached when there is one worth keeping. */
 export const signInPath = (next: string = currentReturnPath()): string => {
   const target = safeReturnPath(next);
-  if (target === "/" || target.startsWith("/auth")) return "/auth";
-  return `/auth?next=${encodeURIComponent(target)}`;
+  if (target === "/" || /^\/(auth|login|signup|forgot-password|reset-password)(?:[/?#]|$)/.test(target)) return "/login";
+  return `/login?next=${encodeURIComponent(target)}`;
 };
