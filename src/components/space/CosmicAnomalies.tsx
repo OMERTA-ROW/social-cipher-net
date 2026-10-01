@@ -78,11 +78,24 @@ const edgeMask = (() => {
     return tex;
   };
 })();
-const PhotoSprite = ({ url, size, rotation = 0, opacity = 0.75, position }: { url: string; size: number; rotation?: number; opacity?: number; position?: V3 }) => (
-  <sprite position={position} scale={[size, size, 1]}>
-    <spriteMaterial map={photo(url)} alphaMap={edgeMask()} rotation={rotation} transparent opacity={opacity} depthWrite={false} blending={THREE.AdditiveBlending} />
-  </sprite>
-);
+/** Layered at slightly different depths/scales/rotations so the object reads
+ *  as a volume floating in the void rather than a flat picture. */
+const PhotoSprite = ({ url, size, rotation = 0, opacity = 0.75, position }: { url: string; size: number; rotation?: number; opacity?: number; position?: V3 }) => {
+  const layers = useMemo(() => [
+    { o: [0, 0, 0] as V3, k: 1, r: 0, a: 0.6 },
+    { o: [size * 0.06, size * 0.03, -size * 0.12] as V3, k: 1.12, r: 0.18, a: 0.28 },
+    { o: [-size * 0.05, -size * 0.04, size * 0.1] as V3, k: 0.86, r: -0.14, a: 0.22 },
+  ], [size]);
+  return (
+    <group position={position}>
+      {layers.map((l, i) => (
+        <sprite key={i} position={l.o} scale={[size * l.k, size * l.k, 1]}>
+          <spriteMaterial map={photo(url)} alphaMap={edgeMask()} rotation={rotation + l.r} transparent opacity={opacity * l.a * 1.4} depthWrite={false} fog={false} blending={THREE.AdditiveBlending} />
+        </sprite>
+      ))}
+    </group>
+  );
+};
 
 const at = (p: V3, s: number): V3 => [p[0] * s, p[1] * s, p[2] * s];
 
