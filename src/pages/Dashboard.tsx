@@ -22,6 +22,7 @@ import {
 import ProfilePictureEditor from "@/components/profile/ProfilePictureEditor";
 import { DollarSign, Home, Loader2 } from "lucide-react";
 import { signInPath } from "@/lib/authRedirect";
+import LinkedAccountManager from "@/components/accounts/LinkedAccountManager";
 
 interface NotificationPrefs {
   notify_likes: boolean;
@@ -282,6 +283,11 @@ const Dashboard = () => {
               />
             )}
           </Card>
+
+          <LinkedAccountManager
+            title="Account connections"
+            description="Review every linked account, choose the active account, reconnect, rename, or disconnect."
+          />
 
           <Card className="p-5 bg-card/70 backdrop-blur-sm border-border/60">
             <h3 className="font-semibold mb-4">Edit profile</h3>

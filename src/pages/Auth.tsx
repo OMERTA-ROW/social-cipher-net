@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, Lock } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import ScrollDatePicker from "@/components/ScrollDatePicker";
 import { safeReturnPath } from "@/lib/authRedirect";
 import { fetchOnboardingComplete } from "@/hooks/useOnboarding";
@@ -19,18 +18,17 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [documentType, setDocumentType] = useState<string>("");
-  const [idDocument, setIdDocument] = useState<File | null>(null);
   const [birthdate, setBirthdate] = useState("");
   const [birthdateTouched, setBirthdateTouched] = useState(false);
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(() => window.location.pathname === "/forgot-password");
   const [isAccountLocked, setIsAccountLocked] = useState(false);
   const [lockoutEndTime, setLockoutEndTime] = useState<Date | null>(null);
   const [remainingAttempts, setRemainingAttempts] = useState(6);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
@@ -40,6 +38,7 @@ const Auth = () => {
     if (typeof window === "undefined") return "none";
     const hash = window.location.hash ?? "";
     const requested =
+      window.location.pathname === "/reset-password" ||
       new URLSearchParams(window.location.search).get("reset") === "true" ||
       hash.includes("type=recovery") ||
       hash.includes("error=");
@@ -58,6 +57,7 @@ const Auth = () => {
   // Same-origin relative path to return to after auth (used by the OAuth consent flow).
   const nextPath = safeReturnPath(searchParams.get("next"));
   const inRecovery = recovery !== "none";
+  const initialTab = location.pathname === "/signup" ? "signup" : "signin";
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +74,7 @@ const Auth = () => {
     setLoading(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?reset=true`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
 
     if (error) {
@@ -187,15 +187,6 @@ const Auth = () => {
       return;
     }
 
-    if (!documentType || !idDocument) {
-      toast({
-        title: "Error",
-        description: "Please select document type and upload your ID document.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!birthdate) {
       setBirthdateTouched(true);
 
@@ -226,7 +217,6 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Create user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -243,46 +233,15 @@ const Auth = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("User creation failed");
 
-      // Store birthdate privately (never exposed on public profiles)
-      const { error: profileError } = await supabase
-        .from('profile_private')
-        .upsert({ user_id: authData.user.id, birthdate }, { onConflict: 'user_id' });
-
-      if (profileError) console.error('Profile update error:', profileError);
-
-      // Upload ID document
-      const fileExt = idDocument.name.split('.').pop();
-      const fileName = `${authData.user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('identity-documents')
-        .upload(fileName, idDocument, {
-          contentType: idDocument.type,
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Create verification record
-      const { error: verificationError } = await supabase
-        .from('identity_verification')
-        .insert({
-          user_id: authData.user.id,
-          document_type: documentType,
-          document_url: fileName,
-          verification_status: 'pending',
-        });
-
-      if (verificationError) throw verificationError;
-
       toast({
-        title: "Success",
-        description: "Account created! Your identity is being verified. You can now sign in.",
+        title: authData.session ? "Account created" : "Check your email",
+        description: authData.session
+          ? "Your account is ready."
+          : "Use the confirmation link we sent before signing in.",
       });
       
       setEmail("");
       setPassword("");
-      setDocumentType("");
-      setIdDocument(null);
       setBirthdate("");
       setUsername("");
       setDisplayName("");
@@ -442,7 +401,7 @@ const Auth = () => {
               )}
             </div>
           ) : (
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue={initialTab} className="w-full">
 
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
@@ -545,7 +504,7 @@ const Auth = () => {
                     type="button"
                     variant="link"
                     className="w-full text-primary hover:text-primary/80 p-0 h-auto"
-                    onClick={() => setShowForgotPassword(true)}
+                    onClick={() => navigate(`/forgot-password${nextPath === "/" ? "" : `?next=${encodeURIComponent(nextPath)}`}`)}
                   >
                     Forgot Password?
                   </Button>
@@ -621,37 +580,6 @@ const Auth = () => {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="document-type" className="text-foreground">Document Type</Label>
-                  <Select value={documentType} onValueChange={setDocumentType} required>
-                    <SelectTrigger id="document-type" className="bg-background/50 border-primary/30">
-                      <SelectValue placeholder="Select ID type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="passport">Passport</SelectItem>
-                      <SelectItem value="drivers_license">Driver's License</SelectItem>
-                      <SelectItem value="national_id">National ID</SelectItem>
-                      <SelectItem value="other">Other Government ID</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="id-document" className="text-foreground">Upload ID Document</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="id-document"
-                      type="file"
-                      accept="image/jpeg,image/jpg,image/png,application/pdf"
-                      onChange={(e) => setIdDocument(e.target.files?.[0] || null)}
-                      required
-                      className="cursor-pointer bg-background/50 border-primary/30"
-                    />
-                    <Upload className="h-5 w-5 text-primary" />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Accepted formats: JPG, PNG, PDF (Max 10MB)
-                  </p>
-                </div>
                 <Button 
                   type="submit" 
                   className="w-full glow-primary hover:scale-105 transition-transform" 
@@ -664,6 +592,10 @@ const Auth = () => {
             </TabsContent>
           </Tabs>
           )}
+          <div className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
+            <Link to="/security" className="hover:text-primary">Privacy & security</Link>
+            <Link to="/community-guidelines" className="hover:text-primary">Terms & guidelines</Link>
+          </div>
         </CardContent>
 
       </Card>
