@@ -140,7 +140,7 @@ export const CrossPlatformEarnings = ({ days = 30 }: { days?: number }) => {
                 </div>
                 {entry.status === "needs_reconnect" && (
                   <Button asChild size="sm" variant="outline">
-                    <Link to="/connectors">Reconnect</Link>
+                    <Link to="/integrations">Reconnect</Link>
                   </Button>
                 )}
               </div>
@@ -159,7 +159,7 @@ export const CrossPlatformEarnings = ({ days = 30 }: { days?: number }) => {
           </CardHeader>
           <CardContent>
             <Button asChild>
-              <Link to="/connectors">Open connections</Link>
+              <Link to="/integrations">Open connections</Link>
             </Button>
           </CardContent>
         </Card>

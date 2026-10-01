@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { resolvePostsMedia } from "@/lib/media";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import PostCard from "@/components/PostCard";
 import { PostCardSkeleton } from "@/components/PostCardSkeleton";
@@ -42,6 +42,7 @@ const defaultPrefs: NotificationPrefs = {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<SocialProfile & { bio?: string | null } | null>(null);
@@ -231,7 +232,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <Tabs defaultValue={searchParams.get("tab") === "settings" ? "settings" : "posts"}>
+      <Tabs defaultValue={location.pathname === "/settings" || searchParams.get("tab") === "settings" ? "settings" : "posts"}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="posts">My posts</TabsTrigger>
           <TabsTrigger value="settings">Account settings</TabsTrigger>
