@@ -27,6 +27,7 @@ const ConnectDialog = ({
 }: ConnectDialogProps) => {
   const [starting, setStarting] = useState(false);
   const [configured, setConfigured] = useState<string[] | null>(null);
+  const [statusResolved, setStatusResolved] = useState(false);
 
   // Which services already have their developer app set up on the server.
   useEffect(() => {
@@ -36,9 +37,13 @@ const ConnectDialog = ({
       .invoke("connector-oauth", { body: { action: "status" } })
       .then(({ data }) => {
         if (alive && Array.isArray(data?.configured)) setConfigured(data.configured);
+        if (alive) setStatusResolved(true);
       })
       .catch(() => {
-        if (alive) setConfigured(null);
+        if (alive) {
+          setConfigured([]);
+          setStatusResolved(true);
+        }
       });
     return () => {
       alive = false;
@@ -49,8 +54,7 @@ const ConnectDialog = ({
 
 
   const supportsOauth = service.methods.includes("oauth") && service.oauthProvider;
-  const oauthReady =
-    configured === null ? true : configured.includes(String(service.oauthProvider));
+  const oauthReady = statusResolved && (configured ?? []).includes(String(service.oauthProvider));
 
   const startOauth = async () => {
     setStarting(true);
@@ -126,19 +130,19 @@ const ConnectDialog = ({
             <Button
               className="w-full glow-primary"
               onClick={startOauth}
-              disabled={starting || !oauthReady}
+              disabled={starting || !oauthReady || !statusResolved}
             >
               {starting ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <ShieldCheck className="w-4 h-4 mr-2" />
               )}
-              {oauthReady ? `Authorize with ${service.name}` : "Setup needed"}
+              {!statusResolved ? "Checking setup…" : oauthReady ? `Authorize with ${service.name}` : "Setup required"}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
               {oauthReady
                 ? `You sign in on ${service.name} — Cyber Link never sees your password.`
-                : `One-click sign-in for ${service.name} is waiting on its developer app details. You can still connect with your own keys below.`}
+                : `Cyber Link must register a ${service.name} developer app, store its client ID and secret server-side, approve the requested scopes, and allow this site's /integrations callback.`}
             </p>
           </div>
         )}

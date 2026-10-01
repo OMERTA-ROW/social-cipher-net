@@ -129,9 +129,10 @@ const CyberStreamer = () => {
   const loadPlatformConnections = async () => {
     try {
       const { data, error } = await supabase
-        .from('platform_connections')
-        .select('*')
-        .eq('is_active', true);
+        .from('user_connections')
+        .select('service_id, status')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id ?? '')
+        .eq('status', 'connected');
 
       if (error) throw error;
 
@@ -139,9 +140,9 @@ const CyberStreamer = () => {
         const updatePlatforms = (platforms: Platform[]) => 
           platforms.map(p => ({
             ...p,
-            connected: data.some(conn => conn.platform === p.id),
-            streamKey: data.find(conn => conn.platform === p.id)?.stream_key,
-            rtmpUrl: data.find(conn => conn.platform === p.id)?.rtmp_url
+            connected: data.some(conn => conn.service_id === p.id),
+            streamKey: undefined,
+            rtmpUrl: undefined
           }));
 
         setStreamingPlatforms(prev => updatePlatforms(prev));
@@ -205,55 +206,11 @@ const CyberStreamer = () => {
   };
 
   const connectPlatform = async (platformId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Real credentials only: the RTMP server URL and stream key must come
-      // from the streaming provider's own dashboard. Nothing is generated here.
-      const rtmpUrl = window.prompt(`RTMP server URL from your ${platformId} dashboard`)?.trim();
-      if (!rtmpUrl) return;
-      const streamKey = window.prompt(`Stream key from your ${platformId} dashboard`)?.trim();
-      if (!streamKey) return;
-
-      const { error } = await supabase
-        .from('platform_connections')
-        .insert({
-          user_id: user.id,
-          platform: platformId,
-          is_active: true,
-          stream_key: streamKey,
-          rtmp_url: rtmpUrl
-        });
-
-      if (error) throw error;
-
-      await loadPlatformConnections();
-      toast.success(`Connected to ${platformId}!`);
-    } catch (error: any) {
-      if (error.code === '23505') {
-        toast.info(`Already connected to ${platformId}`);
-      } else {
-        toast.error("Failed to connect platform");
-      }
-    }
+    navigate(`/integrations?provider=${encodeURIComponent(platformId)}`);
   };
 
   const disconnectPlatform = async (platformId: string) => {
-    try {
-      const { error } = await supabase
-        .from('platform_connections')
-        .delete()
-        .eq('platform', platformId);
-
-      if (error) throw error;
-
-      await loadPlatformConnections();
-      toast.info(`Disconnected from ${platformId}`);
-    } catch (error) {
-      console.error('Error disconnecting platform:', error);
-      toast.error("Failed to disconnect platform");
-    }
+    navigate(`/integrations?provider=${encodeURIComponent(platformId)}`);
   };
 
   const sendChatMessage = async () => {

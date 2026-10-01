@@ -81,8 +81,8 @@ export const LinkedAccountManager = ({
         {!loading && services.length === 0 && (
           <div className="rounded-lg border border-border/60 p-4 text-sm text-muted-foreground">
             You have no accounts linked here yet.{" "}
-            <Link to="/connectors" className="text-primary hover:underline">
-              Open Connectors
+            <Link to="/integrations" className="text-primary hover:underline">
+              Open Connections
             </Link>{" "}
             to add one. {relevantCatalogue.length} provider
             {relevantCatalogue.length === 1 ? " is" : "s are"} available to link.
@@ -100,7 +100,7 @@ export const LinkedAccountManager = ({
                   <Badge variant="secondary">{list.length} account{list.length === 1 ? "" : "s"}</Badge>
                 </div>
                 <Button asChild size="sm" variant="outline">
-                  <Link to="/connectors">Add another</Link>
+                  <Link to="/integrations">Add another</Link>
                 </Button>
               </div>
 
@@ -175,7 +175,7 @@ export const LinkedAccountManager = ({
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button asChild size="icon" variant="ghost" aria-label="Reconnect account">
-                      <Link to="/connectors">
+                      <Link to="/integrations">
                         <RefreshCw className="h-4 w-4" />
                       </Link>
                     </Button>

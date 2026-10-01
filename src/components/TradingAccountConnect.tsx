@@ -22,13 +22,6 @@ const PLATFORM_TYPES = [
   { value: 'dex', label: 'DEX', icon: '🦄' },
 ];
 
-const PLATFORMS = {
-  crypto_exchange: ['Binance', 'Coinbase', 'Kraken', 'KuCoin', 'Bybit'],
-  stock_broker: ['Interactive Brokers', 'TD Ameritrade', 'E*TRADE', 'Robinhood', 'Fidelity'],
-  nft_marketplace: ['OpenSea', 'Rarible', 'Magic Eden', 'LooksRare'],
-  dex: ['Uniswap', 'PancakeSwap', 'SushiSwap', 'Curve'],
-};
-
 export const TradingAccountConnect = () => {
   const [accounts, setAccounts] = useState<TradingAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,11 +165,9 @@ export const TradingAccountConnect = () => {
         )}
 
         <div className="mt-4 text-xs text-muted-foreground space-y-1 p-3 bg-muted/50 rounded-lg">
-          <p className="font-semibold">✓ Supported Platforms:</p>
-          <p>• Major crypto exchanges (Binance, Coinbase, Kraken)</p>
-          <p>• Stock brokers (Interactive Brokers, TD Ameritrade)</p>
-          <p>• NFT marketplaces (OpenSea, Rarible)</p>
-          <p>• Decentralized exchanges (Uniswap, PancakeSwap)</p>
+          <p className="font-semibold">Integration status</p>
+          <p>New trading connections remain unavailable until a provider-specific, server-verified integration is configured.</p>
+          <p>Existing legacy records are shown for review only and do not prove provider authorization.</p>
         </div>
       </CardContent>
     </Card>

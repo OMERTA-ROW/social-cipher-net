@@ -260,22 +260,6 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Check if account is locked before attempting login
-    const { data: lockCheck } = await supabase.rpc('check_account_locked', { p_email: email });
-    
-    if (lockCheck && lockCheck.length > 0 && lockCheck[0].is_locked) {
-      const unlockTime = new Date(lockCheck[0].unlock_time);
-      setIsAccountLocked(true);
-      setLockoutEndTime(unlockTime);
-      toast({
-        title: "Account Locked",
-        description: `Too many failed login attempts. Please try again after ${unlockTime.toLocaleTimeString()}.`,
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
