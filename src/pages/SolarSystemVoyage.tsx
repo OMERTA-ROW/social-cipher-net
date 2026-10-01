@@ -427,8 +427,6 @@ const SolarSystemVoyage = () => {
           <DeepSky full={activeTier === "high"} />
           <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
           <VoyageSun full={activeTier === "high"} />
-          {PLANETS.map((p) => <OrbitRing key={p.name} r={p.distance} />)}
-          <OrbitRing r={ASTEROID_BELT_R} />
           {PLANETS.map((p) => (
             <VoyageCelestialBody
               key={p.name}
