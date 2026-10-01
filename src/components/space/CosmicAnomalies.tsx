@@ -68,8 +68,9 @@ const edgeMask = (() => {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
     const g = c.getContext("2d")!;
-    const grad = g.createRadialGradient(128, 128, 70, 128, 128, 128);
+    const grad = g.createRadialGradient(128, 128, 20, 128, 128, 128);
     grad.addColorStop(0, "#fff");
+    grad.addColorStop(0.55, "#888");
     grad.addColorStop(1, "#000");
     g.fillStyle = grad;
     g.fillRect(0, 0, 256, 256);
@@ -77,7 +78,7 @@ const edgeMask = (() => {
     return tex;
   };
 })();
-const PhotoSprite = ({ url, size, rotation = 0, opacity = 1, position }: { url: string; size: number; rotation?: number; opacity?: number; position?: V3 }) => (
+const PhotoSprite = ({ url, size, rotation = 0, opacity = 0.75, position }: { url: string; size: number; rotation?: number; opacity?: number; position?: V3 }) => (
   <sprite position={position} scale={[size, size, 1]}>
     <spriteMaterial map={photo(url)} alphaMap={edgeMask()} rotation={rotation} transparent opacity={opacity} depthWrite={false} blending={THREE.AdditiveBlending} />
   </sprite>
@@ -102,21 +103,21 @@ const Wormhole = ({ position, size, animate }: { position: V3; size: number; ani
   useFrame((_, d) => { if (animate && m.current) m.current.rotation += Math.min(d, 0.05) * 0.05; });
   return (
     <sprite position={position} scale={[size * 2.4, size * 2.4, 1]}>
-      <spriteMaterial ref={m} map={photo(wormholeUrl)} alphaMap={edgeMask()} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      <spriteMaterial ref={m} map={photo(wormholeUrl)} alphaMap={edgeMask()} transparent opacity={0.75} depthWrite={false} blending={THREE.AdditiveBlending} />
     </sprite>
   );
 };
 
 /* ---------------- Nebula: layered gas sprites ---------------- */
 const Nebula = ({ position, size, seed }: { position: V3; size: number; colors?: string[]; seed: number }) => (
-  <PhotoSprite url={nebulaUrl} position={position} size={size * 2.2} rotation={seed * 0.7} opacity={0.9} />
+  <PhotoSprite url={nebulaUrl} position={position} size={size * 2.2} rotation={seed * 0.7} opacity={0.6} />
 );
 
 /* ---------------- Spiral galaxy point cloud ---------------- */
 const SpiralGalaxy = ({ position, size, tilt }: { position: V3; size: number; seed?: number; tilt: V3; count?: number }) => (
   <mesh position={position} rotation={tilt}>
     <planeGeometry args={[size * 2.2, size * 2.2]} />
-    <meshBasicMaterial map={photo(galaxyUrl)} alphaMap={edgeMask()} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+    <meshBasicMaterial map={photo(galaxyUrl)} alphaMap={edgeMask()} transparent opacity={0.75} depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
   </mesh>
 );
 
@@ -142,7 +143,7 @@ const Comet = ({ orbit, size, speed, phase, animate }: { orbit: [number, number,
         <group key={rz} rotation={[0, 0, rz]}>
           <mesh position={[0, 0, w * 0.37]} rotation={[0, -Math.PI / 2, 0]}>
             <planeGeometry args={[w, w / 2]} />
-            <meshBasicMaterial map={photo(cometUrl)} transparent depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+            <meshBasicMaterial map={photo(cometUrl)} transparent opacity={0.8} depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
           </mesh>
         </group>
       ))}
@@ -188,7 +189,7 @@ const Pulsar = ({ position, size, animate }: { position: V3; size: number; anima
   useFrame((_, d) => { if (animate && m.current) m.current.rotation += Math.min(d, 0.05) * 1.5; });
   return (
     <sprite position={position} scale={[size * 14, size * 14, 1]}>
-      <spriteMaterial ref={m} map={photo(pulsarUrl)} alphaMap={edgeMask()} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      <spriteMaterial ref={m} map={photo(pulsarUrl)} alphaMap={edgeMask()} transparent opacity={0.75} depthWrite={false} blending={THREE.AdditiveBlending} />
     </sprite>
   );
 };
@@ -203,7 +204,7 @@ const Supernova = ({ position, size, animate }: { position: V3; size: number; an
   });
   return (
     <sprite ref={sp} position={position}>
-      <spriteMaterial map={photo(supernovaUrl)} alphaMap={edgeMask()} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+      <spriteMaterial map={photo(supernovaUrl)} alphaMap={edgeMask()} transparent opacity={0.75} depthWrite={false} blending={THREE.AdditiveBlending} />
     </sprite>
   );
 };
