@@ -68,8 +68,8 @@ const VoyageSun = ({ full, animate }: { full: boolean; animate: boolean }) => {
   return (
     <group>
       <group scale={0.1375}>
-        <SharedSun full={full} />
-        <SolarFlares radius={SUN_PHOTO_RADIUS} animate={animate} />
+        <SharedSun full={full} animate={animate} />
+        <SolarFlares radius={SUN_PHOTO_RADIUS} animate={animate} full={full} />
       </group>
       <pointLight color="#fff4dc" intensity={6200} distance={0} decay={2} />
     </group>
@@ -409,7 +409,7 @@ const SolarSystemVoyage = () => {
           <ambientLight intensity={0.075} />
           <DeepSky full={activeTier === "high"} />
           <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
-          <VoyageSun full={activeTier === "high"} animate={!reducedMotion} />
+          <VoyageSun full={activeTier === "high"} animate={sceneAnimated} />
           {PLANETS.map((p) => (
             <VoyageCelestialBody
               key={p.name}

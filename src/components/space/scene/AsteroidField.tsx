@@ -246,12 +246,13 @@ const AsteroidField = ({ animate, full }: { animate: boolean; full: boolean }) =
             vertexColors
             map={asteroidMaps(i).map}
             normalMap={asteroidMaps(i).normalMap}
+            normalScale={new THREE.Vector2(1.55, 1.55)}
             roughnessMap={asteroidMaps(i).roughnessMap}
-            color="#d6d0c8"
-            emissive="#3a3835"
-            emissiveIntensity={0.6}
+            color="#b8b0a6"
+            emissive="#171614"
+            emissiveIntensity={0.18}
             roughness={1}
-            metalness={0.03}
+            metalness={i === 2 ? 0.08 : 0.015}
             flatShading={cfg.flatShading}
           />
         </instancedMesh>

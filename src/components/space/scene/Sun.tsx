@@ -121,7 +121,7 @@ const surfaceFrag = /* glsl */ `
   }
 `;
 
-const Sun = ({ full }: { full: boolean }) => {
+const Sun = ({ full, animate = true }: { full: boolean; animate?: boolean }) => {
   const mesh = useRef<THREE.Mesh>(null);
   const surfMat = useRef<THREE.ShaderMaterial>(null);
   const map = useLazyTexture(SUN_TEXTURE_URL, { delay: full ? 160 : 400 });
@@ -142,9 +142,9 @@ const Sun = ({ full }: { full: boolean }) => {
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
-    if (mesh.current) mesh.current.rotation.y += dt * 0.012;
+    if (animate && mesh.current) mesh.current.rotation.y += dt * 0.012;
     const t = state.clock.elapsedTime;
-    if (surfMat.current) surfMat.current.uniforms.uTime.value = t;
+    if (animate && surfMat.current) surfMat.current.uniforms.uTime.value = t;
   });
 
   const segments = full ? 128 : 64;

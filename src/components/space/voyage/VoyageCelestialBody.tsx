@@ -22,6 +22,8 @@ export interface VoyagePlanetDef {
 }
 
 const atmosphereVertex = /* glsl */ `
+  #include <common>
+  #include <logdepthbuf_pars_vertex>
   varying vec3 vNormalWorld;
   varying vec3 vPositionWorld;
   void main() {
@@ -29,16 +31,20 @@ const atmosphereVertex = /* glsl */ `
     vPositionWorld = world.xyz;
     vNormalWorld = normalize(mat3(modelMatrix) * normal);
     gl_Position = projectionMatrix * viewMatrix * world;
+    #include <logdepthbuf_vertex>
   }
 `;
 
 const atmosphereFragment = /* glsl */ `
   precision highp float;
+  #include <common>
+  #include <logdepthbuf_pars_fragment>
   varying vec3 vNormalWorld;
   varying vec3 vPositionWorld;
   uniform vec3 uColor;
   uniform float uStrength;
   void main() {
+    #include <logdepthbuf_fragment>
     vec3 normal = normalize(vNormalWorld);
     vec3 viewDirection = normalize(cameraPosition - vPositionWorld);
     vec3 lightDirection = normalize(-vPositionWorld);
@@ -171,6 +177,7 @@ const VoyageCelestialBody = ({
               transparent
               opacity={definition.name === "Venus" ? 0.92 : 0.78}
               roughness={1}
+              alphaTest={0.015}
               depthWrite={false}
             />
           </mesh>

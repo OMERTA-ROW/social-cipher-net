@@ -8,6 +8,7 @@ import {
   useLazyTexture,
 } from "../realTextures";
 import Sun from "./Sun";
+import { SolarFlares } from "../CosmicAnomalies";
 import { WORLD_SCALE } from "../worldScale";
 
 /**
@@ -140,11 +141,12 @@ const Ring = ({ inner, outer, delay }: { inner: number; outer: number; delay: nu
   );
 };
 
-const PlanetMesh = ({ body, full, segments, index }: { body: Body; full: boolean; segments: number; index: number }) => {
+const PlanetMesh = ({ body, full, animate, segments, index }: { body: Body; full: boolean; animate: boolean; segments: number; index: number }) => {
   const group = useRef<THREE.Group>(null);
   const mesh = useRef<THREE.Mesh>(null);
   const clouds = useRef<THREE.Mesh>(null);
   const atmoMat = useRef<THREE.ShaderMaterial>(null);
+  const orbitalTime = useRef(0);
   const tmp = useMemo(() => new THREE.Vector3(), []);
 
   // progressive: stagger requests so the UI paints first
@@ -163,12 +165,12 @@ const PlanetMesh = ({ body, full, segments, index }: { body: Body; full: boolean
     [],
   );
 
-  useFrame((state, delta) => {
-    const t = state.clock.elapsedTime;
+  useFrame((_, delta) => {
     const dt = Math.min(delta, 0.05);
-    if (group.current) group.current.position.copy(orbitPoint(body, t, tmp));
-    if (mesh.current) mesh.current.rotation.y += dt * body.spin * 0.28;
-    if (clouds.current) clouds.current.rotation.y += dt * body.spin * 0.36;
+    if (animate) orbitalTime.current += dt;
+    if (group.current) group.current.position.copy(orbitPoint(body, orbitalTime.current, tmp));
+    if (animate && mesh.current) mesh.current.rotation.y += dt * body.spin * 0.28;
+    if (animate && clouds.current) clouds.current.rotation.y += dt * body.spin * 0.36;
     if (atmoMat.current) atmoMat.current.uniforms.uLightPos.value.set(0, 0, 0);
   });
 
@@ -225,7 +227,7 @@ const PlanetMesh = ({ body, full, segments, index }: { body: Body; full: boolean
 };
 
 
-const Planets = ({ full }: { full: boolean }) => {
+const Planets = ({ full, animate }: { full: boolean; animate: boolean }) => {
   const segments = full ? 96 : 40;
   const bodies = full ? BODIES : BODIES.slice(0, 4);
 
@@ -233,10 +235,11 @@ const Planets = ({ full }: { full: boolean }) => {
     <group>
       {/* local star: the single light source for every body */}
       <pointLight position={[0, 0, 0]} intensity={3} distance={0} decay={0} color="#fff3d8" />
-      <Sun full={full} />
+      <Sun full={full} animate={animate} />
+      <SolarFlares radius={16} animate={animate} full={full} />
 
       {bodies.map((b, i) => (
-        <PlanetMesh key={b.name} body={b} full={full} segments={segments} index={i} />
+        <PlanetMesh key={b.name} body={b} full={full} animate={animate} segments={segments} index={i} />
       ))}
     </group>
   );
