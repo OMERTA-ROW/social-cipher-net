@@ -1,6 +1,5 @@
-// Shared helpers for signing and verifying OAuth `state` values.
-// The state is HMAC-signed server-side so a forged/replayed state cannot be
-// used to attach an attacker's social account to another user's profile.
+// Legacy signed-state helpers. Verification requires an atomic, server-side
+// one-time consume callback; a signature alone does not prevent replay.
 
 const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -57,7 +56,10 @@ export async function signOAuthState(user_id: string, platform: string): Promise
   return `${encoded}.${signature}`;
 }
 
-export async function verifyOAuthState(state: string): Promise<OAuthStatePayload> {
+export async function verifyOAuthState(
+  state: string,
+  consumeNonce: (payload: OAuthStatePayload) => Promise<boolean>,
+): Promise<OAuthStatePayload> {
   const parts = state.split(".");
   if (parts.length !== 2) throw new Error("Invalid state parameter");
 
@@ -74,11 +76,15 @@ export async function verifyOAuthState(state: string): Promise<OAuthStatePayload
 
   const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(encoded))) as OAuthStatePayload;
 
-  if (!payload?.user_id || !payload?.platform || typeof payload.iat !== "number") {
+  if (!payload?.user_id || !payload?.platform || !payload?.nonce || typeof payload.iat !== "number") {
     throw new Error("Invalid state payload");
   }
   if (Date.now() - payload.iat > STATE_TTL_MS) {
     throw new Error("State parameter has expired");
+  }
+
+  if (!(await consumeNonce(payload))) {
+    throw new Error("State parameter was already used");
   }
 
   return payload;

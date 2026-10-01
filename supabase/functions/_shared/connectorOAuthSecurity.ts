@@ -28,6 +28,16 @@ export const oauthRedirectIsAllowed = (raw: string): boolean => {
   }
 };
 
+export const trustedOAuthRedirect = (requestOrigin: string | null): string | null => {
+  if (!requestOrigin) return null;
+  try {
+    const callback = new URL("/integrations", requestOrigin).toString();
+    return oauthRedirectIsAllowed(callback) ? callback : null;
+  } catch {
+    return null;
+  }
+};
+
 export const sanitizeOAuthError = (value: unknown): string => {
   const text = typeof value === "string" ? value : "Authorization failed";
   if (/cancel|denied|access_denied/i.test(text)) return "Authorization was cancelled. Your existing connection was not changed.";
