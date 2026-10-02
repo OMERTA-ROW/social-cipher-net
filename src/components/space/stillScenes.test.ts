@@ -31,11 +31,12 @@ describe("still-by-default space scenes", () => {
 });
 
 describe("progressive astronomy textures", () => {
-  it("retries failures, rejects stale results, and respects renderer filtering limits", () => {
+  it("retries failures, rejects stale results, and keeps filtering bounded without nested hooks", () => {
     const source = read("realTextures.ts");
     expect(source).toContain("if (cache.get(url) === p) cache.delete(url)");
     expect(source).toContain("loaded?.key === textureKey ? loaded.texture : null");
-    expect(source).toContain("gl.capabilities.getMaxAnisotropy()");
+    expect(source).toContain("Math.min(8, anisotropy)");
+    expect(source).not.toContain("useThree");
     expect(source).toContain("if (owned) owned.dispose()");
   });
 });

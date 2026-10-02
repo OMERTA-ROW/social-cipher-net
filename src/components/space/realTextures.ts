@@ -2,7 +2,6 @@
 // This module owns hook-local WebGL resources; hot updates must remount consumers
 // rather than preserving an incompatible hook frame from an earlier loader version.
 import { useEffect, useState } from "react";
-import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import mercury from "@/assets/space/mercury.jpg.asset.json";
@@ -100,8 +99,11 @@ export const useLazyTexture = (
   url: string | undefined,
   { srgb = true, anisotropy = 8, delay = 120 }: LazyTextureOptions = {},
 ): THREE.Texture | null => {
-  const rendererLimit = useThree(({ gl }) => gl.capabilities.getMaxAnisotropy());
-  const effectiveAnisotropy = Math.max(1, Math.min(rendererLimit, anisotropy));
+  // Keep this custom hook independent of renderer-context hooks. Adding a
+  // nested useThree call here changes every consumer's hook frame during HMR
+  // and can blank an already-mounted preview with a hook-order exception.
+  // Three's renderer applies its own hardware limit when uploading textures.
+  const effectiveAnisotropy = Math.max(1, Math.min(8, anisotropy));
   const textureKey = url ? `${url}|${srgb ? "srgb" : "linear"}|${effectiveAnisotropy}` : "";
   const [loaded, setLoaded] = useState<{ key: string; texture: THREE.Texture } | null>(null);
 
