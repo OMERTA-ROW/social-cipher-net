@@ -1,0 +1,15 @@
+import { describe, expect, it } from "vitest";
+import * as THREE from "three";
+import { CELESTIAL_BODIES, bodyPositionAt, bodyVelocityAt, canDock, orbitAssistVelocity, runFixedSteps, saturnRingHit, softenedGravity, stepShip, sweptSphereHit, visualRadius, type ShipState } from "./voyagePhysics";
+const earth=CELESTIAL_BODIES.find(b=>b.id==="earth"); const jupiter=CELESTIAL_BODIES.find(b=>b.id==="jupiter"); const saturn=CELESTIAL_BODIES.find(b=>b.id==="saturn");
+if(!earth||!jupiter||!saturn) throw new Error("body data missing");
+describe("voyage physics",()=>{
+ it("preserves relative size before visual compression",()=>{expect(jupiter.radiusKm/CELESTIAL_BODIES[0].radiusKm).toBeGreaterThan(28);expect(visualRadius(jupiter.radiusKm)).toBeGreaterThan(visualRadius(earth.radiusKm));});
+ it("gravity points toward the closest body and increases when distance decreases",()=>{const e=bodyPositionAt(earth,0);const near=softenedGravity(e.clone().add(new THREE.Vector3(earth.radiusKm+1000,0,0)),0);const far=softenedGravity(e.clone().add(new THREE.Vector3(earth.radiusKm+10000,0,0)),0);expect(near.closest).toBe("earth");expect(near.acceleration.length()).toBeGreaterThan(far.acceleration.length());expect(near.acceleration.x).toBeLessThan(0);});
+ it("orbit assist returns moving-body velocity plus circular velocity",()=>{const e=bodyPositionAt(earth,0);const v=orbitAssistVelocity(earth,e.clone().add(new THREE.Vector3(earth.radiusKm+400,0,0)),0);expect(v.length()).toBeGreaterThan(7);});
+ it("fixed stepping is bounded at 100x",()=>{let count=0;const r=runFixedSteps(0,0.05,100,()=>count++);expect(r.steps).toBe(3);expect(count).toBe(3);expect(r.steps).toBeLessThanOrEqual(12);});
+ it("sweeps through a sphere instead of tunnelling",()=>{expect(sweptSphereHit(new THREE.Vector3(-10,0,0),new THREE.Vector3(10,0,0),new THREE.Vector3(),2).hit).toBe(true);});
+ it("detects Saturn annulus crossings but not its central gap",()=>{const ring=saturn.ring; if(!ring)throw new Error("ring missing");expect(saturnRingHit(new THREE.Vector3(ring.innerKm+10,-10,0),new THREE.Vector3(ring.innerKm+10,10,0),new THREE.Vector3(),ring).hit).toBe(true);expect(saturnRingHit(new THREE.Vector3(0,-10,0),new THREE.Vector3(0,10,0),new THREE.Vector3(),ring).hit).toBe(false);});
+ it("gates docking by both zone and safe relative speed",()=>{expect(canDock(.05,5,10)).toBe(true);expect(canDock(.2,5,10)).toBe(false);expect(canDock(.05,20,10)).toBe(false);});
+ it("resolves low and high speed impacts with different damage",()=>{const center=bodyPositionAt(earth,0);const orbital=bodyVelocityAt(earth,0);const mk=(speed:number):ShipState=>({position:center.clone().add(new THREE.Vector3(earth.radiusKm+2.05,0,0)),velocity:orbital.clone().add(new THREE.Vector3(-speed,0,0)),massKg:12000,collisionRadiusKm:2,angularVelocity:new THREE.Vector3(),fuelKg:100,damage:0});const low=mk(.1),high=mk(1);expect(stepShip(low,{thrust:new THREE.Vector3(),brake:false},1,0)?.severity).toBe("minor");expect(stepShip(high,{thrust:new THREE.Vector3(),brake:false},1,0)?.severity).toBe("major");expect(high.damage).toBeGreaterThan(low.damage);});
+});

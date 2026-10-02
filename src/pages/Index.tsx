@@ -13,7 +13,7 @@ import { CryptoBalanceCard } from "@/components/CryptoBalanceCard";
 import SocialFeed from "@/components/SocialFeed";
 import { useFloatingWindowsContext } from "@/providers/FloatingWindowsProvider";
 import { Button } from "@/components/ui/button";
-import { Wallet, TrendingUp, Award, DollarSign, Eye, ChevronDown, ChevronUp, LayoutDashboard, User, Radio, Gamepad2, Globe } from "lucide-react";
+import { Wallet, TrendingUp, Award, DollarSign, Eye, ChevronDown, ChevronUp, LayoutDashboard, User, Radio, Gamepad2, Globe, Rocket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -204,6 +204,16 @@ const Index = () => {
           
           <div className="mb-6">
             <PostComposer onPublished={() => setFeedRefreshKey((k) => k + 1)} />
+          </div>
+
+          <div className="mb-6 flex items-center justify-between gap-4 border-y border-primary/20 bg-background/55 px-4 py-3 backdrop-blur-md">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">Solar System Voyage</p>
+              <p className="truncate text-xs text-muted-foreground">Fly a physics-driven mission through the live 3D starfield.</p>
+            </div>
+            <Button asChild size="sm" className="shrink-0">
+              <Link to="/voyage"><Rocket className="mr-2 h-4 w-4" />Launch</Link>
+            </Button>
           </div>
 
           <SocialFeed refreshKey={feedRefreshKey} />

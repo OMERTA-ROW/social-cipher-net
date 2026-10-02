@@ -28,9 +28,11 @@ const CameraRig = ({ animate }: { animate: boolean }) => {
 
     // wide precessing orbit around the star, well outside the inner bodies
     const r = (210 + Math.sin(a * 0.37) * 78) * WORLD_SCALE;
+    const pointerX = animate ? state.pointer.x * 12 * WORLD_SCALE : 0;
+    const pointerY = animate ? state.pointer.y * 7 * WORLD_SCALE : 0;
     const pos = tmp.current.set(
-      Math.cos(a) * r,
-      Math.sin(a * 0.53) * 46 * WORLD_SCALE + 18 * WORLD_SCALE,
+      Math.cos(a) * r + pointerX,
+      Math.sin(a * 0.53) * 46 * WORLD_SCALE + 18 * WORLD_SCALE + pointerY,
       Math.sin(a) * r * 0.86,
     );
 
