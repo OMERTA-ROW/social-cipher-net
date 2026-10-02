@@ -339,7 +339,7 @@ const Contents = ({ full, dpr, animate }: { full: boolean; dpr: number; animate:
       <Lighting />
       {resident("deep") && weights.street < 0.5 && (
         <>
-          <Galaxy full={full} boost={0.75} />
+          <Galaxy full={full} boost={0.75} animate={animate} />
           <DeepSky full={full} />
           <Starfield full={full} dpr={dpr} boost={1} animate={animate} />
           <CosmicAnomalies scale={5} animate={animate} full={full} local={false} />

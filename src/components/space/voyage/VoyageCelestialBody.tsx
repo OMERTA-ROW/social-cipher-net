@@ -111,10 +111,6 @@ const VoyageCelestialBody = ({
   const clouds = useRef<THREE.Mesh>(null);
   const angle = useRef((definition.distance * 0.731) % (Math.PI * 2));
   const map = useLazyTexture(SPACE_TEXTURE_URLS[definition.name], { delay: 180 + definition.distance * 18 });
-  const bump = useLazyTexture(full && ["Mercury", "Venus", "Earth", "Mars"].includes(definition.name) ? SPACE_TEXTURE_URLS[definition.name] : undefined, {
-    srgb: false,
-    delay: 520 + definition.distance * 18,
-  });
   const cloudMap = useLazyTexture(full ? CLOUD_TEXTURE_URLS[definition.name] : undefined, {
     delay: 720 + definition.distance * 18,
   });
@@ -161,8 +157,6 @@ const VoyageCelestialBody = ({
           <meshStandardMaterial
             map={map ?? undefined}
             color={map ? "#ffffff" : "#4b4a47"}
-            bumpMap={bump ?? undefined}
-            bumpScale={bump ? definition.bump * definition.radius : 0}
             roughness={definition.roughness}
             metalness={0}
           />

@@ -29,7 +29,10 @@ const SpaceBackground = () => {
   }, []);
 
   const render3d = mode !== "off";
-  const full = mode === "full" && !lowPower && !reduced;
+  const full = mode === "full" && !lowPower;
+  // The shared astronomical environment is a still workspace by default.
+  // Visibility and motion preferences remain inputs for future explicit travel.
+  const animate = false && visible && !reduced;
 
   return (
     <div aria-hidden className="fixed inset-0 -z-10 pointer-events-none select-none overflow-hidden bg-black">
@@ -38,7 +41,7 @@ const SpaceBackground = () => {
 
       {render3d && (
         <Suspense fallback={null}>
-          <SpaceScene full={full} animate={visible && !reduced} view={view} cameraMode={camera} tier={tier} />
+          <SpaceScene full={full} animate={animate} view={view} cameraMode={camera} tier={tier} />
         </Suspense>
       )}
 

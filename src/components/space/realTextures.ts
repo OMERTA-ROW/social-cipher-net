@@ -69,6 +69,10 @@ const load = (url: string) => {
   if (!p) {
     p = new Promise<THREE.Texture>((resolve, reject) => {
       loader.load(url, resolve, undefined, reject);
+    }).catch((error) => {
+      // A transient CDN/network failure must not poison this URL forever.
+      cache.delete(url);
+      throw error;
     });
     cache.set(url, p);
   }
@@ -94,8 +98,12 @@ export const useLazyTexture = (
   const [tex, setTex] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
+    let owned: THREE.Texture | null = null;
+    setTex((current) => {
+      current?.dispose();
+      return null;
+    });
     if (!url) {
-      setTex(null);
       return;
     }
     let alive = true;
@@ -107,8 +115,11 @@ export const useLazyTexture = (
           clone.needsUpdate = true;
           clone.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
           clone.wrapS = THREE.RepeatWrapping;
-          clone.anisotropy = anisotropy;
-          setTex(clone);
+          clone.wrapT = THREE.ClampToEdgeWrapping;
+          clone.anisotropy = Math.max(1, Math.min(8, anisotropy));
+          owned = clone;
+          if (alive) setTex(clone);
+          else clone.dispose();
         })
         .catch(() => {
           /* offline / blocked: procedural surface stays */
@@ -117,10 +128,9 @@ export const useLazyTexture = (
     return () => {
       alive = false;
       window.clearTimeout(timer);
+      if (owned) owned.dispose();
     };
   }, [url, srgb, anisotropy, delay]);
-
-  useEffect(() => () => tex?.dispose(), [tex]);
 
   return tex;
 };

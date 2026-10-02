@@ -71,7 +71,16 @@ const TEMP_COLORS: [number, number, number][] = [
   [1.0, 0.66, 0.46],
 ];
 
+const seeded = (seed: number) => {
+  let value = seed >>> 0;
+  return () => {
+    value = (value * 1664525 + 1013904223) >>> 0;
+    return value / 4294967296;
+  };
+};
+
 const buildShell = (count: number, inner: number, outer: number, sizeScale: number, seedBase: number) => {
+  const random = seeded(Math.round(seedBase * 97 + count * 13));
   const pos = new Float32Array(count * 3);
   const col = new Float32Array(count * 3);
   const size = new Float32Array(count);
@@ -80,18 +89,18 @@ const buildShell = (count: number, inner: number, outer: number, sizeScale: numb
 
   for (let i = 0; i < count; i++) {
     // uniform direction on the sphere, random radius inside the shell
-    const u = Math.random() * 2 - 1;
-    const theta = Math.random() * Math.PI * 2;
+    const u = random() * 2 - 1;
+    const theta = random() * Math.PI * 2;
     const s = Math.sqrt(1 - u * u);
     v.set(s * Math.cos(theta), u, s * Math.sin(theta));
-    const r = inner + Math.random() * (outer - inner);
+    const r = inner + random() * (outer - inner);
     pos[i * 3] = v.x * r;
     pos[i * 3 + 1] = v.y * r;
     pos[i * 3 + 2] = v.z * r;
 
     // luminosity function: most stars faint, a few very bright
-    const lum = Math.pow(Math.random(), 3.2);
-    const t = Math.min(TEMP_COLORS.length - 1, Math.floor(Math.pow(Math.random(), 1.6) * TEMP_COLORS.length));
+    const lum = Math.pow(random(), 3.2);
+    const t = Math.min(TEMP_COLORS.length - 1, Math.floor(Math.pow(random(), 1.6) * TEMP_COLORS.length));
     const c = TEMP_COLORS[t];
     const b = 0.35 + lum * 0.9;
     col[i * 3] = c[0] * b;
@@ -99,7 +108,7 @@ const buildShell = (count: number, inner: number, outer: number, sizeScale: numb
     col[i * 3 + 2] = c[2] * b;
 
     size[i] = (0.5 + lum * 2.6) * sizeScale;
-    seed[i] = seedBase + Math.random();
+    seed[i] = seedBase + random();
   }
 
   const geo = new THREE.BufferGeometry();
