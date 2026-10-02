@@ -1,3 +1,6 @@
+// @refresh reset
+// This module owns hook-local WebGL resources; hot updates must remount consumers
+// rather than preserving an incompatible hook frame from an earlier loader version.
 import { useEffect, useState } from "react";
 import * as THREE from "three";
 
