@@ -6,11 +6,11 @@ import { SKY_RADIUS } from "../worldScale";
 /**
  * Real astronomy imagery layered over the procedural galaxy.
  *
- *  - an equirectangular all-sky survey mosaic (ESO / NASA derived, public
- *    domain) mapped to the inside of the backdrop sphere, which supplies the
+ *  - an equirectangular Milky Way texture from the credited CC BY 4.0 set,
+ *    mapped to the inside of the backdrop sphere, which supplies the
  *    fine star field and Milky Way structure no shader can fake;
- *  - four wide-field Hubble / JWST deep-sky frames placed as very large,
- *    very distant billboards so there is real nebular dust at mid depth.
+ *  - four credited Hubble / Webb deep-sky frames integrated as very large,
+ *    distant scene layers so there is photographic nebular detail at mid depth.
  *
  * Everything is additively blended on a black sky, so there are no visible
  * quad edges, and everything streams in lazily after first paint.

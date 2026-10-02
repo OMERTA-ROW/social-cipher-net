@@ -13,8 +13,8 @@ import { WORLD_SCALE } from "../worldScale";
 
 /**
  * Real 3D bodies on inclined elliptical orbits around a single local star.
- * Each planet is a textured sphere using NASA-derived surface maps, with the
- * a separate cloud shell where appropriate, a fresnel atmosphere shell, and
+ * Each planet is a textured sphere using credited mission-derived and
+ * Solar System Scope maps, with a separate cloud shell where appropriate, and
  * real ring geometry. Colour maps are never reused as fake terrain data.
  * Orbits, radii, tilts and speeds are unchanged.
  */

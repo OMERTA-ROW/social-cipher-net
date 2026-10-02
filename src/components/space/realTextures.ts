@@ -25,9 +25,9 @@ import nebEagle from "@/assets/space/nebula_eagle.jpg.asset.json";
 import nebHorsehead from "@/assets/space/nebula_horsehead.jpg.asset.json";
 
 /**
- * Real NASA-derived public imagery (Solar System Scope, CC BY 4.0) served from
- * the CDN. Everything is loaded lazily after first paint so the large maps
- * stream in behind the procedural placeholder instead of blocking the UI.
+ * Sourced astronomy imagery, including public-domain mission products and the
+ * CC BY 4.0 Solar System Scope texture set, served from the CDN. Everything is
+ * loaded lazily after first paint so large maps do not block the interface.
  */
 export const SPACE_TEXTURE_URLS = {
   Mercury: mercury.url,
@@ -99,7 +99,12 @@ export const useLazyTexture = (
   url: string | undefined,
   { srgb = true, anisotropy = 8, delay = 120 }: LazyTextureOptions = {},
 ): THREE.Texture | null => {
-  const textureKey = url ? `${url}|${srgb ? "srgb" : "linear"}|${anisotropy}` : "";
+  // Keep this custom hook independent of renderer-context hooks. Adding a
+  // nested renderer hook here changes every consumer's hook frame during HMR
+  // and can blank an already-mounted preview with a hook-order exception.
+  // Three's renderer applies its own hardware limit when uploading textures.
+  const effectiveAnisotropy = Math.max(1, Math.min(8, anisotropy));
+  const textureKey = url ? `${url}|${srgb ? "srgb" : "linear"}|${effectiveAnisotropy}` : "";
   const [loaded, setLoaded] = useState<{ key: string; texture: THREE.Texture } | null>(null);
 
   useEffect(() => {
@@ -117,7 +122,7 @@ export const useLazyTexture = (
           clone.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
           clone.wrapS = THREE.RepeatWrapping;
           clone.wrapT = THREE.ClampToEdgeWrapping;
-          clone.anisotropy = Math.max(1, Math.min(8, anisotropy));
+          clone.anisotropy = effectiveAnisotropy;
           owned = clone;
           if (alive) setLoaded({ key: textureKey, texture: clone });
           else clone.dispose();
@@ -131,7 +136,7 @@ export const useLazyTexture = (
       window.clearTimeout(timer);
       if (owned) owned.dispose();
     };
-  }, [url, srgb, anisotropy, delay, textureKey]);
+  }, [url, srgb, effectiveAnisotropy, delay, textureKey]);
 
   return loaded?.key === textureKey ? loaded.texture : null;
 };

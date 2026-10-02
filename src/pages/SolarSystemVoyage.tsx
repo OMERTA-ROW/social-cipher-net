@@ -356,7 +356,9 @@ const SolarSystemVoyage = () => {
   }, []);
   const travelActive = travelling && !reducedMotion;
   const orbitActive = focusedPlanet !== null && orbitSpeed !== 0 && !reducedMotion;
-  const sceneAnimated = false;
+  // Nothing advances while idle. Explicit travel is the sole scene-motion gate;
+  // focused OrbitControls rotation remains a separate, user-selected action.
+  const sceneAnimated = travelActive;
   const paletteVeil = {
     cosmic: "bg-primary/5",
     draco: "bg-destructive/5",
