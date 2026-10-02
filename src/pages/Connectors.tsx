@@ -39,6 +39,7 @@ const Connectors = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
+  const [recovery, setRecovery] = useState<{ serviceId: string | null; message: string } | null>(null);
 
   // Auth guard
   useEffect(() => {
@@ -70,6 +71,7 @@ const Connectors = () => {
       .then(({ data, error }) => {
         const failed = !!(error || data?.error);
         const message = data?.error ?? error?.message ?? "Authorization failed";
+        const serviceId: string | null = data?.service_id ?? null;
         if (inPopup) {
           window.opener.postMessage(
             {
@@ -77,6 +79,7 @@ const Connectors = () => {
               ok: !failed,
               message: failed ? message : "Account connected",
               account: data?.account_name ?? null,
+              serviceId,
             },
             window.location.origin,
           );
@@ -84,8 +87,10 @@ const Connectors = () => {
           return;
         }
         if (failed) {
-          toast.error(message);
+          setRecovery({ serviceId, message });
+          refresh();
         } else {
+          setRecovery(null);
           toast.success(
             data?.account_name
               ? `Connected as ${data.account_name}`
@@ -112,6 +117,7 @@ const Connectors = () => {
       if (event.origin !== window.location.origin) return;
       if (event.data?.type !== "cyberlink:oauth-result") return;
       if (event.data.ok) {
+        setRecovery(null);
         toast.success(
           event.data.account
             ? `Connected as ${event.data.account}`
@@ -119,7 +125,8 @@ const Connectors = () => {
         );
         refresh();
       } else {
-        toast.error(event.data.message || "Authorization failed");
+        setRecovery({ serviceId: event.data.serviceId ?? null, message: event.data.message || "Authorization failed" });
+        refresh();
       }
     };
     window.addEventListener("message", onMessage);
@@ -195,6 +202,33 @@ const Connectors = () => {
             )}
           </div>
         </header>
+
+        {recovery && (() => {
+          const svc = CONNECTOR_SERVICES.find((s) => s.id === recovery.serviceId) ?? null;
+          return (
+            <Card role="alert" className="mb-6 p-4 border-destructive/50 bg-destructive/10">
+              <p className="font-medium">
+                {svc ? `${svc.name} wasn't connected` : "That account wasn't connected"}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">{recovery.message}</p>
+              <p className="text-sm mt-2">
+                Your existing connected accounts were not changed. To retry, start a fresh
+                authorization — each attempt can only be used once. Make sure you approve every
+                requested permission and stay signed in to the same provider account.
+              </p>
+              <div className="flex gap-2 mt-3">
+                {svc && (
+                  <Button size="sm" onClick={() => { setRecovery(null); open(svc); }}>
+                    Try again
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={() => setRecovery(null)}>
+                  Dismiss
+                </Button>
+              </div>
+            </Card>
+          );
+        })()}
 
         <div className="relative mb-6 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
