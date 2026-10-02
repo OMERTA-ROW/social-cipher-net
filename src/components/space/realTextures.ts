@@ -67,11 +67,12 @@ const cache = new Map<string, Promise<THREE.Texture>>();
 const load = (url: string) => {
   let p = cache.get(url);
   if (!p) {
-    p = new Promise<THREE.Texture>((resolve, reject) => {
+    const request = new Promise<THREE.Texture>((resolve, reject) => {
       loader.load(url, resolve, undefined, reject);
-    }).catch((error) => {
+    });
+    p = request.catch((error) => {
       // A transient CDN/network failure must not poison this URL forever.
-      cache.delete(url);
+      if (cache.get(url) === p) cache.delete(url);
       throw error;
     });
     cache.set(url, p);
@@ -95,14 +96,11 @@ export const useLazyTexture = (
   url: string | undefined,
   { srgb = true, anisotropy = 8, delay = 120 }: LazyTextureOptions = {},
 ): THREE.Texture | null => {
-  const [tex, setTex] = useState<THREE.Texture | null>(null);
+  const textureKey = url ? `${url}|${srgb ? "srgb" : "linear"}|${anisotropy}` : "";
+  const [loaded, setLoaded] = useState<{ key: string; texture: THREE.Texture } | null>(null);
 
   useEffect(() => {
     let owned: THREE.Texture | null = null;
-    setTex((current) => {
-      current?.dispose();
-      return null;
-    });
     if (!url) {
       return;
     }
@@ -118,7 +116,7 @@ export const useLazyTexture = (
           clone.wrapT = THREE.ClampToEdgeWrapping;
           clone.anisotropy = Math.max(1, Math.min(8, anisotropy));
           owned = clone;
-          if (alive) setTex(clone);
+          if (alive) setLoaded({ key: textureKey, texture: clone });
           else clone.dispose();
         })
         .catch(() => {
@@ -130,7 +128,7 @@ export const useLazyTexture = (
       window.clearTimeout(timer);
       if (owned) owned.dispose();
     };
-  }, [url, srgb, anisotropy, delay]);
+  }, [url, srgb, anisotropy, delay, textureKey]);
 
-  return tex;
+  return loaded?.key === textureKey ? loaded.texture : null;
 };
