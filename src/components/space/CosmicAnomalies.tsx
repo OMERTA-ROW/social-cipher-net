@@ -1,4 +1,4 @@
-import { useFrame, useLoader } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import nebulaUrl from "@/assets/space/nebula.jpg";
@@ -33,35 +33,58 @@ const seeded = (seed: number) => {
 
 const at = (point: V3, scale: number): V3 => [point[0] * scale, point[1] * scale, point[2] * scale];
 
-const useEventTextures = (): EventTextures => {
-  const textures = useLoader(THREE.TextureLoader, [
-    nebulaUrl,
-    galaxyUrl,
-    supernovaUrl,
-    blackholeUrl,
-    wormholeUrl,
-    cometUrl,
-    pulsarUrl,
-    quasarUrl,
-  ]);
-  useEffect(() => {
-    textures.forEach((texture) => {
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.anisotropy = 2;
-      texture.needsUpdate = true;
-    });
-  }, [textures]);
-  return {
-    nebula: textures[0],
-    galaxy: textures[1],
-    supernova: textures[2],
-    blackhole: textures[3],
-    wormhole: textures[4],
-    comet: textures[5],
-    pulsar: textures[6],
-    quasar: textures[7],
-  };
+const EVENT_URLS = {
+  nebula: nebulaUrl,
+  galaxy: galaxyUrl,
+  supernova: supernovaUrl,
+  blackhole: blackholeUrl,
+  wormhole: wormholeUrl,
+  comet: cometUrl,
+  pulsar: pulsarUrl,
+  quasar: quasarUrl,
+} as const;
+
+let sharedTextures: EventTextures | null = null;
+
+/**
+ * Non-throwing texture load: each texture starts as a dim 1×1 fallback and
+ * swaps in the image when it arrives. A failed or stale asset request never
+ * suspends or crashes the scene (useLoader would throw and blank the page).
+ */
+const getEventTextures = (): EventTextures => {
+  if (sharedTextures) return sharedTextures;
+  const loader = new THREE.TextureLoader();
+  const result = {} as EventTextures;
+  (Object.keys(EVENT_URLS) as (keyof EventTextures)[]).forEach((key) => {
+    const fallback = document.createElement("canvas");
+    fallback.width = fallback.height = 1;
+    const ctx = fallback.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#181820";
+      ctx.fillRect(0, 0, 1, 1);
+    }
+    const texture = new THREE.Texture(fallback as unknown as HTMLImageElement);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    loader.load(
+      EVENT_URLS[key],
+      (loaded) => {
+        texture.image = loaded.image as HTMLImageElement;
+        texture.anisotropy = 2;
+        texture.needsUpdate = true;
+      },
+      undefined,
+      () => {
+        /* keep fallback; scene stays up */
+      },
+    );
+    result[key] = texture;
+  });
+  sharedTextures = result;
+  return result;
 };
+
+const useEventTextures = (): EventTextures => useMemo(getEventTextures, []);
 
 const makePointGeometry = (
   count: number,
