@@ -1,0 +1,4 @@
+import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+interface Props { children:ReactNode; fallback:ReactNode } interface State { failed:boolean }
+export default class VoyageErrorBoundary extends Component<Props,State>{state={failed:false};static getDerivedStateFromError(){return{failed:true}}componentDidCatch(error:Error,info:ErrorInfo){console.error("Voyage renderer failed",error,info.componentStack)}render(){if(this.state.failed)return <div className="relative h-full w-full">{this.props.fallback}<div className="absolute inset-x-4 top-20 z-20 mx-auto max-w-md border border-destructive/50 bg-background/90 p-4 text-center"><p className="text-sm text-foreground">3D rendering was interrupted.</p><Button className="mt-3" size="sm" onClick={()=>this.setState({failed:false})}>Retry 3D</Button></div></div>;return this.props.children}}
