@@ -31,6 +31,16 @@ export interface DynamicBody { position: THREE.Vector3; velocity: THREE.Vector3;
 export interface ShipState extends DynamicBody { angularVelocity: THREE.Vector3; fuelKg: number; damage: number; }
 export interface PhysicsInput { thrust: THREE.Vector3; brake: boolean; orbitAssistBody?: CelestialBodyData; }
 export interface Impact { bodyId: string; speedKmS: number; severity: "minor"|"major"; direction: THREE.Vector3; }
+export interface PhysicalObstacle { id:string; name:string; shape:"sphere"|"box"; position:THREE.Vector3; radiusKm:number; halfExtentsKm?:THREE.Vector3; dockingZoneKm?:number; }
+export const physicalObstaclesAt = (timeSeconds:number):PhysicalObstacle[] => {
+  const earth=CELESTIAL_BODIES[2]; const earthPos=bodyPositionAt(earth,timeSeconds);
+  return [
+    {id:"station",name:"Orbital Station",shape:"box",position:earthPos.clone().add(new THREE.Vector3(earth.radiusKm+780,0,0)),radiusKm:42,halfExtentsKm:new THREE.Vector3(42,16,24),dockingZoneKm:68},
+    {id:"asteroid-1",name:"Survey Asteroid",shape:"sphere",position:new THREE.Vector3(420e6,18000,120e6),radiusKm:18},
+    {id:"asteroid-2",name:"Iron Asteroid",shape:"sphere",position:new THREE.Vector3(440e6,-12000,128e6),radiusKm:26},
+    {id:"debris",name:"Tracked Debris",shape:"sphere",position:earthPos.clone().add(new THREE.Vector3(earth.radiusKm+1200,300,80)),radiusKm:4},
+  ];
+};
 
 export const visualRadius = (radiusKm:number) => VISUAL_RADIUS_K * Math.cbrt(radiusKm / VISUAL_RADIUS_REFERENCE_KM);
 export const visualOrbitRadius = (km:number) => 3.4 + 7.1 * Math.log10(1 + km / 40_000_000);
@@ -81,6 +91,11 @@ export function saturnRingHit(start:THREE.Vector3,end:THREE.Vector3,saturnPositi
   return {hit:radial>=ring.innerKm&&radial<=ring.outerKm,t};
 }
 
+export function sweptBoxHit(start:THREE.Vector3,end:THREE.Vector3,center:THREE.Vector3,half:THREE.Vector3,padding=0){
+  const direction=end.clone().sub(start); let tMin=0,tMax=1;
+  for(const axis of ["x","y","z"] as const){const min=center[axis]-half[axis]-padding,max=center[axis]+half[axis]+padding; if(Math.abs(direction[axis])<1e-9){if(start[axis]<min||start[axis]>max)return{hit:false,t:0};continue;} const inv=1/direction[axis];let t1=(min-start[axis])*inv,t2=(max-start[axis])*inv;if(t1>t2)[t1,t2]=[t2,t1];tMin=Math.max(tMin,t1);tMax=Math.min(tMax,t2);if(tMin>tMax)return{hit:false,t:tMin};}return{hit:true,t:tMin};
+}
+
 export function canDock(relativeSpeedKmS:number,distanceKm:number,zoneRadiusKm:number){ return relativeSpeedKmS<=0.08&&distanceKm<=zoneRadiusKm; }
 
 export function stepShip(ship:ShipState,input:PhysicsInput,dt:number,timeSeconds:number):Impact|null {
@@ -91,6 +106,10 @@ export function stepShip(ship:ShipState,input:PhysicsInput,dt:number,timeSeconds
   if(input.brake) ship.velocity.multiplyScalar(Math.exp(-0.08*dt));
   ship.velocity.addScaledVector(softenedGravity(ship.position,timeSeconds).acceleration,dt);
   ship.position.addScaledVector(ship.velocity,dt);
+  for(const obstacle of physicalObstaclesAt(timeSeconds+dt)){
+    const hit=obstacle.shape==="box"&&obstacle.halfExtentsKm?sweptBoxHit(previous,ship.position,obstacle.position,obstacle.halfExtentsKm,ship.collisionRadiusKm):sweptSphereHit(previous,ship.position,obstacle.position,obstacle.radiusKm+ship.collisionRadiusKm);
+    if(hit.hit){const normal=ship.position.clone().sub(obstacle.position).normalize();const speed=ship.velocity.length();ship.position.copy(previous);ship.velocity.reflect(normal.lengthSq()?normal:new THREE.Vector3(1,0,0)).multiplyScalar(speed<0.15?.36:.08);ship.damage=Math.min(100,ship.damage+(speed<.15?3:speed*16));return{bodyId:obstacle.id,speedKmS:speed,severity:speed<.45?"minor":"major",direction:normal};}
+  }
   for(const body of CELESTIAL_BODIES){ const center=bodyPositionAt(body,timeSeconds+dt); const hit=sweptSphereHit(previous,ship.position,center,body.collisionRadiusKm+ship.collisionRadiusKm); if(hit.hit){ const speed=Math.abs(ship.velocity.dot(hit.normal)); ship.position.copy(center).addScaledVector(hit.normal,body.collisionRadiusKm+ship.collisionRadiusKm+1); ship.velocity.reflect(hit.normal).multiplyScalar(speed<0.15?0.32:0.08); ship.damage=Math.min(100,ship.damage+(speed<0.15?4:speed*18)); return {bodyId:body.id,speedKmS:speed,severity:speed<0.45?"minor":"major",direction:hit.normal}; } if(body.ring&&saturnRingHit(previous,ship.position,center,body.ring).hit){ const speed=Math.abs(ship.velocity.y); ship.velocity.y*=-0.2; ship.damage=Math.min(100,ship.damage+(speed<0.15?3:speed*14)); return {bodyId:"saturn-rings",speedKmS:speed,severity:speed<0.45?"minor":"major",direction:new THREE.Vector3(0,1,0)}; }}
   return null;
 }
