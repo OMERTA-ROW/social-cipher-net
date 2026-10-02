@@ -280,14 +280,14 @@ Deno.serve(async (req) => {
         .select("id")
         .maybeSingle();
       if (!consumed) return json({ error: "This authorization attempt was already used. Please try again." }, 409);
-      if (body.error || !code) return json({ error: sanitizeOAuthError(body.error) }, 400);
+      if (body.error || !code) return json({ service_id: attempt.service_id, retryable: true, error: sanitizeOAuthError(body.error) }, 400);
 
       const provider = String(attempt.provider);
       const config = PROVIDERS[provider];
       const clientId = Deno.env.get(envKey(provider, "CLIENT_ID"));
       const clientSecret = Deno.env.get(envKey(provider, "CLIENT_SECRET"));
       if (!config || !clientId || !clientSecret) {
-        return json({ error: "This service is not configured yet" }, 400);
+        return json({ service_id: attempt.service_id, retryable: true, error: "This service is not configured yet" }, 400);
       }
 
       const tokenRes = await fetch(config.tokenUrl, {
@@ -305,14 +305,14 @@ Deno.serve(async (req) => {
       const tokenBody = await tokenRes.json().catch(() => ({}));
       if (!tokenRes.ok || !tokenBody.access_token) {
         return json(
-          { error: sanitizeOAuthError(tokenBody.error_description ?? tokenBody.error) },
+          { service_id: attempt.service_id, retryable: true, error: sanitizeOAuthError(tokenBody.error_description ?? tokenBody.error) },
           400,
         );
       }
 
       const identity = await fetchProviderIdentity(config, String(tokenBody.access_token), clientId);
       if (!identity) {
-        return json({ error: "The provider account identity could not be verified. Your existing connection was not changed." }, 400);
+        return json({ service_id: attempt.service_id, retryable: true, error: "The provider account identity could not be verified. Your existing connection was not changed." }, 400);
       }
 
       // Create an isolated pending row first. A reconnect must never alter a
@@ -337,7 +337,7 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (connError || !connection) {
-        return json({ error: "The authorized account could not be saved. Your existing connection was not changed." }, 400);
+        return json({ service_id: attempt.service_id, retryable: true, error: "The authorized account could not be saved. Your existing connection was not changed." }, 400);
       }
 
       const expiresAt = tokenBody.expires_in
@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
 
       if (accessFailure || refreshFailure) {
         await admin.from("user_connections").delete().eq("id", connection.id).eq("user_id", user.id);
-        return json({ error: "Authorization succeeded, but its credentials could not be stored securely. Your existing connection was not changed." }, 500);
+        return json({ service_id: attempt.service_id, retryable: true, error: "Authorization succeeded, but its credentials could not be stored securely. Your existing connection was not changed." }, 500);
       }
 
       const { data: activated, error: activateError } = await admin.rpc(
@@ -381,7 +381,7 @@ Deno.serve(async (req) => {
       );
       if (activateError || activated !== true) {
         await admin.from("user_connections").delete().eq("id", connection.id).eq("user_id", user.id);
-        return json({ error: "The connection could not be activated. Your existing connection was not changed." }, 500);
+        return json({ service_id: attempt.service_id, retryable: true, error: "The connection could not be activated. Your existing connection was not changed." }, 500);
       }
 
       await audit(admin, {
