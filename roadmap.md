@@ -13,6 +13,7 @@
 - [x] Sniper gift ($1000) with cinematic strike + persistent crack
 
 ## Current build
+- [ ] Make shared background, Backgrounds, and Voyage still by default; refine sourced astronomy textures, loading resilience, and desktop/mobile verification
 - [x] Complete auth and account-integration repair: secure app flows and preview regression checks complete
 - [x] Replace photo-billboard anomalies with shared living 3D cosmic events; verify default background, Backgrounds, and Voyage on desktop/mobile
 - [ ] Arena: dedicated layout/environment
