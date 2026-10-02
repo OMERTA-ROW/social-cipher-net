@@ -9,6 +9,12 @@ regolith maps are deterministic procedural materials created in-app and are not
 NASA imagery; they are intentionally identified separately here to avoid false
 source attribution.
 
+The distant nebula frames are shown with restrained blending for scene depth;
+their display is aesthetic rather than calibrated scientific color. The nearby
+black-hole, wormhole, comet, pulsar, quasar, galaxy, nebula, and supernova detail
+images are original project art used only to modulate spatial geometry and are
+not presented as NASA imagery.
+
 | Asset | Subject | Source | Licence |
 | --- | --- | --- | --- |
 | `stars_8k.jpg`, `stars_milky_way.jpg` | Equirectangular Milky Way sky texture | Solar System Scope texture set; source notes cite astronomical survey imagery | CC BY 4.0 |

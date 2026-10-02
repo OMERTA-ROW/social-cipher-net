@@ -110,9 +110,13 @@ const VoyageCelestialBody = ({
   const surface = useRef<THREE.Mesh>(null);
   const clouds = useRef<THREE.Mesh>(null);
   const angle = useRef((definition.distance * 0.731) % (Math.PI * 2));
-  const map = useLazyTexture(SPACE_TEXTURE_URLS[definition.name], { delay: 180 + definition.distance * 18 });
+  const map = useLazyTexture(SPACE_TEXTURE_URLS[definition.name], {
+    delay: 180 + definition.distance * 18,
+    anisotropy: full ? 8 : 2,
+  });
   const cloudMap = useLazyTexture(full ? CLOUD_TEXTURE_URLS[definition.name] : undefined, {
     delay: 720 + definition.distance * 18,
+    anisotropy: full ? 8 : 2,
   });
   const atmosphereUniforms = useMemo(
     () => ({

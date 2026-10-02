@@ -151,9 +151,9 @@ const PlanetMesh = ({ body, full, animate, segments, index }: { body: Body; full
 
   // progressive: stagger requests so the UI paints first
   const delay = 220 + index * 160;
-  const map = useLazyTexture(SPACE_TEXTURE_URLS[body.texture], { delay });
+  const map = useLazyTexture(SPACE_TEXTURE_URLS[body.texture], { delay, anisotropy: full ? 8 : 2 });
   const cloudUrl = full ? CLOUD_TEXTURE_URLS[body.texture] : undefined;
-  const cloudMap = useLazyTexture(cloudUrl, { delay: delay + 600 });
+  const cloudMap = useLazyTexture(cloudUrl, { delay: delay + 600, anisotropy: full ? 8 : 2 });
 
   const atmoUniforms = useMemo(
     () => ({

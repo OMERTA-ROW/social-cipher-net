@@ -5,3 +5,4 @@
 - Shared and Voyage space views render one quality-scaled spatial cosmic-event system; source imagery may texture geometry but never acts as a standalone event billboard.
 - Solar effects are one shared 3D system attached to the star in both space views so pause, reduced motion, and quality behavior stay consistent.
 - Every active space viewport reuses the shared astronomical sky, sourced celestial textures, soft-particle events, and motion/quality gates so mining and descent never fall back to flat celestial stand-ins.
+- Shared space scenes remain still by default; only explicit user travel or camera input may move them, and sourced colour maps are never reused as terrain data.
