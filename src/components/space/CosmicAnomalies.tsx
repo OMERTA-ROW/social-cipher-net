@@ -63,13 +63,13 @@ const getEventTextures = (): EventTextures => {
       ctx.fillStyle = "#181820";
       ctx.fillRect(0, 0, 1, 1);
     }
-    const texture: THREE.Texture = new THREE.Texture<TexImageSource>(fallback);
+    const texture = new THREE.Texture(fallback as unknown as HTMLImageElement);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
     loader.load(
       EVENT_URLS[key],
       (loaded) => {
-        texture.image = loaded.image;
+        texture.image = loaded.image as HTMLImageElement;
         texture.anisotropy = 2;
         texture.needsUpdate = true;
       },
