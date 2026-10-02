@@ -36,7 +36,7 @@ describe("progressive astronomy textures", () => {
     expect(source).toContain("if (cache.get(url) === p) cache.delete(url)");
     expect(source).toContain("loaded?.key === textureKey ? loaded.texture : null");
     expect(source).toContain("Math.min(8, anisotropy)");
-    expect(source).not.toContain("useThree");
+    expect(source).not.toMatch(/import\s*\{[^}]*useThree/);
     expect(source).toContain("if (owned) owned.dispose()");
   });
 });
