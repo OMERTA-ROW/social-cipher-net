@@ -82,12 +82,14 @@ const FocusFollower = ({
   focusedPlanet,
   focusedRadius,
   targetOrbitSpeed,
+  reducedMotion,
 }: {
   controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
   planetRefs: React.MutableRefObject<Record<string, THREE.Mesh | null>>;
   focusedPlanet: string | null;
   focusedRadius: number | undefined;
   targetOrbitSpeed: number;
+  reducedMotion: boolean;
 }) => {
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const currentSpeed = useRef(0);
@@ -108,13 +110,15 @@ const FocusFollower = ({
           .add(new THREE.Vector3(0, 0.24, 0))
           .normalize();
         controls.object.position.copy(tmp).add(viewDirection.multiplyScalar(distance));
+        controls.target.copy(tmp);
+      } else {
+        controls.target.lerp(tmp, 0.2);
       }
-      controls.target.lerp(tmp, 0.2);
     } else {
-      controls.target.lerp(tmp.set(0, 0, 0), 0.1);
+      controls.target.copy(tmp.set(0, 0, 0));
     }
     // Smoothly ramp orbit speed toward target (exponential smoothing, ~0.6s time constant)
-    const goal = focusedPlanet ? targetOrbitSpeed : 0;
+    const goal = focusedPlanet && !reducedMotion ? targetOrbitSpeed : 0;
     const k = 1 - Math.exp(-dt / 0.6);
     currentSpeed.current += (goal - currentSpeed.current) * k;
     const applied = currentSpeed.current * 2;
@@ -215,10 +219,12 @@ const CameraRig = ({
   mode,
   shipRef,
   cinematicIdx,
+  travelActive,
 }: {
   mode: ViewMode;
   shipRef: React.MutableRefObject<THREE.Group | null>;
   cinematicIdx: number;
+  travelActive: boolean;
 }) => {
   useFrame(({ camera }) => {
     if (!shipRef.current) return;
@@ -230,12 +236,14 @@ const CameraRig = ({
       camera.lookAt(shipPos.clone().add(shipDir.clone().multiplyScalar(6)));
     } else if (mode === "chase") {
       const target = shipPos.clone().add(shipDir.clone().multiplyScalar(-3)).add(new THREE.Vector3(0, 1.2, 0));
-      camera.position.lerp(target, 0.1);
+      if (travelActive) camera.position.lerp(target, 0.1);
+      else camera.position.copy(target);
       camera.lookAt(shipPos);
     } else if (mode === "cinematic") {
       const p = PLANETS[cinematicIdx % PLANETS.length];
       const target = new THREE.Vector3(p.distance * 0.9, 3, p.distance * 0.4);
-      camera.position.lerp(target, 0.03);
+      if (travelActive) camera.position.lerp(target, 0.03);
+      else camera.position.copy(target);
       camera.lookAt(0, 0, 0);
     } else if (mode === "harvest") {
       const target = new THREE.Vector3(ASTEROID_BELT_R + 4, 3, 4);
@@ -339,15 +347,15 @@ const SolarSystemVoyage = () => {
   const activeTier: Exclude<Quality, "auto"> = quality === "auto" ? autoTier : quality;
   const preset = QUALITY_PRESETS[activeTier];
 
-  // Quality-overridden effective values (fall back to user controls if we ever add a "custom" tier)
-  const effStarDensity = preset.starDensity;
-  const effParallax = preset.parallax;
-  const effInteractive = preset.interactive;
-  const effectiveIntensity: IntensityName =
-    autoIntensity ? (speed > 3 ? "hyper" : preset.intensity) : preset.intensity;
-
-  const reducedMotion = useMemo(prefersReducedMotion, []);
+  const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReducedMotion(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
   const travelActive = travelling && !reducedMotion;
+  const orbitActive = focusedPlanet !== null && orbitSpeed !== 0 && !reducedMotion;
   const sceneAnimated = false;
   const paletteVeil = {
     cosmic: "bg-primary/5",
@@ -388,7 +396,7 @@ const SolarSystemVoyage = () => {
       <div className={`pointer-events-none absolute inset-0 ${paletteVeil}`} />
 
       <Canvas
-        frameloop={travelActive ? "always" : "demand"}
+        frameloop={travelActive || orbitActive ? "always" : "demand"}
         camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 5000000 }}
         dpr={preset.dpr}
         className="!absolute inset-0"
@@ -426,7 +434,7 @@ const SolarSystemVoyage = () => {
 
           <Ship tRef={tRef} speedRef={speedRef} shipRef={shipRef} />
 
-          <CameraRig mode={mode} shipRef={shipRef} cinematicIdx={cinematicIdx} />
+          <CameraRig mode={mode} shipRef={shipRef} cinematicIdx={cinematicIdx} travelActive={travelActive} />
 
           {(mode === "orbital" || mode === "closeup") && (
             <>
@@ -436,7 +444,7 @@ const SolarSystemVoyage = () => {
                 minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
                 maxDistance={120000}
               />
-              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} focusedRadius={focusedDef?.radius} targetOrbitSpeed={orbitSpeed} />
+              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} focusedRadius={focusedDef?.radius} targetOrbitSpeed={orbitSpeed} reducedMotion={reducedMotion} />
             </>
           )}
           {activeTier === "high" && !reducedMotion && (
