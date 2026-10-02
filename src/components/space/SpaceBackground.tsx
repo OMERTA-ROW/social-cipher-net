@@ -1,35 +1,20 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
-import { isLowPowerDevice, prefersReducedMotion, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
+import { Suspense, lazy, useMemo } from "react";
+import { isLowPowerDevice, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
 
 const SpaceScene = lazy(() => import("./scene/SpaceScene"));
 
 /**
- * Fixed, full-screen procedural space background. Sits behind every route,
- * never receives pointer events, and pauses whenever the tab is hidden.
- * Everything is generated in code — no image assets, so there are no seams.
+ * Fixed, full-screen astronomical background. Sits behind every route and
+ * combines sourced imagery with spatial geometry without receiving pointer events.
  */
 const SpaceBackground = () => {
   const { mode, dim, view, camera, quality } = useSpaceBgSettings();
-  const [visible, setVisible] = useState(() => typeof document === "undefined" || !document.hidden);
-  const [reduced, setReduced] = useState(prefersReducedMotion);
   const lowPower = useMemo(isLowPowerDevice, []);
   const tier = useMemo(() => resolveQuality(quality), [quality]);
 
-  useEffect(() => {
-    const onVis = () => setVisible(!document.hidden);
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, []);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(mq.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
   const render3d = mode !== "off";
-  const full = mode === "full" && !lowPower && !reduced;
+  const full = mode === "full" && !lowPower;
+  const animate = false;
 
   return (
     <div aria-hidden className="fixed inset-0 -z-10 pointer-events-none select-none overflow-hidden bg-black">
@@ -38,7 +23,7 @@ const SpaceBackground = () => {
 
       {render3d && (
         <Suspense fallback={null}>
-          <SpaceScene full={full} animate={visible && !reduced} view={view} cameraMode={camera} tier={tier} />
+          <SpaceScene full={full} animate={animate} view={view} cameraMode={camera} tier={tier} />
         </Suspense>
       )}
 

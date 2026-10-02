@@ -1,3 +1,6 @@
+// @refresh reset
+// This module owns hook-local WebGL resources; hot updates must remount consumers
+// rather than preserving an incompatible hook frame from an earlier loader version.
 import { useEffect, useState } from "react";
 import * as THREE from "three";
 
@@ -67,8 +70,13 @@ const cache = new Map<string, Promise<THREE.Texture>>();
 const load = (url: string) => {
   let p = cache.get(url);
   if (!p) {
-    p = new Promise<THREE.Texture>((resolve, reject) => {
+    const request = new Promise<THREE.Texture>((resolve, reject) => {
       loader.load(url, resolve, undefined, reject);
+    });
+    p = request.catch((error) => {
+      // A transient CDN/network failure must not poison this URL forever.
+      if (cache.get(url) === p) cache.delete(url);
+      throw error;
     });
     cache.set(url, p);
   }
@@ -91,11 +99,12 @@ export const useLazyTexture = (
   url: string | undefined,
   { srgb = true, anisotropy = 8, delay = 120 }: LazyTextureOptions = {},
 ): THREE.Texture | null => {
-  const [tex, setTex] = useState<THREE.Texture | null>(null);
+  const textureKey = url ? `${url}|${srgb ? "srgb" : "linear"}|${anisotropy}` : "";
+  const [loaded, setLoaded] = useState<{ key: string; texture: THREE.Texture } | null>(null);
 
   useEffect(() => {
+    let owned: THREE.Texture | null = null;
     if (!url) {
-      setTex(null);
       return;
     }
     let alive = true;
@@ -107,8 +116,11 @@ export const useLazyTexture = (
           clone.needsUpdate = true;
           clone.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
           clone.wrapS = THREE.RepeatWrapping;
-          clone.anisotropy = anisotropy;
-          setTex(clone);
+          clone.wrapT = THREE.ClampToEdgeWrapping;
+          clone.anisotropy = Math.max(1, Math.min(8, anisotropy));
+          owned = clone;
+          if (alive) setLoaded({ key: textureKey, texture: clone });
+          else clone.dispose();
         })
         .catch(() => {
           /* offline / blocked: procedural surface stays */
@@ -117,10 +129,9 @@ export const useLazyTexture = (
     return () => {
       alive = false;
       window.clearTimeout(timer);
+      if (owned) owned.dispose();
     };
-  }, [url, srgb, anisotropy, delay]);
+  }, [url, srgb, anisotropy, delay, textureKey]);
 
-  useEffect(() => () => tex?.dispose(), [tex]);
-
-  return tex;
+  return loaded?.key === textureKey ? loaded.texture : null;
 };

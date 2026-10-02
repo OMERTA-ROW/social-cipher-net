@@ -2,8 +2,7 @@ import { Suspense, useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { Bloom, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
+import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -83,12 +82,14 @@ const FocusFollower = ({
   focusedPlanet,
   focusedRadius,
   targetOrbitSpeed,
+  reducedMotion,
 }: {
   controlsRef: React.MutableRefObject<OrbitControlsImpl | null>;
   planetRefs: React.MutableRefObject<Record<string, THREE.Mesh | null>>;
   focusedPlanet: string | null;
   focusedRadius: number | undefined;
   targetOrbitSpeed: number;
+  reducedMotion: boolean;
 }) => {
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const currentSpeed = useRef(0);
@@ -109,13 +110,15 @@ const FocusFollower = ({
           .add(new THREE.Vector3(0, 0.24, 0))
           .normalize();
         controls.object.position.copy(tmp).add(viewDirection.multiplyScalar(distance));
+        controls.target.copy(tmp);
+      } else {
+        controls.target.lerp(tmp, 0.2);
       }
-      controls.target.lerp(tmp, 0.2);
     } else {
-      controls.target.lerp(tmp.set(0, 0, 0), 0.1);
+      controls.target.copy(tmp.set(0, 0, 0));
     }
     // Smoothly ramp orbit speed toward target (exponential smoothing, ~0.6s time constant)
-    const goal = focusedPlanet ? targetOrbitSpeed : 0;
+    const goal = focusedPlanet && !reducedMotion ? targetOrbitSpeed : 0;
     const k = 1 - Math.exp(-dt / 0.6);
     currentSpeed.current += (goal - currentSpeed.current) * k;
     const applied = currentSpeed.current * 2;
@@ -131,8 +134,7 @@ const HarvesterBot = ({ offset, color, personaLabel, animate }: { offset: number
   const ref = useRef<THREE.Group>(null);
   const beamRef = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
-    if (!animate) return;
-    const t = clock.getElapsedTime() * 0.4 + offset;
+    const t = (animate ? clock.getElapsedTime() * 0.4 : 0) + offset;
     const r = ASTEROID_BELT_R + Math.sin(t * 1.3) * 1.2;
     if (ref.current) {
       ref.current.position.set(Math.cos(t) * r, Math.sin(t * 2) * 0.4, Math.sin(t) * r);
@@ -140,7 +142,7 @@ const HarvesterBot = ({ offset, color, personaLabel, animate }: { offset: number
     }
     if (beamRef.current) {
       const mat = beamRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.4 + Math.sin(t * 6) * 0.3;
+      mat.opacity = animate ? 0.4 + Math.sin(t * 6) * 0.3 : 0;
     }
   });
   return (
@@ -217,10 +219,12 @@ const CameraRig = ({
   mode,
   shipRef,
   cinematicIdx,
+  travelActive,
 }: {
   mode: ViewMode;
   shipRef: React.MutableRefObject<THREE.Group | null>;
   cinematicIdx: number;
+  travelActive: boolean;
 }) => {
   useFrame(({ camera }) => {
     if (!shipRef.current) return;
@@ -232,12 +236,14 @@ const CameraRig = ({
       camera.lookAt(shipPos.clone().add(shipDir.clone().multiplyScalar(6)));
     } else if (mode === "chase") {
       const target = shipPos.clone().add(shipDir.clone().multiplyScalar(-3)).add(new THREE.Vector3(0, 1.2, 0));
-      camera.position.lerp(target, 0.1);
+      if (travelActive) camera.position.lerp(target, 0.1);
+      else camera.position.copy(target);
       camera.lookAt(shipPos);
     } else if (mode === "cinematic") {
       const p = PLANETS[cinematicIdx % PLANETS.length];
       const target = new THREE.Vector3(p.distance * 0.9, 3, p.distance * 0.4);
-      camera.position.lerp(target, 0.03);
+      if (travelActive) camera.position.lerp(target, 0.03);
+      else camera.position.copy(target);
       camera.lookAt(0, 0, 0);
     } else if (mode === "harvest") {
       const target = new THREE.Vector3(ASTEROID_BELT_R + 4, 3, 4);
@@ -256,7 +262,7 @@ const VIEW_MODES: { key: ViewMode; label: string; hint: string }[] = [
   { key: "cockpit",   label: "Cockpit",     hint: "First-person from ship" },
   { key: "chase",     label: "Chase",       hint: "Follow cam" },
   { key: "orbital",   label: "Orbital",     hint: "Free orbit — drag to look" },
-  { key: "cinematic", label: "Cinematic",   hint: "Auto-cutting planet cams" },
+  { key: "cinematic", label: "Cinematic",   hint: "Composed planet view" },
   { key: "closeup",   label: "Close-up",    hint: "Click any planet" },
   { key: "harvest",   label: "Harvest",     hint: "Watch AI bots mine" },
 ];
@@ -264,10 +270,10 @@ const VIEW_MODES: { key: ViewMode; label: string; hint: string }[] = [
 const SolarSystemVoyage = () => {
   const [mode, setMode] = useState<ViewMode>("chase");
   const [speed, setSpeed] = useState(1);
-  const [travelling, setTravelling] = useState(true);
+  const [travelling, setTravelling] = useState(false);
   const [focusedPlanet, setFocusedPlanet] = useState<string | null>(null);
-  const [orbitSpeed, setOrbitSpeed] = useState(1);
-  const [cinematicIdx, setCinematicIdx] = useState(0);
+  const [orbitSpeed, setOrbitSpeed] = useState(0);
+  const cinematicIdx = 0;
 
   // Background engagement controls
   const [palette, setPalette] = useState<PaletteName>("solar");
@@ -341,15 +347,16 @@ const SolarSystemVoyage = () => {
   const activeTier: Exclude<Quality, "auto"> = quality === "auto" ? autoTier : quality;
   const preset = QUALITY_PRESETS[activeTier];
 
-  // Quality-overridden effective values (fall back to user controls if we ever add a "custom" tier)
-  const effStarDensity = preset.starDensity;
-  const effParallax = preset.parallax;
-  const effInteractive = preset.interactive;
-  const effectiveIntensity: IntensityName =
-    autoIntensity ? (speed > 3 ? "hyper" : preset.intensity) : preset.intensity;
-
-  const reducedMotion = useMemo(prefersReducedMotion, []);
-  const sceneAnimated = travelling && !reducedMotion;
+  const [reducedMotion, setReducedMotion] = useState(prefersReducedMotion);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReducedMotion(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+  const travelActive = travelling && !reducedMotion;
+  const orbitActive = focusedPlanet !== null && orbitSpeed !== 0 && !reducedMotion;
+  const sceneAnimated = false;
   const paletteVeil = {
     cosmic: "bg-primary/5",
     draco: "bg-destructive/5",
@@ -362,14 +369,7 @@ const SolarSystemVoyage = () => {
   const speedRef = useRef(1);
   const shipRef = useRef<THREE.Group | null>(null);
 
-  useEffect(() => { speedRef.current = travelling ? speed : 0; }, [speed, travelling]);
-
-  // Cinematic auto-cut
-  useEffect(() => {
-    if (mode !== "cinematic") return;
-    const id = setInterval(() => setCinematicIdx((i) => i + 1), 4500);
-    return () => clearInterval(id);
-  }, [mode]);
+  useEffect(() => { speedRef.current = travelActive ? speed : 0; }, [speed, travelActive]);
 
   // Keyboard controls
   useEffect(() => {
@@ -396,6 +396,7 @@ const SolarSystemVoyage = () => {
       <div className={`pointer-events-none absolute inset-0 ${paletteVeil}`} />
 
       <Canvas
+        frameloop={travelActive || orbitActive ? "always" : "demand"}
         camera={{ position: [0, 20, 45], fov: 55, near: 0.05, far: 5000000 }}
         dpr={preset.dpr}
         className="!absolute inset-0"
@@ -408,7 +409,7 @@ const SolarSystemVoyage = () => {
         <Suspense fallback={null}>
           <ambientLight intensity={0.075} />
           <DeepSky full={activeTier === "high"} />
-          <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && speed > 3 ? 1.35 : 1} />
+          <Starfield full={activeTier !== "low"} dpr={preset.dpr[1]} boost={autoIntensity && travelActive && speed > 3 ? 1.35 : 1} animate={false} />
           <VoyageSun full={activeTier === "high"} animate={sceneAnimated} />
           {PLANETS.map((p) => (
             <VoyageCelestialBody
@@ -433,7 +434,7 @@ const SolarSystemVoyage = () => {
 
           <Ship tRef={tRef} speedRef={speedRef} shipRef={shipRef} />
 
-          <CameraRig mode={mode} shipRef={shipRef} cinematicIdx={cinematicIdx} />
+          <CameraRig mode={mode} shipRef={shipRef} cinematicIdx={cinematicIdx} travelActive={travelActive} />
 
           {(mode === "orbital" || mode === "closeup") && (
             <>
@@ -443,13 +444,12 @@ const SolarSystemVoyage = () => {
                 minDistance={focusedDef ? Math.max(focusedDef.radius * 2.5, 1.5) : 2}
                 maxDistance={120000}
               />
-              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} focusedRadius={focusedDef?.radius} targetOrbitSpeed={orbitSpeed} />
+              <FocusFollower controlsRef={controlsRef} planetRefs={planetRefs} focusedPlanet={focusedPlanet} focusedRadius={focusedDef?.radius} targetOrbitSpeed={orbitSpeed} reducedMotion={reducedMotion} />
             </>
           )}
           {activeTier === "high" && !reducedMotion && (
             <EffectComposer multisampling={0}>
               <Bloom intensity={0.42} luminanceThreshold={0.58} luminanceSmoothing={0.32} mipmapBlur />
-              <Noise premultiply opacity={0.018} blendFunction={BlendFunction.OVERLAY} />
               <Vignette eskil={false} offset={0.25} darkness={0.72} />
             </EffectComposer>
           )}
@@ -596,7 +596,7 @@ const SolarSystemVoyage = () => {
               </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="auto-intensity" className="text-[11px]">Auto-hyper at warp</Label>
+                <Label htmlFor="auto-intensity" className="text-[11px]">Travel brightness</Label>
                 <Switch id="auto-intensity" checked={autoIntensity} onCheckedChange={setAutoIntensity} />
               </div>
 
@@ -651,7 +651,7 @@ const SolarSystemVoyage = () => {
       {/* Bottom warp + HUD */}
       <div className="absolute bottom-2 left-2 z-10 flex max-w-[calc(100vw-1rem)] flex-wrap items-end gap-2 pointer-events-auto sm:bottom-4 sm:left-4 sm:gap-3">
         <div className="w-[min(17rem,calc(100vw-1rem))] rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-3">
-          <div className="text-xs text-muted-foreground mb-2">Warp Speed: {speed.toFixed(2)}×</div>
+          <div className="text-xs text-muted-foreground mb-2">Travel Speed: {speed.toFixed(2)}×</div>
           <Slider
             value={[speed]}
             min={0.25}
@@ -665,7 +665,7 @@ const SolarSystemVoyage = () => {
             className="mt-2 w-full h-7 text-xs"
             onClick={() => setTravelling((v) => !v)}
           >
-            {travelling ? "Pause Travel" : "Resume Travel"}  (Space)
+            {travelling ? "Stop Travel" : "Start Travel"}  (Space)
           </Button>
         </div>
 
@@ -695,7 +695,7 @@ const SolarSystemVoyage = () => {
         </Button>
         <div className="hidden sm:block">
           <h1 className="hologram-title text-xl font-bold sm:text-2xl">Solar System Voyage</h1>
-          <p className="text-xs text-muted-foreground">Keys 1–6 switch views · Space pauses travel</p>
+          <p className="text-xs text-muted-foreground">Keys 1–6 switch views · Space starts or stops travel</p>
         </div>
       </div>
     </div>

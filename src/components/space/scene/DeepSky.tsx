@@ -20,10 +20,10 @@ import { SKY_RADIUS } from "../worldScale";
 const SKY_SHELL = SKY_RADIUS * 0.94;
 
 const NEBULA_PLACEMENT: { dir: [number, number, number]; size: number; tint: string; opacity: number }[] = [
-  { dir: [-0.72, 0.18, 0.67], size: 0.46, tint: "#9fb6ff", opacity: 0.3 },
-  { dir: [0.58, -0.32, 0.75], size: 0.52, tint: "#ffd7b0", opacity: 0.26 },
-  { dir: [0.12, 0.52, -0.85], size: 0.4, tint: "#c9b7ff", opacity: 0.22 },
-  { dir: [-0.46, -0.55, -0.7], size: 0.44, tint: "#ffb9c4", opacity: 0.18 },
+  { dir: [-0.72, 0.18, 0.67], size: 0.46, tint: "#f2f5ff", opacity: 0.3 },
+  { dir: [0.58, -0.32, 0.75], size: 0.52, tint: "#fff7ef", opacity: 0.26 },
+  { dir: [0.12, 0.52, -0.85], size: 0.4, tint: "#f6f3ff", opacity: 0.22 },
+  { dir: [-0.46, -0.55, -0.7], size: 0.44, tint: "#fff3f5", opacity: 0.18 },
 ];
 
 const NebulaPanel = ({

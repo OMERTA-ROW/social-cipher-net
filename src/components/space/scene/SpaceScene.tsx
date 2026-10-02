@@ -1,15 +1,13 @@
 import { Canvas } from "@react-three/fiber";
-import { Bloom, ChromaticAberration, EffectComposer, Noise, Vignette } from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
+import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import CameraRig from "./CameraRig";
 import Galaxy from "./Galaxy";
 import MarketComets from "./MarketComets";
 import Planets from "./Planets";
 import AsteroidField from "./AsteroidField";
 import Starfield from "./Starfield";
-import { marketPulse, useMarketPulse } from "./useMarketPulse";
 import MiningWorld from "./MiningWorld";
 import ShipChaseCamera from "./ShipChaseCamera";
 import PlanetOrbitCamera from "./PlanetOrbitCamera";
@@ -37,16 +35,7 @@ interface Props {
   tier: QualityTier;
 }
 
-const CHROMA = new THREE.Vector2(0.00008, 0.0001);
-
 const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galaxy", tier }: Props & { dpr: number }) => {
-  // ambient lift reacts gently to live market volatility
-  const [boost, setBoost] = useState(1);
-  useEffect(() => {
-    const id = setInterval(() => setBoost(1 + marketPulse.volatility * 0.35), 1500);
-    return () => clearInterval(id);
-  }, []);
-
   const debug = useMemo(isAsteroidDebug, []);
   const mining = view === "mining";
   const descent = view === "descent";
@@ -67,9 +56,9 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
         <MiningWorld animate={animate} full={full} />
       ) : (
         <>
-          <Galaxy full={full} boost={boost} />
+          <Galaxy full={full} boost={1} animate={animate} />
           <DeepSky full={full} />
-          <Starfield full={full} dpr={dpr} boost={boost} animate={animate} />
+          <Starfield full={full} dpr={dpr} boost={1} animate={animate} />
           <AsteroidField animate={animate} full={full} />
           {debug && <AsteroidDebug />}
           <Planets full={full} animate={animate} />
@@ -83,8 +72,6 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
       {full && (
         <EffectComposer multisampling={0}>
           <Bloom intensity={0.44} luminanceThreshold={0.58} luminanceSmoothing={0.32} mipmapBlur />
-          <ChromaticAberration offset={CHROMA} blendFunction={BlendFunction.NORMAL} radialModulation={false} modulationOffset={0} />
-          <Noise premultiply opacity={0.025} blendFunction={BlendFunction.OVERLAY} />
           <Vignette eskil={false} offset={0.28} darkness={0.82} />
         </EffectComposer>
       )}
@@ -93,7 +80,6 @@ const SceneContents = ({ full, animate, dpr, view = "solar", cameraMode = "galax
 };
 
 const SpaceScene = ({ full, animate, view = "solar", cameraMode = "galaxy", tier }: Props) => {
-  useMarketPulse();
   const dpr = full ? Math.min(window.devicePixelRatio || 1, 1.5) : 1;
 
   return (

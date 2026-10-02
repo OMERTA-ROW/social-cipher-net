@@ -14,8 +14,8 @@ import { WORLD_SCALE } from "../worldScale";
 /**
  * Real 3D bodies on inclined elliptical orbits around a single local star.
  * Each planet is a textured sphere using NASA-derived surface maps, with the
- * same map driving a bump channel for terrain relief, a separate cloud shell
- * where appropriate, a fresnel atmosphere shell, and real ring geometry.
+ * a separate cloud shell where appropriate, a fresnel atmosphere shell, and
+ * real ring geometry. Colour maps are never reused as fake terrain data.
  * Orbits, radii, tilts and speeds are unchanged.
  */
 
@@ -151,10 +151,9 @@ const PlanetMesh = ({ body, full, animate, segments, index }: { body: Body; full
 
   // progressive: stagger requests so the UI paints first
   const delay = 220 + index * 160;
-  const map = useLazyTexture(SPACE_TEXTURE_URLS[body.texture], { delay });
-  const bump = useLazyTexture(full ? SPACE_TEXTURE_URLS[body.texture] : undefined, { srgb: false, delay: delay + 400 });
+  const map = useLazyTexture(SPACE_TEXTURE_URLS[body.texture], { delay, anisotropy: full ? 8 : 2 });
   const cloudUrl = full ? CLOUD_TEXTURE_URLS[body.texture] : undefined;
-  const cloudMap = useLazyTexture(cloudUrl, { delay: delay + 600 });
+  const cloudMap = useLazyTexture(cloudUrl, { delay: delay + 600, anisotropy: full ? 8 : 2 });
 
   const atmoUniforms = useMemo(
     () => ({
@@ -162,7 +161,7 @@ const PlanetMesh = ({ body, full, animate, segments, index }: { body: Body; full
       uLightPos: { value: new THREE.Vector3(0, 0, 0) },
       uStrength: { value: body.atmoStrength },
     }),
-    [],
+    [body.atmo, body.atmoStrength],
   );
 
   useFrame((_, delta) => {
@@ -182,10 +181,8 @@ const PlanetMesh = ({ body, full, animate, segments, index }: { body: Body; full
           <meshStandardMaterial
             map={map ?? undefined}
             color={map ? "#ffffff" : new THREE.Color(...body.base)}
-            bumpMap={bump ?? undefined}
-            bumpScale={bump ? body.bump * body.radius : 0}
             roughness={body.rough}
-            metalness={0.02}
+            metalness={0}
           />
         </mesh>
 
@@ -234,7 +231,7 @@ const Planets = ({ full, animate }: { full: boolean; animate: boolean }) => {
   return (
     <group>
       {/* local star: the single light source for every body */}
-      <pointLight position={[0, 0, 0]} intensity={3} distance={0} decay={0} color="#fff3d8" />
+      <pointLight position={[0, 0, 0]} intensity={6200} distance={0} decay={2} color="#fff3d8" />
       <Sun full={full} animate={animate} />
       <SolarFlares radius={16} animate={animate} full={full} />
 

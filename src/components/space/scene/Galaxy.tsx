@@ -84,17 +84,19 @@ const frag = /* glsl */ `
   }
 `;
 
-const Galaxy = ({ full, boost }: { full: boolean; boost: number }) => {
+const Galaxy = ({ full, boost, animate = false }: { full: boolean; boost: number; animate?: boolean }) => {
   const mat = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({ uTime: { value: 0 }, uDetail: { value: full ? 1 : 0 }, uBoost: { value: boost } }),
-    [],
+    [boost, full],
   );
   uniforms.uDetail.value = full ? 1 : 0;
 
-  useFrame((state) => {
+  const time = useRef(0);
+  useFrame((_, delta) => {
     if (!mat.current) return;
-    mat.current.uniforms.uTime.value = state.clock.elapsedTime;
+    if (animate) time.current += Math.min(delta, 0.05);
+    mat.current.uniforms.uTime.value = time.current;
     mat.current.uniforms.uBoost.value = boost;
   });
 
