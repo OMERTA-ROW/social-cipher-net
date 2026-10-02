@@ -161,7 +161,7 @@ const PlanetMesh = ({ body, full, animate, segments, index }: { body: Body; full
       uLightPos: { value: new THREE.Vector3(0, 0, 0) },
       uStrength: { value: body.atmoStrength },
     }),
-    [],
+    [body.atmo, body.atmoStrength],
   );
 
   useFrame((_, delta) => {

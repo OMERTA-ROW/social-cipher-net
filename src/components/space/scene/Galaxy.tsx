@@ -88,7 +88,7 @@ const Galaxy = ({ full, boost, animate = false }: { full: boolean; boost: number
   const mat = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({ uTime: { value: 0 }, uDetail: { value: full ? 1 : 0 }, uBoost: { value: boost } }),
-    [],
+    [boost, full],
   );
   uniforms.uDetail.value = full ? 1 : 0;
 

@@ -651,7 +651,7 @@ const SolarSystemVoyage = () => {
       {/* Bottom warp + HUD */}
       <div className="absolute bottom-2 left-2 z-10 flex max-w-[calc(100vw-1rem)] flex-wrap items-end gap-2 pointer-events-auto sm:bottom-4 sm:left-4 sm:gap-3">
         <div className="w-[min(17rem,calc(100vw-1rem))] rounded-md bg-background/75 backdrop-blur-xl border border-primary/25 p-3">
-          <div className="text-xs text-muted-foreground mb-2">Warp Speed: {speed.toFixed(2)}×</div>
+          <div className="text-xs text-muted-foreground mb-2">Travel Speed: {speed.toFixed(2)}×</div>
           <Slider
             value={[speed]}
             min={0.25}
@@ -665,7 +665,7 @@ const SolarSystemVoyage = () => {
             className="mt-2 w-full h-7 text-xs"
             onClick={() => setTravelling((v) => !v)}
           >
-            {travelling ? "Pause Travel" : "Resume Travel"}  (Space)
+            {travelling ? "Stop Travel" : "Start Travel"}  (Space)
           </Button>
         </div>
 
@@ -695,7 +695,7 @@ const SolarSystemVoyage = () => {
         </Button>
         <div className="hidden sm:block">
           <h1 className="hologram-title text-xl font-bold sm:text-2xl">Solar System Voyage</h1>
-          <p className="text-xs text-muted-foreground">Keys 1–6 switch views · Space pauses travel</p>
+          <p className="text-xs text-muted-foreground">Keys 1–6 switch views · Space starts or stops travel</p>
         </div>
       </div>
     </div>

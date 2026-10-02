@@ -150,7 +150,7 @@ const Shell = ({
       uPixelRatio: { value: dpr },
       uBoost: { value: boost },
     }),
-    [],
+    [boost, dpr],
   );
   uniforms.uPixelRatio.value = dpr;
 
