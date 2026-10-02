@@ -56,7 +56,14 @@ const getEventTextures = (): EventTextures => {
   const loader = new THREE.TextureLoader();
   const result = {} as EventTextures;
   (Object.keys(EVENT_URLS) as (keyof EventTextures)[]).forEach((key) => {
-    const texture = new THREE.DataTexture(new Uint8Array([24, 24, 32, 255]), 1, 1);
+    const fallback = document.createElement("canvas");
+    fallback.width = fallback.height = 1;
+    const ctx = fallback.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#181820";
+      ctx.fillRect(0, 0, 1, 1);
+    }
+    const texture = new THREE.Texture(fallback);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.needsUpdate = true;
     loader.load(
