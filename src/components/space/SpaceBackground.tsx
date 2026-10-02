@@ -1,5 +1,6 @@
 import { Suspense, lazy, useMemo } from "react";
-import { isLowPowerDevice, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
+import { isLowPowerDevice, prefersReducedMotion, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
+import ProceduralStarFallback from "./voyage/ProceduralStarFallback";
 
 const SpaceScene = lazy(() => import("./scene/SpaceScene"));
 
@@ -14,18 +15,27 @@ const SpaceBackground = () => {
 
   const render3d = mode !== "off";
   const full = mode === "full" && !lowPower;
-  const animate = false;
+  const reducedMotion = useMemo(prefersReducedMotion, []);
+  const animate = !reducedMotion;
+  const webgl = useMemo(() => {
+    try {
+      const canvas = document.createElement("canvas");
+      return Boolean(canvas.getContext("webgl2") || canvas.getContext("webgl"));
+    } catch {
+      return false;
+    }
+  }, []);
 
   return (
     <div aria-hidden className="fixed inset-0 -z-10 pointer-events-none select-none overflow-hidden bg-black">
       {/* Pure black base — every layer above dissolves into it. */}
       <div className="absolute inset-0 bg-black" />
 
-      {render3d && (
+      {render3d && webgl ? (
         <Suspense fallback={null}>
           <SpaceScene full={full} animate={animate} view={view} cameraMode={camera} tier={tier} />
         </Suspense>
-      )}
+      ) : render3d ? <ProceduralStarFallback calm={reducedMotion} /> : null}
 
       <div className="space-depth-light absolute inset-0" />
       <div className="space-depth-haze absolute inset-0" />
