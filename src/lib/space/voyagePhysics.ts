@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export const KM_PER_UNIT = 1_000_000;
-export const FIXED_STEP_SECONDS = 2;
+export const FIXED_STEP_SECONDS = 1 / 60;
 export const MAX_SUBSTEPS = 12;
 export const SOFTENING_KM = 250;
 export const VISUAL_RADIUS_REFERENCE_KM = 2_439.7;
@@ -110,8 +110,8 @@ export function stepShip(ship:ShipState,input:PhysicsInput,dt:number,timeSeconds
     const hit=obstacle.shape==="box"&&obstacle.halfExtentsKm?sweptBoxHit(previous,ship.position,obstacle.position,obstacle.halfExtentsKm,ship.collisionRadiusKm):sweptSphereHit(previous,ship.position,obstacle.position,obstacle.radiusKm+ship.collisionRadiusKm);
     if(hit.hit){const normal=ship.position.clone().sub(obstacle.position).normalize();const speed=ship.velocity.length();ship.position.copy(previous);ship.velocity.reflect(normal.lengthSq()?normal:new THREE.Vector3(1,0,0)).multiplyScalar(speed<0.15?.36:.08);ship.damage=Math.min(100,ship.damage+(speed<.15?3:speed*16));return{bodyId:obstacle.id,speedKmS:speed,severity:speed<.45?"minor":"major",direction:normal};}
   }
-  for(const body of CELESTIAL_BODIES){ const center=bodyPositionAt(body,timeSeconds+dt); const hit=sweptSphereHit(previous,ship.position,center,body.collisionRadiusKm+ship.collisionRadiusKm); if(hit.hit){ const speed=Math.abs(ship.velocity.dot(hit.normal)); ship.position.copy(center).addScaledVector(hit.normal,body.collisionRadiusKm+ship.collisionRadiusKm+1); ship.velocity.reflect(hit.normal).multiplyScalar(speed<0.15?0.32:0.08); ship.damage=Math.min(100,ship.damage+(speed<0.15?4:speed*18)); return {bodyId:body.id,speedKmS:speed,severity:speed<0.45?"minor":"major",direction:hit.normal}; } if(body.ring&&saturnRingHit(previous,ship.position,center,body.ring).hit){ const speed=Math.abs(ship.velocity.y); ship.velocity.y*=-0.2; ship.damage=Math.min(100,ship.damage+(speed<0.15?3:speed*14)); return {bodyId:"saturn-rings",speedKmS:speed,severity:speed<0.45?"minor":"major",direction:new THREE.Vector3(0,1,0)}; }}
+  for(const body of CELESTIAL_BODIES){ const center=bodyPositionAt(body,timeSeconds+dt); const hit=sweptSphereHit(previous,ship.position,center,body.collisionRadiusKm+ship.collisionRadiusKm); if(hit.hit){ const relative=ship.velocity.clone().sub(bodyVelocityAt(body,timeSeconds+dt)); const speed=Math.abs(relative.dot(hit.normal)); ship.position.copy(center).addScaledVector(hit.normal,body.collisionRadiusKm+ship.collisionRadiusKm+1); ship.velocity.copy(relative.reflect(hit.normal).multiplyScalar(speed<0.15?0.32:0.08).add(bodyVelocityAt(body,timeSeconds+dt))); ship.damage=Math.min(100,ship.damage+(speed<0.15?4:speed*18)); return {bodyId:body.id,speedKmS:speed,severity:speed<0.45?"minor":"major",direction:hit.normal}; } if(body.ring&&saturnRingHit(previous,ship.position,center,body.ring).hit){ const speed=Math.abs(ship.velocity.y); ship.velocity.y*=-0.2; ship.damage=Math.min(100,ship.damage+(speed<0.15?3:speed*14)); return {bodyId:"saturn-rings",speedKmS:speed,severity:speed<0.45?"minor":"major",direction:new THREE.Vector3(0,1,0)}; }}
   return null;
 }
 
-export function runFixedSteps(accumulator:number,frameSeconds:number,speed:number,step:(dt:number)=>void){ let next=accumulator+Math.min(frameSeconds,0.05)*speed; let steps=0; while(next>=FIXED_STEP_SECONDS&&steps<MAX_SUBSTEPS){step(FIXED_STEP_SECONDS);next-=FIXED_STEP_SECONDS;steps++;} if(steps===MAX_SUBSTEPS)next=0; return {accumulator:next,steps}; }
+export function runFixedSteps(accumulator:number,frameSeconds:number,speed:number,step:(dt:number)=>void){ let next=accumulator+Math.min(frameSeconds,0.05); let steps=0; while(next>=FIXED_STEP_SECONDS&&steps<MAX_SUBSTEPS){step(FIXED_STEP_SECONDS*speed);next-=FIXED_STEP_SECONDS;steps++;} if(steps===MAX_SUBSTEPS)next=0; return {accumulator:next,steps}; }
