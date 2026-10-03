@@ -50,13 +50,13 @@ const Index = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate(signInPath());
+        navigate(signInPath(), { replace: true });
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate(signInPath());
+        navigate(signInPath(), { replace: true });
       }
     });
 
@@ -90,7 +90,7 @@ const Index = () => {
 
       toast.success("Payment successful! Content unlocked.");
       setFeedRefreshKey((key) => key + 1);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Payment error:", error);
       toast.error("Failed to process payment");
     }

@@ -189,3 +189,5 @@
 - [x] OAuth callback: by design — connector OAuth returns only to /integrations or /connectors; app sign-in doesn't use it
 - [ ] /privacy and /terms show "Page not found" — blocked: needs approved legal text from the owner
 - [x] /forgot-password shows sign-in UI while URL stays /forgot-password
+
+- [ ] Route audit follow-ups: signed-in matrix + real auth flows (need test identity), owner copy for /privacy /terms /contact, desktop Voyage->Home render delay, h1 on auth pages

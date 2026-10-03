@@ -1,0 +1,326 @@
+page_url,viewport,auth_state,case,source_element,expected_action,actual_action,status,repair,remaining_configuration,evidence
+/,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/login title=""Sign in · Cyber Link"" reload->/login elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/login,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/login title=""Sign in · Cyber Link"" reload->/login elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/signup,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/signup title=""Create account · Cyber Link"" reload->/signup elements=177 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/forgot-password,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/forgot-password title=""Reset password · Cyber Link"" reload->/forgot-password elements=8 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/reset-password,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/reset-password title=""Choose a new password · Cyber Link"" reload->/reset-password elements=5 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/auth/callback,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/auth/callback title=""Confirming sign-in · Cyber Link"" reload->/auth/callback elements=0 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/voyage,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/voyage title=""Solar System Voyage · Cyber Link"" reload->/voyage elements=46 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/privacy,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/privacy title=""Privacy Policy · Cyber Link"" reload->/privacy elements=3 bad_links=0",PASS,,Owner copy needed,Playwright crawl.py (isolated anonymous context)
+/terms,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/terms title=""Terms of Service · Cyber Link"" reload->/terms elements=3 bad_links=0",PASS,,Owner copy needed,Playwright crawl.py (isolated anonymous context)
+/contact,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/contact title=""Contact · Cyber Link"" reload->/contact elements=3 bad_links=0",PASS,,Owner copy needed,Playwright crawl.py (isolated anonymous context)
+/dashboard,desktop,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fdashboard title=""Sign in · Cyber Link"" reload->/login?next=%2Fdashboard elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/profile,desktop,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fprofile title=""Sign in · Cyber Link"" reload->/login?next=%2Fprofile elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/settings,desktop,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fsettings title=""Sign in · Cyber Link"" reload->/login?next=%2Fsettings elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/integrations,desktop,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fintegrations title=""Sign in · Cyber Link"" reload->/login?next=%2Fintegrations elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/no-such-page-xyz,desktop,anonymous,direct visit + hard reload,(route),404 page,"/no-such-page-xyz title=""Page not found · Cyber Link"" reload->/no-such-page-xyz elements=1 bad_links=0",PASS,,Dev server always returns HTTP 200 for SPA routes; 404 is client-rendered,Playwright crawl.py (isolated anonymous context)
+/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired title=""Confirming sign-in · Cyber Link"" reload->/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired elements=2 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired title=""Confirming sign-in · Cyber Link"" reload->/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired elements=2 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired title=""Choose a new password · Cyber Link"" reload->/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired elements=5 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/auth/callback#type=recovery,desktop,anonymous,direct visit + hard reload,(route),render page with correct title,"/reset-password#type=recovery title=""Choose a new password · Cyber Link"" reload->/reset-password#type=recovery elements=5 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/login?next=//evil.example.com,desktop,anonymous,direct visit + hard reload,(route),stay on /login; unsafe next ignored after sign-in (unit-tested),"/login?next=//evil.example.com title=""Sign in · Cyber Link"" reload->/login?next=//evil.example.com elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/dashboard?tab=x,desktop,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fdashboard%3Ftab%3Dx title=""Sign in · Cyber Link"" reload->/login?next=%2Fdashboard%3Ftab%3Dx elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/login title=""Sign in · Cyber Link"" reload->/login elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/login,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/login title=""Sign in · Cyber Link"" reload->/login elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/signup,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/signup title=""Create account · Cyber Link"" reload->/signup elements=177 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/forgot-password,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/forgot-password title=""Reset password · Cyber Link"" reload->/forgot-password elements=8 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/reset-password,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/reset-password title=""Choose a new password · Cyber Link"" reload->/reset-password elements=5 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/auth/callback,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/auth/callback title=""Confirming sign-in · Cyber Link"" reload->/auth/callback elements=0 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/voyage,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/voyage title=""Solar System Voyage · Cyber Link"" reload->/voyage elements=35 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/privacy,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/privacy title=""Privacy Policy · Cyber Link"" reload->/privacy elements=3 bad_links=0",PASS,,Owner copy needed,Playwright crawl.py (isolated anonymous context)
+/terms,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/terms title=""Terms of Service · Cyber Link"" reload->/terms elements=3 bad_links=0",PASS,,Owner copy needed,Playwright crawl.py (isolated anonymous context)
+/contact,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/contact title=""Contact · Cyber Link"" reload->/contact elements=3 bad_links=0",PASS,,Owner copy needed,Playwright crawl.py (isolated anonymous context)
+/dashboard,mobile,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fdashboard title=""Sign in · Cyber Link"" reload->/login?next=%2Fdashboard elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/profile,mobile,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fprofile title=""Sign in · Cyber Link"" reload->/login?next=%2Fprofile elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/settings,mobile,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fsettings title=""Sign in · Cyber Link"" reload->/login?next=%2Fsettings elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/integrations,mobile,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fintegrations title=""Sign in · Cyber Link"" reload->/login?next=%2Fintegrations elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/no-such-page-xyz,mobile,anonymous,direct visit + hard reload,(route),404 page,"/no-such-page-xyz title=""Page not found · Cyber Link"" reload->/no-such-page-xyz elements=1 bad_links=0",PASS,,Dev server always returns HTTP 200 for SPA routes; 404 is client-rendered,Playwright crawl.py (isolated anonymous context)
+/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired title=""Confirming sign-in · Cyber Link"" reload->/auth/callback?error=access_denied&error_description=Email+link+is+invalid+or+has+expired elements=2 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired title=""Choose a new password · Cyber Link"" reload->/reset-password#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired elements=5 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/auth/callback#type=recovery,mobile,anonymous,direct visit + hard reload,(route),render page with correct title,"/reset-password#type=recovery title=""Choose a new password · Cyber Link"" reload->/reset-password#type=recovery elements=5 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/login?next=//evil.example.com,mobile,anonymous,direct visit + hard reload,(route),stay on /login; unsafe next ignored after sign-in (unit-tested),"/login?next=//evil.example.com title=""Sign in · Cyber Link"" reload->/login?next=//evil.example.com elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/dashboard?tab=x,mobile,anonymous,direct visit + hard reload,(route),redirect to /login?next=<path>,"/login?next=%2Fdashboard%3Ftab%3Dx title=""Sign in · Cyber Link"" reload->/login?next=%2Fdashboard%3Ftab%3Dx elements=9 bad_links=0",PASS,,,Playwright crawl.py (isolated anonymous context)
+/login,desktop,anonymous,click + hard reload,tab: Sign Up,/signup,/signup | reload->/signup,PASS,Tabs now update URL,,"Playwright clicks.py, ordinary click/tap, no force"
+/signup,desktop,anonymous,click + hard reload,tab: Sign In,/login,/login | reload->/login,PASS,Tabs now update URL,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,desktop,anonymous,click + hard reload,button: Forgot Password?,/forgot-password,/forgot-password?next=%2Fdashboard | reload->/forgot-password?next=%2Fdashboard,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/forgot-password,desktop,anonymous,click + hard reload,button: Back to Sign In,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/forgot-password,desktop,anonymous,click + hard reload,button: Send Reset Link,/forgot-password,/forgot-password | reload->/forgot-password,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/reset-password,desktop,anonymous,click + hard reload,button: Request a new reset link,/forgot-password,/forgot-password | reload->/forgot-password,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/auth/callback?error=access_denied,desktop,anonymous,click + hard reload,link: Sign in,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/auth/callback?error=access_denied,desktop,anonymous,click + hard reload,link: Reset password,/forgot-password,/forgot-password | reload->/forgot-password,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/privacy,desktop,anonymous,click + hard reload,link: Privacy & security settings,/login?next=%2Fsecurity,/login?next=%2Fsecurity | reload->/login?next=%2Fsecurity,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/terms,desktop,anonymous,click + hard reload,link: Community guidelines,/community-guidelines,/community-guidelines | reload->/community-guidelines,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/contact,desktop,anonymous,click + hard reload,link: Home,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/no-such-page-xyz,desktop,anonymous,click + hard reload,link: Return Home,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/voyage,desktop,anonymous,click + hard reload,link: Home,/login,/,FAIL,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login?next=%2Fintegrations,desktop,anonymous,click + hard reload,link: Create Account,/signup?next=%2Fintegrations,/signup?next=%2Fintegrations | reload->/signup?next=%2Fintegrations,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,desktop,anonymous,keyboard Enter + hard reload,key: Privacy,/privacy,/privacy | reload->/privacy,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,mobile,anonymous,tap + hard reload,link: Create Account,/signup,/signup | reload->/signup,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,mobile,anonymous,keyboard Enter + hard reload,key: Privacy,/privacy,/privacy | reload->/privacy,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,mobile,anonymous,tap + hard reload,link: Terms,/terms,/terms | reload->/terms,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,mobile,anonymous,tap + hard reload,link: Guidelines,/community-guidelines,/community-guidelines | reload->/community-guidelines,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,mobile,anonymous,tap + hard reload,link: Contact,/contact,/contact | reload->/contact,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,mobile,anonymous,tap + hard reload,tab: Sign Up,/signup,/signup | reload->/signup,PASS,Tabs now update URL,,"Playwright clicks.py, ordinary click/tap, no force"
+/signup,mobile,anonymous,tap + hard reload,tab: Sign In,/login,/login | reload->/login,PASS,Tabs now update URL,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,mobile,anonymous,tap + hard reload,button: Forgot Password?,/forgot-password,/forgot-password?next=%2Fdashboard | reload->/forgot-password?next=%2Fdashboard,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/forgot-password,mobile,anonymous,tap + hard reload,button: Back to Sign In,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/forgot-password,mobile,anonymous,tap + hard reload,button: Send Reset Link,/forgot-password,/forgot-password | reload->/forgot-password,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/reset-password,mobile,anonymous,tap + hard reload,button: Request a new reset link,/forgot-password,/forgot-password | reload->/forgot-password,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/auth/callback?error=access_denied,mobile,anonymous,tap + hard reload,link: Sign in,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/auth/callback?error=access_denied,mobile,anonymous,tap + hard reload,link: Reset password,/forgot-password,/forgot-password | reload->/forgot-password,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/privacy,mobile,anonymous,tap + hard reload,link: Privacy & security settings,/login?next=%2Fsecurity,/login?next=%2Fsecurity | reload->/login?next=%2Fsecurity,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/terms,mobile,anonymous,tap + hard reload,link: Community guidelines,/community-guidelines,/community-guidelines | reload->/community-guidelines,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/contact,mobile,anonymous,tap + hard reload,link: Home,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/no-such-page-xyz,mobile,anonymous,tap + hard reload,link: Return Home,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/voyage,mobile,anonymous,tap + hard reload,link: Home,/login,/login | reload->/login,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login?next=%2Fintegrations,mobile,anonymous,tap + hard reload,link: Create Account,/signup?next=%2Fintegrations,/signup?next=%2Fintegrations | reload->/signup?next=%2Fintegrations,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,desktop,anonymous,click + hard reload,link: Create Account,/signup,/signup | reload->/signup,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,desktop,anonymous,click + hard reload,link: Terms,/terms,/terms | reload->/terms,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,desktop,anonymous,click + hard reload,link: Guidelines,/community-guidelines,/community-guidelines | reload->/community-guidelines,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/login,desktop,anonymous,click + hard reload,link: Contact,/contact,/contact | reload->/contact,PASS,,,"Playwright clicks.py, ordinary click/tap, no force"
+/reset-password,desktop,anonymous,inventory,a: Privacy,/privacy,href valid,NOT TESTED,,,crawl inventory
+/reset-password,desktop,anonymous,inventory,a: Terms,/terms,href valid,NOT TESTED,,,crawl inventory
+/reset-password,desktop,anonymous,inventory,a: Guidelines,/community-guidelines,href valid,NOT TESTED,,,crawl inventory
+/reset-password,desktop,anonymous,inventory,a: Contact,/contact,href valid,NOT TESTED,,,crawl inventory
+/login,desktop,anonymous,inventory,button: Sign In,button action,href valid,NOT TESTED,,,crawl inventory
+/login,desktop,anonymous,inventory,button: Enter CyberLink,button action,href valid,BLOCKED,,,Submits real auth request; needs authorized test identity
+/login,mobile,anonymous,inventory,button: Sign In,button action,href valid,NOT TESTED,,,crawl inventory
+/login,mobile,anonymous,inventory,button: Enter CyberLink,button action,href valid,BLOCKED,,,Submits real auth request; needs authorized test identity
+/signup,mobile,anonymous,inventory,button: Sign Up,button action,href valid,NOT TESTED,,,crawl inventory
+/signup,mobile,anonymous,inventory,button: January,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: February,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: March,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: April,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: May,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: June,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: July,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: August,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: September,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: October,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: November,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: December,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 3,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 4,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 5,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 6,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 7,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 8,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 9,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 10,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 11,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 12,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 13,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 14,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 15,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 16,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 17,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 18,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 19,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 20,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 21,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 22,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 23,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 24,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 25,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 26,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 27,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 28,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 29,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 30,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 31,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2026,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2025,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2024,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2023,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2022,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2021,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2020,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2019,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2018,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2017,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2016,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2015,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2014,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2013,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2012,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2011,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2010,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2009,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2008,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2007,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2006,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2005,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2004,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2003,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2002,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2001,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 2000,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1999,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1998,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1997,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1996,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1995,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1994,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1993,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1992,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1991,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1990,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1989,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1988,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1987,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1986,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1985,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1984,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1983,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1982,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1981,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1980,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1979,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1978,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1977,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1976,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1975,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1974,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1973,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1972,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1971,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1970,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1969,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1968,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1967,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1966,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1965,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1964,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1963,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1962,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1961,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1960,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1959,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1958,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1957,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1956,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1955,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1954,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1953,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1952,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1951,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1950,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1949,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1948,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1947,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1946,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1945,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1944,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1943,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1942,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1941,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1940,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1939,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1938,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1937,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1936,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1935,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1934,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1933,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1932,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1931,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1930,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1929,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1928,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1927,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1926,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1925,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1924,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1923,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1922,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1921,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1920,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1919,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1918,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1917,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1916,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1915,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1914,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1913,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1912,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1911,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1910,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1909,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1908,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1907,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1906,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1905,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1904,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1903,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1902,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1901,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: 1900,button action,href valid,NOT TESTED,,,Birthdate picker cell
+/signup,mobile,anonymous,inventory,button: Join CyberLink,button action,href valid,BLOCKED,,,Submits real auth request; needs authorized test identity
+/signup,mobile,anonymous,inventory,a: Privacy,/privacy,href valid,NOT TESTED,,,crawl inventory
+/signup,mobile,anonymous,inventory,a: Terms,/terms,href valid,NOT TESTED,,,crawl inventory
+/signup,mobile,anonymous,inventory,a: Guidelines,/community-guidelines,href valid,NOT TESTED,,,crawl inventory
+/signup,mobile,anonymous,inventory,a: Contact,/contact,href valid,NOT TESTED,,,crawl inventory
+/forgot-password,mobile,anonymous,inventory,button: Sign In,button action,href valid,NOT TESTED,,,crawl inventory
+/forgot-password,mobile,anonymous,inventory,button: Sign Up,button action,href valid,NOT TESTED,,,crawl inventory
+/forgot-password,mobile,anonymous,inventory,a: Privacy,/privacy,href valid,NOT TESTED,,,crawl inventory
+/forgot-password,mobile,anonymous,inventory,a: Terms,/terms,href valid,NOT TESTED,,,crawl inventory
+/forgot-password,mobile,anonymous,inventory,a: Guidelines,/community-guidelines,href valid,NOT TESTED,,,crawl inventory
+/forgot-password,mobile,anonymous,inventory,a: Contact,/contact,href valid,NOT TESTED,,,crawl inventory
+/reset-password,mobile,anonymous,inventory,a: Privacy,/privacy,href valid,NOT TESTED,,,crawl inventory
+/reset-password,mobile,anonymous,inventory,a: Terms,/terms,href valid,NOT TESTED,,,crawl inventory
+/reset-password,mobile,anonymous,inventory,a: Guidelines,/community-guidelines,href valid,NOT TESTED,,,crawl inventory
+/reset-password,mobile,anonymous,inventory,a: Contact,/contact,href valid,NOT TESTED,,,crawl inventory
+/voyage,mobile,anonymous,inventory,button: Mercury,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Venus,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Earth,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Mars,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Saturn,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Uranus,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Neptune,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Pause,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: 1×,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: 10×,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: 100×,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Details,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: −10 −,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Cut X,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: +10 +,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Cruise,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Assist,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Probe,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Dock,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Brake,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: R,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: W,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: F,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: A,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: S,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: D,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Zoom in,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Orbit camera up,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Zoom out,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Orbit camera left,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Orbit camera down,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Orbit camera right,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/voyage,mobile,anonymous,inventory,button: Recenter camera,button action,href valid,NOT TESTED,,,Voyage controls verified in earlier Voyage/throttle browser runs (see docs/voyage-verification.md); not re-clicked in this crawl
+/privacy,mobile,anonymous,inventory,a: Community guidelines,/community-guidelines,href valid,NOT TESTED,,,crawl inventory
+/privacy,mobile,anonymous,inventory,a: Home,/,href valid,NOT TESTED,,,crawl inventory
+/terms,mobile,anonymous,inventory,a: Privacy & security settings,/security,href valid,NOT TESTED,,,crawl inventory
+/terms,mobile,anonymous,inventory,a: Home,/,href valid,NOT TESTED,,,crawl inventory
+/contact,mobile,anonymous,inventory,a: Privacy & security settings,/security,href valid,NOT TESTED,,,crawl inventory
+/contact,mobile,anonymous,inventory,a: Community guidelines,/community-guidelines,href valid,NOT TESTED,,,crawl inventory
+/dashboard,desktop,signed-in,"render, nav, logout, login-page redirect",(route),render for signed-in user; /login redirects to dashboard; logout clears session,,BLOCKED,,Needs authorized test identity; user's own session not used,
+/dashboard,mobile,signed-in,"render, nav, logout, login-page redirect",(route),render for signed-in user; /login redirects to dashboard; logout clears session,,BLOCKED,,Needs authorized test identity; user's own session not used,
+/profile,desktop,signed-in,"render, nav, logout, login-page redirect",(route),render for signed-in user; /login redirects to dashboard; logout clears session,,BLOCKED,,Needs authorized test identity; user's own session not used,
+/profile,mobile,signed-in,"render, nav, logout, login-page redirect",(route),render for signed-in user; /login redirects to dashboard; logout clears session,,BLOCKED,,Needs authorized test identity; user's own session not used,
+/settings,desktop,signed-in,"render, nav, logout, login-page redirect",(route),render for signed-in user; /login redirects to dashboard; logout clears session,,BLOCKED,,Needs authorized test identity; user's own session not used,
+/settings,mobile,signed-in,"render, nav, logout, login-page redirect",(route),render for signed-in user; /login redirects to dashboard; logout clears session,,BLOCKED,,Needs authorized test identity; user's own session not used,
+/integrations,desktop,signed-in,"render, nav, logout, login-page redirect",(route),render for signed-in user; /login redirects to dashboard; logout clears session,,BLOCKED,,Needs authorized test identity; user's own session not used,
+/integrations,mobile,signed-in,"render, nav, logout, login-page redirect",(route),render for signed-in user; /login redirects to dashboard; logout clears session,,BLOCKED,,Needs authorized test identity; user's own session not used,
+(flow),any,—,real signup + confirmation email,,,,BLOCKED,,Needs authorized test identity / user action,
+(flow),any,—,real reset email delivery,,,,BLOCKED,,Needs authorized test identity / user action,
+(flow),any,—,login session persistence,,,,BLOCKED,,Needs authorized test identity / user action,
+(flow),any,—,logout,,,,BLOCKED,,Needs authorized test identity / user action,
+(flow),any,—,external OAuth connect,,,,BLOCKED,,Needs authorized test identity / user action,

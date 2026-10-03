@@ -28,7 +28,7 @@ const SidebarAuthButton = ({ collapsed }: { collapsed?: boolean }) => {
     if (signedIn) {
       await supabase.auth.signOut();
       queryClient.clear();
-      navigate("/");
+      navigate("/login", { replace: true });
     } else {
       navigate(signInPath());
     }

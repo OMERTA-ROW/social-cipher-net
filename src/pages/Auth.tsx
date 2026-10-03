@@ -404,7 +404,7 @@ const Auth = () => {
               </Button>
             </div>
           ) : (
-          <Tabs key={location.pathname} defaultValue={initialTab} className="w-full">
+          <Tabs value={initialTab} onValueChange={(v) => navigate(`${v === "signup" ? "/signup" : "/login"}${location.search}`, { replace: true })} className="w-full">
 
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
@@ -602,8 +602,10 @@ const Auth = () => {
           </Tabs>
           )}
           <div className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
-            <Link to="/security" className="hover:text-primary">Privacy & security</Link>
-            <Link to="/community-guidelines" className="hover:text-primary">Terms & guidelines</Link>
+            <Link to="/privacy" className="hover:text-primary">Privacy</Link>
+            <Link to="/terms" className="hover:text-primary">Terms</Link>
+            <Link to="/community-guidelines" className="hover:text-primary">Guidelines</Link>
+            <Link to="/contact" className="hover:text-primary">Contact</Link>
           </div>
         </CardContent>
 

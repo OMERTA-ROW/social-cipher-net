@@ -19,7 +19,7 @@ const AuthCallback = () => {
     const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
     const type = hash.get("type") ?? url.searchParams.get("type");
     const next = safeReturnPath(url.searchParams.get("next") || "/dashboard");
-    const errDesc = hash.get("error_description") ?? url.searchParams.get("error_description");
+    const errDesc = hash.get("error_description") ?? url.searchParams.get("error_description") ?? hash.get("error") ?? url.searchParams.get("error");
 
     if (errDesc) {
       const expired = /expired|invalid/i.test(errDesc);

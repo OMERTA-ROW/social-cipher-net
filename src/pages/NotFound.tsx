@@ -6,7 +6,10 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    console.warn("404: no route for", location.pathname);
+    const t = setTimeout(() => { document.title = "Page not found · Cyber Link"; }, 0);
+    const meta = document.createElement("meta"); meta.name = "robots"; meta.content = "noindex"; document.head.appendChild(meta);
+    return () => { clearTimeout(t); meta.remove(); };
   }, [location.pathname]);
 
   return (
