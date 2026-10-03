@@ -133,6 +133,7 @@ const Auth = () => {
     toast({ title: "Password updated", description: "You are signed in with your new password." });
     setNewPassword("");
     setConfirmPassword("");
+    clearRecoveryVerified();
     setRecovery("none");
     window.history.replaceState(null, "", `${window.location.pathname}`);
     navigate(nextPath);
