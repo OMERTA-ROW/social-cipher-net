@@ -103,7 +103,10 @@ export const physicalObstaclesAt = (t: number): PhysicalObstacle[] => {
 // ---------- gravity ----------
 export interface BodyFrame { t: number; pos: THREE.Vector3[]; vel: THREE.Vector3[] }
 /** index 0 = Sun, 1..8 = CELESTIAL_BODIES */
-export const computeFrame = (t: number): BodyFrame => ({ t, pos: [new THREE.Vector3(), ...CELESTIAL_BODIES.map(b => bodyPositionAt(b, t))], vel: [new THREE.Vector3(), ...CELESTIAL_BODIES.map(b => bodyVelocityAt(b, t))] });
+const frameCache: BodyFrame[] = [];
+/** Memoised per time (the integrator reuses step n's end frame as step n+1's start frame). Treat as read-only. */
+export const computeFrame = (t: number): BodyFrame => { const hit = frameCache.find(f => f.t === t); if (hit) return hit; const f = buildFrame(t); frameCache.unshift(f); if (frameCache.length > 4) frameCache.pop(); return f; };
+const buildFrame = (t: number): BodyFrame => ({ t, pos: [new THREE.Vector3(), ...CELESTIAL_BODIES.map(b => bodyPositionAt(b, t))], vel: [new THREE.Vector3(), ...CELESTIAL_BODIES.map(b => bodyVelocityAt(b, t))] });
 const MU = [SUN.muKm3S2, ...CELESTIAL_BODIES.map(b => b.muKm3S2)];
 const SOURCE_IDS = [SUN.id, ...CELESTIAL_BODIES.map(b => b.id)];
 const RADII = [SUN.radiusKm, ...CELESTIAL_BODIES.map(b => b.radiusKm)];
