@@ -50,13 +50,13 @@ const Index = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        navigate(signInPath());
+        navigate(signInPath(), { replace: true });
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate(signInPath());
+        navigate(signInPath(), { replace: true });
       }
     });
 
