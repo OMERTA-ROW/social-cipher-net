@@ -70,13 +70,15 @@ Deno.serve(async (req) => {
     if (action === "save") {
       const definition = getDefinition(serviceId);
       const credentials = (body.credentials ?? {}) as Record<string, string>;
-      const accountName =
-        typeof body.account_name === "string"
-          ? body.account_name.slice(0, 120)
-          : null;
+      if (serviceId.startsWith("acct:")) {
+        return json({ error: "This account must be connected through the provider's sign-in, not pasted keys." }, 400);
+      }
       const accountKey = String(body.account_key ?? "default").slice(0, 64) || "default";
+      // User-typed names are labels only, never a verified provider identity.
       const accountLabel =
-        typeof body.account_label === "string" ? body.account_label.slice(0, 120) : null;
+        typeof body.account_label === "string"
+          ? body.account_label.slice(0, 120)
+          : typeof body.account_name === "string" ? body.account_name.slice(0, 120) : null;
 
       const entries = Object.entries(credentials).filter(
         ([, v]) => typeof v === "string" && v.trim().length > 0,
@@ -85,6 +87,19 @@ Deno.serve(async (req) => {
         return json({ error: "No credentials provided" }, 400);
       }
 
+      // Never overwrite a working connection's secrets in place; a failed write
+      // would destroy the previous verified credentials.
+      const { data: existing } = await admin
+        .from("user_connections")
+        .select("id, status, method")
+        .eq("user_id", user.id).eq("service_id", serviceId).eq("account_key", accountKey)
+        .maybeSingle();
+      if (existing?.status === "connected") {
+        return json({ error: "This account is already connected. Disconnect it first, or add it under a new account name." }, 409);
+      }
+
+      // Saved as pending/unverified: manual keys are never shown as Connected
+      // until a server-side provider check verifies them.
       const { data: connection, error: connError } = await admin
         .from("user_connections")
         .upsert(
@@ -93,13 +108,12 @@ Deno.serve(async (req) => {
             service_id: serviceId,
             account_key: accountKey,
             account_label: accountLabel,
-            method: definition?.methods.includes("app_password")
-              ? "app_password"
-              : "api_key",
-            status: "connected",
-            health: "healthy",
+            account_name: null,
+            provider_account_id: null,
+            method: definition?.methods.includes("app_password") ? "app_password" : "api_key",
+            status: "pending",
+            health: "unverified",
             failure_count: 0,
-            account_name: accountName,
             last_error: null,
             updated_at: new Date().toISOString(),
           },
@@ -109,7 +123,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (connError || !connection) {
-        return json({ error: connError?.message ?? "Could not save" }, 400);
+        return json({ error: "Could not save" }, 400);
       }
 
       for (const [key, value] of entries) {
@@ -119,7 +133,11 @@ Deno.serve(async (req) => {
           type: key,
           value: String(value),
         });
-        if (failure) return json({ error: failure }, 400);
+        if (failure) {
+          await admin.from("connection_secrets").delete().eq("connection_id", connection.id);
+          await admin.from("user_connections").delete().eq("id", connection.id).eq("user_id", user.id);
+          return json({ error: failure }, 400);
+        }
       }
 
       await audit(admin, {
@@ -128,10 +146,10 @@ Deno.serve(async (req) => {
         serviceId,
         action: "save_credentials",
         status: "ok",
-        detail: `${entries.length} credential field(s) stored`,
+        detail: `${entries.length} credential field(s) stored, pending verification`,
       });
 
-      return json({ ok: true, connection_id: connection.id });
+      return json({ ok: true, connection_id: connection.id, status: "pending" });
     }
 
     /* --------------------------- disconnect ----------------------------- */

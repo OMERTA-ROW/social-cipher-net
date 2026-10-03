@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { getSecrets, putSecret } from "../_shared/connectorVault.ts";
-import { buildAuthorizeUrl, getIntegration, INTEGRATION_PROVIDERS, integrationScope, missingConfiguration } from "../_shared/accountIntegrations.ts";
+import { buildAuthorizeUrl, getIntegration, grantedScopes, INTEGRATION_PROVIDERS, integrationScope, missingConfiguration } from "../_shared/accountIntegrations.ts";
 import { exchangeCode, fetchIdentity, refreshToken, revokeToken } from "../_shared/integrationOAuth.ts";
 import { audit } from "../_shared/connectorEngine.ts";
 import { getDefinition } from "../_shared/connectorManifest.ts";
@@ -289,7 +289,8 @@ Deno.serve(async (req) => {
       const redirectUri = trustedOAuthRedirect(req.headers.get("Origin"));
       if (!redirectUri || !oauthRedirectIsAllowed(redirectUri)) return json({ error: "invalid_origin", message: "This site address is not on the approved callback list." }, 400);
       const creds = integrationCreds(p);
-      if (!creds) return json({ error: "not_configured", missing: missingConfiguration(p, (n) => Deno.env.get(n)) }, 400);
+      const missing = missingConfiguration(p, (n) => Deno.env.get(n));
+      if (!creds || missing.length) return json({ error: "not_configured", missing }, 400);
       const state = createOAuthState();
       const verifier = p.pkce ? createCodeVerifier() : null;
       const { error: attemptError } = await admin.from("connector_oauth_attempts").insert({
@@ -416,7 +417,8 @@ Deno.serve(async (req) => {
         const { error: actErr } = await admin.from("user_connections").update({
           status: "connected", health: "healthy", account_key: "primary", is_active_account: true,
           provider_account_id: identity.id, account_name: identity.name ?? identity.handle ?? identity.id,
-          account_handle: identity.handle, connected_at: now, expires_at: exp, last_error: null, metadata: { scope: integrationScope(integ) },
+          account_handle: identity.handle, connected_at: now, expires_at: exp, last_error: null,
+          metadata: { requested_scope: integrationScope(integ), granted_scope: granted.join(" "), livemode: typeof t.json.livemode === "boolean" ? t.json.livemode : null },
         }).eq("id", conn.id).eq("user_id", user.id);
         if (actErr) return json({ service_id: attempt.service_id, retryable: true, error: "The connection could not be activated." }, 500);
         await audit(admin, { userId: user.id, connectionId: conn.id, serviceId: attempt.service_id, action: "oauth_connect", status: "ok" });

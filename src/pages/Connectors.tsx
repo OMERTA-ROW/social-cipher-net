@@ -154,7 +154,8 @@ const Connectors = () => {
         body: { action: "profile", service_id: service.id },
       });
       const result = Array.isArray(data?.results) ? data.results[0] : null;
-      const ok = !error && !data?.error && result?.ok !== false;
+      // Strict: only an explicit ok:true result from the provider counts.
+      const ok = !error && !data?.error && result !== null && result?.ok === true;
       if (ok) {
         toast.success(`${service.name} responded successfully`);
       } else {
