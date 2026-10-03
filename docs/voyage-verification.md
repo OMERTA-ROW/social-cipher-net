@@ -88,3 +88,8 @@ External audit (auditor's local copy) reported 1 PASS / 8 FAIL. Re-encoded as `s
 - Did NOT reproduce here (PASS in this workspace): swept-sphere first contact t=0.4; Sun impact; polar orbit-assist tangent speed; softened circular speed (v²/r = μ/(r²+ε²) exactly, matching the spec's G·m1·m2/(r²+ε²); a Plummer (r²+ε²)^{3/2} model would give the reported ~0.07% difference); 25% vs 100% throttle ratio 0.25 (with fuel not limiting — at very large dt both are fuel-capped and match); coplanar tilted-ring traversal; empty fuel.
 - Design difference, not a bug here: fixed substep is a constant 2 simulated seconds at every time scale (bounded by MAX_SUBSTEPS), not 1/60 s. An observed dt of 1.6667 implies the auditor tested a different file revision.
 - Likely cause of the gap: the audited file differs from this workspace's saved revision (it is not published). Exact audit test inputs were not available here; results are not proof that the auditor's own tests pass.
+
+## Audit round 2 (2026-10-03 03:16 UTC)
+- Near-empty fuel (1e-9 kg): did not reproduce in this workspace (Δv ≈ 3e-12 km/s; burn already scaled to remaining fuel). Locked in by acceptance test.
+- Probe/debris vs station/asteroids: REPRODUCED by code inspection and FIXED — dynamic objects now collide with every solid collider (fresh wreck fragments get a 60 s grace). Acceptance test added (probe at −200 km/s from +100 km is stopped).
+- Full suite 188/188 PASS; typecheck PASS. Earlier evidence sections left unchanged.
