@@ -24,9 +24,14 @@ const tokenRequest = async (p: IntegrationProvider, creds: Creds, params: Record
   }
   const res = await fetch(p.tokenUrl, { method: "POST", headers, body: payload });
   const json = await res.json().catch(() => ({}));
+  return { ok: tokenResponseOk(p, res.ok, json), json: json as Record<string, unknown> };
+};
+
+/** Strict success check: HTTP ok, no error, Slack ok!==false, and the provider's proof field present. */
+export const tokenResponseOk = (p: IntegrationProvider, httpOk: boolean, json: Record<string, unknown>) => {
   // TikTok wraps errors in a 200 body; Slack reports ok:false.
-  const ok = res.ok && !json.error && json.ok !== false && Boolean(json.access_token);
-  return { ok, json: json as Record<string, unknown> };
+  const proof = json[p.successField ?? "access_token"];
+  return httpOk && !json.error && json.ok !== false && typeof proof === "string" && proof.length > 0;
 };
 
 export const exchangeCode = (p: IntegrationProvider, creds: Creds, code: string, redirectUri: string, verifier: string | null) =>

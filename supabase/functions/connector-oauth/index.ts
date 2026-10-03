@@ -389,14 +389,16 @@ Deno.serve(async (req) => {
         if (!t.ok) return json({ service_id: attempt.service_id, retryable: true, error: sanitizeOAuthError(t.json.error_description ?? t.json.error) }, 400);
         const identity = await fetchIdentity(integ, t.json);
         if (!identity) return json({ service_id: attempt.service_id, retryable: true, error: "The provider account identity could not be verified. Nothing was saved." }, 400);
+        const granted = grantedScopes(integ, t.json);
         const { data: conn, error: connError } = await admin.from("user_connections").insert({
           user_id: user.id, service_id: attempt.service_id, account_key: `pending-${crypto.randomUUID()}`,
           method: "oauth", status: "pending", health: "checking", is_active_account: false,
-          scopes: integ.scopes, updated_at: new Date().toISOString(),
+          scopes: granted, updated_at: new Date().toISOString(),
         }).select("id").single();
         if (connError || !conn) return json({ service_id: attempt.service_id, retryable: true, error: "The authorized account could not be saved." }, 500);
         const exp = tokenExpiry(t.json);
-        const f1 = await putSecret(admin, { connectionId: conn.id, userId: user.id, type: "access_token", value: String(t.json.access_token), expiresAt: exp });
+        // Stripe Connect may omit access_token (deprecated); only store tokens actually returned.
+        const f1 = t.json.access_token ? await putSecret(admin, { connectionId: conn.id, userId: user.id, type: "access_token", value: String(t.json.access_token), expiresAt: exp }) : null;
         const f2 = t.json.refresh_token ? await putSecret(admin, { connectionId: conn.id, userId: user.id, type: "refresh_token", value: String(t.json.refresh_token) }) : null;
         if (f1 || f2) {
           await admin.from("connection_secrets").delete().eq("connection_id", conn.id);

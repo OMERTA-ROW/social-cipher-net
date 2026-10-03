@@ -33,7 +33,22 @@ export interface IntegrationProvider {
   docsUrl: string;
   /** Owner-side requirement beyond client id/secret, shown with Approval required. */
   ownerNote?: string;
+  /**
+   * Token-response field that proves a successful exchange. Defaults to
+   * access_token; Stripe Connect uses stripe_user_id (access_token is deprecated).
+   */
+  successField?: string;
+  /** Owner configuration that blocks OAuth even when client secrets exist. */
+  approvalBlocker?: string;
 }
+
+/** Granted scopes from a token response, falling back to requested scopes only when the provider omits them. */
+export const grantedScopes = (p: IntegrationProvider, tokenBody: Record<string, unknown>): string[] => {
+  const raw = tokenBody.scope;
+  if (typeof raw === "string" && raw.trim()) return raw.split(/[\s,]+/).filter(Boolean);
+  if (Array.isArray(raw)) return raw.filter((s): s is string => typeof s === "string");
+  return p.scopes;
+};
 
 export const INTEGRATION_PROVIDERS: IntegrationProvider[] = [
   {
@@ -102,14 +117,17 @@ export const INTEGRATION_PROVIDERS: IntegrationProvider[] = [
     docsUrl: "https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm",
   },
   {
-    id: "stripe", name: "Stripe", feature: "Read-only view of your Stripe account balance and payouts.",
+    id: "stripe", name: "Stripe", feature: "Link your Stripe account to CyberLink's platform (account id only).",
     secretPrefix: "STRIPE_CONNECT",
     authorizeUrl: "https://connect.stripe.com/oauth/authorize", tokenUrl: "https://connect.stripe.com/oauth/token",
-    scopes: ["read_only"], pkce: false,
+    // read_only is documented for Stripe Extensions only; never request it (or
+    // silently expand to read_write) for an unverified platform type.
+    scopes: [], pkce: false, successField: "stripe_user_id",
     identity: { kind: "token", id: ["stripe_user_id"] },
-    revoke: { url: "https://connect.stripe.com/oauth/deauthorize", style: "stripe-deauthorize" }, refreshable: true,
+    revoke: { url: "https://connect.stripe.com/oauth/deauthorize", style: "stripe-deauthorize" }, refreshable: false,
     docsUrl: "https://docs.stripe.com/connect/oauth-reference",
-    ownerNote: "Uses Stripe Connect OAuth: STRIPE_CONNECT_CLIENT_ID is the platform ca_… id and STRIPE_CONNECT_CLIENT_SECRET is the platform secret key.",
+    ownerNote: "Stripe Connect OAuth: STRIPE_CONNECT_CLIENT_ID is the platform ca_… id, STRIPE_CONNECT_CLIENT_SECRET the platform secret key in the same test/live mode.",
+    approvalBlocker: "Stripe Connect app type (Platform vs Extension) and permitted scope are not verified for CyberLink; owner must confirm before OAuth is enabled",
   },
   {
     id: "x", name: "X", feature: "Identify your X account and read your posts.",
@@ -144,6 +162,7 @@ export const missingConfiguration = (
   const missing: string[] = [];
   if (!env(`${p.secretPrefix}_CLIENT_ID`)) missing.push(`${p.secretPrefix}_CLIENT_ID backend secret is not set`);
   if (!env(`${p.secretPrefix}_CLIENT_SECRET`)) missing.push(`${p.secretPrefix}_CLIENT_SECRET backend secret is not set`);
+  if (p.approvalBlocker) missing.push(p.approvalBlocker);
   return missing;
 };
 
