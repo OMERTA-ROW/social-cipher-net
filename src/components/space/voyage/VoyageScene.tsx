@@ -65,7 +65,7 @@ function Planet({ body, worldRef, quality, labels, onSelect }: { body: Celestial
       <group rotation={[THREE.MathUtils.degToRad(body.axialTiltDeg), 0, 0]}>
         <mesh ref={surface} onClick={e => { e.stopPropagation(); onSelect(body.id); }}>
           <sphereGeometry args={[r, budget.segments, Math.round(budget.segments / 2)]} />
-          <meshStandardMaterial map={map ?? undefined} color={map ? "#ffffff" : "#8793a1"} roughness={0.95} metalness={0} />
+          <meshStandardMaterial key={map ? "tex" : "flat"} map={map ?? undefined} color={map ? "#ffffff" : "#8793a1"} roughness={0.95} metalness={0} />
         </mesh>
         {clouds && <mesh scale={1.012}><sphereGeometry args={[r, 48, 24]} /><meshStandardMaterial map={clouds} alphaMap={clouds} transparent opacity={0.7} depthWrite={false} /></mesh>}
       </group>
@@ -73,7 +73,7 @@ function Planet({ body, worldRef, quality, labels, onSelect }: { body: Celestial
         <group quaternion={ringQ}>
           <mesh rotation={[-Math.PI / 2, 0, 0]}>
             <primitive object={ringGeo} attach="geometry" />
-            <meshStandardMaterial map={ring ?? undefined} color={ring ? "#ffffff" : "#c8b892"} transparent opacity={0.92} alphaTest={0.02} side={THREE.DoubleSide} depthWrite={false} roughness={0.9} />
+            <meshStandardMaterial key={ring ? "tex" : "flat"} map={ring ?? undefined} color={ring ? "#ffffff" : "#c8b892"} transparent opacity={0.92} alphaTest={0.02} side={THREE.DoubleSide} depthWrite={false} roughness={0.9} />
           </mesh>
         </group>
       )}
@@ -99,7 +99,7 @@ export function radialRingGeometry(inner: number, outer: number, segments = 128)
 
 function LiteSun() {
   const map = useLazyTexture(SUN_TEXTURE_URL, { delay: 60, anisotropy: 2 });
-  return <mesh><sphereGeometry args={[SUN_VISUAL_RADIUS, 32, 16]} /><meshBasicMaterial map={map ?? undefined} color={map ? "#ffffff" : "#ffcf7a"} toneMapped={false} /></mesh>;
+  return <mesh><sphereGeometry args={[SUN_VISUAL_RADIUS, 32, 16]} /><meshBasicMaterial key={map ? "tex" : "flat"} map={map ?? undefined} color={map ? "#ffffff" : "#ffcf7a"} toneMapped={false} /></mesh>;
 }
 
 function OrbitGuides() {
