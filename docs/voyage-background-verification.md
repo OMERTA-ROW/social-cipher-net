@@ -21,10 +21,15 @@ No edits were made to `src/lib/space/voyagePhysics.ts`, planet data, radii, posi
 | Voyage preference/input parsing | PASS | 3 existing tests |
 | Type check | PASS | `tsgo --noEmit` |
 | Focused lint | PASS with two pre-existing Fast Refresh warnings in `VoyageScene.tsx` | No lint errors |
+| Preview build | PASS | Lovable build harness reported `build OK` after the final source change |
 
 ## Visual/runtime checks
 
-The browser check records actual final URLs, screenshots, console errors, and failed requests for desktop 1280×1800 and mobile 390×844. Authentication redirects are reported as redirects rather than Voyage rendering evidence.
+- Anonymous `/` desktop and mobile checks resolved to `/login`; the procedural star background and readability veil rendered on desktop, while the mobile auth card filled the viewport. This is redirect evidence, not public-home rendering evidence.
+- A temporary managed preview session for the designated account opened `/voyage` directly and survived rendering at 1280×1800 and 390×844 (reduced motion). Both runs had one WebGL canvas and no page or console errors.
+- The dark-matter control was present with the exact fictional label, started OFF on each fresh browser context, switched ON, and exposed the scan action. The screenshots show the sensor telemetry without hiding the physical scene; mobile reduced motion remained static.
+- Two desktop and one mobile requests failed during the final runs. They were not background image requests and did not produce a page error; one earlier attempt logged a failed optional security-monitoring edge-function request. No real OAuth or provider action was initiated.
+- Screenshots: `/tmp/browser/background-repair/home-desktop.png`, `home-mobile.png`, `voyage-desktop-auth.png`, `voyage-desktop-auth-sensor.png`, and `voyage-mobile-auth-sensor.png`.
 
 ## Not tested or limited
 
@@ -32,6 +37,7 @@ The browser check records actual final URLs, screenshots, console errors, and fa
 - WebGL context loss cannot be reliably forced in the hosted preview; existing recovery controls are unchanged.
 - Long-duration real-GPU thermal/performance testing is not performed.
 - A pixel-perfect foreground occlusion assertion is limited to screenshot review; scan meshes use depth testing and no depth writes behind opaque geometry.
+- Fixed-camera frame-difference measurements across all quality tiers and pause/resume were not automated; steady-time behavior is covered by source inspection, and Voyage-only screenshots were reviewed.
 - The fictional zones are intentionally distant and ordinary guided paths may not encounter them; pure policy tests exercise hypothetical entry.
 
 ## Release and cost
