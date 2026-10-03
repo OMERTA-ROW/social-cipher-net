@@ -15,6 +15,7 @@ import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
 import { VOYAGE_PREFS_KEY, parseVoyagePreferences, shouldIgnoreKey, supportsWebGL, type QualityPref } from "@/lib/space/voyagePreferences";
 import { getTextureLoadStats, subscribeTextureLoadStats, type TextureLoadStats } from "@/components/space/realTextures";
 
+const readPrefs = () => { try { return parseVoyagePreferences(localStorage.getItem(VOYAGE_PREFS_KEY)); } catch { return parseVoyagePreferences(null); } };
 const fmtKm = (km: number) => km >= 1e6 ? `${(km / 1e6).toFixed(2)} M km` : `${Math.round(km).toLocaleString()} km`;
 const fmtTime = (s: number) => { const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); return `${d}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m`; };
 
