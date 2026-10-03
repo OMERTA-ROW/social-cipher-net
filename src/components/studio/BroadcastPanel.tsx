@@ -1,3 +1,4 @@
+import { isVerifiedConnection, connectionNeedsAttention } from "@/lib/integrationStatus";
 import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,11 +90,12 @@ const BroadcastPanel = () => {
     // OBS pushes straight into our ingest, so its live state is the ingest state.
     if (service.id === "obs") {
       if (isLive) return { label: "Live", tone: "live" as const };
-      return connection?.status === "connected"
+      return isVerifiedConnection(connection)
         ? { label: "Connected", tone: "connected" as const }
         : { label: "Offline", tone: "offline" as const };
     }
     if (connection?.status === "connected") {
+      if (!isVerifiedConnection(connection)) return { label: connectionNeedsAttention(connection) ? "Connection failed" : "Not verified", tone: "warn" as const };
       if (isLive && ingest?.last_source === service.id) {
         return { label: "Live", tone: "live" as const };
       }

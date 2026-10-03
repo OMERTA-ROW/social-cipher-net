@@ -1,3 +1,4 @@
+import { isVerifiedConnection } from "@/lib/integrationStatus";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,7 +47,7 @@ export const useConnections = () => {
       const { data, error: dbError } = await supabase
         .from("user_connections")
         .select(
-          "id, service_id, method, status, account_name, account_handle, metadata, last_error, health, expires_at, last_synced_at, scopes, failure_count, connected_at, updated_at",
+          "id, service_id, method, status, account_name, account_handle, provider_account_id, metadata, last_error, health, expires_at, last_synced_at, scopes, failure_count, connected_at, updated_at",
         )
         .eq("user_id", user.id);
       if (!isCurrent()) return;
@@ -87,7 +88,7 @@ export const useConnections = () => {
     connections.find((c) => c.service_id === serviceId) ?? null;
 
   const isConnected = (serviceId: string) =>
-    byService(serviceId)?.status === "connected";
+    isVerifiedConnection(byService(serviceId));
 
   return { connections, loading, error, userId, refresh: load, byService, isConnected };
 };
