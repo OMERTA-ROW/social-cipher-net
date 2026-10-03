@@ -52,6 +52,7 @@ export const APP_ROUTES: AppRouteMeta[] = [
   { path: "/token-purchase", title: "Token Purchase", description: "Complete a token purchase with explicit confirmation.", parent: "/" },
   { path: "/auth", title: "Sign In", description: "Access or create your Cyber Link account.", navigation: "hidden", system: true },
   { path: "/login", title: "Sign In", description: "Access your Cyber Link account.", navigation: "hidden", system: true },
+  { path: "/auth/callback", title: "Confirming Sign-In", description: "Completes email confirmation, password reset and sign-in links.", navigation: "hidden", system: true },
   { path: "/signup", title: "Sign Up", description: "Create your Cyber Link account.", navigation: "hidden", system: true },
   { path: "/forgot-password", title: "Forgot Password", description: "Request a secure password reset link.", navigation: "hidden", system: true },
   { path: "/reset-password", title: "Reset Password", description: "Choose a new password from a recovery link.", navigation: "hidden", system: true },

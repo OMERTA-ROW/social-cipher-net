@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { safeReturnPath } from "@/lib/authRedirect";
+import { markRecoveryVerified, safeReturnPath } from "@/lib/authRedirect";
 
 /**
  * Landing page for email confirmation, password-reset and OAuth redirects.
@@ -26,10 +26,16 @@ const AuthCallback = () => {
       setError(expired ? "This link has expired or was already used. Request a new one." : "We couldn't complete sign-in. Please try again.");
       return;
     }
-    if (type === "recovery") {
+    // Implicit-flow recovery tokens live in the hash; the reset page's auth
+    // client consumes them and emits PASSWORD_RECOVERY. PKCE recovery (?code=)
+    // is exchanged below first so the code is never dropped.
+    if (type === "recovery" && hash.get("access_token") && !url.searchParams.get("code")) {
       navigate(`/reset-password${url.hash}`, { replace: true });
       return;
     }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") markRecoveryVerified();
+    });
 
     const finish = async () => {
       try {
@@ -37,6 +43,13 @@ const AuthCallback = () => {
         if (code) {
           const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
           if (exErr) throw exErr;
+          if (type === "recovery") {
+            markRecoveryVerified();
+            if (active) navigate("/reset-password", { replace: true });
+            return;
+          }
+        } else if (type === "recovery") {
+          throw new Error("expired: recovery link missing its code");
         }
         // Give hash-based tokens a moment to be picked up by the client.
         for (let i = 0; i < 10; i++) {
@@ -56,7 +69,7 @@ const AuthCallback = () => {
       }
     };
     finish();
-    return () => { active = false; };
+    return () => { active = false; subscription.unsubscribe(); };
   }, [navigate]);
 
   return (

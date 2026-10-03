@@ -232,7 +232,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <Tabs defaultValue={location.pathname === "/settings" || searchParams.get("tab") === "settings" ? "settings" : "posts"}>
+      <Tabs key={location.pathname + location.search} defaultValue={location.pathname === "/settings" || searchParams.get("tab") === "settings" ? "settings" : "posts"}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="posts">My posts</TabsTrigger>
           <TabsTrigger value="settings">Account settings</TabsTrigger>
