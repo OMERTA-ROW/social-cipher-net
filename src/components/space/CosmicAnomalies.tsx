@@ -107,20 +107,26 @@ const useDisposableGeometry = (geometry: THREE.BufferGeometry) => {
 };
 
 const SOFT_POINT_VERTEX_SHADER = /* glsl */ `
+  #include <common>
+  #include <logdepthbuf_pars_vertex>
   uniform float uSize;
 
   void main() {
     vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
     gl_PointSize = max(1.0, uSize * (300.0 / max(1.0, -viewPosition.z)));
     gl_Position = projectionMatrix * viewPosition;
+    #include <logdepthbuf_vertex>
   }
 `;
 
 const SOFT_POINT_FRAGMENT_SHADER = /* glsl */ `
+  #include <common>
+  #include <logdepthbuf_pars_fragment>
   uniform vec3 uColor;
   uniform float uOpacity;
 
   void main() {
+    #include <logdepthbuf_fragment>
     float radius = length(gl_PointCoord - vec2(0.5));
     float alpha = 1.0 - smoothstep(0.12, 0.5, radius);
     if (alpha < 0.015) discard;
@@ -530,6 +536,8 @@ export const SolarFlares = ({ radius, animate, full = true }: { radius: number; 
           ref={corona}
           uniforms={coronaUniforms}
           vertexShader={/* glsl */ `
+            #include <common>
+            #include <logdepthbuf_pars_vertex>
             varying vec3 vNormalW;
             varying vec3 vPositionW;
             void main() {
@@ -537,14 +545,18 @@ export const SolarFlares = ({ radius, animate, full = true }: { radius: number; 
               vPositionW = world.xyz;
               vNormalW = normalize(mat3(modelMatrix) * normal);
               gl_Position = projectionMatrix * viewMatrix * world;
+              #include <logdepthbuf_vertex>
             }
           `}
           fragmentShader={/* glsl */ `
+            #include <common>
+            #include <logdepthbuf_pars_fragment>
             uniform float uTime;
             uniform float uOpacity;
             varying vec3 vNormalW;
             varying vec3 vPositionW;
             void main() {
+              #include <logdepthbuf_fragment>
               vec3 viewDir = normalize(cameraPosition - vPositionW);
               float rim = pow(1.0 - max(dot(normalize(vNormalW), viewDir), 0.0), 4.2);
               float filament = 0.82 + 0.18 * sin(vPositionW.y * 0.23 + vPositionW.x * 0.11 + uTime * 0.08);

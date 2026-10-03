@@ -1,5 +1,6 @@
-import { Suspense, lazy, useMemo } from "react";
-import { isLowPowerDevice, prefersReducedMotion, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
+import { Suspense, lazy, useMemo, useSyncExternalStore } from "react";
+import { isLowPowerDevice, resolveQuality, useSpaceBgSettings } from "@/lib/spaceBackgroundSettings";
+import { getSpaceMotionSnapshot, getServerSpaceMotionSnapshot, subscribeSpaceMotion } from "@/lib/spaceMotionPolicy";
 import ProceduralStarFallback from "./voyage/ProceduralStarFallback";
 
 const SpaceScene = lazy(() => import("./scene/SpaceScene"));
@@ -15,8 +16,7 @@ const SpaceBackground = () => {
 
   const render3d = mode !== "off";
   const full = mode === "full" && !lowPower;
-  const reducedMotion = useMemo(prefersReducedMotion, []);
-  const animate = !reducedMotion;
+  const animate = useSyncExternalStore(subscribeSpaceMotion, getSpaceMotionSnapshot, getServerSpaceMotionSnapshot);
   const webgl = useMemo(() => {
     try {
       const canvas = document.createElement("canvas");
@@ -35,7 +35,7 @@ const SpaceBackground = () => {
         <Suspense fallback={null}>
           <SpaceScene full={full} animate={animate} view={view} cameraMode={camera} tier={tier} />
         </Suspense>
-      ) : render3d ? <ProceduralStarFallback calm={reducedMotion} /> : null}
+      ) : render3d ? <ProceduralStarFallback calm={!animate} /> : null}
 
       <div className="space-depth-light absolute inset-0" />
       <div className="space-depth-haze absolute inset-0" />
