@@ -38,6 +38,8 @@ const Auth = () => {
   const [remainingAttempts, setRemainingAttempts] = useState(6);
   const navigate = useNavigate();
   const location = useLocation();
+  // The same Auth instance serves /login and /forgot-password; keep the view in sync with the URL.
+  useEffect(() => { setShowForgotPassword(location.pathname === "/forgot-password"); }, [location.pathname]);
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
