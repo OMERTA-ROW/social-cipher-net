@@ -17,30 +17,32 @@ const RequireAuth = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let active = true;
     let revision = 0;
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return;
-      revision += 1;
-      setUserId(session?.user.id ?? null);
-      setResolved(true);
-    });
-    const requestRevision = revision;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active || requestRevision !== revision) return;
-      setUserId(data.user?.id ?? null);
-      setResolved(true);
-    }).catch(() => {
-      // Auth server unreachable: fall back to the locally restored session
-      // for routing only; data access is still validated server-side by RLS.
-      if (!active || requestRevision !== revision) return;
-      supabase.auth.getSession()
-        .then(({ data }) => { if (active && requestRevision === revision) setUserId(data.session?.user.id ?? null); })
-        .catch(() => { if (active) setUserId(null); })
-        .finally(() => { if (active) setResolved(true); });
-    });
-    return () => {
-      active = false;
-      data.subscription.unsubscribe();
+    const verify = async () => {
+      const request = ++revision;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const result = await Promise.race([
+          supabase.auth.getUser(),
+          new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error("timeout")), 12000); }),
+        ]);
+        if (active && request === revision) {
+          setUserId(result.error ? null : result.data.user?.id ?? null);
+          setResolved(true);
+        }
+      } catch {
+        if (active && request === revision) { setUserId(null); setResolved(true); }
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
     };
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (!active) return;
+      if (event === "SIGNED_OUT") { revision++; setUserId(null); setResolved(true); }
+      // Token refreshes re-verify silently; only a user change blanks the page.
+      else if (event === "SIGNED_IN" || event === "USER_UPDATED") queueMicrotask(() => { if (active) void verify(); });
+    });
+    void verify();
+    return () => { active = false; revision++; data.subscription.unsubscribe(); };
   }, []);
 
   const state = authGateState(resolved, userId);
@@ -52,7 +54,8 @@ const RequireAuth = ({ children }: { children: ReactNode }) => {
     );
   }
   if (state === "signed-out") {
-    return <Navigate to={signInPath(`${location.pathname}${location.search}`)} replace />;
+    const here = `${location.pathname}${location.search}`;
+    return <Navigate to={location.pathname.startsWith("/cyber-arena") ? `/cyber-arena/login?next=${encodeURIComponent(here)}` : signInPath(here)} replace />;
   }
   return <>{children}</>;
 };
