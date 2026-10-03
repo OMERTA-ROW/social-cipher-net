@@ -148,7 +148,10 @@ function CameraDirector({ controlsRef, subject, defaultDistance, minDistance, re
     // Smooth focus: target eases toward the subject; the camera moves by the same delta (no teleport).
     const desired = subject(); const before = c.target.clone(); c.target.lerp(desired, 1 - Math.exp(-4 * dt)); camera.position.add(c.target.clone().sub(before));
     if (resetting.current) {
-      const goal = c.target.clone().add(new THREE.Vector3(0, 0.45, 1).normalize().multiplyScalar(defaultDistance));
+      // Frame from the sunlit side (Sun at origin) at a three-quarter angle so the day hemisphere and terminator are visible.
+      const toSun = c.target.lengthSq() > 1e-6 ? c.target.clone().negate().normalize() : new THREE.Vector3(0, 0, 1);
+      const side = new THREE.Vector3(0, 1, 0).cross(toSun).normalize();
+      const goal = c.target.clone().add(toSun.multiplyScalar(0.75).add(side.multiplyScalar(0.55)).add(new THREE.Vector3(0, 0.38, 0)).normalize().multiplyScalar(defaultDistance));
       camera.position.lerp(goal, 1 - Math.exp(-2.5 * dt)); if (camera.position.distanceTo(goal) < defaultDistance * 0.01) resetting.current = false;
     }
     const cmd = cmdRef.current;
