@@ -90,7 +90,7 @@ const Index = () => {
 
       toast.success("Payment successful! Content unlocked.");
       setFeedRefreshKey((key) => key + 1);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Payment error:", error);
       toast.error("Failed to process payment");
     }
