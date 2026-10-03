@@ -186,6 +186,6 @@
 - [x] Verify pause/reduced-motion, quality scaling, cleanup, builds, focused tests, and bounded desktop/mobile previews
 
 ## Audit follow-ups (2026-10-03)
-- [ ] OAuth callback: oauthRedirectIsAllowed('https://cyberlink.social/auth/callback') false; trustedOAuthRedirect returns /integrations
-- [ ] /privacy and /terms show "Page not found" in production
-- [ ] /forgot-password shows sign-in UI while URL stays /forgot-password
+- [x] OAuth callback: by design — connector OAuth returns only to /integrations or /connectors; app sign-in doesn't use it
+- [ ] /privacy and /terms show "Page not found" — blocked: needs approved legal text from the owner
+- [x] /forgot-password shows sign-in UI while URL stays /forgot-password
