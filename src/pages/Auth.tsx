@@ -602,8 +602,10 @@ const Auth = () => {
           </Tabs>
           )}
           <div className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground">
-            <Link to="/security" className="hover:text-primary">Privacy & security</Link>
-            <Link to="/community-guidelines" className="hover:text-primary">Terms & guidelines</Link>
+            <Link to="/privacy" className="hover:text-primary">Privacy</Link>
+            <Link to="/terms" className="hover:text-primary">Terms</Link>
+            <Link to="/community-guidelines" className="hover:text-primary">Guidelines</Link>
+            <Link to="/contact" className="hover:text-primary">Contact</Link>
           </div>
         </CardContent>
 

@@ -56,6 +56,8 @@ import AIBotAssistant from "./components/AIBotAssistant";
 import SpaceBackground from "./components/space/SpaceBackground";
 import AppShell from "@/components/layout/AppShell";
 import RequireAuth from "@/components/auth/RequireAuth";
+import RouteTitle from "@/components/routing/RouteTitle";
+import PendingPolicy from "./pages/PendingPolicy";
 import type { ReactNode } from "react";
 
 const ShellRoute = ({ children }: { children: ReactNode }) => <AppShell>{children}</AppShell>;
@@ -66,8 +68,12 @@ const AppContent = () => {
     <>
       <SpaceBackground />
       <SecurityMonitor />
+      <RouteTitle />
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/privacy" element={<PendingPolicy kind="privacy" />} />
+        <Route path="/terms" element={<PendingPolicy kind="terms" />} />
+        <Route path="/contact" element={<PendingPolicy kind="contact" />} />
         <Route path="/studio" element={<ShellRoute><Studio /></ShellRoute>} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
