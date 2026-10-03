@@ -4,10 +4,12 @@ import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import Galaxy from "@/components/space/scene/Galaxy";
+import DeepSky from "@/components/space/scene/DeepSky";
 import Starfield from "@/components/space/scene/Starfield";
 import MiningVessel from "@/components/space/scene/MiningVessel";
 import Sun, { PHOTO_RADIUS } from "@/components/space/scene/Sun";
+import { SolarFlares } from "@/components/space/CosmicAnomalies";
+import DarkMatterField from "./DarkMatterField";
 import { CLOUD_TEXTURE_URLS, RING_TEXTURE_URL, SPACE_TEXTURE_URLS, SUN_TEXTURE_URL, useLazyTexture } from "@/components/space/realTextures";
 import {
   CELESTIAL_BODIES, SUN, SUN_VISUAL_RADIUS, bodyPositionAt, bodyRenderPosition, gravityFromFrame, computeFrame, localVisualDistance, nearbyObjects, physicalObstaclesAt,
@@ -37,7 +39,7 @@ export interface VoyageTelemetry {
 interface Props {
   worldRef: React.MutableRefObject<WorldState>; inputRef: React.MutableRefObject<VoyageInput>; cameraCmdRef: React.MutableRefObject<CameraCommand>;
   timeScale: number; quality: QualityTier; labels: boolean; guides: boolean; showVelocity: boolean; reducedMotion: boolean; selected: string; follow: FollowMode;
-  resetCamera: number; onSelect: (id: string) => void; onTelemetry: (t: VoyageTelemetry) => void; onEvents: (e: StepEvent[]) => void; onFirstFrame: () => void; onFps: (fps: number) => void;
+  resetCamera: number; darkMatterEnabled: boolean; scanStartedAt: number | null; outerEnvelope: number; paused: boolean; onSelect: (id: string) => void; onTelemetry: (t: VoyageTelemetry) => void; onEvents: (e: StepEvent[]) => void; onFirstFrame: () => void; onFps: (fps: number) => void;
 }
 
 const tmp = new THREE.Vector3();
@@ -223,12 +225,16 @@ function Simulation(props: Props) {
   const vr = visualRadius(selectedBody.radiusKm);
   const animateField = !props.reducedMotion;
   return <>
-    <Galaxy full={budget.stars} boost={0.4} animate={animateField} />
-    <Starfield full={budget.stars} dpr={budget.dpr} boost={1} animate={animateField} />
+    <DeepSky full={budget.stars} />
+    <Starfield full={budget.stars} dpr={budget.dpr} boost={1} animate={animateField} lensEnabled={props.darkMatterEnabled} />
+    <DarkMatterField enabled={props.darkMatterEnabled} scanStartedAt={props.scanStartedAt} reducedMotion={props.reducedMotion} paused={props.paused} outerEnvelope={props.outerEnvelope} />
     {/* Distances are log-compressed, so physical 1/r² falloff would blow out inner planets: use a constant-intensity sun light. */}
     <ambientLight intensity={0.035} color="#5d78ba" />
     <pointLight intensity={2.4} distance={0} decay={0} color="#fff4e2" />
-    {props.quality === "low" ? <LiteSun /> : <group scale={SUN_VISUAL_RADIUS / PHOTO_RADIUS}><Sun full={props.quality === "high"} animate={animateField && props.timeScale > 0} /></group>}
+    <group scale={SUN_VISUAL_RADIUS / PHOTO_RADIUS}>
+      {props.quality === "low" ? <group scale={PHOTO_RADIUS / SUN_VISUAL_RADIUS}><LiteSun /></group> : <Sun full={props.quality === "high"} animate={animateField && props.timeScale > 0} steady />}
+      <SolarFlares radius={PHOTO_RADIUS} animate={animateField && props.timeScale > 0} full={props.quality === "high"} steady />
+    </group>
     {props.guides && <OrbitGuides />}
     {CELESTIAL_BODIES.map(b => <Planet key={b.id} body={b} worldRef={worldRef} quality={props.quality} labels={props.labels} onSelect={props.onSelect} />)}
     <Obstacles worldRef={worldRef} />

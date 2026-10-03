@@ -17,12 +17,6 @@ import uranus from "@/assets/space/uranus.jpg.asset.json";
 import neptune from "@/assets/space/neptune.jpg.asset.json";
 import moon from "@/assets/space/moon.jpg.asset.json";
 import sun from "@/assets/space/sun.jpg.asset.json";
-import stars2k from "@/assets/space/stars_milky_way.jpg.asset.json";
-import stars8k from "@/assets/space/stars_8k.jpg.asset.json";
-import nebOrion from "@/assets/space/nebula_orion.jpg.asset.json";
-import nebCarina from "@/assets/space/nebula_carina.jpg.asset.json";
-import nebEagle from "@/assets/space/nebula_eagle.jpg.asset.json";
-import nebHorsehead from "@/assets/space/nebula_horsehead.jpg.asset.json";
 
 /**
  * Sourced astronomy imagery, including public-domain mission products and the
@@ -48,21 +42,6 @@ export const CLOUD_TEXTURE_URLS: Record<string, string> = {
 export const MOON_TEXTURE_URL = moon.url;
 export const SUN_TEXTURE_URL = sun.url;
 export const RING_TEXTURE_URL = saturnRing.url;
-export const STARFIELD_URL = stars8k.url;
-export const STARFIELD_LITE_URL = stars2k.url;
-
-/**
- * Real deep-sky photography (Hubble / JWST, public domain) used for the
- * layered nebula backdrop. Each is a wide-field colour image on a near-black
- * sky, so additive blending drops the background cleanly.
- */
-export const NEBULA_URLS = [
-  { url: nebOrion.url, name: "Orion Nebula (Hubble)" },
-  { url: nebCarina.url, name: "Carina Nebula (JWST)" },
-  { url: nebEagle.url, name: "Eagle Nebula (Hubble)" },
-  { url: nebHorsehead.url, name: "Horsehead Nebula (Hubble)" },
-] as const;
-
 const loader = new THREE.TextureLoader();
 loader.setCrossOrigin("anonymous");
 const cache = new Map<string, Promise<THREE.Texture>>();

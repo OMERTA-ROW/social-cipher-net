@@ -1,111 +1,29 @@
-import { useMemo } from "react";
 import * as THREE from "three";
-import { NEBULA_URLS, STARFIELD_LITE_URL, STARFIELD_URL, useLazyTexture } from "../realTextures";
 import { SKY_RADIUS } from "../worldScale";
 
 /**
- * Real astronomy imagery layered over the procedural galaxy.
- *
- *  - an equirectangular Milky Way texture from the credited CC BY 4.0 set,
- *    mapped to the inside of the backdrop sphere, which supplies the
- *    fine star field and Milky Way structure no shader can fake;
- *  - four credited Hubble / Webb deep-sky frames integrated as very large,
- *    distant scene layers so there is photographic nebular detail at mid depth.
- *
- * Everything is additively blended on a black sky, so there are no visible
- * quad edges, and everything streams in lazily after first paint.
- * See src/components/space/ATTRIBUTION.md for sources.
+ * Direction-only procedural deep-space haze. It is an inward-facing opaque
+ * shell in the earliest render queue, so planets and transparent physical
+ * objects always render over it without photographic panels or seams.
  */
 
-const SKY_SHELL = SKY_RADIUS * 0.94;
+const vert = /* glsl */ `
+  varying vec3 vDir;
+  void main(){ vDir=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
+`;
+const frag = /* glsl */ `
+  precision highp float;
+  varying vec3 vDir;
+  float hash(vec3 p){ p=fract(p*.1031); p+=dot(p,p.yzx+33.33); return fract((p.x+p.y)*p.z); }
+  float noise(vec3 p){ vec3 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z); }
+  void main(){ vec3 d=normalize(vDir); float broad=noise(d*3.2+11.0); float dust=noise(d*15.0-4.0); float voids=smoothstep(.44,.72,noise(d*5.3+31.0)); float h=max(0.0,broad-.47)*(1.0-voids*.82)+max(0.0,dust-.72)*.12; vec3 navy=vec3(.006,.012,.028); vec3 haze=vec3(.025,.055,.095)*h*.28; gl_FragColor=vec4(navy+haze,1.0); }
+`;
 
-const NEBULA_PLACEMENT: { dir: [number, number, number]; size: number; tint: string; opacity: number }[] = [
-  { dir: [-0.72, 0.18, 0.67], size: 0.46, tint: "#f2f5ff", opacity: 0.3 },
-  { dir: [0.58, -0.32, 0.75], size: 0.52, tint: "#fff7ef", opacity: 0.26 },
-  { dir: [0.12, 0.52, -0.85], size: 0.4, tint: "#f6f3ff", opacity: 0.22 },
-  { dir: [-0.46, -0.55, -0.7], size: 0.44, tint: "#fff3f5", opacity: 0.18 },
-];
-
-const NebulaPanel = ({
-  url,
-  dir,
-  size,
-  tint,
-  opacity,
-  delay,
-}: {
-  url: string;
-  dir: [number, number, number];
-  size: number;
-  tint: string;
-  opacity: number;
-  delay: number;
-}) => {
-  const map = useLazyTexture(url, { delay, anisotropy: 4 });
-  const { position, quaternion, span } = useMemo(() => {
-    const d = new THREE.Vector3(...dir).normalize();
-    const radius = SKY_RADIUS * 0.62;
-    const pos = d.clone().multiplyScalar(radius);
-    const q = new THREE.Quaternion().setFromRotationMatrix(
-      new THREE.Matrix4().lookAt(new THREE.Vector3(), d.clone().negate(), new THREE.Vector3(0, 1, 0)),
-    );
-    return { position: pos, quaternion: q, span: radius * size };
-  }, [dir, size]);
-
-  if (!map) return null;
-
-  return (
-    <mesh position={position} quaternion={quaternion} frustumCulled={false} renderOrder={-8}>
-      <planeGeometry args={[span, span * 0.62]} />
-      <meshBasicMaterial
-        map={map}
-        color={tint}
-        transparent
-        opacity={opacity}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-        depthTest={false}
-        toneMapped={false}
-      />
-    </mesh>
-  );
-};
-
-const DeepSky = ({ full }: { full: boolean }) => {
-  const sky = useLazyTexture(full ? STARFIELD_URL : STARFIELD_LITE_URL, { delay: 420, anisotropy: 4 });
-
-  return (
-    <group>
-      {sky && (
-        <mesh frustumCulled={false} renderOrder={-9} scale={[-1, 1, 1]}>
-          <sphereGeometry args={[SKY_SHELL, 64, 40]} />
-          <meshBasicMaterial
-            map={sky}
-            color="#ffffff"
-            transparent
-            opacity={full ? 0.85 : 0.7}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-            depthTest={false}
-            toneMapped={false}
-          />
-        </mesh>
-      )}
-
-      {full &&
-        NEBULA_URLS.map((n, i) => (
-          <NebulaPanel
-            key={n.name}
-            url={n.url}
-            dir={NEBULA_PLACEMENT[i].dir}
-            size={NEBULA_PLACEMENT[i].size}
-            tint={NEBULA_PLACEMENT[i].tint}
-            opacity={NEBULA_PLACEMENT[i].opacity}
-            delay={900 + i * 260}
-          />
-        ))}
-    </group>
-  );
-};
+const DeepSky = ({ full }: { full: boolean }) => (
+  <mesh frustumCulled={false} renderOrder={-1000}>
+    <sphereGeometry args={[SKY_RADIUS * 0.985, full ? 48 : 32, full ? 32 : 20]} />
+    <shaderMaterial vertexShader={vert} fragmentShader={frag} side={THREE.BackSide} depthWrite={false} depthTest={false} toneMapped={false} />
+  </mesh>
+);
 
 export default DeepSky;

@@ -19,12 +19,22 @@ const vert = /* glsl */ `
   uniform float uTime;
   uniform float uPixelRatio;
   uniform float uBoost;
+  uniform float uLensEnabled;
+  uniform vec3 uLensA;
+  uniform vec3 uLensB;
 
   varying vec3 vColor;
   varying float vBright;
 
   void main() {
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    vec3 p = position;
+    vec3 dir = normalize(p);
+    vec3 tangentA = normalize(cross(uLensA, vec3(0.0, 1.0, 0.001)));
+    vec3 tangentB = normalize(cross(uLensB, vec3(1.0, 0.001, 0.0)));
+    float lensA = exp(-(1.0 - dot(dir, uLensA)) * 1800.0);
+    float lensB = exp(-(1.0 - dot(dir, uLensB)) * 1800.0);
+    p = normalize(dir + uLensEnabled * 0.001 * (tangentA * lensA + tangentB * lensB)) * length(p);
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
     #include <logdepthbuf_vertex>
 
@@ -129,6 +139,7 @@ const Shell = ({
   dpr,
   boost,
   animate,
+  lensEnabled,
 }: {
   count: number;
   inner: number;
@@ -138,6 +149,7 @@ const Shell = ({
   dpr: number;
   boost: number;
   animate: boolean;
+  lensEnabled: boolean;
 }) => {
   const mat = useRef<THREE.ShaderMaterial>(null);
   const group = useRef<THREE.Points>(null);
@@ -149,8 +161,11 @@ const Shell = ({
       uTime: { value: 0 },
       uPixelRatio: { value: dpr },
       uBoost: { value: boost },
+      uLensEnabled: { value: lensEnabled ? 1 : 0 },
+      uLensA: { value: new THREE.Vector3(2.8, 1.3, -2.4).normalize() },
+      uLensB: { value: new THREE.Vector3(-3.7, -1.7, 2.9).normalize() },
     }),
-    [boost, dpr],
+    [boost, dpr, lensEnabled],
   );
   uniforms.uPixelRatio.value = dpr;
 
@@ -160,6 +175,7 @@ const Shell = ({
     if (mat.current) {
       mat.current.uniforms.uTime.value = time.current;
       mat.current.uniforms.uBoost.value = boost;
+      mat.current.uniforms.uLensEnabled.value = lensEnabled ? 1 : 0;
     }
     if (animate && group.current) group.current.rotation.y += Math.min(delta, 0.05) * spin;
   });
@@ -179,16 +195,16 @@ const Shell = ({
   );
 };
 
-const Starfield = ({ full, dpr, boost, animate = true }: { full: boolean; dpr: number; boost: number; animate?: boolean }) => {
+const Starfield = ({ full, dpr, boost, animate = true, lensEnabled = false }: { full: boolean; dpr: number; boost: number; animate?: boolean; lensEnabled?: boolean }) => {
   const scale = full ? 1 : 0.2;
   return (
     <group>
       {/* near field: physically inside the flight volume, so travel gives real parallax */}
-      <Shell count={Math.round(7000 * scale)} inner={260} outer={620} sizeScale={1.32} spin={0.00065} dpr={dpr} boost={boost} animate={animate} />
-      <Shell count={Math.round(11000 * scale)} inner={900} outer={1900} sizeScale={1.02} spin={0.0003} dpr={dpr} boost={boost} animate={animate} />
-      <Shell count={Math.round(13000 * scale)} inner={2500} outer={4400} sizeScale={0.82} spin={0.00013} dpr={dpr} boost={boost} animate={animate} />
-      <Shell count={Math.round(13000 * scale)} inner={5800} outer={9000} sizeScale={0.7} spin={0.00005} dpr={dpr} boost={boost} animate={animate} />
-      <Shell count={Math.round(11000 * scale)} inner={12000} outer={18000} sizeScale={0.62} spin={0.00002} dpr={dpr} boost={boost} animate={animate} />
+      <Shell count={Math.round(7000 * scale)} inner={260} outer={620} sizeScale={0.82} spin={0.00065} dpr={dpr} boost={boost * 0.72} animate={animate} lensEnabled={lensEnabled} />
+      <Shell count={Math.round(11000 * scale)} inner={900} outer={1900} sizeScale={0.68} spin={0.0003} dpr={dpr} boost={boost * 0.7} animate={animate} lensEnabled={lensEnabled} />
+      <Shell count={Math.round(13000 * scale)} inner={2500} outer={4400} sizeScale={0.56} spin={0.00013} dpr={dpr} boost={boost * 0.68} animate={animate} lensEnabled={lensEnabled} />
+      <Shell count={Math.round(13000 * scale)} inner={5800} outer={9000} sizeScale={0.48} spin={0.00005} dpr={dpr} boost={boost * 0.66} animate={animate} lensEnabled={lensEnabled} />
+      <Shell count={Math.round(11000 * scale)} inner={12000} outer={18000} sizeScale={0.42} spin={0.00002} dpr={dpr} boost={boost * 0.64} animate={animate} lensEnabled={lensEnabled} />
     </group>
   );
 };
