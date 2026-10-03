@@ -17,7 +17,26 @@ export interface ServerConnectionRow {
   status: string | null;
   provider_account_id: string | null;
   last_error?: string | null;
+  health?: string | null;
 }
+
+/**
+ * The single rule for showing "Connected"/"Active" anywhere in the app: a
+ * server-written connected row, a provider-verified account id, and no
+ * outstanding provider error. Rows saved from pasted keys, or rows whose
+ * provider rejected the token, never qualify. Purely a display rule —
+ * nothing is deleted or revoked.
+ */
+export const isVerifiedConnection = (row: ServerConnectionRow | null | undefined) =>
+  !!row &&
+  row.status === "connected" &&
+  !!row.provider_account_id &&
+  !row.last_error &&
+  !["failing", "error", "unverified", "replaced"].includes(String(row.health ?? ""));
+
+/** A row that exists but has a provider error / failing health. */
+export const connectionNeedsAttention = (row: ServerConnectionRow | null | undefined) =>
+  !!row && (row.status === "error" || !!row.last_error || row.health === "failing" || row.health === "error");
 
 export interface StatusInput {
   row: ServerConnectionRow | null;
@@ -28,7 +47,8 @@ export interface StatusInput {
 
 export const integrationState = ({ row, missingConfig, connecting, lastResult }: StatusInput): IntegrationState => {
   if (connecting) return "Connecting";
-  if (row?.status === "connected" && row.provider_account_id) return "Connected";
+  if (isVerifiedConnection(row)) return "Connected";
+  if (connectionNeedsAttention(row)) return "Connection failed";
   if (row?.status === "error" || lastResult === "failed") return "Connection failed";
   if (lastResult === "disconnected") return "Disconnected";
   if (missingConfig === null || missingConfig.length > 0) return "Approval required";
