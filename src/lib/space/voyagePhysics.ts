@@ -330,7 +330,8 @@ export function thrustFrame(p: THREE.Vector3, v: THREE.Vector3, t: number) {
  */
 export function commandedThrust(ship: ShipState, input: PhysicsInput, t: number, dt: number) {
   const out = { acc: new THREE.Vector3(), fuelKg: 0, thrustN: 0, fraction: 0 };
-  if (ship.status !== "flying" || ship.fuelKg <= 0) return out;
+  // A fully damaged hull is disabled even if a caller set damage without changing status.
+  if (ship.status !== "flying" || ship.fuelKg <= 0 || ship.damage >= 100) return out;
   const mass = shipMass(ship); const f = thrustFrame(ship.position, ship.velocity, t);
   if (f.relVel.lengthSq() > 1e-10) ship.heading.copy(f.forward); // nose holds prograde (relative to reference body)
   const main = engineSpec(ship.engineMode); const rcs = engineSpec("standard"); const scale = input.thrustScale ?? 1;

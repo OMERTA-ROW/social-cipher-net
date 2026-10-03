@@ -81,3 +81,10 @@ See `voyage-simulation.md` → Limitations. Not marked production-ready: real-de
 | Keyboard +/−/X on desktop | PASS | Playwright keyboard: +30%, −20% rev, Cut 0% |
 | Desktop button clicks, mobile (390px, touch) taps on +10 / Cut | PASS | ordinary Playwright click/tap, no force; taps slow under software WebGL |
 | Slider drag on real touch device, real-GPU cruise flight | NOT TESTED | |
+
+## Independent audit regressions (2026-10-03 03:14 UTC)
+External audit (auditor's local copy) reported 1 PASS / 8 FAIL. Re-encoded as `src/lib/space/voyageAcceptance.test.ts` against this workspace's code:
+- Reproduced and FIXED: 100% damage still burned fuel (thrust now disabled when damage ≥ 100).
+- Did NOT reproduce here (PASS in this workspace): swept-sphere first contact t=0.4; Sun impact; polar orbit-assist tangent speed; softened circular speed (v²/r = μ/(r²+ε²) exactly, matching the spec's G·m1·m2/(r²+ε²); a Plummer (r²+ε²)^{3/2} model would give the reported ~0.07% difference); 25% vs 100% throttle ratio 0.25 (with fuel not limiting — at very large dt both are fuel-capped and match); coplanar tilted-ring traversal; empty fuel.
+- Design difference, not a bug here: fixed substep is a constant 2 simulated seconds at every time scale (bounded by MAX_SUBSTEPS), not 1/60 s. An observed dt of 1.6667 implies the auditor tested a different file revision.
+- Likely cause of the gap: the audited file differs from this workspace's saved revision (it is not published). Exact audit test inputs were not available here; results are not proof that the auditor's own tests pass.
