@@ -4,6 +4,8 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { markRecoveryVerified, safeReturnPath } from "@/lib/authRedirect";
+import { takeSocialNext } from "@/components/auth/SocialSignIn";
+import { isIntegrationReturn, storeIntegrationResult, takeIntegrationReturn } from "@/lib/integrationStatus";
 
 /**
  * Landing page for email confirmation, password-reset and OAuth redirects.
@@ -18,8 +20,38 @@ const AuthCallback = () => {
     const url = new URL(window.location.href);
     const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
     const type = hash.get("type") ?? url.searchParams.get("type");
-    const next = safeReturnPath(url.searchParams.get("next") || "/dashboard");
+    const next = safeReturnPath(url.searchParams.get("next") || takeSocialNext() || "/dashboard");
     const errDesc = hash.get("error_description") ?? url.searchParams.get("error_description") ?? hash.get("error") ?? url.searchParams.get("error");
+
+    // Account-integration return (provider consent). Never treated as sign-in:
+    // the server verifies state, owner, expiry and replay before storing anything.
+    if (isIntegrationReturn(url.searchParams)) {
+      const back = takeIntegrationReturn();
+      window.history.replaceState(null, "", "/auth/callback");
+      (async () => {
+        try {
+          const { data: u } = await supabase.auth.getUser();
+          if (!u.user) {
+            storeIntegrationResult({ serviceId: null, ok: false, message: "Your CyberLink session ended before the connection finished. Sign in and try again." });
+          } else {
+            const { data, error: fnErr } = await supabase.functions.invoke("connector-oauth", {
+              body: { action: "callback", state: url.searchParams.get("state"), code: url.searchParams.get("code"), error: url.searchParams.get("error") },
+            });
+            let message = data?.error as string | undefined;
+            if (fnErr && !message) {
+              try { message = (await (fnErr as { context?: Response }).context?.json())?.error; } catch { /* keep generic */ }
+            }
+            storeIntegrationResult(data?.ok
+              ? { serviceId: data.service_id ?? null, ok: true, message: `Connected${data.account_name ? ` as ${data.account_name}` : ""}.` }
+              : { serviceId: data?.service_id ?? null, ok: false, message: message ?? "The connection could not be completed. Nothing was changed." });
+          }
+        } catch {
+          storeIntegrationResult({ serviceId: null, ok: false, message: "Network error while finishing the connection. Nothing was changed." });
+        }
+        if (active) navigate(back, { replace: true });
+      })();
+      return () => { active = false; };
+    }
 
     if (errDesc) {
       const expired = /expired|invalid/i.test(errDesc);

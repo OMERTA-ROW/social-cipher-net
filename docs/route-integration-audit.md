@@ -69,3 +69,9 @@ Voyage throttle, pause, speed, probe, dock, brake, thrust-pad and camera control
 - RequireAuth: a failed `getUser()` no longer leaves a permanent spinner; it falls back to the restored session for routing only (data still guarded server-side) or redirects to sign-in.
 - Legacy Navigation: logo is a link home; every icon item is a real link with an accessible name. Rendered only on pages outside the app shell; no such page was browser-checked this round (NOT TESTED).
 - Browser (anonymous, desktop): `/auth/callback?type=recovery` without code, with bogus code, and `/reset-password` with no session all show the invalid-link state — PASS. Real reset email, valid recovery link, fresh login/signup/logout: BLOCKED (no authorized test identity).
+
+## Account integrations round (Oct 3 2026)
+- `/integrations` now renders the Account Integrations page (old platform list remains at `/connectors`). See `docs/account-integrations-audit.md`.
+- `/login` and `/signup`: Continue with Google (managed provider, returns via `/auth/callback`, keeps safe `next`) and Continue with GitHub (explains it's unsupported; no flow started).
+- `/auth/callback` now separates three returns: integration (state + started marker), password recovery, sign-in/confirmation.
+- Anonymous `/integrations` → `/login?next=%2Fintegrations`: PASS (desktop). Social button clicks and mobile: NOT TESTED (test browser stalled on animated background).

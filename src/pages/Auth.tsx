@@ -11,6 +11,7 @@ import { Loader2, Lock } from "lucide-react";
 import ScrollDatePicker from "@/components/ScrollDatePicker";
 import { clearRecoveryVerified, hasVerifiedRecovery, markRecoveryVerified, safeReturnPath } from "@/lib/authRedirect";
 import { fetchOnboardingComplete } from "@/hooks/useOnboarding";
+import SocialSignIn from "@/components/auth/SocialSignIn";
 
 type RecoveryState = "none" | "pending" | "ready" | "expired";
 
@@ -425,6 +426,7 @@ const Auth = () => {
                 Sign Up
               </TabsTrigger>
             </TabsList>
+            {!showForgotPassword && <div className="mb-4"><SocialSignIn nextPath={nextPath} /></div>}
             <TabsContent value="signin" className="animate-fade-in">
               {showForgotPassword ? (
                 <form onSubmit={handleForgotPassword} className="space-y-4">

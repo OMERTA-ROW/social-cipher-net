@@ -1,3 +1,4 @@
+import { rememberIntegrationReturn } from "@/lib/integrationStatus";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -93,6 +94,9 @@ const ConnectDialog = ({
       if (!authorizeUrl) throw new Error("No sign-in link was returned");
 
       // Authorise in a popup so the user keeps their place on this page.
+      // The popup inherits this tab's session storage, so /auth/callback knows
+      // it is an integration return and sends the popup back here.
+      rememberIntegrationReturn("/connectors");
       const popup = window.open(
         authorizeUrl,
         "cyberlink-oauth",

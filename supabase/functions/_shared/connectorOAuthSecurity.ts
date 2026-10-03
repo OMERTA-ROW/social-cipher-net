@@ -22,7 +22,7 @@ export const oauthRedirectIsAllowed = (raw: string): boolean => {
       "https://id-preview--f6447429-4027-45e0-bfb6-e09c4b149510.lovable.app",
       "http://localhost:8080",
     ]);
-    return allowedOrigins.has(url.origin) && ["/integrations", "/connectors"].includes(url.pathname);
+    return allowedOrigins.has(url.origin) && url.pathname === "/auth/callback";
   } catch {
     return false;
   }
@@ -31,7 +31,7 @@ export const oauthRedirectIsAllowed = (raw: string): boolean => {
 export const trustedOAuthRedirect = (requestOrigin: string | null): string | null => {
   if (!requestOrigin) return null;
   try {
-    const callback = new URL("/integrations", requestOrigin).toString();
+    const callback = new URL("/auth/callback", requestOrigin).toString();
     return oauthRedirectIsAllowed(callback) ? callback : null;
   } catch {
     return null;

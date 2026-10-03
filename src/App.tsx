@@ -21,6 +21,7 @@ import Messages from "./pages/Messages";
 import CyberGamers from "./pages/CyberGamers";
 import CyberStreamer from "./pages/CyberStreamer";
 import Connectors from "./pages/Connectors";
+import Integrations from "./pages/Integrations";
 import Theater from "./pages/Theater";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
@@ -90,7 +91,7 @@ const AppContent = () => {
         <Route path="/cyber-arena" element={<CyberGamers />} />
         <Route path="/cyber-streamer" element={<ShellRoute><CyberStreamer /></ShellRoute>} />
         <Route path="/connectors" element={<PrivateRoute><ShellRoute><Connectors /></ShellRoute></PrivateRoute>} />
-        <Route path="/integrations" element={<PrivateRoute><ShellRoute><Connectors /></ShellRoute></PrivateRoute>} />
+        <Route path="/integrations" element={<PrivateRoute><ShellRoute><Integrations /></ShellRoute></PrivateRoute>} />
         <Route path="/theater" element={<ShellRoute><Theater /></ShellRoute>} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
