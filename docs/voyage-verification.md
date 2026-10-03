@@ -65,3 +65,19 @@ See `voyage-simulation.md` → Limitations. Not marked production-ready: real-de
 - `oauthRedirectIsAllowed('…/auth/callback')` is false on purpose: connector OAuth only returns to `/integrations` or `/connectors`. App sign-in doesn't use that helper. Not changed.
 - `/privacy` and `/terms` don't exist. They need real approved legal text, which hasn't been provided.
 - Forgot-password view now follows the URL (fixed).
+
+## Throttle (2026-10-03)
+
+| Check | Status | Evidence |
+|---|---|---|
+| 0% throttle burns no fuel | PASS | unit test |
+| Partial/full/reverse fuel proportional to delivered thrust | PASS | unit test (50% = 0.5× full; reverse = full) ; browser readout 30% → 1.47 kg/s, 40% → 1.96 kg/s, 20% → 0.98 kg/s |
+| Forward accelerates along heading, reverse decelerates | PASS | unit test vs. gravity-only control |
+| Fuel depletion stops thrust at exactly 0 kg | PASS | unit test |
+| No thrust when destroyed | PASS | unit test; docked/landed covered by status gate in code |
+| Cruise reaches >90 km/s in 1,200 s sim without position jumps | PASS | unit test |
+| Brake stops relative motion in cruise | PASS | unit test |
+| Max-speed planet impact, no tunnelling | PASS | unit test (300 km/s) |
+| Keyboard +/−/X on desktop | PASS | Playwright keyboard: +30%, −20% rev, Cut 0% |
+| Desktop button clicks, mobile (390px, touch) taps on +10 / Cut | PASS | ordinary Playwright click/tap, no force; taps slow under software WebGL |
+| Slider drag on real touch device, real-GPU cruise flight | NOT TESTED | |

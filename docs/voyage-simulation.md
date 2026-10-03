@@ -97,3 +97,12 @@ The Sound toggle creates/resumes the `AudioContext` inside the click, plays a co
 - Landing zones don't rotate with the planet's surface texture.
 - Ring collision thickness is widened to 50 km for robust contact.
 - Time scales are bounded at 100×; interplanetary transfers take minutes of real time.
+
+## Throttle and cruise drive
+
+- `ShipState.throttleSetting` is a persistent signed main-engine setting in [-1, +1]; it stays set until changed (slider, +/- 10% buttons/keys, Cut/X/0), and is zeroed only by engine cut, Reset Ship or destruction.
+- Main engine force = `thrustN(mode) · throttleSetting · heading`; the ship's nose (`heading`) holds prograde relative to the current reference body, so negative throttle is a retro burn. W/S/A/D/R/F RCS thrusters (standard rating) still steer laterally/vertically.
+- Fuel burn per step = Σ (delivered thrust / (Isp · g0)) · dt over main engine, brake and RCS; if a step would need more fuel than remains, all thrust is scaled so fuel hits exactly 0. No thrust when fuel is empty, docked, landed or destroyed.
+- Brake retro-fires the active engine against relative velocity, sized so it cannot overshoot, and cancels throttle for that step.
+- Engine modes: Standard 144 kN / Isp 3,000 s (Δv ≈ 4.8 km/s). **Cruise drive** (T key / Cruise button) is a disclosed fictional high-performance engine, 1,200 kN / Isp 200,000 s (Δv ≈ 320 km/s), so Earth→Mars at ~150 km/s takes ~90 real seconds at 100×. Gravity, inertia, fuel and collisions are unchanged; there is no teleport, and the throttle is independent of the 1×/10×/100× time scale.
+- At 300 km/s and the 2 s fixed step the ship moves ≤ 600 km per substep; swept collisions handle this (tested: cruise-speed planet impact registers, ship never ends inside the surface).
