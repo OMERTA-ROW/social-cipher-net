@@ -231,7 +231,10 @@ function Simulation(props: Props) {
     {/* Distances are log-compressed, so physical 1/r² falloff would blow out inner planets: use a constant-intensity sun light. */}
     <ambientLight intensity={0.035} color="#5d78ba" />
     <pointLight intensity={2.4} distance={0} decay={0} color="#fff4e2" />
-    {props.quality === "low" ? <LiteSun /> : <group scale={SUN_VISUAL_RADIUS / PHOTO_RADIUS}><Sun full={props.quality === "high"} animate={animateField && props.timeScale > 0} steady /><SolarFlares radius={PHOTO_RADIUS} animate={animateField && props.timeScale > 0} full={props.quality === "high"} steady /></group>}
+    <group scale={SUN_VISUAL_RADIUS / PHOTO_RADIUS}>
+      {props.quality === "low" ? <group scale={PHOTO_RADIUS / SUN_VISUAL_RADIUS}><LiteSun /></group> : <Sun full={props.quality === "high"} animate={animateField && props.timeScale > 0} steady />}
+      <SolarFlares radius={PHOTO_RADIUS} animate={animateField && props.timeScale > 0} full={props.quality === "high"} steady />
+    </group>
     {props.guides && <OrbitGuides />}
     {CELESTIAL_BODIES.map(b => <Planet key={b.id} body={b} worldRef={worldRef} quality={props.quality} labels={props.labels} onSelect={props.onSelect} />)}
     <Obstacles worldRef={worldRef} />

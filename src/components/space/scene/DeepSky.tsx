@@ -20,7 +20,7 @@ const frag = /* glsl */ `
 `;
 
 const DeepSky = ({ full }: { full: boolean }) => (
-  <mesh frustumCulled={false} renderOrder={-1000} scale={[-1, 1, 1]}>
+  <mesh frustumCulled={false} renderOrder={-1000}>
     <sphereGeometry args={[SKY_RADIUS * 0.985, full ? 48 : 32, full ? 32 : 20]} />
     <shaderMaterial vertexShader={vert} fragmentShader={frag} side={THREE.BackSide} depthWrite={false} depthTest={false} toneMapped={false} />
   </mesh>
