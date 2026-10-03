@@ -201,28 +201,28 @@ const SolarSystemVoyage = () => {
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex items-end justify-between gap-2 p-2 sm:p-4">
       <div className="pointer-events-auto select-none" style={{ touchAction: "none" }}>
         <div className="mb-1 grid grid-cols-4 gap-1">
-          <Button size="sm" variant={assist ? "default" : "outline"} aria-pressed={assist} onClick={toggleAssist} className="h-9 px-2 text-[11px]"><Orbit className="mr-1 h-3.5 w-3.5" />Assist</Button>
-          <Button size="sm" variant="outline" onClick={doLaunch} disabled={status !== "flying"} className="h-9 px-2 text-[11px]"><Rocket className="mr-1 h-3.5 w-3.5" />Probe</Button>
-          <Button size="sm" variant="outline" onClick={doDock} disabled={status === "destroyed" || status === "landed"} className="h-9 px-2 text-[11px]"><Satellite className="mr-1 h-3.5 w-3.5" />{status === "docked" ? "Undock" : "Dock"}</Button>
-          <Button size="sm" variant="destructive" aria-label="Brake (hold)" {...hold("brake", 1)} className="h-9 px-2 text-[11px]">Brake</Button>
+          <Button size="sm" variant={assist ? "default" : "outline"} aria-pressed={assist} onClick={toggleAssist} className="h-9 bg-background/80 px-2 text-[11px]"><Orbit className="mr-1 h-3.5 w-3.5" />Assist</Button>
+          <Button size="sm" variant="outline" onClick={doLaunch} disabled={status !== "flying"} className="h-9 bg-background/80 px-2 text-[11px]"><Rocket className="mr-1 h-3.5 w-3.5" />Probe</Button>
+          <Button size="sm" variant="outline" onClick={doDock} disabled={status === "destroyed" || status === "landed"} className="h-9 bg-background/80 px-2 text-[11px]"><Satellite className="mr-1 h-3.5 w-3.5" />{status === "docked" ? "Undock" : "Dock"}</Button>
+          <Button size="sm" variant="destructive" aria-label="Brake (hold)" {...hold("brake", 1)} className="h-9 bg-background/80 px-2 text-[11px]">Brake</Button>
         </div>
         <div className="grid w-44 grid-cols-3 gap-1 sm:w-48" aria-label="Thrust pad (hold buttons; multiple at once)">
-          <Button variant="outline" aria-label="Radial out thrust (R)" {...hold("y", 1)} className="h-11">R</Button>
-          <Button variant="outline" aria-label="Prograde thrust (W)" {...hold("z", 1)} className="h-11">W</Button>
-          <Button variant="outline" aria-label="Radial in thrust (F)" {...hold("y", -1)} className="h-11">F</Button>
-          <Button variant="outline" aria-label="Lateral left thrust (A)" {...hold("x", -1)} className="h-11">A</Button>
-          <Button variant="outline" aria-label="Retrograde thrust (S)" {...hold("z", -1)} className="h-11">S</Button>
-          <Button variant="outline" aria-label="Lateral right thrust (D)" {...hold("x", 1)} className="h-11">D</Button>
+          <Button variant="outline" className="h-11 bg-background/80" aria-label="Radial out thrust (R)" {...hold("y", 1)} >R</Button>
+          <Button variant="outline" className="h-11 bg-background/80" aria-label="Prograde thrust (W)" {...hold("z", 1)} >W</Button>
+          <Button variant="outline" className="h-11 bg-background/80" aria-label="Radial in thrust (F)" {...hold("y", -1)} >F</Button>
+          <Button variant="outline" className="h-11 bg-background/80" aria-label="Lateral left thrust (A)" {...hold("x", -1)} >A</Button>
+          <Button variant="outline" className="h-11 bg-background/80" aria-label="Retrograde thrust (S)" {...hold("z", -1)} >S</Button>
+          <Button variant="outline" className="h-11 bg-background/80" aria-label="Lateral right thrust (D)" {...hold("x", 1)} >D</Button>
         </div>
       </div>
       <div className="pointer-events-auto grid select-none grid-cols-3 gap-1" style={{ touchAction: "none" }} aria-label="Camera controls">
-        <Button size="icon" variant="outline" aria-label="Zoom in" {...cam("zoom", -1)}><Plus className="h-4 w-4" /></Button>
-        <Button size="icon" variant="outline" aria-label="Orbit camera up" {...cam("rotateY", 1)}><ArrowUp className="h-4 w-4" /></Button>
-        <Button size="icon" variant="outline" aria-label="Zoom out" {...cam("zoom", 1)}><Minus className="h-4 w-4" /></Button>
-        <Button size="icon" variant="outline" aria-label="Orbit camera left" {...cam("rotateX", -1)}><ArrowLeft className="h-4 w-4" /></Button>
-        <Button size="icon" variant="outline" aria-label="Orbit camera down" {...cam("rotateY", -1)}><ArrowDown className="h-4 w-4" /></Button>
-        <Button size="icon" variant="outline" aria-label="Orbit camera right" {...cam("rotateX", 1)}><ArrowRight className="h-4 w-4" /></Button>
-        <Button size="icon" variant="outline" aria-label="Recenter camera" onClick={() => setResetCamera(v => v + 1)}><Crosshair className="h-4 w-4" /></Button>
+        <Button size="icon" variant="outline" className="bg-background/80" aria-label="Zoom in" {...cam("zoom", -1)}><Plus className="h-4 w-4" /></Button>
+        <Button size="icon" variant="outline" className="bg-background/80" aria-label="Orbit camera up" {...cam("rotateY", 1)}><ArrowUp className="h-4 w-4" /></Button>
+        <Button size="icon" variant="outline" className="bg-background/80" aria-label="Zoom out" {...cam("zoom", 1)}><Minus className="h-4 w-4" /></Button>
+        <Button size="icon" variant="outline" className="bg-background/80" aria-label="Orbit camera left" {...cam("rotateX", -1)}><ArrowLeft className="h-4 w-4" /></Button>
+        <Button size="icon" variant="outline" className="bg-background/80" aria-label="Orbit camera down" {...cam("rotateY", -1)}><ArrowDown className="h-4 w-4" /></Button>
+        <Button size="icon" variant="outline" className="bg-background/80" aria-label="Orbit camera right" {...cam("rotateX", 1)}><ArrowRight className="h-4 w-4" /></Button>
+        <Button size="icon" variant="outline" className="bg-background/80" aria-label="Recenter camera" onClick={() => setResetCamera(v => v + 1)}><Crosshair className="h-4 w-4" /></Button>
         <Button size="icon" variant="outline" asChild title="Home"><Link to="/" aria-label="Home"><Home className="h-4 w-4" /></Link></Button>
       </div>
     </div>
