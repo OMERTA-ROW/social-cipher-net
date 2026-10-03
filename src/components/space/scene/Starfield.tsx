@@ -165,7 +165,7 @@ const Shell = ({
       uLensA: { value: new THREE.Vector3(2.8, 1.3, -2.4).normalize() },
       uLensB: { value: new THREE.Vector3(-3.7, -1.7, 2.9).normalize() },
     }),
-    [boost, dpr],
+    [boost, dpr, lensEnabled],
   );
   uniforms.uPixelRatio.value = dpr;
 

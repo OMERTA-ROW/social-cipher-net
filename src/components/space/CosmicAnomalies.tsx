@@ -194,6 +194,7 @@ const smoothPulse = (phase: number, rise: number, fall: number) => {
   if (phase <= rise) return THREE.MathUtils.smoothstep(phase, 0, rise);
   if (phase >= fall) return 0;
   return 1 - THREE.MathUtils.smoothstep(phase, rise, fall);
+};
 
 /** Decorative cosmic-event image rendering is retired; physical systems render elsewhere. */
 const CosmicAnomalies = () => null;
