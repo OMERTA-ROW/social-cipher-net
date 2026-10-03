@@ -184,3 +184,8 @@
 ## Complete astronomical visual integration (Oct 1)
 - [x] Apply the shared NASA-inspired astronomical effects consistently across site backdrop, Voyage, mining, and descent/world scenes
 - [x] Verify pause/reduced-motion, quality scaling, cleanup, builds, focused tests, and bounded desktop/mobile previews
+
+## Audit follow-ups (2026-10-03)
+- [ ] OAuth callback: oauthRedirectIsAllowed('https://cyberlink.social/auth/callback') false; trustedOAuthRedirect returns /integrations
+- [ ] /privacy and /terms show "Page not found" in production
+- [ ] /forgot-password shows sign-in UI while URL stays /forgot-password
