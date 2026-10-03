@@ -51,3 +51,24 @@ Sign-in providers: **Google** enabled (managed). **GitHub** sign-in is not suppo
 | Published cyberlink.social | NOT TESTED | Publishing not authorized; callbacks are already allowlisted for it |
 
 Automated: 154/154 focused tests pass; type check passes.
+
+## Security hardening pass (2026-10-03)
+
+Source docs used: Stripe https://docs.stripe.com/connect/oauth-reference · Supabase https://supabase.com/docs/guides/auth/social-login/auth-google and https://supabase.com/docs/guides/auth/redirect-urls · Slack https://docs.slack.dev/authentication/installing-with-oauth/ · Notion https://developers.notion.com/guides/get-started/authorization
+
+| Finding | Change | Status |
+|---|---|---|
+| connector-credentials save marked connected/healthy before storing secrets | Saves as `pending`/`unverified`; refuses to overwrite an already-connected account (409); rolls back row+secrets if any vault write fails; `acct:*` services rejected (OAuth only); typed name stored as label, never as `account_name`/identity | Code changed, NOT DEPLOYED |
+| putSecret truncated at 8000 chars | Rejects values > 16000 chars with an error; no truncation. Encryption key/format unchanged (v1, same HKDF salt) | Code changed, NOT DEPLOYED |
+| testConnection treated missing result as success | Requires explicit `ok === true` result | Code changed (front end) |
+| useConnections ignored DB errors, auth race | Request-sequence guard discards stale/previous-user responses; clears on SIGNED_IN/SIGNED_OUT; exposes `error` | Code changed (front end) |
+| One token shape for all providers | Per-provider `successField` (Stripe: `stripe_user_id`); TikTok `client_key`; Notion Basic+JSON; X Basic+client_id; tokens stored only if returned; granted scopes recorded from token response | Code changed, unit-tested, NOT DEPLOYED |
+| Stripe `read_only` scope | Removed (Extensions-only). Stripe stays **Approval required** until owner confirms app type; no auto expansion to read_write; not refreshable; livemode recorded | Code changed |
+| Supabase sign-in callback | Provider callback is the backend `/auth/v1/callback` (managed); app `redirect_uri` is `/auth/callback`; integrations use distinct `connector_oauth_attempts` state | Unchanged, documented |
+
+Open / blocked:
+- Slack: current adapter is "Sign in with Slack" (OIDC, top-level token). A workspace install with `authed_user.access_token` needs a separate adapter — NOT IMPLEMENTED.
+- Legacy `/integrations` callback → `/auth/callback` migration for in-flight legacy attempts — NOT IMPLEMENTED.
+- Stripe livemode match vs. platform key mode — recorded only, not enforced.
+- Edge function changes are not deployed (preview-only instruction); live backend still runs the previous code.
+- All real provider flows BLOCKED: no provider client credentials configured.
