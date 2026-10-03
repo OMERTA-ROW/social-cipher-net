@@ -112,6 +112,32 @@ const Connectors = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Result handed over by /auth/callback (the provider now returns there).
+  // Inside the popup: pass it to the opener and close. Full-page fallback: show it here.
+  useEffect(() => {
+    const result = takeIntegrationResult();
+    if (!result) return;
+    const inPopup = !!window.opener && window.opener !== window;
+    if (inPopup) {
+      try {
+        window.opener.postMessage(
+          { type: "cyberlink:oauth-result", ok: result.ok, message: result.message, account: null, serviceId: result.serviceId },
+          window.location.origin,
+        );
+      } catch { /* opener gone; fall through to local display */ }
+      window.close();
+      return;
+    }
+    if (result.ok) {
+      setRecovery(null);
+      toast.success(result.message);
+    } else {
+      setRecovery({ serviceId: result.serviceId, message: result.message });
+    }
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Confirmation coming back from the OAuth popup.
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -122,7 +148,7 @@ const Connectors = () => {
         toast.success(
           event.data.account
             ? `Connected as ${event.data.account}`
-            : "Account connected",
+            : event.data.message || "Account connected",
         );
         refresh();
       } else {
