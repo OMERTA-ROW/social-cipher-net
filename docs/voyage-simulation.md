@@ -79,6 +79,10 @@ On-screen: Pause/Resume, 1×/10×/100×, body selector, thrust pad (hold; severa
 
 Auto measures FPS in 2 s windows: drops a tier below 28 FPS, rises after three windows above 55.
 
+## Lighting
+
+Because distances are squeezed, the Sun is a constant-intensity point light (no distance falloff, intensity 2.4) with a dim blue fill light (0.035). Glow applies only to the brightest pixels (threshold 0.95). Saturn's ring uses radial texture coordinates: u = (r − inner)/(outer − inner).
+
 ## Preferences
 
 Stored under `voyage.sim.preferences.v3`: quality, labels, orbit guides, velocity vector, camera follow, thrust power, time scale, selected body. Each field is validated on load. Sound always starts off because browsers only allow audio after a user gesture.
