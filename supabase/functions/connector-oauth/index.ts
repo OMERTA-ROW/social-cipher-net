@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
-import { putSecret } from "../_shared/connectorVault.ts";
+import { getSecrets, putSecret } from "../_shared/connectorVault.ts";
+import { buildAuthorizeUrl, getIntegration, INTEGRATION_PROVIDERS, integrationScope, missingConfiguration } from "../_shared/accountIntegrations.ts";
+import { exchangeCode, fetchIdentity, refreshToken, revokeToken } from "../_shared/integrationOAuth.ts";
 import { audit } from "../_shared/connectorEngine.ts";
 import { getDefinition } from "../_shared/connectorManifest.ts";
 import {
@@ -230,6 +232,17 @@ const fetchProviderIdentity = async (
 const envKey = (provider: string, suffix: string) =>
   `${provider.toUpperCase()}_${suffix}`;
 
+const ACCT = "acct:";
+const integrationFor = (serviceId: string) =>
+  serviceId.startsWith(ACCT) ? getIntegration(serviceId.slice(ACCT.length)) : undefined;
+const integrationCreds = (p: { secretPrefix: string }) => {
+  const clientId = Deno.env.get(`${p.secretPrefix}_CLIENT_ID`);
+  const clientSecret = Deno.env.get(`${p.secretPrefix}_CLIENT_SECRET`);
+  return clientId && clientSecret ? { clientId, clientSecret } : null;
+};
+const tokenExpiry = (t: Record<string, unknown>) =>
+  t.expires_in ? new Date(Date.now() + Number(t.expires_in) * 1000).toISOString() : null;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -252,6 +265,92 @@ Deno.serve(async (req) => {
       authHeader.replace("Bearer ", ""),
     );
     if (authError || !user) return json({ error: "Sign in required" }, 401);
+
+    // ================= account integrations (acct:<provider>) =================
+    if (action === "integration_status") {
+      const env = (n: string) => Deno.env.get(n);
+      return json({
+        ok: true,
+        providers: INTEGRATION_PROVIDERS.map((p) => ({
+          id: p.id,
+          service_id: ACCT + p.id,
+          scopes: p.scopes,
+          missing: missingConfiguration(p, env),
+          owner_note: p.ownerNote ?? null,
+          revocable: Boolean(p.revoke),
+          refreshable: p.refreshable,
+        })),
+      });
+    }
+
+    if (action === "integration_start") {
+      const p = getIntegration(String(body.provider ?? ""));
+      if (!p) return json({ error: "Unsupported integration" }, 400);
+      const redirectUri = trustedOAuthRedirect(req.headers.get("Origin"));
+      if (!redirectUri || !oauthRedirectIsAllowed(redirectUri)) return json({ error: "invalid_origin", message: "This site address is not on the approved callback list." }, 400);
+      const creds = integrationCreds(p);
+      if (!creds) return json({ error: "not_configured", missing: missingConfiguration(p, (n) => Deno.env.get(n)) }, 400);
+      const state = createOAuthState();
+      const verifier = p.pkce ? createCodeVerifier() : null;
+      const { error: attemptError } = await admin.from("connector_oauth_attempts").insert({
+        user_id: user.id,
+        service_id: ACCT + p.id,
+        provider: p.id,
+        account_key: "primary",
+        account_label: null,
+        state_hash: await sha256(state),
+        code_verifier: verifier,
+        redirect_uri: redirectUri,
+        expires_at: new Date(Date.now() + OAUTH_ATTEMPT_TTL_MS).toISOString(),
+      });
+      if (attemptError) return json({ error: "Could not start authorization" }, 500);
+      return json({
+        ok: true,
+        authorize_url: buildAuthorizeUrl(p, { clientId: creds.clientId, redirectUri, state, codeChallenge: verifier ? await sha256(verifier) : null }),
+      });
+    }
+
+    if (action === "integration_disconnect" || action === "integration_refresh") {
+      const p = getIntegration(String(body.provider ?? ""));
+      if (!p) return json({ error: "Unsupported integration" }, 400);
+      const { data: rows } = await admin.from("user_connections")
+        .select("id,provider_account_id").eq("user_id", user.id).eq("service_id", ACCT + p.id);
+      if (!rows?.length) return json({ ok: true, status: "not_connected" });
+      const creds = integrationCreds(p);
+
+      if (action === "integration_refresh") {
+        const row = rows[0];
+        const secrets = await getSecrets(admin, row.id);
+        if (!p.refreshable || !secrets.refresh_token || !creds) {
+          return json({ error: "reconnect_required", message: "This connection cannot be refreshed automatically. Reconnect to renew access." }, 400);
+        }
+        const r = await refreshToken(p, creds, secrets.refresh_token);
+        if (!r.ok) {
+          await admin.from("user_connections").update({ status: "error", health: "failing", last_error: "Refresh was rejected by the provider. Reconnect to restore access." }).eq("id", row.id).eq("user_id", user.id);
+          return json({ error: "refresh_failed", message: "The provider rejected the refresh. Reconnect to restore access." }, 400);
+        }
+        const exp = tokenExpiry(r.json);
+        const f1 = await putSecret(admin, { connectionId: row.id, userId: user.id, type: "access_token", value: String(r.json.access_token), expiresAt: exp });
+        const f2 = r.json.refresh_token ? await putSecret(admin, { connectionId: row.id, userId: user.id, type: "refresh_token", value: String(r.json.refresh_token) }) : null;
+        if (f1 || f2) return json({ error: "store_failed", message: "Refreshed credentials could not be stored securely." }, 500);
+        await admin.from("user_connections").update({ status: "connected", health: "healthy", last_error: null, expires_at: exp, last_synced_at: new Date().toISOString() }).eq("id", row.id).eq("user_id", user.id);
+        await audit(admin, { userId: user.id, connectionId: row.id, serviceId: ACCT + p.id, action: "oauth_refresh", status: "ok" });
+        return json({ ok: true, status: "connected" });
+      }
+
+      // disconnect: revoke at provider when supported, then delete secrets + metadata.
+      let revocation: "revoked" | "unsupported" | "failed" = "unsupported";
+      for (const row of rows) {
+        const secrets = await getSecrets(admin, row.id);
+        revocation = await revokeToken(p, creds, { ...secrets, provider_account_id: row.provider_account_id ?? undefined });
+      }
+      const ids = rows.map((r) => r.id);
+      const { error: secErr } = await admin.from("connection_secrets").delete().in("connection_id", ids).eq("user_id", user.id);
+      const { error: rowErr } = await admin.from("user_connections").delete().in("id", ids).eq("user_id", user.id);
+      await audit(admin, { userId: user.id, connectionId: null, serviceId: ACCT + p.id, action: "disconnect", status: secErr || rowErr ? "error" : "ok", detail: `revocation=${revocation}` });
+      if (secErr || rowErr) return json({ error: "partial_disconnect", revocation, message: "Provider access may be revoked, but stored data could not be fully removed. Try again." }, 500);
+      return json({ ok: true, status: "disconnected", revocation });
+    }
 
     // ---- callback: exchange the code, store the token server-side ----
     if (action === "callback") {
@@ -281,6 +380,46 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!consumed) return json({ error: "This authorization attempt was already used. Please try again." }, 409);
       if (body.error || !code) return json({ service_id: attempt.service_id, retryable: true, error: sanitizeOAuthError(body.error) }, 400);
+
+      const integ = integrationFor(String(attempt.service_id));
+      if (integ) {
+        const creds = integrationCreds(integ);
+        if (!creds) return json({ service_id: attempt.service_id, retryable: true, error: "This integration is not configured." }, 400);
+        const t = await exchangeCode(integ, creds, code, String(attempt.redirect_uri), attempt.code_verifier ? String(attempt.code_verifier) : null);
+        if (!t.ok) return json({ service_id: attempt.service_id, retryable: true, error: sanitizeOAuthError(t.json.error_description ?? t.json.error) }, 400);
+        const identity = await fetchIdentity(integ, t.json);
+        if (!identity) return json({ service_id: attempt.service_id, retryable: true, error: "The provider account identity could not be verified. Nothing was saved." }, 400);
+        const { data: conn, error: connError } = await admin.from("user_connections").insert({
+          user_id: user.id, service_id: attempt.service_id, account_key: `pending-${crypto.randomUUID()}`,
+          method: "oauth", status: "pending", health: "checking", is_active_account: false,
+          scopes: integ.scopes, updated_at: new Date().toISOString(),
+        }).select("id").single();
+        if (connError || !conn) return json({ service_id: attempt.service_id, retryable: true, error: "The authorized account could not be saved." }, 500);
+        const exp = tokenExpiry(t.json);
+        const f1 = await putSecret(admin, { connectionId: conn.id, userId: user.id, type: "access_token", value: String(t.json.access_token), expiresAt: exp });
+        const f2 = t.json.refresh_token ? await putSecret(admin, { connectionId: conn.id, userId: user.id, type: "refresh_token", value: String(t.json.refresh_token) }) : null;
+        if (f1 || f2) {
+          await admin.from("connection_secrets").delete().eq("connection_id", conn.id);
+          await admin.from("user_connections").delete().eq("id", conn.id).eq("user_id", user.id);
+          return json({ service_id: attempt.service_id, retryable: true, error: "Credentials could not be stored securely. Nothing was saved." }, 500);
+        }
+        // Replace any previous connection for this provider only after the new one is stored.
+        const { data: old } = await admin.from("user_connections").select("id").eq("user_id", user.id).eq("service_id", attempt.service_id).neq("id", conn.id);
+        if (old?.length) {
+          const oldIds = old.map((o) => o.id);
+          await admin.from("connection_secrets").delete().in("connection_id", oldIds);
+          await admin.from("user_connections").delete().in("id", oldIds).eq("user_id", user.id);
+        }
+        const now = new Date().toISOString();
+        const { error: actErr } = await admin.from("user_connections").update({
+          status: "connected", health: "healthy", account_key: "primary", is_active_account: true,
+          provider_account_id: identity.id, account_name: identity.name ?? identity.handle ?? identity.id,
+          account_handle: identity.handle, connected_at: now, expires_at: exp, last_error: null, metadata: { scope: integrationScope(integ) },
+        }).eq("id", conn.id).eq("user_id", user.id);
+        if (actErr) return json({ service_id: attempt.service_id, retryable: true, error: "The connection could not be activated." }, 500);
+        await audit(admin, { userId: user.id, connectionId: conn.id, serviceId: attempt.service_id, action: "oauth_connect", status: "ok" });
+        return json({ ok: true, service_id: attempt.service_id, account_name: identity.name ?? identity.handle });
+      }
 
       const provider = String(attempt.provider);
       const config = PROVIDERS[provider];
