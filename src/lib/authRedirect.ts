@@ -8,6 +8,7 @@
 export const safeReturnPath = (raw: string | null | undefined): string => {
   if (!raw) return "/";
   if (!raw.startsWith("/") || raw.startsWith("//")) return "/";
+  // eslint-disable-next-line no-control-regex -- rejecting control chars is the intent
   if (raw.includes("\\") || /[\u0000-\u001f]/.test(raw)) return "/";
   return raw;
 };
