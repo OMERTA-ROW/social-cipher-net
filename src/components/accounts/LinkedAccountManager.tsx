@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { isVerifiedConnection, connectionNeedsAttention } from "@/lib/integrationStatus";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Link2, Loader2, Pencil, RefreshCw, Unlink } from "lucide-react";
 import { toast } from "sonner";
