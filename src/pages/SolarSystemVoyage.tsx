@@ -204,7 +204,7 @@ const SolarSystemVoyage = () => {
           <Button size="sm" variant={assist ? "default" : "outline"} aria-pressed={assist} onClick={toggleAssist} className="h-9 bg-background/80 px-2 text-[11px]"><Orbit className="mr-1 h-3.5 w-3.5" />Assist</Button>
           <Button size="sm" variant="outline" onClick={doLaunch} disabled={status !== "flying"} className="h-9 bg-background/80 px-2 text-[11px]"><Rocket className="mr-1 h-3.5 w-3.5" />Probe</Button>
           <Button size="sm" variant="outline" onClick={doDock} disabled={status === "destroyed" || status === "landed"} className="h-9 bg-background/80 px-2 text-[11px]"><Satellite className="mr-1 h-3.5 w-3.5" />{status === "docked" ? "Undock" : "Dock"}</Button>
-          <Button size="sm" variant="destructive" aria-label="Brake (hold)" {...hold("brake", 1)} className="h-9 bg-background/80 px-2 text-[11px]">Brake</Button>
+          <Button size="sm" variant="destructive" aria-label="Brake (hold)" {...hold("brake", 1)} className="h-9 px-2 text-[11px]">Brake</Button>
         </div>
         <div className="grid w-44 grid-cols-3 gap-1 sm:w-48" aria-label="Thrust pad (hold buttons; multiple at once)">
           <Button variant="outline" className="h-11 bg-background/80" aria-label="Radial out thrust (R)" {...hold("y", 1)} >R</Button>
