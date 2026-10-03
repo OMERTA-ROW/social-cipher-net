@@ -54,8 +54,10 @@ const AuthCallback = () => {
     }
 
     if (errDesc) {
-      const expired = /expired|invalid/i.test(errDesc);
-      setError(expired ? "This link has expired or was already used. Request a new one." : "We couldn't complete sign-in. Please try again.");
+      const errCode = hash.get("error") ?? url.searchParams.get("error") ?? "";
+      const cancelled = /access_denied|cancel/i.test(`${errCode} ${errDesc}`);
+      const expired = /expired|invalid|otp/i.test(errDesc);
+      setError(cancelled ? "Sign-in was cancelled. Nothing was changed." : expired ? "This link has expired or was already used. Request a new one." : "We couldn't complete sign-in. Please try again.");
       return;
     }
     // Implicit-flow recovery tokens live in the hash; the reset page's auth
@@ -69,11 +71,15 @@ const AuthCallback = () => {
       if (event === "PASSWORD_RECOVERY") markRecoveryVerified();
     });
 
+    // Never leave the loader spinning forever on a hung auth request.
+    const withTimeout = <T,>(p: Promise<T>, ms = 12000) =>
+      Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error("network: auth request timed out")), ms))]);
+
     const finish = async () => {
       try {
         const code = url.searchParams.get("code");
         if (code) {
-          const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
+          const { error: exErr } = await withTimeout(supabase.auth.exchangeCodeForSession(code));
           if (exErr) throw exErr;
           if (type === "recovery") {
             markRecoveryVerified();
@@ -85,7 +91,7 @@ const AuthCallback = () => {
         }
         // Give hash-based tokens a moment to be picked up by the client.
         for (let i = 0; i < 10; i++) {
-          const { data } = await supabase.auth.getUser();
+          const { data } = await withTimeout(supabase.auth.getUser(), 6000);
           if (data.user) {
             if (active) navigate(next, { replace: true });
             return;
