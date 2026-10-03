@@ -15,7 +15,7 @@ export type IntegrationState = (typeof INTEGRATION_STATES)[number];
 
 export interface ServerConnectionRow {
   status: string | null;
-  provider_account_id: string | null;
+  provider_account_id?: string | null;
   last_error?: string | null;
   health?: string | null;
 }
