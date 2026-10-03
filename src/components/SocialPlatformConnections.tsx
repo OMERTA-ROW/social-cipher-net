@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import LinkedAccountManager from "@/components/accounts/LinkedAccountManager";
 import { useLinkedAccounts } from "@/hooks/useLinkedAccounts";
 import { getService } from "@/lib/connectors/registry";
+import { isVerifiedConnection } from "@/lib/integrationStatus";
 
 interface Props {
   onConnectionsUpdate?: (platforms: Array<{
@@ -27,7 +28,7 @@ export const SocialPlatformConnections = ({ onConnectionsUpdate }: Props) => {
         .map((account) => ({
           platform: account.service_id,
           platform_name: getService(account.service_id)?.name ?? account.service_id,
-          is_active: account.status === "connected" && account.is_active_account,
+          is_active: isVerifiedConnection(account) && account.is_active_account,
         })),
     );
   }, [accounts, loading, onConnectionsUpdate]);
