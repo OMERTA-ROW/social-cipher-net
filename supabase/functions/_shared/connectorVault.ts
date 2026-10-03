@@ -78,6 +78,8 @@ export interface SecretBag {
 // deno-lint-ignore no-explicit-any
 type Admin = any;
 
+export const MAX_SECRET_LENGTH = 16000;
+
 /** Store one credential, encrypted. */
 export const putSecret = async (
   admin: Admin,
@@ -89,7 +91,11 @@ export const putSecret = async (
     expiresAt?: string | null;
   },
 ) => {
-  const value = await encryptSecret(opts.connectionId, opts.value.slice(0, 8000));
+  // Reject rather than truncate: a cut token is silently corrupt.
+  if (opts.value.length > MAX_SECRET_LENGTH) {
+    return `Credential "${opts.type.slice(0, 64)}" exceeds ${MAX_SECRET_LENGTH} characters and was not stored`;
+  }
+  const value = await encryptSecret(opts.connectionId, opts.value);
   const { error } = await admin.from("connection_secrets").upsert(
     {
       connection_id: opts.connectionId,

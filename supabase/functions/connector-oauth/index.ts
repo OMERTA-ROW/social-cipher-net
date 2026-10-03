@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 import { getSecrets, putSecret } from "../_shared/connectorVault.ts";
-import { buildAuthorizeUrl, getIntegration, INTEGRATION_PROVIDERS, integrationScope, missingConfiguration } from "../_shared/accountIntegrations.ts";
+import { buildAuthorizeUrl, getIntegration, grantedScopes, INTEGRATION_PROVIDERS, integrationScope, missingConfiguration } from "../_shared/accountIntegrations.ts";
 import { exchangeCode, fetchIdentity, refreshToken, revokeToken } from "../_shared/integrationOAuth.ts";
 import { audit } from "../_shared/connectorEngine.ts";
 import { getDefinition } from "../_shared/connectorManifest.ts";
@@ -289,7 +289,8 @@ Deno.serve(async (req) => {
       const redirectUri = trustedOAuthRedirect(req.headers.get("Origin"));
       if (!redirectUri || !oauthRedirectIsAllowed(redirectUri)) return json({ error: "invalid_origin", message: "This site address is not on the approved callback list." }, 400);
       const creds = integrationCreds(p);
-      if (!creds) return json({ error: "not_configured", missing: missingConfiguration(p, (n) => Deno.env.get(n)) }, 400);
+      const missing = missingConfiguration(p, (n) => Deno.env.get(n));
+      if (!creds || missing.length) return json({ error: "not_configured", missing }, 400);
       const state = createOAuthState();
       const verifier = p.pkce ? createCodeVerifier() : null;
       const { error: attemptError } = await admin.from("connector_oauth_attempts").insert({
@@ -389,14 +390,16 @@ Deno.serve(async (req) => {
         if (!t.ok) return json({ service_id: attempt.service_id, retryable: true, error: sanitizeOAuthError(t.json.error_description ?? t.json.error) }, 400);
         const identity = await fetchIdentity(integ, t.json);
         if (!identity) return json({ service_id: attempt.service_id, retryable: true, error: "The provider account identity could not be verified. Nothing was saved." }, 400);
+        const granted = grantedScopes(integ, t.json);
         const { data: conn, error: connError } = await admin.from("user_connections").insert({
           user_id: user.id, service_id: attempt.service_id, account_key: `pending-${crypto.randomUUID()}`,
           method: "oauth", status: "pending", health: "checking", is_active_account: false,
-          scopes: integ.scopes, updated_at: new Date().toISOString(),
+          scopes: granted, updated_at: new Date().toISOString(),
         }).select("id").single();
         if (connError || !conn) return json({ service_id: attempt.service_id, retryable: true, error: "The authorized account could not be saved." }, 500);
         const exp = tokenExpiry(t.json);
-        const f1 = await putSecret(admin, { connectionId: conn.id, userId: user.id, type: "access_token", value: String(t.json.access_token), expiresAt: exp });
+        // Stripe Connect may omit access_token (deprecated); only store tokens actually returned.
+        const f1 = t.json.access_token ? await putSecret(admin, { connectionId: conn.id, userId: user.id, type: "access_token", value: String(t.json.access_token), expiresAt: exp }) : null;
         const f2 = t.json.refresh_token ? await putSecret(admin, { connectionId: conn.id, userId: user.id, type: "refresh_token", value: String(t.json.refresh_token) }) : null;
         if (f1 || f2) {
           await admin.from("connection_secrets").delete().eq("connection_id", conn.id);
@@ -414,7 +417,8 @@ Deno.serve(async (req) => {
         const { error: actErr } = await admin.from("user_connections").update({
           status: "connected", health: "healthy", account_key: "primary", is_active_account: true,
           provider_account_id: identity.id, account_name: identity.name ?? identity.handle ?? identity.id,
-          account_handle: identity.handle, connected_at: now, expires_at: exp, last_error: null, metadata: { scope: integrationScope(integ) },
+          account_handle: identity.handle, connected_at: now, expires_at: exp, last_error: null,
+          metadata: { requested_scope: integrationScope(integ), granted_scope: granted.join(" "), livemode: typeof t.json.livemode === "boolean" ? t.json.livemode : null },
         }).eq("id", conn.id).eq("user_id", user.id);
         if (actErr) return json({ service_id: attempt.service_id, retryable: true, error: "The connection could not be activated." }, 500);
         await audit(admin, { userId: user.id, connectionId: conn.id, serviceId: attempt.service_id, action: "oauth_connect", status: "ok" });
