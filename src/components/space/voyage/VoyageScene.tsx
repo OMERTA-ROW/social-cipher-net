@@ -13,6 +13,7 @@ import {
   CELESTIAL_BODIES, SUN, SUN_VISUAL_RADIUS, bodyPositionAt, bodyRenderPosition, gravityFromFrame, computeFrame, localVisualDistance, nearbyObjects, physicalObstaclesAt,
   predictTrajectory, referenceBody, renderPosition, ringQuaternion, runFixedSteps, spinAngleAt, stepWorld, thrustFrame, visualRadius, bodyVelocityAt,
   type CelestialBodyData, type NearbyObject, type ShipStatus, type StepEvent, type WorldState,
+  type EngineMode,
 } from "@/lib/space/voyagePhysics";
 
 export type TimeScale = 1 | 10 | 100;

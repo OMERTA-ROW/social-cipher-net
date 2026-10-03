@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import VoyageScene, { QUALITY_BUDGETS, type CameraCommand, type FollowMode, type QualityTier, type TimeScale, type VoyageInput, type VoyageTelemetry } from "@/components/space/voyage/VoyageScene";
 import VoyageErrorBoundary from "@/components/space/voyage/VoyageErrorBoundary";
 import ProceduralStarFallback from "@/components/space/voyage/ProceduralStarFallback";
-import { CELESTIAL_BODIES, SAFE_CONTACT_KMS, STATION, createShip, createWorld, launchProbe, type Impact, type StepEvent, type WorldState } from "@/lib/space/voyagePhysics";
+import { CELESTIAL_BODIES, CRUISE_ISP_S, CRUISE_THRUST_N, clampThrottle, SAFE_CONTACT_KMS, STATION, createShip, createWorld, launchProbe, type Impact, type StepEvent, type WorldState } from "@/lib/space/voyagePhysics";
 import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
 import { VOYAGE_PREFS_KEY, parseVoyagePreferences, shouldIgnoreKey, supportsWebGL, type QualityPref } from "@/lib/space/voyagePreferences";
 import { getTextureLoadStats, subscribeTextureLoadStats, type TextureLoadStats } from "@/components/space/realTextures";
