@@ -9,7 +9,7 @@ import { SKY_RADIUS } from "../worldScale";
 
 const vert = /* glsl */ `
   varying vec3 vDir;
-  void main(){ vDir=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
+  void main(){ vDir=normalize(position); gl_Position=projectionMatrix*vec4(mat3(viewMatrix)*mat3(modelMatrix)*position,1.0); gl_Position.z=gl_Position.w*0.99999; }
 `;
 const frag = /* glsl */ `
   precision highp float;
@@ -22,7 +22,14 @@ const frag = /* glsl */ `
 const DeepSky = ({ full }: { full: boolean }) => (
   <mesh frustumCulled={false} renderOrder={-1000}>
     <sphereGeometry args={[SKY_RADIUS * 0.985, full ? 48 : 32, full ? 32 : 20]} />
-    <shaderMaterial vertexShader={vert} fragmentShader={frag} side={THREE.BackSide} depthWrite={false} depthTest={false} toneMapped={false} />
+    <shaderMaterial
+      vertexShader={vert}
+      fragmentShader={frag}
+      side={THREE.BackSide}
+      depthWrite={false}
+      depthTest={false}
+      toneMapped={false}
+    />
   </mesh>
 );
 

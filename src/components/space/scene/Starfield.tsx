@@ -4,13 +4,12 @@ import * as THREE from "three";
 
 /**
  * Procedural starfield built from several concentric depth shells.
- * Each shell is a single THREE.Points draw call; parallax comes for free
- * from perspective because the camera physically travels between them.
+ * Direction-only layers render before physical objects; ship translation cannot
+ * bring background stars into the flight volume.
  */
 
 const vert = /* glsl */ `
   #include <common>
-  #include <logdepthbuf_pars_vertex>
 
   attribute float aSize;
   attribute float aSeed;
@@ -34,14 +33,14 @@ const vert = /* glsl */ `
     float lensA = exp(-(1.0 - dot(dir, uLensA)) * 1800.0);
     float lensB = exp(-(1.0 - dot(dir, uLensB)) * 1800.0);
     p = normalize(dir + uLensEnabled * 0.001 * (tangentA * lensA + tangentB * lensB)) * length(p);
-    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    vec4 mv = vec4(mat3(viewMatrix) * mat3(modelMatrix) * p, 1.0);
     gl_Position = projectionMatrix * mv;
-    #include <logdepthbuf_vertex>
+    gl_Position.z = gl_Position.w * 0.99999;
 
     float tw = 0.90 + 0.10 * sin(uTime * (0.25 + aSeed * 0.65) + aSeed * 40.0);
     float dist = max(-mv.z, 1.0);
     gl_PointSize = aSize * uPixelRatio * (300.0 / dist) * tw * uBoost;
-    gl_PointSize = clamp(gl_PointSize, 0.55, 18.0);
+    gl_PointSize = clamp(gl_PointSize, 0.55, 2.0 * uPixelRatio);
 
     vColor = aColor;
     vBright = tw;
@@ -50,13 +49,12 @@ const vert = /* glsl */ `
 
 const frag = /* glsl */ `
   #include <common>
-  #include <logdepthbuf_pars_fragment>
 
   varying vec3 vColor;
   varying float vBright;
 
   void main() {
-    #include <logdepthbuf_fragment>
+    // Background pass deliberately does not read or write depth.
     vec2 uv = gl_PointCoord - 0.5;
     float d = length(uv);
     // diffraction-like pin core with a restrained halo on bright stars
@@ -69,7 +67,6 @@ const frag = /* glsl */ `
     gl_FragColor = vec4(vColor * vBright * (1.0 + core * 1.8), a);
   }
 `;
-
 
 // Stellar temperature ramp: O/B blue-white -> A/F white -> G yellow -> K amber -> M red
 const TEMP_COLORS: [number, number, number][] = [
@@ -181,13 +178,14 @@ const Shell = ({
   });
 
   return (
-    <points ref={group} geometry={geometry} frustumCulled={false}>
+    <points ref={group} geometry={geometry} frustumCulled={false} renderOrder={-990}>
       <shaderMaterial
         ref={mat}
         vertexShader={vert}
         fragmentShader={frag}
         uniforms={uniforms}
-        transparent
+        transparent={false}
+        depthTest={false}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
       />
@@ -195,16 +193,78 @@ const Shell = ({
   );
 };
 
-const Starfield = ({ full, dpr, boost, animate = true, lensEnabled = false }: { full: boolean; dpr: number; boost: number; animate?: boolean; lensEnabled?: boolean }) => {
+const Starfield = ({
+  full,
+  dpr,
+  boost,
+  animate = true,
+  lensEnabled = false,
+}: {
+  full: boolean;
+  dpr: number;
+  boost: number;
+  animate?: boolean;
+  lensEnabled?: boolean;
+}) => {
   const scale = full ? 1 : 0.2;
   return (
     <group>
-      {/* near field: physically inside the flight volume, so travel gives real parallax */}
-      <Shell count={Math.round(7000 * scale)} inner={260} outer={620} sizeScale={0.82} spin={0.00065} dpr={dpr} boost={boost * 0.72} animate={animate} lensEnabled={lensEnabled} />
-      <Shell count={Math.round(11000 * scale)} inner={900} outer={1900} sizeScale={0.68} spin={0.0003} dpr={dpr} boost={boost * 0.7} animate={animate} lensEnabled={lensEnabled} />
-      <Shell count={Math.round(13000 * scale)} inner={2500} outer={4400} sizeScale={0.56} spin={0.00013} dpr={dpr} boost={boost * 0.68} animate={animate} lensEnabled={lensEnabled} />
-      <Shell count={Math.round(13000 * scale)} inner={5800} outer={9000} sizeScale={0.48} spin={0.00005} dpr={dpr} boost={boost * 0.66} animate={animate} lensEnabled={lensEnabled} />
-      <Shell count={Math.round(11000 * scale)} inner={12000} outer={18000} sizeScale={0.42} spin={0.00002} dpr={dpr} boost={boost * 0.64} animate={animate} lensEnabled={lensEnabled} />
+      {/* Directional shells: radii vary star density, never physical flight depth. */}
+      <Shell
+        count={Math.round(7000 * scale)}
+        inner={260}
+        outer={620}
+        sizeScale={0.82}
+        spin={0.00065}
+        dpr={dpr}
+        boost={boost * 0.72}
+        animate={animate}
+        lensEnabled={lensEnabled}
+      />
+      <Shell
+        count={Math.round(11000 * scale)}
+        inner={900}
+        outer={1900}
+        sizeScale={0.68}
+        spin={0.0003}
+        dpr={dpr}
+        boost={boost * 0.7}
+        animate={animate}
+        lensEnabled={lensEnabled}
+      />
+      <Shell
+        count={Math.round(13000 * scale)}
+        inner={2500}
+        outer={4400}
+        sizeScale={0.56}
+        spin={0.00013}
+        dpr={dpr}
+        boost={boost * 0.68}
+        animate={animate}
+        lensEnabled={lensEnabled}
+      />
+      <Shell
+        count={Math.round(13000 * scale)}
+        inner={5800}
+        outer={9000}
+        sizeScale={0.48}
+        spin={0.00005}
+        dpr={dpr}
+        boost={boost * 0.66}
+        animate={animate}
+        lensEnabled={lensEnabled}
+      />
+      <Shell
+        count={Math.round(11000 * scale)}
+        inner={12000}
+        outer={18000}
+        sizeScale={0.42}
+        spin={0.00002}
+        dpr={dpr}
+        boost={boost * 0.64}
+        animate={animate}
+        lensEnabled={lensEnabled}
+      />
     </group>
   );
 };
