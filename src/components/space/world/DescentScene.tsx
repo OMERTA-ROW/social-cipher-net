@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import Starfield from "../scene/Starfield";
-import Galaxy from "../scene/Galaxy";
 import DeepSky from "../scene/DeepSky";
 import { CLOUD_TEXTURE_URLS, SPACE_TEXTURE_URLS, useLazyTexture } from "../realTextures";
 import { MAX_ALTITUDE, MIN_ALTITUDE, PLANET_RADIUS } from "./altitude";

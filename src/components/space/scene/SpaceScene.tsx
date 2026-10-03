@@ -3,7 +3,6 @@ import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { useMemo } from "react";
 import CameraRig from "./CameraRig";
-import Galaxy from "./Galaxy";
 import MarketComets from "./MarketComets";
 import Planets from "./Planets";
 import AsteroidField from "./AsteroidField";
