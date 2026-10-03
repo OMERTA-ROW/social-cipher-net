@@ -75,3 +75,11 @@ Voyage throttle, pause, speed, probe, dock, brake, thrust-pad and camera control
 - `/login` and `/signup`: Continue with Google (managed provider, returns via `/auth/callback`, keeps safe `next`) and Continue with GitHub (explains it's unsupported; no flow started).
 - `/auth/callback` now separates three returns: integration (state + started marker), password recovery, sign-in/confirmation.
 - Anonymous `/integrations` → `/login?next=%2Fintegrations`: PASS (desktop). Social button clicks and mobile: NOT TESTED (test browser stalled on animated background).
+
+## Run 2026-10-03 03:05 UTC (local preview, anonymous, isolated Playwright, software WebGL)
+- Automated: full suite passed after removing the obsolete still-by-default test (asserted behavior superseded by the Voyage spec). Typecheck PASS.
+- Direct visit + hard reload, desktop 1280 and mobile 390: all 15 routes PASS (titles correct, protected routes → /login?next=…, unknown → "Page not found", 0 page errors).
+- Finding: anonymous `/` redirects to `/login` rather than showing a public starfield preview with Voyage CTA — NOT FIXED.
+- BLOCKED (user-controlled): real reset email (user sending one via published UI; agent sent none), password set/change, fresh login/logout persistence, Google/provider OAuth consent, signed-in Integrations UI.
+- NOT TESTED: published-site hard refresh by agent, real-GPU performance, physical touch/pinch.
+- Integration hardening edge-function changes are NOT DEPLOYED.
