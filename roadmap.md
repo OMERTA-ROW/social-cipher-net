@@ -22,6 +22,8 @@
 - [ ] Movie Theater: events, synced playback, live chat
 - [ ] Connectors: universal hub (OAuth + manual keys), actions, multicast
 - [ ] Space background: mining ship + alien crew, chase cam, selectable mining view
+- [x] Google sign-in button on /login and /signup (already present, managed Google provider enabled)
+- [ ] Integration security hardening: verified-only credential saves, strict testConnection, useConnections auth race, per-provider token adapters, Gmail scopes, oversized-secret rejection, legacy callback migration
 - [x] Replace every standalone Zozo/Draco overlay with one clickable spaceship interface for AI switching and miner purchases
 
 ## Blocked / waiting on user
