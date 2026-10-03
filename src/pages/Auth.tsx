@@ -1,3 +1,4 @@
+import { arenaReturnPath } from "@/lib/arenaAuth";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +25,16 @@ const friendlyAuthError = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-const Auth = () => {
+async function authAction<T extends { error: unknown }>(request: PromiseLike<T>): Promise<T | { error: unknown }> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try { return await Promise.race([request, new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error("Network timeout")), 15000); })]); }
+  catch (error) { return { error }; }
+  finally { if (timer) clearTimeout(timer); }
+}
+
+const Auth = ({ arena = false }: { arena?: boolean }) => {
+  const authBase = arena ? "/cyber-arena" : "";
+  const [formError, setFormError] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,14 +43,14 @@ const Auth = () => {
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [showForgotPassword, setShowForgotPassword] = useState(() => window.location.pathname === "/forgot-password");
+  const [showForgotPassword, setShowForgotPassword] = useState(() => window.location.pathname === `${authBase}/forgot-password`);
   const [isAccountLocked, setIsAccountLocked] = useState(false);
   const [lockoutEndTime, setLockoutEndTime] = useState<Date | null>(null);
   const [remainingAttempts, setRemainingAttempts] = useState(6);
   const navigate = useNavigate();
   const location = useLocation();
   // The same Auth instance serves /login and /forgot-password; keep the view in sync with the URL.
-  useEffect(() => { setShowForgotPassword(location.pathname === "/forgot-password"); }, [location.pathname]);
+  useEffect(() => { setShowForgotPassword(location.pathname === `${authBase}/forgot-password`); }, [location.pathname, authBase]);
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
@@ -50,7 +60,7 @@ const Auth = () => {
     if (typeof window === "undefined") return "none";
     const hash = window.location.hash ?? "";
     const requested =
-      window.location.pathname === "/reset-password" ||
+      window.location.pathname === `${authBase}/reset-password` ||
       new URLSearchParams(window.location.search).get("reset") === "true" ||
       hash.includes("type=recovery") ||
       hash.includes("error=");
@@ -68,10 +78,10 @@ const Auth = () => {
 
   // Same-origin relative path to return to after auth (used by the OAuth consent flow).
   const rawNext = searchParams.get("next");
-  const nextPath = rawNext ? safeReturnPath(rawNext) : "/dashboard";
+  const nextPath = arena ? arenaReturnPath(rawNext) : rawNext ? safeReturnPath(rawNext) : "/dashboard";
   const [checkEmailFor, setCheckEmailFor] = useState<string | null>(null);
   const inRecovery = recovery !== "none";
-  const initialTab = location.pathname === "/signup" ? "signup" : "signin";
+  const initialTab = location.pathname === `${authBase}/signup` ? "signup" : "signin";
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,9 +97,9 @@ const Auth = () => {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-    });
+    const { error } = await authAction(supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: arena ? `${window.location.origin}/cyber-arena/reset-password` : `${window.location.origin}/auth/callback?type=recovery`,
+    }));
 
     if (error) {
       toast({
@@ -102,7 +112,7 @@ const Auth = () => {
         title: "Success",
         description: "Password reset email sent! Check your inbox.",
       });
-      navigate(`/login${location.search}`, { replace: true });
+      navigate(`${authBase}/login${location.search}`, { replace: true });
     }
 
     setLoading(false);
@@ -111,6 +121,7 @@ const Auth = () => {
   const handleSetNewPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (recovery !== "ready" || !hasVerifiedRecovery()) { setRecoveryError("Request a new password reset link."); return; }
     if (newPassword.length < 6) {
       toast({ title: "Error", description: "Use at least 6 characters.", variant: "destructive" });
       return;
@@ -121,7 +132,7 @@ const Auth = () => {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    const { error } = await authAction(supabase.auth.updateUser({ password: newPassword }));
     setLoading(false);
 
     if (error) {
@@ -146,6 +157,9 @@ const Auth = () => {
     // Where a signed-in member goes: their welcome setup the first time,
     // otherwise the page they came from. A read failure never traps anyone.
     const continueSignedIn = async (userId: string) => {
+      const { data, error } = await supabase.auth.getUser();
+      if (!active || error || data.user?.id !== userId) return;
+      if (arena) { navigate(nextPath, { replace: true }); return; }
       let done = true;
       try {
         done = await fetchOnboardingComplete(userId);
@@ -191,14 +205,15 @@ const Auth = () => {
       }
       if (!session) return;
       if (recovery !== "none") return;
-      continueSignedIn(session.user.id);
+      const uid = session.user.id;
+      queueMicrotask(() => { if (active) void continueSignedIn(uid); });
     });
 
     return () => {
       active = false;
       subscription.unsubscribe();
     };
-  }, [navigate, nextPath, recovery]);
+  }, [navigate, nextPath, recovery, arena]);
 
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -247,9 +262,10 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback${rawNext ? `?next=${encodeURIComponent(nextPath)}` : ""}`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
           data: {
             birthdate: birthdate,
+            arena_signup: arena,
             username: username.trim(),
             display_name: displayName.trim(),
           }
@@ -281,13 +297,13 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setFormError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await authAction(supabase.auth.signInWithPassword({ email, password }));
 
     if (error) {
+      setFormError(friendlyAuthError(error, "Sign-in failed. Check your connection and try again."));
+      if (/email not confirmed/i.test(error instanceof Error ? error.message : String((error as { message?: string })?.message ?? ""))) setCheckEmailFor(email);
       // Record failed login attempt
       const { data: attemptResult } = await supabase.rpc('record_failed_login', { p_email: email });
       
@@ -334,13 +350,14 @@ const Auth = () => {
       <Card className="w-full max-w-md relative z-10 bg-card/95 backdrop-blur-xl border-primary/20 shadow-2xl shadow-primary/10 animate-fade-in">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-            {inRecovery ? "Choose a new password" : "Welcome to CyberLink"}
+            {inRecovery ? "Choose a new password" : arena ? "Welcome to Cyber Arena" : "Welcome to CyberLink"}
           </CardTitle>
           <CardDescription className="text-base">
             {inRecovery ? "Finish resetting your account password" : "Enter the digital universe"}
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {formError && <p role="alert" className="mb-4 text-sm text-destructive">{formError}</p>}
           {inRecovery ? (
             <div className="space-y-4">
               {recovery === "pending" && (
@@ -363,7 +380,7 @@ const Auth = () => {
                     onClick={() => {
                       setRecovery("none");
                       setRecoveryError(null);
-                      navigate("/forgot-password", { replace: true });
+                      navigate(`${authBase}/forgot-password`, { replace: true });
                     }}
                   >
                     Request a new reset link
@@ -407,16 +424,22 @@ const Auth = () => {
             </div>
           ) : checkEmailFor ? (
             <div className="space-y-4 text-center" role="status">
-              <h3 className="text-lg font-semibold text-foreground">Check your email to confirm your account</h3>
+              <h3 className="text-lg font-semibold text-foreground">{arena ? "Check your email to confirm your Cyber Arena account" : "Check your email to confirm your account"}</h3>
               <p className="text-sm text-muted-foreground">
                 We sent a confirmation link to <span className="text-foreground">{checkEmailFor}</span>. Open it to activate your account, then sign in.
               </p>
-              <Button variant="outline" className="w-full" onClick={() => { setCheckEmailFor(null); navigate("/login"); }}>
+              <Button variant="outline" className="w-full" disabled={loading} onClick={async () => {
+                setLoading(true);
+                const { error } = await authAction(supabase.auth.resend({ type: "signup", email: checkEmailFor, options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}` } }));
+                toast({ title: error ? "Could not resend" : "Check your email", description: error ? friendlyAuthError(error, "Please wait and try again.") : "A new confirmation link was requested.", variant: error ? "destructive" : "default" });
+                setLoading(false);
+              }}>Resend confirmation</Button>
+              <Button variant="outline" className="w-full" onClick={() => { setCheckEmailFor(null); navigate(`${authBase}/login`); }}>
                 Back to sign in
               </Button>
             </div>
           ) : (
-          <Tabs value={initialTab} onValueChange={(v) => navigate(`${v === "signup" ? "/signup" : "/login"}${location.search}`, { replace: true })} className="w-full">
+          <Tabs value={initialTab} onValueChange={(v) => navigate(`${v === "signup" ? `${authBase}/signup` : `${authBase}/login`}${location.search}`, { replace: true })} className="w-full">
 
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
@@ -460,7 +483,7 @@ const Auth = () => {
                     type="button"
                     variant="ghost"
                     className="w-full text-primary hover:text-primary/80"
-                    onClick={() => navigate(`/login${location.search}`)}
+                    onClick={() => navigate(`${authBase}/login${location.search}`)}
                   >
                     Back to Sign In
                   </Button>
@@ -520,13 +543,13 @@ const Auth = () => {
                     type="button"
                     variant="link"
                     className="w-full text-primary hover:text-primary/80 p-0 h-auto"
-                    onClick={() => navigate(`/forgot-password${nextPath === "/" ? "" : `?next=${encodeURIComponent(nextPath)}`}`)}
+                    onClick={() => navigate(`${authBase}/forgot-password${nextPath === "/" ? "" : `?next=${encodeURIComponent(nextPath)}`}`)}
                   >
                     Forgot Password?
                   </Button>
                   <p className="text-center text-sm text-muted-foreground">
                     New here?{" "}
-                    <Link to={`/signup${rawNext ? `?next=${encodeURIComponent(nextPath)}` : ""}`} className="font-medium text-primary hover:underline">
+                    <Link to={`${authBase}/signup${rawNext ? `?next=${encodeURIComponent(nextPath)}` : ""}`} className="font-medium text-primary hover:underline">
                       Create Account
                     </Link>
                   </p>
