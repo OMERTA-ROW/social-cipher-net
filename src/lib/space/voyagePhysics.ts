@@ -322,6 +322,7 @@ export function launchProbe(world: WorldState, maxObjects = 48): boolean {
   const s = world.ship; if (s.status !== "flying" || s.probes <= 0 || world.objects.length >= maxObjects) return false;
   const f = thrustFrame(s.position, s.velocity, world.time);
   world.objects.push({ id: world.nextId++, kind: "probe", position: s.position.clone().addScaledVector(f.forward, s.collisionRadiusKm + PROBE_RADIUS_KM + 2), velocity: s.velocity.clone().addScaledVector(f.forward, PROBE_LAUNCH_KMS), massKg: PROBE_MASS_KG, radiusKm: PROBE_RADIUS_KM, age: 0, maxAge: Infinity });
+  s.dryMassKg -= PROBE_MASS_KG; // probes are carried in the dry mass
   s.velocity.addScaledVector(f.forward, -PROBE_LAUNCH_KMS * PROBE_MASS_KG / shipMass(s)); s.probes--;
   return true;
 }

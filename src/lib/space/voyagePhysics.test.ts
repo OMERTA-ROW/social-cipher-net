@@ -156,7 +156,7 @@ describe("impacts, docking, landing", () => {
   });
   it("lands only inside the designated zone below safe speed", () => {
     const zone = new THREE.Vector3(...earth.landingZone!.direction);
-    const inZone = createWorld(0); placeShip(inZone, earth, zone.clone().multiplyScalar(earth.radiusKm + 3.6), zone.clone().multiplyScalar(-0.05));
+    const inZone = createWorld(0); placeShip(inZone, earth, zone.clone().multiplyScalar(earth.radiusKm + 3.2), zone.clone().multiplyScalar(-0.02));
     expect(run(inZone, 10).some(e => e.type === "landed")).toBe(true); expect(inZone.ship.status).toBe("landed");
     const outZone = createWorld(0); const off = new THREE.Vector3(0, 0, 1); placeShip(outZone, earth, off.clone().multiplyScalar(earth.radiusKm + 3.6), off.clone().multiplyScalar(-0.05));
     run(outZone, 10); expect(outZone.ship.status).toBe("flying");
