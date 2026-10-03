@@ -412,7 +412,7 @@ export function stepWorld(world: WorldState, input: PhysicsInput, dt: number, ma
     for (const c of colliders) { if (c.kind === "station" || c.kind === "asteroid") continue; const h = sweepCollider(c, prev, o.position, o.radiusKm); if (h.hit) { if (o.kind !== "fragment") events.push({ type: "object-lost", label: `${o.kind === "probe" ? "Probe" : "Debris"} impacted ${c.name}`, position: o.position.clone() }); return false; } }
     return true;
   });
-  const s = world.ship; const mass = shipMass(s); const accel = SHIP_THRUST_N / mass / 1000;
+  const s = world.ship; const mass = shipMass(s);
   if (s.status === "docked" || s.status === "landed") {
     const a = anchorState(s.attachedTo!, t1); s.position.copy(a.p).add(s.attachOffset!); s.velocity.copy(a.v);
     s.throttle = 0; s.thrustN = 0; s.fuelRateKgS = 0;
