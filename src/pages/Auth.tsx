@@ -425,6 +425,7 @@ const Auth = () => {
                 Sign Up
               </TabsTrigger>
             </TabsList>
+            {!showForgotPassword && <div className="mb-4"><SocialSignIn nextPath={nextPath} /></div>}
             <TabsContent value="signin" className="animate-fade-in">
               {showForgotPassword ? (
                 <form onSubmit={handleForgotPassword} className="space-y-4">
