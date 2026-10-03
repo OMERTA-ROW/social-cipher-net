@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock } from "lucide-react";
 import ScrollDatePicker from "@/components/ScrollDatePicker";
-import { safeReturnPath } from "@/lib/authRedirect";
+import { clearRecoveryVerified, hasVerifiedRecovery, markRecoveryVerified, safeReturnPath } from "@/lib/authRedirect";
 import { fetchOnboardingComplete } from "@/hooks/useOnboarding";
 
 type RecoveryState = "none" | "pending" | "ready" | "expired";
@@ -87,7 +87,7 @@ const Auth = () => {
     setLoading(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
     });
 
     if (error) {
@@ -133,6 +133,7 @@ const Auth = () => {
     toast({ title: "Password updated", description: "You are signed in with your new password." });
     setNewPassword("");
     setConfirmPassword("");
+    clearRecoveryVerified();
     setRecovery("none");
     window.history.replaceState(null, "", `${window.location.pathname}`);
     navigate(nextPath);
@@ -165,7 +166,16 @@ const Auth = () => {
         return;
       }
       if (recovery === "pending") {
-        setRecovery("ready");
+        // Only a session proven to come from a recovery link may set a new
+        // password here; an ordinary signed-in session is not enough.
+        const hashRecovery = window.location.hash.includes("type=recovery");
+        if (hasVerifiedRecovery() || hashRecovery) {
+          if (!hashRecovery) setRecovery("ready");
+          // Hash tokens: wait for PASSWORD_RECOVERY from the auth client.
+        } else {
+          setRecovery("expired");
+          setRecoveryError("Open the reset link from your email to choose a new password, or change it from Account settings.");
+        }
         return;
       }
       if (recovery === "none") continueSignedIn(session.user.id);
@@ -174,6 +184,7 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       if (event === "PASSWORD_RECOVERY") {
+        markRecoveryVerified();
         setRecovery("ready");
         return;
       }
@@ -235,7 +246,7 @@ const Auth = () => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback${rawNext ? `?next=${encodeURIComponent(nextPath)}` : ""}`,
           data: {
             birthdate: birthdate,
             username: username.trim(),

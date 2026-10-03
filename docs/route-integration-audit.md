@@ -59,3 +59,13 @@ Voyage throttle, pause, speed, probe, dock, brake, thrust-pad and camera control
 - TypeScript (`tsgo -p tsconfig.app.json`): exit 0.
 - Vitest: 62/62 across route-title, RequireAuth, appRoutes, authRedirect, authSession, Voyage physics and preferences.
 - ESLint on touched files: 0 errors, 1 react-refresh warning.
+
+## Follow-up fixes (Oct 3 2026)
+- Password-reset emails now return via `/auth/callback?type=recovery`; PKCE `code` is exchanged before routing to `/reset-password` (previously dropped). Hash-token links still go to the reset page and wait for `PASSWORD_RECOVERY`.
+- `/reset-password` only shows the new-password form with recovery proof (PASSWORD_RECOVERY event, recovery hash, or a 15-minute tab-scoped marker set by the callback). An ordinary signed-in session gets "open the reset link from your email". Marker is cleared after a successful update. Unit-tested (fixture, 4 tests).
+- Signup confirmation link keeps a safe `next` return path through the callback.
+- `/settings` re-selects Account settings when navigating from `/dashboard` (tabs re-keyed by URL).
+- `/auth/callback` added to the route registry.
+- RequireAuth: a failed `getUser()` no longer leaves a permanent spinner; it falls back to the restored session for routing only (data still guarded server-side) or redirects to sign-in.
+- Legacy Navigation: logo is a link home; every icon item is a real link with an accessible name. Rendered only on pages outside the app shell; no such page was browser-checked this round (NOT TESTED).
+- Browser (anonymous, desktop): `/auth/callback?type=recovery` without code, with bogus code, and `/reset-password` with no session all show the invalid-link state — PASS. Real reset email, valid recovery link, fresh login/signup/logout: BLOCKED (no authorized test identity).

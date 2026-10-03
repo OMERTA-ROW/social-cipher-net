@@ -28,6 +28,14 @@ const RequireAuth = ({ children }: { children: ReactNode }) => {
       if (!active || requestRevision !== revision) return;
       setUserId(data.user?.id ?? null);
       setResolved(true);
+    }).catch(() => {
+      // Auth server unreachable: fall back to the locally restored session
+      // for routing only; data access is still validated server-side by RLS.
+      if (!active || requestRevision !== revision) return;
+      supabase.auth.getSession()
+        .then(({ data }) => { if (active && requestRevision === revision) setUserId(data.session?.user.id ?? null); })
+        .catch(() => { if (active) setUserId(null); })
+        .finally(() => { if (active) setResolved(true); });
     });
     return () => {
       active = false;
