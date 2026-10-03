@@ -58,20 +58,22 @@ function Planet({ body, worldRef, quality, labels, onSelect }: { body: Celestial
     // Spin from the real sidereal period and simulated time: pauses with the simulation.
     if (surface.current) surface.current.rotation.y = spinAngleAt(body, t);
   });
+  const ringGeo = useMemo(() => radialRingGeometry(ringInner || 1, ringOuter || 2), [ringInner, ringOuter]);
+  useEffect(() => () => ringGeo.dispose(), [ringGeo]);
   return (
     <group ref={group}>
       <group rotation={[THREE.MathUtils.degToRad(body.axialTiltDeg), 0, 0]}>
         <mesh ref={surface} onClick={e => { e.stopPropagation(); onSelect(body.id); }}>
           <sphereGeometry args={[r, budget.segments, Math.round(budget.segments / 2)]} />
-          <meshStandardMaterial map={map ?? undefined} color={map ? "#ffffff" : "#8793a1"} roughness={0.85} />
+          <meshStandardMaterial map={map ?? undefined} color={map ? "#ffffff" : "#8793a1"} roughness={0.95} metalness={0} />
         </mesh>
         {clouds && <mesh scale={1.012}><sphereGeometry args={[r, 48, 24]} /><meshStandardMaterial map={clouds} alphaMap={clouds} transparent opacity={0.7} depthWrite={false} /></mesh>}
       </group>
       {body.ring && (
         <group quaternion={ringQ}>
           <mesh rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[ringInner, ringOuter, 128]} />
-            <meshStandardMaterial map={ring ?? undefined} alphaMap={ring ?? undefined} color={ring ? "#ffffff" : "#c8b892"} transparent opacity={0.88} side={THREE.DoubleSide} depthWrite={false} />
+            <primitive object={ringGeo} attach="geometry" />
+            <meshStandardMaterial map={ring ?? undefined} color={ring ? "#ffffff" : "#c8b892"} transparent opacity={0.92} alphaTest={0.02} side={THREE.DoubleSide} depthWrite={false} roughness={0.9} />
           </mesh>
         </group>
       )}
@@ -86,6 +88,15 @@ function Planet({ body, worldRef, quality, labels, onSelect }: { body: Celestial
 }
 
 /** Low tier: textured emissive sphere instead of the procedural photosphere shader (same collision radius). */
+/** Ring texture strips run inner→outer along u; remap RingGeometry's planar UVs to radial ones. */
+export function radialRingGeometry(inner: number, outer: number, segments = 128) {
+  const g = new THREE.RingGeometry(inner, outer, segments, 1);
+  const pos = g.attributes.position, uv = g.attributes.uv, v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i); uv.setXY(i, (v.length() - inner) / (outer - inner), 0.5); }
+  uv.needsUpdate = true;
+  return g;
+}
+
 function LiteSun() {
   const map = useLazyTexture(SUN_TEXTURE_URL, { delay: 60, anisotropy: 2 });
   return <mesh><sphereGeometry args={[SUN_VISUAL_RADIUS, 32, 16]} /><meshBasicMaterial map={map ?? undefined} color={map ? "#ffffff" : "#ffcf7a"} toneMapped={false} /></mesh>;
@@ -208,10 +219,11 @@ function Simulation(props: Props) {
   const vr = visualRadius(selectedBody.radiusKm);
   const animateField = !props.reducedMotion;
   return <>
-    <Galaxy full={budget.stars} boost={0.72} animate={animateField} />
+    <Galaxy full={budget.stars} boost={0.4} animate={animateField} />
     <Starfield full={budget.stars} dpr={budget.dpr} boost={1} animate={animateField} />
-    <ambientLight intensity={0.14} color="#5d78ba" />
-    <pointLight intensity={4200} distance={0} decay={2} color="#fff1cf" />
+    {/* Distances are log-compressed, so physical 1/r² falloff would blow out inner planets: use a constant-intensity sun light. */}
+    <ambientLight intensity={0.035} color="#5d78ba" />
+    <pointLight intensity={2.4} distance={0} decay={0} color="#fff4e2" />
     {props.quality === "low" ? <LiteSun /> : <group scale={SUN_VISUAL_RADIUS / PHOTO_RADIUS}><Sun full={props.quality === "high"} animate={animateField && props.timeScale > 0} /></group>}
     {props.guides && <OrbitGuides />}
     {CELESTIAL_BODIES.map(b => <Planet key={b.id} body={b} worldRef={worldRef} quality={props.quality} labels={props.labels} onSelect={props.onSelect} />)}
@@ -223,7 +235,7 @@ function Simulation(props: Props) {
     <primitive object={arrow} />
     <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} enablePan={false} touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }} />
     <CameraDirector controlsRef={controlsRef} subject={subject} defaultDistance={props.follow === "ship" ? 0.5 : vr * 7} minDistance={props.follow === "ship" ? 0.06 : vr * 1.3} resetCamera={props.resetCamera} selected={props.selected} follow={props.follow} cmdRef={props.cameraCmdRef} />
-    {budget.post && <EffectComposer multisampling={0}><Bloom intensity={0.42} luminanceThreshold={0.72} mipmapBlur /><Vignette offset={0.25} darkness={0.7} /></EffectComposer>}
+    {budget.post && <EffectComposer multisampling={0}><Bloom intensity={0.35} luminanceThreshold={0.95} luminanceSmoothing={0.05} mipmapBlur /><Vignette offset={0.25} darkness={0.7} /></EffectComposer>}
   </>;
 }
 export default function VoyageScene(props: Props) { return <Simulation {...props} />; }
