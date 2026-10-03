@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { markRecoveryVerified, safeReturnPath } from "@/lib/authRedirect";
+import { takeSocialNext } from "@/components/auth/SocialSignIn";
 import { isIntegrationReturn, storeIntegrationResult, takeIntegrationReturn } from "@/lib/integrationStatus";
 
 /**
@@ -19,7 +20,7 @@ const AuthCallback = () => {
     const url = new URL(window.location.href);
     const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
     const type = hash.get("type") ?? url.searchParams.get("type");
-    const next = safeReturnPath(url.searchParams.get("next") || "/dashboard");
+    const next = safeReturnPath(url.searchParams.get("next") || takeSocialNext() || "/dashboard");
     const errDesc = hash.get("error_description") ?? url.searchParams.get("error_description") ?? hash.get("error") ?? url.searchParams.get("error");
 
     // Account-integration return (provider consent). Never treated as sign-in:

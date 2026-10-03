@@ -11,6 +11,7 @@ import { Loader2, Lock } from "lucide-react";
 import ScrollDatePicker from "@/components/ScrollDatePicker";
 import { clearRecoveryVerified, hasVerifiedRecovery, markRecoveryVerified, safeReturnPath } from "@/lib/authRedirect";
 import { fetchOnboardingComplete } from "@/hooks/useOnboarding";
+import SocialSignIn from "@/components/auth/SocialSignIn";
 
 type RecoveryState = "none" | "pending" | "ready" | "expired";
 
