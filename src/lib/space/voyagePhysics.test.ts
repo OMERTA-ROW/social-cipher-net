@@ -195,3 +195,39 @@ describe("launches & prediction", () => {
     expect(ab.angleTo(ac)).toBeGreaterThan(0.1);
   });
 });
+
+describe("persistent throttle", async () => {
+  const P = await import("./voyagePhysics");
+  const T = await import("three");
+  const none = () => ({ thrust: new T.Vector3(), brake: false });
+  const far = () => { const w = P.createWorld(0); const s = w.ship; s.position.set(0, 3e8, 0); s.velocity.set(0, 0, 10); s.heading.set(0, 0, 1); return w; };
+  it("0% throttle burns no fuel", () => { const w = far(); const f = w.ship.fuelKg; for (let i = 0; i < 50; i++) P.stepWorld(w, none(), 2); expect(w.ship.fuelKg).toBe(f); expect(w.ship.thrustN).toBe(0); });
+  it("throttle persists, fuel burn proportional to delivered thrust", () => {
+    const burn = (k: number) => { const w = far(); w.ship.throttleSetting = k; const f = w.ship.fuelKg; for (let i = 0; i < 10; i++) P.stepWorld(w, none(), 2); expect(w.ship.throttleSetting).toBe(k); return f - w.ship.fuelKg; };
+    const full = burn(1), half = burn(0.5);
+    expect(full).toBeCloseTo(P.SHIP_THRUST_N / (P.SHIP_ISP_S * P.G0) * 20, 3);
+    expect(half / full).toBeCloseTo(0.5, 5);
+    expect(burn(-1)).toBeCloseTo(full, 5);
+  });
+  it("forward accelerates along heading, reverse decelerates", () => {
+    const run = (k: number) => { const w = far(); w.ship.throttleSetting = k; const v0 = w.ship.velocity.clone(); for (let i = 0; i < 20; i++) P.stepWorld(w, none(), 2); const g = far(); const g0 = g.ship.velocity.clone(); for (let i = 0; i < 20; i++) P.stepWorld(g, none(), 2); return w.ship.velocity.clone().sub(v0).sub(g.ship.velocity.clone().sub(g0)).dot(v0.normalize()); };
+    expect(run(1)).toBeGreaterThan(0.1); expect(run(-1)).toBeLessThan(-0.1); expect(run(0.5) / run(1)).toBeGreaterThan(0.45);
+  });
+  it("fuel depletion stops thrust exactly at zero", () => { const w = far(); w.ship.engineMode = "standard"; w.ship.throttleSetting = 1; for (let i = 0; i < 400; i++) P.stepWorld(w, none(), 2); expect(w.ship.fuelKg).toBe(0); P.stepWorld(w, none(), 2); expect(w.ship.thrustN).toBe(0); });
+  it("no thrust when docked or destroyed", () => { const w = far(); w.ship.status = "destroyed"; w.ship.throttleSetting = 1; const f = w.ship.fuelKg; P.stepWorld(w, none(), 2); expect(w.ship.fuelKg).toBe(f); });
+  it("cruise drive reaches interplanetary speed in playable time and Earth→Mars gap shrinks without teleport", () => {
+    const w = far(); w.ship.engineMode = "cruise"; w.ship.throttleSetting = 1; let maxJump = 0;
+    // 600 steps = 1200 s sim = 2 s real at 100x
+    for (let i = 0; i < 600; i++) { const p = w.ship.position.clone(); P.stepWorld(w, none(), 2); maxJump = Math.max(maxJump, p.distanceTo(w.ship.position)); }
+    expect(w.ship.velocity.length()).toBeGreaterThan(90);
+    expect(maxJump).toBeLessThan(w.ship.velocity.length() * 2 + 5);
+  });
+  it("brake with cruise drive stops relative motion", () => { const w = far(); w.ship.engineMode = "cruise"; w.ship.velocity.set(0, 0, 60); w.ship.throttleSetting = 1; for (let i = 0; i < 400; i++) P.stepWorld(w, { thrust: new T.Vector3(), brake: true }, 2); const ref = P.referenceBody(w.ship.position, w.time); const rel = ref ? w.ship.velocity.clone().sub(P.bodyVelocityAt(ref, w.time)).length() : w.ship.velocity.length(); expect(rel).toBeLessThan(0.5); });
+  it("max cruise speed still collides with a planet (no tunnelling)", () => {
+    const w = P.createWorld(0); const earth = P.CELESTIAL_BODIES[2]; const e = P.bodyPositionAt(earth, 0); const ev = P.bodyVelocityAt(earth, 0);
+    w.ship.position.copy(e).add(new T.Vector3(0, earth.radiusKm + 2000, 0)); w.ship.velocity.copy(ev).add(new T.Vector3(0, -300, 0)); w.ship.engineMode = "cruise"; w.ship.throttleSetting = 1;
+    let hit = false; for (let i = 0; i < 40 && !hit; i++) hit = P.stepWorld(w, none(), 2).some(x => x.type === "impact");
+    expect(hit).toBe(true); expect(w.ship.status).toBe("destroyed"); expect(w.ship.throttleSetting).toBe(0);
+    expect(w.ship.position.distanceTo(P.bodyPositionAt(earth, w.time))).toBeGreaterThanOrEqual(earth.radiusKm);
+  });
+});
