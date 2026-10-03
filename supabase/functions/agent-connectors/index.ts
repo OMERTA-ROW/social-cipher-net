@@ -46,10 +46,11 @@ async function listMcpTools(url: string, token: string | null) {
       method: "POST",
       headers,
       body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
+      redirect: "error",
       signal: AbortSignal.timeout(20_000),
     });
     const text = await res.text();
-    if (!res.ok) throw new Error(`Server replied ${res.status}: ${text.slice(0, 300)}`);
+    if (!res.ok) throw new Error(`Server request failed (HTTP ${res.status}).`);
     // Streamable HTTP may answer as SSE; take the last data frame.
     const payload = text.includes("data:")
       ? text
@@ -102,15 +103,14 @@ async function testAgentKey(provider: string, key: string) {
     },
   };
   const probe = probes[provider];
-  if (!probe) return { ok: true, detail: "Saved. This provider has no test endpoint." };
+  if (!probe) return { ok: false, detail: "This provider has no supported verification endpoint." };
 
   const res = await fetch(probe.url, {
     headers: probe.headers,
     signal: AbortSignal.timeout(15_000),
   });
   if (res.ok) return { ok: true, detail: "Key verified" };
-  const body = await res.text();
-  return { ok: false, detail: `${res.status}: ${body.slice(0, 200)}` };
+  return { ok: false, detail: `Provider verification failed (HTTP ${res.status}). Check your credentials and permissions.` };
 }
 
 Deno.serve(async (req) => {

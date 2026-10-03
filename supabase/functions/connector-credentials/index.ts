@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       const { data, error } = await admin
         .from("user_connections")
         .select(
-          "id, service_id, account_key, account_label, is_active_account, status, method, health, account_name, account_handle, scopes, expires_at, last_synced_at, last_error, failure_count, connected_at, updated_at",
+          "id, service_id, account_key, account_label, is_active_account, status, method, health, account_name, account_handle, provider_account_id, scopes, expires_at, last_synced_at, last_error, failure_count, connected_at, updated_at",
         )
         .eq("user_id", user.id);
       if (error) return json({ error: error.message }, 400);

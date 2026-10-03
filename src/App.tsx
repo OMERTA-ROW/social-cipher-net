@@ -56,6 +56,7 @@ import AffiliateRedirect from "./pages/AffiliateRedirect";
 import AIBotAssistant from "./components/AIBotAssistant";
 import SpaceBackground from "./components/space/SpaceBackground";
 import AppShell from "@/components/layout/AppShell";
+import { ArenaEntry, ArenaGate, ArenaProfile, ArenaReset } from "@/components/arena/ArenaAccount";
 import RequireAuth from "@/components/auth/RequireAuth";
 import RouteTitle from "@/components/routing/RouteTitle";
 import PendingPolicy from "./pages/PendingPolicy";
@@ -88,7 +89,14 @@ const AppContent = () => {
         <Route path="/seller-dashboard" element={<ShellRoute><SellerDashboard /></ShellRoute>} />
         <Route path="/monetization" element={<ShellRoute><Monetization /></ShellRoute>} />
         <Route path="/messages" element={<Messages />} />
-        <Route path="/cyber-arena" element={<CyberGamers />} />
+        <Route path="/cyber-arena" element={<ArenaEntry />} />
+        <Route path="/cyber-arena/login" element={<Auth arena />} />
+        <Route path="/cyber-arena/signup" element={<Auth arena />} />
+        <Route path="/cyber-arena/forgot-password" element={<Auth arena />} />
+        <Route path="/cyber-arena/reset-password" element={<ArenaReset />} />
+        <Route path="/cyber-arena/lobby" element={<ArenaGate><CyberGamers /></ArenaGate>} />
+        <Route path="/cyber-arena/profile" element={<ArenaGate><ArenaProfile /></ArenaGate>} />
+        <Route path="/cyber-arena/*" element={<ArenaGate><NotFound /></ArenaGate>} />
         <Route path="/cyber-streamer" element={<ShellRoute><CyberStreamer /></ShellRoute>} />
         <Route path="/connectors" element={<PrivateRoute><ShellRoute><Connectors /></ShellRoute></PrivateRoute>} />
         <Route path="/integrations" element={<PrivateRoute><ShellRoute><Integrations /></ShellRoute></PrivateRoute>} />

@@ -551,7 +551,7 @@ Deno.serve(async (req) => {
         requirements: {
           client_id: "Set PROVIDER_CLIENT_ID in server function secrets",
           client_secret: "Set PROVIDER_CLIENT_SECRET in server function secrets",
-          callback: "Register the exact /integrations URL for each deployed origin",
+          callback: "Register the exact /auth/callback URL for each deployed origin",
         },
       });
     }

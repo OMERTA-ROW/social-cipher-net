@@ -13,6 +13,7 @@ import { PageTabManager } from "@/components/PageTabManager";
 import { useSavedTabs } from "@/hooks/useSavedTabs";
 import { SavedTabsManager } from "@/components/SavedTabsManager";
 import { supabase } from "@/integrations/supabase/client";
+import { ArenaAccountLinks } from "@/components/arena/ArenaAccount";
 import ArenaShell, { ArenaStatusChip } from "@/components/arena/ArenaShell";
 
 interface GangMember {
@@ -157,6 +158,7 @@ const CyberGamers = () => {
 
   const status = (
     <>
+      <ArenaAccountLinks />
       <ArenaStatusChip label={`${liveCount} live`} tone="live" />
       <ArenaStatusChip label={`${gangMembers.length} gang members`} />
       <div className="flex flex-wrap gap-2 ml-auto">

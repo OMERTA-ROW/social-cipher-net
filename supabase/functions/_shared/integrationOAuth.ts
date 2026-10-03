@@ -3,6 +3,8 @@ import { candidatePaths, type IntegrationProvider, textAt } from "./accountInteg
 
 export interface Creds { clientId: string; clientSecret: string }
 
+const providerFetch = (url: string, init: RequestInit = {}) => fetch(url, { ...init, redirect: "error", signal: AbortSignal.timeout(15000) });
+
 const tokenRequest = async (p: IntegrationProvider, creds: Creds, params: Record<string, string>) => {
   const headers: Record<string, string> = { Accept: "application/json" };
   const body: Record<string, string> = { ...params };
@@ -22,7 +24,7 @@ const tokenRequest = async (p: IntegrationProvider, creds: Creds, params: Record
     headers["Content-Type"] = "application/x-www-form-urlencoded";
     payload = new URLSearchParams(body).toString();
   }
-  const res = await fetch(p.tokenUrl, { method: "POST", headers, body: payload });
+  const res = await providerFetch(p.tokenUrl, { method: "POST", headers, body: payload });
   const json = await res.json().catch(() => ({}));
   return { ok: tokenResponseOk(p, res.ok, json), json: json as Record<string, unknown> };
 };
@@ -55,7 +57,7 @@ export const fetchIdentity = async (p: IntegrationProvider, tokenBody: Record<st
   const url = id.tokenInPath ? `${id.url}${encodeURIComponent(access)}` : id.url;
   const headers: Record<string, string> = { ...(id.headers ?? {}) };
   if (!id.tokenInPath) headers.Authorization = `Bearer ${access}`;
-  const res = await fetch(url, { headers });
+  const res = await providerFetch(url, { headers });
   const body = await res.json().catch(() => null);
   if (!res.ok || !body || (body as { ok?: boolean }).ok === false) return null;
   const pid = textAt(body, candidatePaths(id.id));
@@ -81,23 +83,23 @@ export const revokeToken = async (
     switch (p.revoke.style) {
       case "form-token":
         if (!token) return "failed";
-        res = await fetch(p.revoke.url, form({ token }));
+        res = await providerFetch(p.revoke.url, form({ token }));
         break;
       case "form-token-client":
         if (!token || !creds) return "failed";
-        res = await fetch(p.revoke.url, form({ token, [p.clientIdParam ?? "client_id"]: creds.clientId, client_secret: creds.clientSecret }));
+        res = await providerFetch(p.revoke.url, form({ token, [p.clientIdParam ?? "client_id"]: creds.clientId, client_secret: creds.clientSecret }));
         break;
       case "basic-token":
         if (!token || !creds) return "failed";
-        res = await fetch(p.revoke.url, form({ token, client_id: creds.clientId }, { Authorization: `Basic ${btoa(`${creds.clientId}:${creds.clientSecret}`)}` }));
+        res = await providerFetch(p.revoke.url, form({ token, client_id: creds.clientId }, { Authorization: `Basic ${btoa(`${creds.clientId}:${creds.clientSecret}`)}` }));
         break;
       case "get-token":
         if (!secrets.access_token) return "failed";
-        res = await fetch(p.revoke.url, { headers: { Authorization: `Bearer ${secrets.access_token}` } });
+        res = await providerFetch(p.revoke.url, { headers: { Authorization: `Bearer ${secrets.access_token}` } });
         break;
       case "stripe-deauthorize":
         if (!creds || !secrets.provider_account_id) return "failed";
-        res = await fetch(p.revoke.url, form({ client_id: creds.clientId, stripe_user_id: secrets.provider_account_id }, { Authorization: `Bearer ${creds.clientSecret}` }));
+        res = await providerFetch(p.revoke.url, form({ client_id: creds.clientId, stripe_user_id: secrets.provider_account_id }, { Authorization: `Bearer ${creds.clientSecret}` }));
         break;
     }
     return res.ok ? "revoked" : "failed";

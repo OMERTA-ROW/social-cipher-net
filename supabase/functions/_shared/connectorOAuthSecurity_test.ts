@@ -16,7 +16,7 @@ Deno.test("OAuth redirect allowlist rejects external and malformed routes", () =
 });
 
 Deno.test("OAuth callback is derived from a trusted request origin", () => {
-  assertEquals(trustedOAuthRedirect("https://cyberlink.social"), "https://cyberlink.social/integrations");
+  assertEquals(trustedOAuthRedirect("https://cyberlink.social"), "https://cyberlink.social/auth/callback");
   assertEquals(trustedOAuthRedirect("https://evil.example"), null);
   assertEquals(trustedOAuthRedirect(null), null);
 });
