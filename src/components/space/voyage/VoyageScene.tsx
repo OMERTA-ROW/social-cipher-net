@@ -13,6 +13,7 @@ import {
   CELESTIAL_BODIES, SUN, SUN_VISUAL_RADIUS, bodyPositionAt, bodyRenderPosition, gravityFromFrame, computeFrame, localVisualDistance, nearbyObjects, physicalObstaclesAt,
   predictTrajectory, referenceBody, renderPosition, ringQuaternion, runFixedSteps, spinAngleAt, stepWorld, thrustFrame, visualRadius, bodyVelocityAt,
   type CelestialBodyData, type NearbyObject, type ShipStatus, type StepEvent, type WorldState,
+  type EngineMode,
 } from "@/lib/space/voyagePhysics";
 
 export type TimeScale = 1 | 10 | 100;
@@ -30,7 +31,7 @@ export interface CameraCommand { rotateX: number; rotateY: number; zoom: number 
 export interface MapPoint { id: string; x: number; z: number }
 export interface VoyageTelemetry {
   simTime: number; speedRel: number; speedAbs: number; reference: string; fuel: number; damage: number; altitude: number; gravity: number; closest: string;
-  status: ShipStatus; contactLabel?: string; probes: number; throttle: number; nearby: NearbyObject[]; planets: MapPoint[]; ship: MapPoint; objects: number;
+  status: ShipStatus; contactLabel?: string; probes: number; throttle: number; throttleSetting: number; engineMode: EngineMode; fuelRate: number; thrustN: number; nearby: NearbyObject[]; planets: MapPoint[]; ship: MapPoint; objects: number;
   selectedRenderDistance: number; selectedRealDistanceKm: number; dockDistanceKm: number; dockRelSpeed: number;
 }
 interface Props {
@@ -210,7 +211,7 @@ function Simulation(props: Props) {
       const selPos = bodyPositionAt(selectedBody, w.time);
       props.onTelemetry({
         simTime: w.time, speedRel: relV, speedAbs: s.velocity.length(), reference: ref?.name ?? SUN.name, fuel: s.fuelKg, damage: s.damage, altitude: g.altitudeKm, gravity: g.acceleration.length(),
-        closest: g.closest === SUN.id ? SUN.name : CELESTIAL_BODIES.find(b => b.id === g.closest)?.name ?? g.closest, status: s.status, contactLabel: s.contactLabel, probes: s.probes, throttle: s.throttle,
+        closest: g.closest === SUN.id ? SUN.name : CELESTIAL_BODIES.find(b => b.id === g.closest)?.name ?? g.closest, status: s.status, contactLabel: s.contactLabel, probes: s.probes, throttle: s.throttle, throttleSetting: s.throttleSetting, engineMode: s.engineMode, fuelRate: s.fuelRateKgS, thrustN: s.thrustN,
         nearby: nearbyObjects(w, 4), planets: CELESTIAL_BODIES.map(b => { const p = bodyRenderPosition(b, w.time); return { id: b.id, x: p.x, z: p.z }; }), ship: { id: "ship", x: shipR.x, z: shipR.z }, objects: w.objects.length,
         selectedRenderDistance: bodyRenderPosition(selectedBody, w.time).distanceTo(shipR), selectedRealDistanceKm: Math.max(0, s.position.distanceTo(selPos) - selectedBody.radiusKm),
         dockDistanceKm: s.position.distanceTo(st.position), dockRelSpeed: s.velocity.clone().sub(st.velocity).length(),

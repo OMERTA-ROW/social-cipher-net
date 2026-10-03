@@ -28,6 +28,16 @@ export const SHIP_FUEL_KG = 1_800;
 export const SHIP_THRUST_N = 144_000;
 export const SHIP_ISP_S = 3_000;
 export const G0 = 9.80665;
+/**
+ * Cruise drive: a disclosed, fictional high-performance engine (≈ fusion-torch class) that makes
+ * interplanetary cruising playable in browser time. Gravity, inertia, fuel use and collisions are
+ * computed exactly the same way as for the standard engine; only thrust and exhaust velocity differ.
+ */
+export const CRUISE_THRUST_N = 1_200_000;
+export const CRUISE_ISP_S = 200_000;
+export type EngineMode = "standard" | "cruise";
+export const engineSpec = (m: EngineMode) => m === "cruise" ? { thrustN: CRUISE_THRUST_N, ispS: CRUISE_ISP_S } : { thrustN: SHIP_THRUST_N, ispS: SHIP_ISP_S };
+export const clampThrottle = (v: number) => Number.isFinite(v) ? Math.max(-1, Math.min(1, v)) : 0;
 export const SHIP_RADIUS_KM = 3;
 export const PROBE_MASS_KG = 60;
 export const PROBE_RADIUS_KM = 0.5;
@@ -240,7 +250,18 @@ export type ShipStatus = "flying"|"docked"|"landed"|"destroyed";
 export interface ShipState {
   position: THREE.Vector3; velocity: THREE.Vector3; dryMassKg: number; collisionRadiusKm: number;
   angularVelocity: THREE.Vector3; fuelKg: number; damage: number; status: ShipStatus;
-  attachedTo?: string; attachOffset?: THREE.Vector3; contactLabel?: string; probes: number; throttle: number;
+  attachedTo?: string; attachOffset?: THREE.Vector3; contactLabel?: string; probes: number;
+  /** delivered thrust fraction (0..1) last step, all thrusters */
+  throttle: number;
+  /** persistent signed main-engine setting, -1 (full reverse) .. +1 (full forward) */
+  throttleSetting: number;
+  engineMode: EngineMode;
+  /** unit vector the ship's nose points along (main engine axis) */
+  heading: THREE.Vector3;
+  /** actual fuel burn last step, kg/s */
+  fuelRateKgS: number;
+  /** actual delivered thrust last step, N */
+  thrustN: number;
 }
 export const shipMass = (s: ShipState) => s.dryMassKg + s.fuelKg;
 export type ObjectKind = "probe"|"debris"|"fragment";
@@ -258,7 +279,7 @@ export function createShip(t: number): ShipState {
   const earth = CELESTIAL_BODIES[2]; const rel = new THREE.Vector3(earth.radiusKm + 900, 0, 0);
   const position = bodyPositionAt(earth, t).add(rel);
   const velocity = bodyVelocityAt(earth, t).addScaledVector(orbitTangent(rel, ZERO), softenedCircularSpeed(earth.muKm3S2, rel.length()));
-  return { position, velocity, dryMassKg: SHIP_DRY_MASS_KG, collisionRadiusKm: SHIP_RADIUS_KM, angularVelocity: new THREE.Vector3(), fuelKg: SHIP_FUEL_KG, damage: 0, status: "flying", probes: PROBE_CAPACITY, throttle: 0 };
+  return { position, velocity, dryMassKg: SHIP_DRY_MASS_KG, collisionRadiusKm: SHIP_RADIUS_KM, angularVelocity: new THREE.Vector3(), fuelKg: SHIP_FUEL_KG, damage: 0, status: "flying", probes: PROBE_CAPACITY, throttle: 0, throttleSetting: 0, engineMode: "standard", heading: velocity.clone().sub(bodyVelocityAt(earth, t)).normalize(), fuelRateKgS: 0, thrustN: 0 };
 }
 export function createWorld(t = 0): WorldState {
   const earth = CELESTIAL_BODIES[2]; const rel = new THREE.Vector3(-(earth.radiusKm + 1200), 0, 0);
@@ -302,14 +323,32 @@ export function thrustFrame(p: THREE.Vector3, v: THREE.Vector3, t: number) {
   return { body, forward, up, right, relVel: rel };
 }
 
-function commandedThrust(ship: ShipState, input: PhysicsInput, t: number, accel: number, dt: number) {
-  if (ship.status !== "flying" || ship.fuelKg <= 0) return new THREE.Vector3();
-  const f = thrustFrame(ship.position, ship.velocity, t); const scale = input.thrustScale ?? 1;
-  const cmd = new THREE.Vector3().addScaledVector(f.right, input.thrust.x).addScaledVector(f.up, input.thrust.y).addScaledVector(f.forward, input.thrust.z).multiplyScalar(scale);
-  if (input.brake && f.relVel.length() > 1e-5) cmd.addScaledVector(f.relVel.clone().normalize(), -Math.min(1, f.relVel.length() / (accel * dt)));
-  if (input.orbitAssistBody) { const delta = orbitAssistVelocity(input.orbitAssistBody, ship.position, t, ship.velocity).sub(ship.velocity); if (delta.length() > 1e-6) cmd.addScaledVector(delta.normalize(), Math.min(1, delta.length() / (accel * dt))); }
-  if (cmd.length() > 1) cmd.normalize();
-  return cmd;
+/**
+ * Thrust model. Main engine fires along `heading` at `throttleSetting` (signed); RCS (standard engine
+ * rating) handles lateral/vertical/axial input, brake and orbit assist. Fuel burn = Σ thrust/(Isp·g0)
+ * for what is actually delivered; if the step would use more fuel than remains, all thrust is scaled down.
+ */
+export function commandedThrust(ship: ShipState, input: PhysicsInput, t: number, dt: number) {
+  const out = { acc: new THREE.Vector3(), fuelKg: 0, thrustN: 0, fraction: 0 };
+  if (ship.status !== "flying" || ship.fuelKg <= 0) return out;
+  const mass = shipMass(ship); const f = thrustFrame(ship.position, ship.velocity, t);
+  if (f.relVel.lengthSq() > 1e-10) ship.heading.copy(f.forward); // nose holds prograde (relative to reference body)
+  const main = engineSpec(ship.engineMode); const rcs = engineSpec("standard"); const scale = input.thrustScale ?? 1;
+  const force = new THREE.Vector3(); let fuelRate = 0, thrustMag = 0;
+  let setting = clampThrottle(ship.throttleSetting);
+  if (input.brake) {
+    // Brake: main engine (current mode) retro-fires against relative velocity, sized to stop without overshoot.
+    setting = 0; const v = f.relVel.length();
+    if (v > 1e-6) { const n = Math.min(main.thrustN, (v * 1000 * mass) / dt); force.addScaledVector(f.relVel.clone().normalize(), -n); fuelRate += n / (main.ispS * G0); thrustMag += n; }
+  }
+  if (setting !== 0) { const n = main.thrustN * Math.abs(setting); force.addScaledVector(ship.heading, n * Math.sign(setting)); fuelRate += n / (main.ispS * G0); thrustMag += n; }
+  const r = new THREE.Vector3().addScaledVector(f.right, input.thrust.x).addScaledVector(f.up, input.thrust.y).addScaledVector(f.forward, input.thrust.z).multiplyScalar(scale);
+  if (input.orbitAssistBody) { const delta = orbitAssistVelocity(input.orbitAssistBody, ship.position, t, ship.velocity).sub(ship.velocity); const acc = rcs.thrustN / mass / 1000; if (delta.length() > 1e-6) r.addScaledVector(delta.normalize(), Math.min(1, delta.length() / (acc * dt))); }
+  if (r.length() > 1) r.normalize();
+  if (r.lengthSq() > 0) { const n = rcs.thrustN * r.length(); force.addScaledVector(r, rcs.thrustN); fuelRate += n / (rcs.ispS * G0); thrustMag += n; }
+  let k = 1; const need = fuelRate * dt; if (need > ship.fuelKg && need > 0) k = ship.fuelKg / need;
+  out.acc.copy(force).multiplyScalar(k / mass / 1000); out.fuelKg = need * k; out.thrustN = thrustMag * k; out.fraction = Math.min(1, out.thrustN / main.thrustN);
+  return out;
 }
 
 const seeded = (n: number) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
@@ -356,7 +395,7 @@ function resolveShipContact(world: WorldState, c: Collider, hit: SweepHit, event
   const destroyed = c.kind === "sun" || speed >= CATASTROPHIC_KMS;
   s.damage = destroyed ? 100 : Math.min(100, s.damage + (minor ? 2 + speed * 25 : speed * 60));
   const impact: Impact = { bodyId: c.id, speedKmS: speed, severity: minor && !destroyed ? "minor" : "major", direction: hit.normal.clone(), destroyed: destroyed || s.damage >= 100 };
-  if (impact.destroyed) { s.status = "destroyed"; s.throttle = 0; spawnFragments(world, s.position, s.velocity, 8, maxObjects); }
+  if (impact.destroyed) { s.status = "destroyed"; s.throttle = 0; s.throttleSetting = 0; s.thrustN = 0; s.fuelRateKgS = 0; spawnFragments(world, s.position, s.velocity, 8, maxObjects); }
   else if (!minor) spawnFragments(world, s.position, s.velocity, 3, maxObjects);
   events.push({ type: "impact", impact, position: s.position.clone() });
 }
@@ -373,18 +412,19 @@ export function stepWorld(world: WorldState, input: PhysicsInput, dt: number, ma
     for (const c of colliders) { if (c.kind === "station" || c.kind === "asteroid") continue; const h = sweepCollider(c, prev, o.position, o.radiusKm); if (h.hit) { if (o.kind !== "fragment") events.push({ type: "object-lost", label: `${o.kind === "probe" ? "Probe" : "Debris"} impacted ${c.name}`, position: o.position.clone() }); return false; } }
     return true;
   });
-  const s = world.ship; const mass = shipMass(s); const accel = SHIP_THRUST_N / mass / 1000;
+  const s = world.ship; const mass = shipMass(s);
   if (s.status === "docked" || s.status === "landed") {
     const a = anchorState(s.attachedTo!, t1); s.position.copy(a.p).add(s.attachOffset!); s.velocity.copy(a.v);
+    s.throttle = 0; s.thrustN = 0; s.fuelRateKgS = 0;
     if (s.status === "docked") { s.fuelKg = Math.min(SHIP_FUEL_KG, s.fuelKg + 20 * dt); s.damage = Math.max(0, s.damage - 0.5 * dt); }
     const wantsOut = input.thrust.lengthSq() > 0 || (s.status === "docked" && input.dock === true);
     if (wantsOut && s.status === "landed" && s.fuelKg > 0) { s.velocity.addScaledVector(s.attachOffset!.clone().normalize(), 0.03); s.status = "flying"; events.push({ type: "liftoff", label: "Lift-off" }); s.attachedTo = undefined; }
     else if (wantsOut && s.status === "docked") { s.velocity.addScaledVector(s.attachOffset!.clone().normalize(), 0.02); s.status = "flying"; events.push({ type: "undocked", label: "Undocked from Orbital Station" }); s.attachedTo = undefined; }
     world.time = t1; return events;
   }
-  const cmd = commandedThrust(s, input, t0, accel, dt); s.throttle = cmd.length();
-  const thrustAcc = cmd.clone().multiplyScalar(accel);
-  if (s.throttle > 0) s.fuelKg = Math.max(0, s.fuelKg - (SHIP_THRUST_N * s.throttle / (SHIP_ISP_S * G0)) * dt);
+  const cmd = commandedThrust(s, input, t0, dt); s.throttle = cmd.fraction; s.thrustN = cmd.thrustN; s.fuelRateKgS = cmd.fuelKg / dt;
+  const thrustAcc = cmd.acc;
+  s.fuelKg = Math.max(0, s.fuelKg - cmd.fuelKg);
   const prev = s.position.clone(); integrate(s.position, s.velocity, thrustAcc, f0, f1, dt);
   // earliest impact across all solid colliders + dynamic objects
   let best: { c: Collider; h: SweepHit } | null = null;
@@ -400,7 +440,7 @@ export function stepWorld(world: WorldState, input: PhysicsInput, dt: number, ma
       if (s.status !== "destroyed") {
         s.damage = Math.min(100, s.damage + (speed < MINOR_IMPACT_KMS ? 2 + speed * 25 : speed * 60));
         const impact: Impact = { bodyId: o.kind, speedKmS: speed, severity: speed < MINOR_IMPACT_KMS ? "minor" : "major", direction: h.normal.clone(), destroyed: s.damage >= 100 };
-        if (impact.destroyed) { s.status = "destroyed"; s.throttle = 0; spawnFragments(world, s.position, s.velocity, 8, maxObjects); }
+        if (impact.destroyed) { s.status = "destroyed"; s.throttle = 0; s.throttleSetting = 0; s.thrustN = 0; s.fuelRateKgS = 0; spawnFragments(world, s.position, s.velocity, 8, maxObjects); }
         events.push({ type: "impact", impact, position: s.position.clone() });
       }
     }

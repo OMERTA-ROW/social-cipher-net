@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import VoyageScene, { QUALITY_BUDGETS, type CameraCommand, type FollowMode, type QualityTier, type TimeScale, type VoyageInput, type VoyageTelemetry } from "@/components/space/voyage/VoyageScene";
 import VoyageErrorBoundary from "@/components/space/voyage/VoyageErrorBoundary";
 import ProceduralStarFallback from "@/components/space/voyage/ProceduralStarFallback";
-import { CELESTIAL_BODIES, SAFE_CONTACT_KMS, STATION, createShip, createWorld, launchProbe, type Impact, type StepEvent, type WorldState } from "@/lib/space/voyagePhysics";
+import { CELESTIAL_BODIES, CRUISE_ISP_S, CRUISE_THRUST_N, clampThrottle, SAFE_CONTACT_KMS, STATION, createShip, createWorld, launchProbe, type Impact, type StepEvent, type WorldState } from "@/lib/space/voyagePhysics";
 import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
 import { VOYAGE_PREFS_KEY, parseVoyagePreferences, shouldIgnoreKey, supportsWebGL, type QualityPref } from "@/lib/space/voyagePreferences";
 import { getTextureLoadStats, subscribeTextureLoadStats, type TextureLoadStats } from "@/components/space/realTextures";
@@ -62,21 +62,27 @@ const SolarSystemVoyage = () => {
   const doLaunch = useCallback(() => { const ok = launchProbe(worldRef.current, QUALITY_BUDGETS[quality].maxObjects); setNotice(ok ? `Probe launched (${worldRef.current.ship.probes} left)` : worldRef.current.ship.probes <= 0 ? "No probes remaining" : "Probe launch unavailable in this state"); }, [quality]);
   const doDock = useCallback(() => { inputRef.current.dock = true; }, []);
   const toggleAssist = useCallback(() => setAssist(a => { inputRef.current.orbitAssist = !a; return !a; }), []);
-  const resetShip = useCallback(() => { worldRef.current.ship = createShip(worldRef.current.time); setImpact(null); setNotice("Ship recovered to Earth orbit"); }, []);
+  const [throttleUi, setThrottleUi] = useState(0); const [cruise, setCruise] = useState(false);
+  const setThrottle = useCallback((v: number) => { const c = Math.round(clampThrottle(v) * 100) / 100; worldRef.current.ship.throttleSetting = c; setThrottleUi(c); }, []);
+  const nudgeThrottle = useCallback((d: number) => setThrottle(worldRef.current.ship.throttleSetting + d), [setThrottle]);
+  const toggleCruise = useCallback(() => setCruise(c => { const n = !c; worldRef.current.ship.engineMode = n ? "cruise" : "standard"; return n; }), []);
+  const resetShip = useCallback(() => { worldRef.current.ship = createShip(worldRef.current.time); setThrottleUi(0); setCruise(false); setImpact(null); setNotice("Ship recovered to Earth orbit — engine cut"); }, []);
   useEffect(() => {
     const thrustKeys: Record<string, [HoldKey, number]> = { KeyW: ["z", 1], KeyS: ["z", -1], KeyA: ["x", -1], KeyD: ["x", 1], KeyR: ["y", 1], KeyF: ["y", -1], Space: ["brake", 1] };
     const recompute = () => { const k: Record<HoldKey, number> = { x: 0, y: 0, z: 0, brake: 0 }; held.current.forEach(c => { const m = thrustKeys[c]; if (m) k[m[0]] += m[1]; }); keyHeld.current = k; syncInput(); };
     const down = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey || shouldIgnoreKey(e.target, e.code)) return;
       if (thrustKeys[e.code]) { e.preventDefault(); held.current.add(e.code); recompute(); return; }
-      if (e.repeat) return;
-      const actions: Record<string, () => void> = { KeyP: () => setPaused(p => !p), Digit1: () => setPrefs(p => ({ ...p, timeScale: 1 })), Digit2: () => setPrefs(p => ({ ...p, timeScale: 10 })), Digit3: () => setPrefs(p => ({ ...p, timeScale: 100 })), KeyO: toggleAssist, KeyL: doLaunch, KeyK: doDock, KeyC: () => setResetCamera(v => v + 1), KeyG: () => setPrefs(p => ({ ...p, guides: !p.guides })), KeyN: () => setPrefs(p => ({ ...p, labels: !p.labels })) };
+      if (e.repeat && !["Equal", "Minus", "NumpadAdd", "NumpadSubtract"].includes(e.code)) return;
+      const actions: Record<string, () => void> = { KeyP: () => setPaused(p => !p), Digit1: () => setPrefs(p => ({ ...p, timeScale: 1 })), Digit2: () => setPrefs(p => ({ ...p, timeScale: 10 })), Digit3: () => setPrefs(p => ({ ...p, timeScale: 100 })), KeyO: toggleAssist, KeyL: doLaunch, KeyK: doDock, KeyC: () => setResetCamera(v => v + 1), KeyG: () => setPrefs(p => ({ ...p, guides: !p.guides })), KeyN: () => setPrefs(p => ({ ...p, labels: !p.labels })), Equal: () => nudgeThrottle(0.1), NumpadAdd: () => nudgeThrottle(0.1), Minus: () => nudgeThrottle(-0.1), NumpadSubtract: () => nudgeThrottle(-0.1), KeyX: () => setThrottle(0), Digit0: () => setThrottle(0), KeyT: toggleCruise };
       if (actions[e.code]) { e.preventDefault(); actions[e.code](); }
     };
     const up = (e: KeyboardEvent) => { held.current.delete(e.code); recompute(); };
     window.addEventListener("keydown", down); window.addEventListener("keyup", up); window.addEventListener("blur", clearKeys);
     return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); window.removeEventListener("blur", clearKeys); };
-  }, [syncInput, clearKeys, toggleAssist, doLaunch, doDock]);
+  }, [syncInput, clearKeys, toggleAssist, doLaunch, doDock, nudgeThrottle, setThrottle, toggleCruise]);
+  // Physics can cut the engine (destroyed); keep the control in sync with the real setting.
+  useEffect(() => { if (telemetry && Math.abs(telemetry.throttleSetting - throttleUi) > 0.005) setThrottleUi(telemetry.throttleSetting); }, [telemetry]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Audio: created/resumed inside the toggle's user gesture; closed on unmount.
   const tone = (ctx: AudioContext, freq: number, dur: number, vol = 0.07) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = freq; g.gain.setValueAtTime(vol, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur); o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + dur + 0.02); };
@@ -175,6 +181,8 @@ const SolarSystemVoyage = () => {
         <dt className="text-muted-foreground">Altitude ({telemetry?.closest ?? "—"})</dt><dd className="text-right">{telemetry ? fmtKm(telemetry.altitude) : "—"}</dd>
         <dt className="text-muted-foreground">Gravity</dt><dd className="text-right">{telemetry ? `${(telemetry.gravity * 1000).toFixed(3)} m/s²` : "—"}</dd>
         <dt className="text-muted-foreground">Fuel</dt><dd className="text-right">{telemetry ? `${telemetry.fuel.toFixed(0)} kg` : "—"}</dd>
+        <dt className="text-muted-foreground">Fuel burn</dt><dd className="text-right">{telemetry ? `${telemetry.fuelRate.toFixed(3)} kg/s` : "—"}</dd>
+        <dt className="text-muted-foreground">Delivered thrust</dt><dd className="text-right">{telemetry ? `${(telemetry.thrustN / 1000).toFixed(0)} kN` : "—"}</dd>
         <dt className="text-muted-foreground">Probes</dt><dd className="text-right">{telemetry?.probes ?? "—"}</dd>
         <dt className="text-muted-foreground">Station port</dt><dd className="text-right">{telemetry ? `${fmtKm(telemetry.dockDistanceKm)} · ${(telemetry.dockRelSpeed * 1000).toFixed(0)} m/s` : "—"}</dd>
       </dl>
@@ -194,12 +202,28 @@ const SolarSystemVoyage = () => {
         <Button size="sm" variant="outline" onClick={toggleAudio}>{audioOn ? <AudioLines className="mr-1 h-3.5 w-3.5" /> : <VolumeX className="mr-1 h-3.5 w-3.5" />}{audioOn ? "Sound on" : "Sound off"}</Button>
         <Button size="sm" variant="outline" asChild className="sm:hidden"><Link to="/backgrounds">Backgrounds</Link></Button>
       </div>
-      <p className="mt-2 text-[10px] text-muted-foreground">Keys: W/S prograde/retrograde · A/D lateral · R/F radial · Space brake · O orbit assist · L probe · K dock · P pause · 1/2/3 speed · C camera · G guides · N labels</p>
+      <p className="mt-2 text-[10px] text-muted-foreground">Cruise drive is a disclosed fictional high-performance engine ({CRUISE_THRUST_N / 1000} kN, Isp {CRUISE_ISP_S.toLocaleString()} s) so planet-to-planet trips take minutes at 100×. Gravity, inertia, fuel and collisions stay fully simulated; no teleporting.</p>
+      <p className="mt-2 text-[10px] text-muted-foreground">Keys: +/− throttle ±10% · X or 0 engine cut · T cruise drive · W/S prograde/retrograde · A/D lateral · R/F radial · Space brake · O orbit assist · L probe · K dock · P pause · 1/2/3 speed · C camera · G guides · N labels</p>
     </aside>}
 
     {/* Bottom control deck: flight (left) and camera (right). Never overlaps the details panel. */}
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex items-end justify-between gap-2 p-2 sm:p-4">
       <div className="pointer-events-auto select-none" style={{ touchAction: "none" }}>
+        <div className="mb-1 w-64 rounded-md border border-border bg-background/85 p-2 sm:w-72" role="group" aria-label="Main engine throttle">
+          <div className="flex items-center justify-between font-mono text-[11px]">
+            <span>Throttle <b className={throttleUi < 0 ? "text-destructive" : "text-primary"}>{throttleUi > 0 ? "+" : ""}{Math.round(throttleUi * 100)}%</b>{throttleUi < 0 ? " rev" : ""}</span>
+            <span className="text-muted-foreground">{telemetry ? `${telemetry.speedRel.toFixed(2)} km/s · ${telemetry.fuelRate.toFixed(2)} kg/s` : "—"}</span>
+          </div>
+          <Slider className="my-2" min={-100} max={100} step={5} value={[Math.round(throttleUi * 100)]} onValueChange={([v]) => setThrottle(v / 100)} aria-label="Throttle, -100% reverse to +100% forward" disabled={status === "destroyed"} />
+          <div className="grid grid-cols-4 gap-1">
+            <Button size="sm" variant="outline" className="h-8 px-1 text-[11px]" aria-label="Decrease throttle 10% (minus key)" onClick={() => nudgeThrottle(-0.1)} disabled={status === "destroyed"}>−10 <kbd className="ml-1 text-muted-foreground">−</kbd></Button>
+            <Button size="sm" variant="outline" className="h-8 px-1 text-[11px]" aria-label="Engine cut (X)" onClick={() => setThrottle(0)}>Cut <kbd className="ml-1 text-muted-foreground">X</kbd></Button>
+            <Button size="sm" variant="outline" className="h-8 px-1 text-[11px]" aria-label="Increase throttle 10% (plus key)" onClick={() => nudgeThrottle(0.1)} disabled={status === "destroyed"}>+10 <kbd className="ml-1 text-muted-foreground">+</kbd></Button>
+            <Button size="sm" variant={cruise ? "default" : "outline"} aria-pressed={cruise} className="h-8 px-1 text-[11px]" aria-label="Cruise drive (T)" onClick={toggleCruise}>Cruise</Button>
+          </div>
+          {status !== "flying" && throttleUi !== 0 && <p className="mt-1 text-[10px] text-muted-foreground">Engine idle while {status}.</p>}
+          {telemetry && telemetry.fuel <= 0 && <p className="mt-1 text-[10px] text-destructive">Fuel empty — no thrust. Reset Ship to recover.</p>}
+        </div>
         <div className="mb-1 grid grid-cols-4 gap-1">
           <Button size="sm" variant={assist ? "default" : "outline"} aria-pressed={assist} onClick={toggleAssist} className="h-9 bg-background/80 px-2 text-[11px]"><Orbit className="mr-1 h-3.5 w-3.5" />Assist</Button>
           <Button size="sm" variant="outline" onClick={doLaunch} disabled={status !== "flying"} className="h-9 bg-background/80 px-2 text-[11px]"><Rocket className="mr-1 h-3.5 w-3.5" />Probe</Button>
