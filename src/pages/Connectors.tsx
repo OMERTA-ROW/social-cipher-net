@@ -1,4 +1,4 @@
-import { isVerifiedConnection } from "@/lib/integrationStatus";
+import { isVerifiedConnection, takeIntegrationResult } from "@/lib/integrationStatus";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
