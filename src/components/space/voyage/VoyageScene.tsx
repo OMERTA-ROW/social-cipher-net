@@ -10,7 +10,7 @@ import MiningVessel from "@/components/space/scene/MiningVessel";
 import Sun, { PHOTO_RADIUS } from "@/components/space/scene/Sun";
 import { CLOUD_TEXTURE_URLS, RING_TEXTURE_URL, SPACE_TEXTURE_URLS, useLazyTexture } from "@/components/space/realTextures";
 import {
-  CELESTIAL_BODIES, STATION, SUN, SUN_VISUAL_RADIUS, bodyPositionAt, bodyRenderPosition, gravityFromFrame, computeFrame, localVisualDistance, nearbyObjects, physicalObstaclesAt,
+  CELESTIAL_BODIES, SUN, SUN_VISUAL_RADIUS, bodyPositionAt, bodyRenderPosition, gravityFromFrame, computeFrame, localVisualDistance, nearbyObjects, physicalObstaclesAt,
   predictTrajectory, referenceBody, renderPosition, ringQuaternion, runFixedSteps, spinAngleAt, stepWorld, thrustFrame, visualRadius, bodyVelocityAt,
   type CelestialBodyData, type NearbyObject, type ShipStatus, type StepEvent, type WorldState,
 } from "@/lib/space/voyagePhysics";
@@ -221,4 +221,3 @@ function Simulation(props: Props) {
   </>;
 }
 export default function VoyageScene(props: Props) { return <Simulation {...props} />; }
-export { STATION };

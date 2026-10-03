@@ -2,7 +2,6 @@ import { Canvas } from "@react-three/fiber";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, AudioLines, ChevronDown, ChevronUp, CirclePause, CirclePlay, Crosshair, Gauge, Home, LocateFixed, Minus, Orbit, Plus, Rocket, RotateCcw, Satellite, VolumeX } from "lucide-react";
-import * as THREE from "three";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,35 +12,9 @@ import VoyageErrorBoundary from "@/components/space/voyage/VoyageErrorBoundary";
 import ProceduralStarFallback from "@/components/space/voyage/ProceduralStarFallback";
 import { CELESTIAL_BODIES, SAFE_CONTACT_KMS, STATION, createShip, createWorld, launchProbe, type Impact, type StepEvent, type WorldState } from "@/lib/space/voyagePhysics";
 import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
+import { VOYAGE_PREFS_KEY, parseVoyagePreferences, shouldIgnoreKey, supportsWebGL, type QualityPref } from "@/lib/space/voyagePreferences";
 import { getTextureLoadStats, subscribeTextureLoadStats, type TextureLoadStats } from "@/components/space/realTextures";
 
-type QualityPref = "auto" | QualityTier;
-export interface VoyagePreferences { quality: QualityPref; labels: boolean; guides: boolean; velocity: boolean; follow: FollowMode; thrustScale: number; timeScale: TimeScale; selected: string }
-export const VOYAGE_PREFS_KEY = "voyage.sim.preferences.v3";
-const DEFAULTS: VoyagePreferences = { quality: "auto", labels: true, guides: true, velocity: true, follow: "selected", thrustScale: 1, timeScale: 1, selected: "earth" };
-/** Safe parsing: every field is validated independently; corrupt storage falls back to defaults. */
-export function parseVoyagePreferences(raw: string | null): VoyagePreferences {
-  let v: Record<string, unknown> = {}; try { const parsed = JSON.parse(raw ?? "{}"); if (parsed && typeof parsed === "object") v = parsed; } catch { /* corrupt */ }
-  const bool = (k: keyof VoyagePreferences) => (typeof v[k] === "boolean" ? (v[k] as boolean) : (DEFAULTS[k] as boolean));
-  return {
-    quality: ["auto", "low", "medium", "high"].includes(v.quality as string) ? (v.quality as QualityPref) : DEFAULTS.quality,
-    labels: bool("labels"), guides: bool("guides"), velocity: bool("velocity"),
-    follow: v.follow === "ship" || v.follow === "selected" ? v.follow : DEFAULTS.follow,
-    thrustScale: typeof v.thrustScale === "number" && Number.isFinite(v.thrustScale) ? Math.min(1, Math.max(0.25, v.thrustScale)) : DEFAULTS.thrustScale,
-    timeScale: [1, 10, 100].includes(v.timeScale as number) ? (v.timeScale as TimeScale) : DEFAULTS.timeScale,
-    selected: CELESTIAL_BODIES.some(b => b.id === v.selected) ? (v.selected as string) : DEFAULTS.selected,
-  };
-}
-const readPrefs = () => { try { return parseVoyagePreferences(localStorage.getItem(VOYAGE_PREFS_KEY)); } catch { return DEFAULTS; } };
-const supportsWebGL = () => { try { const c = document.createElement("canvas"); return Boolean(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; } };
-/** Keys are ignored while typing or when Space/Enter would activate a focused control. */
-export function shouldIgnoreKey(target: EventTarget | null, code: string) {
-  const el = target as HTMLElement | null; if (!el || !el.tagName) return false;
-  if (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) return true;
-  const role = el.getAttribute?.("role"); if (role && ["combobox", "listbox", "option", "menuitem", "slider", "switch", "textbox"].includes(role)) return true;
-  if ((code === "Space" || code === "Enter") && (el.tagName === "BUTTON" || el.tagName === "A" || role === "button")) return true;
-  return false;
-}
 const fmtKm = (km: number) => km >= 1e6 ? `${(km / 1e6).toFixed(2)} M km` : `${Math.round(km).toLocaleString()} km`;
 const fmtTime = (s: number) => { const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); return `${d}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m`; };
 
@@ -261,4 +234,3 @@ const SolarSystemVoyage = () => {
   </main>;
 };
 export default SolarSystemVoyage;
-export { THREE as _three };
