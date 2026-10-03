@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { isVerifiedConnection, connectionNeedsAttention } from "@/lib/integrationStatus";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Link2, Loader2, Pencil, RefreshCw, Unlink } from "lucide-react";
 import { toast } from "sonner";
@@ -53,13 +54,14 @@ export const LinkedAccountManager = ({
   };
 
   const statusBadge = (account: LinkedAccount) => {
-    if (account.status === "connected" && account.health !== "failing") {
+    if (isVerifiedConnection(account)) {
       return <Badge variant="outline" className="border-primary/40 text-primary">Connected</Badge>;
     }
-    if (account.health === "failing" || account.status === "error") {
-      return <Badge variant="destructive">Needs reconnecting</Badge>;
+    if (connectionNeedsAttention(account)) {
+      return <Badge variant="destructive">Connection failed</Badge>;
     }
-    return <Badge variant="secondary">{account.status}</Badge>;
+    // Saved keys/tokens that no provider has verified: kept as-is, never shown as connected.
+    return <Badge variant="secondary">Not verified</Badge>;
   };
 
   return (
@@ -148,9 +150,13 @@ export const LinkedAccountManager = ({
                     </div>
 
                     {statusBadge(account)}
-                    {account.is_active_account ? (
+                    {account.is_active_account && isVerifiedConnection(account) ? (
                       <Badge className="gap-1">
                         <CheckCircle2 className="h-3 w-3" /> Active
+                      </Badge>
+                    ) : account.is_active_account ? (
+                      <Badge variant="outline" className="text-muted-foreground">
+                        Default (not verified)
                       </Badge>
                     ) : (
                       <Button

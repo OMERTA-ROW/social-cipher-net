@@ -13,6 +13,7 @@ export interface LinkedAccount {
   account_name: string | null;
   account_handle: string | null;
   last_error: string | null;
+  provider_account_id: string | null;
   last_synced_at: string | null;
   expires_at: string | null;
   connected_at: string;

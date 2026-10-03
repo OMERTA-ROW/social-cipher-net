@@ -72,3 +72,9 @@ Open / blocked:
 - Stripe livemode match vs. platform key mode — recorded only, not enforced.
 - Edge function changes are not deployed (preview-only instruction); live backend still runs the previous code.
 - All real provider flows BLOCKED: no provider client credentials configured.
+
+## Correction (Oct 3 2026): verified status everywhere
+- Live published evidence: Facebook/Instagram rows showed provider "invalid OAuth access token" errors while displaying Connected + Active; manual api_key rows showed Active. FAIL on published build.
+- Fix (preview only): single rule `isVerifiedConnection` (status connected + provider-verified account id + no last_error + healthy) now drives Settings account connections, social connections, Connectors page, Studio broadcast and Integrations. Errored rows show "Connection failed"; unverified saved keys show "Not verified"; "Active" only for verified rows. Display-only: no rows, credentials or accounts deleted or revoked.
+- /settings correction: published /settings already selects Account settings (incl. hard refresh) — PASS, left unchanged.
+- Bare `access_denied` callback with an existing session redirected to dashboard on the published build — cancellation FAIL there. Preview code shows the cancellation message and stops before any session redirect; published remains FAIL until a publish is authorized.
