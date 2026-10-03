@@ -67,11 +67,24 @@ const loader = new THREE.TextureLoader();
 loader.setCrossOrigin("anonymous");
 const cache = new Map<string, Promise<THREE.Texture>>();
 
+/** Genuine texture download progress for loading UIs (counts unique URL requests). */
+export interface TextureLoadStats { requested: number; loaded: number; failed: number }
+const stats: TextureLoadStats = { requested: 0, loaded: 0, failed: 0 };
+const statListeners = new Set<(s: TextureLoadStats) => void>();
+const emitStats = () => statListeners.forEach((l) => l({ ...stats }));
+export const getTextureLoadStats = (): TextureLoadStats => ({ ...stats });
+export const subscribeTextureLoadStats = (listener: (s: TextureLoadStats) => void) => {
+  statListeners.add(listener);
+  return () => { statListeners.delete(listener); };
+};
+
 const load = (url: string) => {
   let p = cache.get(url);
   if (!p) {
+    stats.requested++;
+    emitStats();
     const request = new Promise<THREE.Texture>((resolve, reject) => {
-      loader.load(url, resolve, undefined, reject);
+      loader.load(url, (t) => { stats.loaded++; emitStats(); resolve(t); }, undefined, (e) => { stats.failed++; emitStats(); reject(e); });
     });
     p = request.catch((error) => {
       // A transient CDN/network failure must not poison this URL forever.
