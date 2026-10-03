@@ -183,8 +183,9 @@ describe("launches & prediction", () => {
   it("probe launch conserves momentum and the probe falls under gravity", () => {
     const w = createWorld(0); w.objects = []; const m = shipMass(w.ship); const before = w.ship.velocity.clone().multiplyScalar(m);
     expect(launchProbe(w)).toBe(true); const probe = w.objects[0];
-    const after = w.ship.velocity.clone().multiplyScalar(m).add(probe.velocity.clone().multiplyScalar(probe.massKg));
-    expect(after.sub(before).length() / before.length()).toBeLessThan(1e-3);
+    const after = w.ship.velocity.clone().multiplyScalar(shipMass(w.ship)).add(probe.velocity.clone().multiplyScalar(probe.massKg));
+    expect(after.sub(before).length() / before.length()).toBeLessThan(1e-9);
+    expect(shipMass(w.ship)).toBe(m - probe.massKg);
     const v0 = probe.velocity.clone(); run(w, 60); expect(probe.velocity.distanceTo(v0)).toBeGreaterThan(0.1);
   });
   it("thrust consumes fuel", () => { const w = createWorld(0); const f = w.ship.fuelKg; run(w, 20, { ...idle, thrust: new THREE.Vector3(0, 0, 1) }); expect(w.ship.fuelKg).toBeLessThan(f); });
