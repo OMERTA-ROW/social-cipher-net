@@ -1,3 +1,4 @@
+import { isVerifiedConnection } from "@/lib/integrationStatus";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -182,7 +183,7 @@ const Connectors = () => {
           s.name.toLowerCase().includes(query.trim().toLowerCase())),
     );
 
-  const connectedCount = connections.filter((c) => c.status === "connected").length;
+  const connectedCount = connections.filter((c) => isVerifiedConnection(c)).length;
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -279,7 +280,7 @@ const Connectors = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {services.map((service) => {
                   const connection = byService(service.id);
-                  const connected = connection?.status === "connected";
+                  const connected = isVerifiedConnection(connection);
                   return (
                     <Card
                       key={service.id}

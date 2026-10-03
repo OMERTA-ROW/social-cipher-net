@@ -9,6 +9,7 @@ export interface UserConnection {
   status: string;
   account_name: string | null;
   account_handle: string | null;
+  provider_account_id?: string | null;
   metadata: Record<string, unknown> | null;
   last_error: string | null;
   health: string | null;
