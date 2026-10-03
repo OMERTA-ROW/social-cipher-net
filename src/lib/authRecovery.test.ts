@@ -1,6 +1,10 @@
-// @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest";
 import { clearRecoveryVerified, hasVerifiedRecovery, markRecoveryVerified } from "./authRedirect";
+const store = new Map<string, string>();
+(globalThis as { sessionStorage?: unknown }).sessionStorage = {
+  getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v),
+  removeItem: (k: string) => void store.delete(k), clear: () => store.clear(),
+};
 
 describe("recovery verification marker", () => {
   beforeEach(() => sessionStorage.clear());
