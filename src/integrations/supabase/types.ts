@@ -470,6 +470,33 @@ export type Database = {
           },
         ]
       }
+      arena_players: {
+        Row: {
+          arena_status: string
+          avatar_selection: string
+          created_at: string
+          display_name: string
+          last_login: string | null
+          user_id: string
+        }
+        Insert: {
+          arena_status?: string
+          avatar_selection?: string
+          created_at?: string
+          display_name?: string
+          last_login?: string | null
+          user_id: string
+        }
+        Update: {
+          arena_status?: string
+          avatar_selection?: string
+          created_at?: string
+          display_name?: string
+          last_login?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       brand_campaigns: {
         Row: {
           brand_name: string
@@ -5082,6 +5109,23 @@ export type Database = {
       detect_suspicious_activity: {
         Args: { _event_type: string; _time_window?: string; _user_id: string }
         Returns: boolean
+      }
+      ensure_arena_player: {
+        Args: never
+        Returns: {
+          arena_status: string
+          avatar_selection: string
+          created_at: string
+          display_name: string
+          last_login: string | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "arena_players"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       fulfill_paid_order: { Args: { _order_id: string }; Returns: boolean }
       get_follow_counts: {

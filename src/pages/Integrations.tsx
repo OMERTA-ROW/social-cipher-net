@@ -127,8 +127,10 @@ const Integrations = () => {
         {configError && <p role="alert" className="text-sm text-destructive">{configError}</p>}
       </header>
 
+      {config && !INTEGRATION_PROVIDERS.some((p) => config[p.id]?.missing.length === 0) && <p role="status" className="text-sm text-muted-foreground">No account integrations are currently available.</p>}
       <ul className="grid gap-4 md:grid-cols-2">
-        {INTEGRATION_PROVIDERS.map((p) => {
+        {/* Unconfigured providers stay hidden unless the member already has a saved row to manage. */}
+        {INTEGRATION_PROVIDERS.filter((p) => !!config?.[p.id] && config[p.id].missing.length === 0 || !!rows[p.id]).map((p) => {
           const row = rows[p.id] ?? null;
           const cfg = config?.[p.id];
           const state = integrationState({
@@ -193,7 +195,7 @@ const Integrations = () => {
                     <Button size="sm" onClick={() => connect(p.id)} disabled={Boolean(b) || state === "Approval required"}
                       aria-describedby={state === "Approval required" ? `int-${p.id}` : undefined}>
                       {b === "connecting" ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <PlugZap className="mr-1 h-4 w-4" />}
-                      {state === "Connection failed" ? "Try again" : `Connect ${p.name.split(" ")[0]}`}
+                      {state === "Connection failed" ? "Reconnect" : `Connect ${p.name.split(" ")[0]}`}
                     </Button>
                     {row && (
                       <Button size="sm" variant="outline" className="text-destructive" onClick={() => disconnect(p.id)} disabled={Boolean(b)}>

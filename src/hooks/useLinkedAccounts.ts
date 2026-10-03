@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface LinkedAccount {
@@ -29,8 +29,11 @@ export const useLinkedAccounts = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
 
+  const requestRef = useRef(0);
   const load = useCallback(async () => {
+    const request = ++requestRef.current;
     const { data: { user } } = await supabase.auth.getUser();
+    if (request !== requestRef.current) return;
     setUserId(user?.id ?? null);
     if (!user) {
       setAccounts([]);
@@ -40,19 +43,23 @@ export const useLinkedAccounts = () => {
     const { data } = await supabase
       .from("user_connections")
       .select(
-        "id, service_id, account_key, account_label, is_active_account, method, status, health, account_name, account_handle, last_error, last_synced_at, expires_at, connected_at",
+        "id, service_id, account_key, account_label, is_active_account, method, status, health, account_name, account_handle, provider_account_id, last_error, last_synced_at, expires_at, connected_at",
       )
       .eq("user_id", user.id)
       .order("service_id", { ascending: true })
       .order("is_active_account", { ascending: false });
+    if (request !== requestRef.current) return;
     setAccounts((data ?? []) as LinkedAccount[]);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     load();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => load());
-    return () => sub.subscription.unsubscribe();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      requestRef.current++; setAccounts([]); setLoading(true);
+      queueMicrotask(() => void load());
+    });
+    return () => { requestRef.current++; sub.subscription.unsubscribe(); };
   }, [load]);
 
   const forService = useCallback(

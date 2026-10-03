@@ -21,6 +21,7 @@ const AuthCallback = () => {
     const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
     const type = hash.get("type") ?? url.searchParams.get("type");
     const next = safeReturnPath(url.searchParams.get("next") || takeSocialNext() || "/dashboard");
+    const recoveryPath = next.startsWith("/cyber-arena/") ? "/cyber-arena/reset-password" : "/reset-password";
     const errDesc = hash.get("error_description") ?? url.searchParams.get("error_description") ?? hash.get("error") ?? url.searchParams.get("error");
 
     // Account-integration return (provider consent). Never treated as sign-in:
@@ -64,7 +65,7 @@ const AuthCallback = () => {
     // client consumes them and emits PASSWORD_RECOVERY. PKCE recovery (?code=)
     // is exchanged below first so the code is never dropped.
     if (type === "recovery" && hash.get("access_token") && !url.searchParams.get("code")) {
-      navigate(`/reset-password${url.hash}`, { replace: true });
+      navigate(`${recoveryPath}${url.hash}`, { replace: true });
       return;
     }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -83,7 +84,7 @@ const AuthCallback = () => {
           if (exErr) throw exErr;
           if (type === "recovery") {
             markRecoveryVerified();
-            if (active) navigate("/reset-password", { replace: true });
+            if (active) navigate(recoveryPath, { replace: true });
             return;
           }
         } else if (type === "recovery") {
