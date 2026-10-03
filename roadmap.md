@@ -184,3 +184,8 @@
 ## Complete astronomical visual integration (Oct 1)
 - [x] Apply the shared NASA-inspired astronomical effects consistently across site backdrop, Voyage, mining, and descent/world scenes
 - [x] Verify pause/reduced-motion, quality scaling, cleanup, builds, focused tests, and bounded desktop/mobile previews
+
+## Audit follow-ups (2026-10-03)
+- [x] OAuth callback: by design — connector OAuth returns only to /integrations or /connectors; app sign-in doesn't use it
+- [ ] /privacy and /terms show "Page not found" — blocked: needs approved legal text from the owner
+- [x] /forgot-password shows sign-in UI while URL stays /forgot-password

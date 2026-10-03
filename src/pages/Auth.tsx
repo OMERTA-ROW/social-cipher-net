@@ -38,6 +38,8 @@ const Auth = () => {
   const [remainingAttempts, setRemainingAttempts] = useState(6);
   const navigate = useNavigate();
   const location = useLocation();
+  // The same Auth instance serves /login and /forgot-password; keep the view in sync with the URL.
+  useEffect(() => { setShowForgotPassword(location.pathname === "/forgot-password"); }, [location.pathname]);
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
@@ -99,7 +101,7 @@ const Auth = () => {
         title: "Success",
         description: "Password reset email sent! Check your inbox.",
       });
-      setShowForgotPassword(false);
+      navigate(`/login${location.search}`, { replace: true });
     }
 
     setLoading(false);
@@ -349,8 +351,7 @@ const Auth = () => {
                     onClick={() => {
                       setRecovery("none");
                       setRecoveryError(null);
-                      setShowForgotPassword(true);
-                      window.history.replaceState(null, "", "/login");
+                      navigate("/forgot-password", { replace: true });
                     }}
                   >
                     Request a new reset link
@@ -446,7 +447,7 @@ const Auth = () => {
                     type="button"
                     variant="ghost"
                     className="w-full text-primary hover:text-primary/80"
-                    onClick={() => setShowForgotPassword(false)}
+                    onClick={() => navigate(`/login${location.search}`)}
                   >
                     Back to Sign In
                   </Button>

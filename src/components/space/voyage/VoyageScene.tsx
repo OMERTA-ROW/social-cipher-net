@@ -8,7 +8,7 @@ import Galaxy from "@/components/space/scene/Galaxy";
 import Starfield from "@/components/space/scene/Starfield";
 import MiningVessel from "@/components/space/scene/MiningVessel";
 import Sun, { PHOTO_RADIUS } from "@/components/space/scene/Sun";
-import { CLOUD_TEXTURE_URLS, RING_TEXTURE_URL, SPACE_TEXTURE_URLS, useLazyTexture } from "@/components/space/realTextures";
+import { CLOUD_TEXTURE_URLS, RING_TEXTURE_URL, SPACE_TEXTURE_URLS, SUN_TEXTURE_URL, useLazyTexture } from "@/components/space/realTextures";
 import {
   CELESTIAL_BODIES, SUN, SUN_VISUAL_RADIUS, bodyPositionAt, bodyRenderPosition, gravityFromFrame, computeFrame, localVisualDistance, nearbyObjects, physicalObstaclesAt,
   predictTrajectory, referenceBody, renderPosition, ringQuaternion, runFixedSteps, spinAngleAt, stepWorld, thrustFrame, visualRadius, bodyVelocityAt,
@@ -80,9 +80,15 @@ function Planet({ body, worldRef, quality, labels, onSelect }: { body: Celestial
           <mesh><ringGeometry args={[r * 0.07, r * 0.1, 32]} /><meshBasicMaterial color="#5ef2a8" transparent opacity={0.85} side={THREE.DoubleSide} /></mesh>
         </group>
       )}
-      {labels && <Html position={[0, r * 1.5, 0]} center distanceFactor={10} zIndexRange={[20, 0]}><button type="button" onClick={() => onSelect(body.id)} className="whitespace-nowrap rounded border border-primary/40 bg-background/85 px-2 py-0.5 text-[10px] text-foreground">{body.name}</button></Html>}
+      {labels && <Html position={[0, r * 1.5, 0]} center zIndexRange={[20, 0]}><button type="button" onClick={() => onSelect(body.id)} className="whitespace-nowrap rounded border border-primary/40 bg-background/85 px-2 py-0.5 text-[10px] text-foreground">{body.name}</button></Html>}
     </group>
   );
+}
+
+/** Low tier: textured emissive sphere instead of the procedural photosphere shader (same collision radius). */
+function LiteSun() {
+  const map = useLazyTexture(SUN_TEXTURE_URL, { delay: 60, anisotropy: 2 });
+  return <mesh><sphereGeometry args={[SUN_VISUAL_RADIUS, 32, 16]} /><meshBasicMaterial map={map ?? undefined} color={map ? "#ffffff" : "#ffcf7a"} toneMapped={false} /></mesh>;
 }
 
 function OrbitGuides() {
@@ -126,7 +132,7 @@ function CameraDirector({ controlsRef, subject, defaultDistance, minDistance, re
   useEffect(() => { resetting.current = true; }, [resetCamera, selected, follow]);
   useEffect(() => { const c = controlsRef.current; if (!c) return; const cancel = () => { resetting.current = false; }; c.addEventListener("start", cancel); return () => c.removeEventListener("start", cancel); }, [controlsRef]);
   useFrame((_, raw) => {
-    const c = controlsRef.current; if (!c) return; const dt = Math.min(raw, 0.05);
+    const c = controlsRef.current; if (!c) return; const dt = Math.min(raw, 0.25); // camera easing tolerates slow frames
     c.minDistance = minDistance; c.maxDistance = 60;
     // Smooth focus: target eases toward the subject; the camera moves by the same delta (no teleport).
     const desired = subject(); const before = c.target.clone(); c.target.lerp(desired, 1 - Math.exp(-4 * dt)); camera.position.add(c.target.clone().sub(before));
@@ -206,7 +212,7 @@ function Simulation(props: Props) {
     <Starfield full={budget.stars} dpr={budget.dpr} boost={1} animate={animateField} />
     <ambientLight intensity={0.14} color="#5d78ba" />
     <pointLight intensity={4200} distance={0} decay={2} color="#fff1cf" />
-    <group scale={SUN_VISUAL_RADIUS / PHOTO_RADIUS} onClick={e => { e.stopPropagation(); }}><Sun full={props.quality === "high"} animate={animateField && props.timeScale > 0} /></group>
+    {props.quality === "low" ? <LiteSun /> : <group scale={SUN_VISUAL_RADIUS / PHOTO_RADIUS}><Sun full={props.quality === "high"} animate={animateField && props.timeScale > 0} /></group>}
     {props.guides && <OrbitGuides />}
     {CELESTIAL_BODIES.map(b => <Planet key={b.id} body={b} worldRef={worldRef} quality={props.quality} labels={props.labels} onSelect={props.onSelect} />)}
     <Obstacles worldRef={worldRef} />

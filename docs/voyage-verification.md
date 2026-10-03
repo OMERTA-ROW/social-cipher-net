@@ -1,33 +1,55 @@
 # Voyage verification
 
-| Requirement | Result | Evidence |
+Date: 2026-10-03. Preview only, not published. Browser checks ran in headless Chromium with **software WebGL (SwiftShader)**, about 0.5–1.6 FPS. So they show the controls are wired up, not how smooth it is on real hardware.
+
+## Automated
+
+| Check | Result |
+| --- | --- |
+| `vitest` voyagePhysics (30), voyagePreferences, authRedirect | PASS — 39/39 |
+| TypeScript (`tsgo`) | PASS |
+| ESLint, files touched | PASS — 0 errors, 1 Fast Refresh warning (VoyageScene exports constants) |
+| Build | PASS |
+
+## Evidence checklist
+
+| Item | Status | Evidence |
 | --- | --- | --- |
-| Gravity attraction | PASS | Automated test checks direction toward Earth. |
-| Mass/distance dependence | PASS | Automated test checks stronger acceleration at shorter distance; body-specific `mu` is summed. |
-| Orbit assist | PASS | Automated test validates circular velocity relative to moving Earth. |
-| Fixed timestep / 100× stability | PASS | Automated test validates bounded fixed substeps at 100×. |
-| Low/high-speed collision response | PASS | Automated test validates distinct minor/major impact outcomes. |
-| High-speed tunnelling | PASS | Swept-sphere test crosses an entire collider in one step. |
-| Saturn ring collision | PASS | Annulus crossing and central-gap tests pass. |
-| Station/asteroid/debris collision | PASS | Swept box/sphere paths are implemented and rendered; direct browser impacts were not induced. |
-| Landing/docking gate | PASS | Automated safe-speed and zone-radius test. |
-| Pause / hidden tab | PASS | Pause control and hidden-tab simulation gate verified in source and browser. |
-| Reduced motion | PASS | Motion media query gates simulation and fallback animation. |
-| Keyboard controls | NOT TESTED | W/A/S/D/R/F/Space listeners and prevention are implemented; automated key driving was not completed. |
-| Touch controls | NOT TESTED | Pointer/cancel controls and two-finger OrbitControls pinch are implemented; real-device touch was not tested. |
-| Tablet layout | NOT TESTED | Responsive rules are implemented; tablet browser interaction did not complete within the software-WebGL budget. |
-| Navigation | PASS | Home, Backgrounds, and Voyage links resolve. |
-| Sign-in destination | PASS | Existing safe `/login` redirect tests pass; auth code unchanged. |
-| WebGL fallback | PASS | 2D procedural fallback and context-loss loading state implemented. |
-| Loading/error behavior | NOT TESTED | Loading progress and retrying error boundary are implemented; forced failure was not browser-tested. |
-| Audio | NOT TESTED | Toggle creates Web Audio only after user interaction; audible output was not testable headlessly. |
-| Real landing procedure | NOT TESTED | No planet landing zone is exposed; docking is station-only by design. |
+| Gravity pulls bodies together; depends on mass and distance | PASS | unit tests: acceleration ∝ μ, ∝ 1/r², Sun dominates |
+| Orbit assist matches softened force | PASS | unit test: circular orbit, relative to a moving planet |
+| Fixed timestep; 100× bounded work; long-run drift | PASS | unit tests: ≤160 substeps/frame, drift <1 % over 3 orbits |
+| Low-speed bounce/scrape, high-speed destruction + fragments | PASS (unit) | unit tests; not seen in the browser |
+| Tunneling at high speed (sphere, moving collider, Sun, rings) | PASS (unit) | first-contact sweep tests incl. tilted ring slab and in-plane travel |
+| Docking gate (distance + relative speed) | PASS | unit test; browser showed "Docking denied: 1880 km from port (zone 68 km)" |
+| Landing only in zones below safe speed | PASS (unit) | unit test |
+| Destroyed ship has no thrust | PASS (unit) | unit test |
+| Probe launch (momentum, mass) | PASS | unit test; browser: "Probe launched (5 left)" on desktop, mobile and tablet |
+| Thrust via keyboard | PASS | browser: fuel 1800 → 1702 kg after holding W |
+| Thrust via on-screen pad (normal pointer, no forced clicks) | PASS | browser: fuel → 1634 kg |
+| Pause stops time | PASS | browser: 0d 00h 04m → 0d 00h 04m while paused |
+| 100× | PASS | browser: time advanced to 1 h within the step |
+| Hidden tab stops simulation | PASS | browser: advanced 5 sim-min (one in-flight frame at 100×), then stopped |
+| Orbit guides toggle, Sound toggle | PASS | browser |
+| Body selection updates panel | PASS | browser: Mars distance 163.36 M km |
+| Mobile 390 px / tablet 820 px layout | PASS | panel and control pads don't overlap; no horizontal scroll; no page errors |
+| Reduced motion starts paused, Resume offered | PASS | browser (emulated reduced motion) |
+| WebGL unavailable → 2D starfield | PASS | browser with WebGL blocked |
+| Texture download failure → page still works | PASS | browser with texture requests aborted; no page errors |
+| Home → sign-in when signed out | PASS | browser: `/` redirected to `/login` |
+| Forgot password ↔ sign in | PASS | browser: link opens `/forgot-password` with the reset form; loading the URL directly shows it too. No reset email was sent. |
+| Camera drag / pinch with real gestures | NOT TESTED | headless can't do real multitouch; on-screen camera buttons tested |
+| Smooth camera focus/reset look | NOT TESTED | too slow under software rendering to judge |
+| Auto-quality tier switching | NOT TESTED | logic in code; not watched in the browser |
+| WebGL context loss / restore | NOT TESTED | handler present, not triggered |
+| Frame rate on real GPUs / phones | NOT TESTED | |
+| Audio sounds heard | NOT TESTED | toggle state only |
 
-## Checks
+## Limitations
 
-- Physics, route, and authentication redirect tests: passed.
-- TypeScript: passed.
-- Focused lint on new/changed simulation files: passed.
-- Desktop preview rendering: passed with no page errors and all required control labels present.
-- Tablet/mobile interaction: not completed because software WebGL exceeded the preview time budget.
-- Preview only; no publication performed.
+See `voyage-simulation.md` → Limitations. Not marked production-ready: real-device performance, real multitouch and context loss still need checking on physical devices.
+
+## Audit items outside Voyage
+
+- `oauthRedirectIsAllowed('…/auth/callback')` is false on purpose: connector OAuth only returns to `/integrations` or `/connectors`. App sign-in doesn't use that helper. Not changed.
+- `/privacy` and `/terms` don't exist. They need real approved legal text, which hasn't been provided.
+- Forgot-password view now follows the URL (fixed).
