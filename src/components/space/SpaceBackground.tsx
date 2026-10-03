@@ -37,10 +37,6 @@ const SpaceBackground = () => {
         </Suspense>
       ) : render3d ? <ProceduralStarFallback calm={!animate} /> : null}
 
-      <div className="space-depth-light absolute inset-0" />
-      <div className="space-depth-haze absolute inset-0" />
-      <div className="space-depth-grain absolute inset-0" />
-
       {/* Dim veil + vignette keep text and feed content fully legible on top. */}
       <div
         className="absolute inset-0 bg-black transition-opacity duration-500"

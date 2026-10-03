@@ -472,7 +472,7 @@ const Quasar = ({ position, size, animate, detail }: { position: V3; size: numbe
   );
 };
 
-export const SolarFlares = ({ radius, animate, full = true }: { radius: number; animate: boolean; full?: boolean }) => {
+export const SolarFlares = ({ radius, animate, full = true, steady = false }: { radius: number; animate: boolean; full?: boolean; steady?: boolean }) => {
   const group = useRef<THREE.Group>(null);
   const corona = useRef<THREE.ShaderMaterial>(null);
   const cme = useRef<THREE.Points>(null);
@@ -513,18 +513,19 @@ export const SolarFlares = ({ radius, animate, full = true }: { radius: number; 
   const time = useRef(0);
   useFrame((_, delta) => {
     if (!group.current) return;
-    if (animate) time.current += Math.min(delta, 0.05);
-    if (corona.current) corona.current.uniforms.uTime.value = time.current;
+    if (animate && !steady) time.current += Math.min(delta, 0.05);
+    const effectTime = steady ? 5.142 : time.current;
+    if (corona.current) corona.current.uniforms.uTime.value = effectTime;
     group.current.children.forEach((child, index) => {
       const loop = loops[index - 1];
       if (!loop) return;
-      child.scale.setScalar(0.85 + 0.25 * Math.sin(time.current * 0.6 + loop.phase));
+      child.scale.setScalar(0.85 + 0.25 * Math.sin(effectTime * 0.6 + loop.phase));
     });
-    const cycle = (time.current * 0.035) % 1;
-    const active = smoothPulse(cycle, 0.08, 0.72);
+    const cycle = steady ? 0.18 : (time.current * 0.035) % 1;
+    const active = steady ? 0.4 : smoothPulse(cycle, 0.08, 0.72);
     if (cme.current) {
       cme.current.scale.setScalar(0.72 + cycle * 0.85);
-      cme.current.rotation.x = Math.sin(time.current * 0.025) * 0.18;
+      cme.current.rotation.x = Math.sin(effectTime * 0.025) * 0.18;
     }
     if (cmeMaterial.current) cmeMaterial.current.uniforms.uOpacity.value = active * 0.3;
   });
@@ -609,32 +610,7 @@ export interface CosmicAnomaliesProps {
   local?: boolean;
 }
 
-const CosmicAnomalies = ({ scale, animate, full, local = true }: CosmicAnomaliesProps) => {
-  const textures = useEventTextures();
-  return (
-    <group name="living-cosmic-events">
-      {local && (
-        <>
-          <Comet orbit={[3 * scale, 1.2 * scale, 0.4]} size={0.012 * scale} speed={0.05} phase={0.5} animate={animate} detail={textures.comet} />
-          <Comet orbit={[5 * scale, 1.8 * scale, -0.7]} size={0.016 * scale} speed={0.03} phase={2.6} animate={animate} detail={textures.comet} />
-          {full && <Comet orbit={[8 * scale, 2.5 * scale, 1.1]} size={0.02 * scale} speed={0.02} phase={4.4} animate={animate} detail={textures.comet} />}
-          <MeteorShower center={[1.5 * scale, 0.4 * scale, -1.2 * scale]} spread={1.2 * scale} count={full ? 60 : 24} animate={animate} />
-        </>
-      )}
-      <BlackHole position={at([40, 6, -55], scale)} size={4 * scale} animate={animate} detail={textures.blackhole} />
-      <Wormhole position={at([-60, 12, 30], scale)} size={3 * scale} animate={animate} detail={textures.wormhole} />
-      <Pulsar position={at([25, -14, 70], scale)} size={0.6 * scale} animate={animate} detail={textures.pulsar} />
-      <Supernova position={at([-90, -20, -80], scale)} size={10 * scale} animate={animate} detail={textures.supernova} />
-      <Nebula position={at([120, 30, 140], scale)} size={45 * scale} colors={["#4388ff", "#6ebdff", "#8065d5"]} seed={3} animate={animate} full={full} detail={textures.nebula} />
-      <Nebula position={at([-180, -40, -60], scale)} size={60 * scale} colors={["#e76546", "#f0a36b", "#4b8fd8"]} seed={9} animate={animate} full={full} detail={textures.nebula} />
-      {full && <Nebula position={at([60, 80, -260], scale)} size={70 * scale} colors={["#47b9b5", "#5a91df", "#8b76c9"]} seed={17} animate={animate} full detail={textures.nebula} />}
-      <SpiralGalaxy position={at([-400, 120, 500], scale)} size={120 * scale} seed={5} tilt={[0.6, 0, 0.3]} count={full ? 1800 : 520} animate={animate} detail={textures.galaxy} />
-      <SpiralGalaxy position={at([700, -200, -500], scale)} size={180 * scale} seed={11} tilt={[1.1, 0.4, 0]} count={full ? 1800 : 520} animate={animate} detail={textures.galaxy} />
-      {full && <SpiralGalaxy position={at([-200, -500, -900], scale)} size={220 * scale} seed={23} tilt={[0.2, 0.8, 0.5]} count={1400} animate={animate} detail={textures.galaxy} />}
-      <Quasar position={at([900, 300, 400], scale)} size={8 * scale} animate={animate} detail={textures.quasar} />
-      {full && <BlackHole position={at([-650, 60, -300], scale)} size={30 * scale} animate={animate} detail={textures.blackhole} />}
-    </group>
-  );
-};
+/** Decorative cosmic event art was intentionally retired; physical comets and asteroids live in their own systems. */
+const CosmicAnomalies = (_props: CosmicAnomaliesProps) => null;
 
 export default CosmicAnomalies;
