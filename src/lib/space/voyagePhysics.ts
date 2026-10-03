@@ -410,7 +410,9 @@ export function stepWorld(world: WorldState, input: PhysicsInput, dt: number, ma
   world.objects = world.objects.filter(o => {
     o.age += dt; if (o.age > o.maxAge) return false;
     const prev = o.position.clone(); prevObj.set(o.id, prev); integrate(o.position, o.velocity, ZERO, f0, f1, dt);
-    for (const c of colliders) { if (c.kind === "station" || c.kind === "asteroid") continue; const h = sweepCollider(c, prev, o.position, o.radiusKm); if (h.hit) { if (o.kind !== "fragment") events.push({ type: "object-lost", label: `${o.kind === "probe" ? "Probe" : "Debris"} impacted ${c.name}`, position: o.position.clone() }); return false; } }
+    // Every solid collider (Sun, planets, rings, station, asteroids) stops dynamic objects.
+    // Fragments spawned at a ship wreck get a short grace period so they don't instantly hit what the ship hit.
+    for (const c of colliders) { if (o.kind === "fragment" && o.age < 60) continue; const h = sweepCollider(c, prev, o.position, o.radiusKm); if (h.hit) { if (o.kind !== "fragment") events.push({ type: "object-lost", label: `${o.kind === "probe" ? "Probe" : "Debris"} impacted ${c.name}`, position: o.position.clone() }); return false; } }
     return true;
   });
   const s = world.ship; const mass = shipMass(s);

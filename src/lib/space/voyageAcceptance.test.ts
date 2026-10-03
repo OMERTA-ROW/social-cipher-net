@@ -4,7 +4,7 @@ import * as THREE from "three";
 import {
   CELESTIAL_BODIES, FIXED_STEP_SECONDS, MAX_SUBSTEPS, SOFTENING_KM, RING_HALF_THICKNESS_KM, SUN,
   bodyPositionAt, bodyVelocityAt, commandedThrust, createWorld, orbitAssistVelocity, runFixedSteps,
-  saturnRingHit, softenedCircularSpeed, stepWorld, sweptSphereHit, type PhysicsInput,
+  physicalObstaclesAt, saturnRingHit, softenedCircularSpeed, stepWorld, sweptSphereHit, type PhysicsInput,
 } from "./voyagePhysics";
 
 const earth = CELESTIAL_BODIES[2];
@@ -76,6 +76,23 @@ describe("audit acceptance", () => {
     expect(r.steps).toBeLessThanOrEqual(MAX_SUBSTEPS);
     const huge: number[] = []; runFixedSteps(0, 10, 100, (dt) => huge.push(dt));
     expect(huge.length).toBeLessThanOrEqual(MAX_SUBSTEPS);
+  });
+
+  it("near-empty fuel (1e-9 kg) caps the impulse to the fuel actually burned", () => {
+    const w = createWorld(0); w.objects = []; w.ship.fuelKg = 1e-9; w.ship.throttleSetting = 1;
+    const w0 = createWorld(0); w0.objects = []; w0.ship.fuelKg = 0;
+    stepWorld(w, idle(), 2); stepWorld(w0, idle(), 2);
+    expect(w.ship.velocity.distanceTo(w0.ship.velocity)).toBeLessThan(1e-9);
+    expect(w.ship.fuelKg).toBe(0);
+  });
+
+  it("a fast probe crossing the station is stopped by it", () => {
+    const w = createWorld(0); w.ship.position.set(1e9, 0, 0);
+    const st = physicalObstaclesAt(0)[0];
+    w.objects = [{ id: 999, kind: "probe", position: st.position.clone().add(new THREE.Vector3(100, 0, 0)), velocity: st.velocity.clone().add(new THREE.Vector3(-200, 0, 0)), massKg: 60, radiusKm: 0.5, age: 0, maxAge: 1e6 }];
+    const ev = stepWorld(w, idle(), FIXED_STEP_SECONDS);
+    expect(w.objects.find((o) => o.id === 999)).toBeUndefined();
+    expect(ev.some((e) => e.type === "object-lost")).toBe(true);
   });
 
   it("empty fuel gives no thrust", () => {
