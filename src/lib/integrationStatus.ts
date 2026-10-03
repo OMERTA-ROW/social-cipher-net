@@ -58,5 +58,9 @@ export const takeIntegrationResult = (): IntegrationResult | null => {
   } catch { return null; }
 };
 
-/** Provider returns carry `state`; auth-server (sign-in/recovery) returns never do. */
-export const isIntegrationReturn = (search: URLSearchParams) => search.has("state") && (search.has("code") || search.has("error"));
+/**
+ * An integration return carries `state` plus code/error AND this tab started an
+ * integration (return marker present). Sign-in and recovery returns lack both.
+ */
+export const isIntegrationReturn = (search: URLSearchParams, hasPending = Boolean(ss()?.getItem(RETURN_KEY))) =>
+  hasPending && search.has("state") && (search.has("code") || search.has("error"));
