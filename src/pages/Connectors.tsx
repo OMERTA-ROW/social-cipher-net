@@ -23,6 +23,7 @@ import {
   type ConnectorService,
 } from "@/lib/connectors/registry";
 import { useConnections } from "@/hooks/useConnections";
+import { useConfiguredProviders } from "@/hooks/useConfiguredProviders";
 import ConnectDialog from "@/components/connectors/ConnectDialog";
 import McpPanel from "@/components/connectors/McpPanel";
 import AiAgentsPanel from "@/components/connectors/AiAgentsPanel";
@@ -35,6 +36,8 @@ const Connectors = () => {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { connections, loading, refresh, byService } = useConnections();
+  const { configured } = useConfiguredProviders();
+  const offered = CONNECTOR_SERVICES.filter((s) => !!s.oauthProvider && configured.includes(s.oauthProvider));
   const [query, setQuery] = useState("");
   const [active, setActive] = useState<ConnectorService | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -202,7 +205,7 @@ const Connectors = () => {
   };
 
   const filtered = (categoryId: string) =>
-    CONNECTOR_SERVICES.filter(
+    offered.filter(
       (s) =>
         s.category === categoryId &&
         (query.trim() === "" ||
@@ -221,7 +224,7 @@ const Connectors = () => {
           </p>
           <div className="flex items-center gap-2 mt-3">
             <Badge variant="outline">{connectedCount} connected</Badge>
-            <Badge variant="outline">{CONNECTOR_SERVICES.length} available</Badge>
+            <Badge variant="outline">{offered.length} available</Badge>
             {finishing && (
               <Badge className="gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" />

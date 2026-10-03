@@ -7,6 +7,7 @@ import { isVerifiedConnection, connectionNeedsAttention } from "@/lib/integratio
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Link2, Loader2, Pencil, RefreshCw, Unlink } from "lucide-react";
 import { toast } from "sonner";
+import { useConfiguredProviders } from "@/hooks/useConfiguredProviders";
 import { useLinkedAccounts, type LinkedAccount } from "@/hooks/useLinkedAccounts";
 import { CONNECTOR_SERVICES, getService } from "@/lib/connectors/registry";
 
@@ -32,6 +33,8 @@ export const LinkedAccountManager = ({
   const [editing, setEditing] = useState<string | null>(null);
   const [draftLabel, setDraftLabel] = useState("");
 
+  const { configured } = useConfiguredProviders();
+  // Existing rows stay listed (so they can be disconnected); only the catalogue is gated.
   const services = useMemo(() => {
     const ids = Array.from(new Set(accounts.map((a) => a.service_id)));
     return ids
@@ -39,7 +42,7 @@ export const LinkedAccountManager = ({
       .filter(({ service }) => !category || service?.category === category);
   }, [accounts, category]);
 
-  const relevantCatalogue = CONNECTOR_SERVICES.filter((s) => !category || s.category === category);
+  const relevantCatalogue = CONNECTOR_SERVICES.filter((s) => !!s.oauthProvider && configured.includes(s.oauthProvider) && (!category || s.category === category));
 
   const run = async (key: string, fn: () => Promise<unknown>, okMessage: string) => {
     setBusy(key);
@@ -162,7 +165,7 @@ export const LinkedAccountManager = ({
                       <Button
                         size="sm"
                         variant="outline"
-                        disabled={busy === account.id}
+                        disabled={busy === account.id || !isVerifiedConnection(account)}
                         onClick={() => run(account.id, () => setActive(id, account.id), "Active account changed")}
                       >
                         Make active
