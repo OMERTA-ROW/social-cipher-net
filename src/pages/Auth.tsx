@@ -101,7 +101,7 @@ const Auth = () => {
         title: "Success",
         description: "Password reset email sent! Check your inbox.",
       });
-      setShowForgotPassword(false);
+      navigate(`/login${location.search}`, { replace: true });
     }
 
     setLoading(false);
@@ -351,8 +351,7 @@ const Auth = () => {
                     onClick={() => {
                       setRecovery("none");
                       setRecoveryError(null);
-                      setShowForgotPassword(true);
-                      window.history.replaceState(null, "", "/login");
+                      navigate("/forgot-password", { replace: true });
                     }}
                   >
                     Request a new reset link
@@ -448,7 +447,7 @@ const Auth = () => {
                     type="button"
                     variant="ghost"
                     className="w-full text-primary hover:text-primary/80"
-                    onClick={() => setShowForgotPassword(false)}
+                    onClick={() => navigate(`/login${location.search}`)}
                   >
                     Back to Sign In
                   </Button>
