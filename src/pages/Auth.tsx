@@ -404,7 +404,7 @@ const Auth = () => {
               </Button>
             </div>
           ) : (
-          <Tabs key={location.pathname} defaultValue={initialTab} className="w-full">
+          <Tabs value={initialTab} onValueChange={(v) => navigate(`${v === "signup" ? "/signup" : "/login"}${location.search}`, { replace: true })} className="w-full">
 
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
