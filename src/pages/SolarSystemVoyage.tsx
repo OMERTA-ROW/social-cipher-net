@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, AudioLines, ChevronDown, ChevronUp, CirclePause, CirclePlay, Crosshair, Gauge, Home, LocateFixed, Minus, Orbit, Plus, Rocket, RotateCcw, Satellite, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,9 @@ import { CELESTIAL_BODIES, CRUISE_ISP_S, CRUISE_THRUST_N, clampThrottle, SAFE_CO
 import { prefersReducedMotion } from "@/lib/spaceBackgroundSettings";
 import { VOYAGE_PREFS_KEY, parseVoyagePreferences, shouldIgnoreKey, supportsWebGL, type QualityPref } from "@/lib/space/voyagePreferences";
 import { getTextureLoadStats, subscribeTextureLoadStats, type TextureLoadStats } from "@/components/space/realTextures";
+import DarkMatterPanel from "@/components/space/voyage/DarkMatterPanel";
+import { SCAN_DURATION_MS } from "@/lib/space/darkMatterSensors";
+import { renderPosition, visualOrbitRadius } from "@/lib/space/voyagePhysics";
 
 const readPrefs = () => { try { return parseVoyagePreferences(localStorage.getItem(VOYAGE_PREFS_KEY)); } catch { return parseVoyagePreferences(null); } };
 const fmtKm = (km: number) => km >= 1e6 ? `${(km / 1e6).toFixed(2)} M km` : `${Math.round(km).toLocaleString()} km`;
@@ -38,12 +41,16 @@ const SolarSystemVoyage = () => {
   const [webgl, setWebgl] = useState(supportsWebGL); const [contextLost, setContextLost] = useState(false); const [canvasKey, setCanvasKey] = useState(0); const lossCount = useRef(0);
   const [tex, setTex] = useState<TextureLoadStats>(getTextureLoadStats); const [autoTier, setAutoTier] = useState<QualityTier>("medium"); const fpsHistory = useRef<number[]>([]);
   const [audioOn, setAudioOn] = useState(false); const [panelOpen, setPanelOpen] = useState(() => window.innerWidth >= 640); const [assist, setAssist] = useState(false);
+  const [darkMatterEnabled, setDarkMatterEnabled] = useState(false); const [scanStartedAt, setScanStartedAt] = useState<number | null>(null);
   const worldRef = useRef<WorldState>(createWorld(0));
   const inputRef = useRef<VoyageInput>({ x: 0, y: 0, z: 0, brake: false, orbitAssist: false, dock: false, thrustScale: prefs.thrustScale });
   const cameraCmdRef = useRef<CameraCommand>({ rotateX: 0, rotateY: 0, zoom: 0 });
   const audioRef = useRef<{ ctx: AudioContext; hum: OscillatorNode; gain: GainNode } | null>(null);
   const quality: QualityTier = prefs.quality === "auto" ? autoTier : prefs.quality;
   const body = CELESTIAL_BODIES.find(b => b.id === selected) ?? CELESTIAL_BODIES[2];
+  const outerEnvelope = useMemo(() => Math.max(...CELESTIAL_BODIES.map(candidate => visualOrbitRadius(candidate.semiMajorKm))), []);
+  const readShipPosition = useCallback(() => { const p = renderPosition(worldRef.current.ship.position, worldRef.current.time); return { x: p.x, y: p.y, z: p.z }; }, []);
+  const runSensorScan = useCallback(() => { if (darkMatterEnabled && !hidden) setScanStartedAt(performance.now()); }, [darkMatterEnabled, hidden]);
   const setSelected = useCallback((id: string) => { setSelectedState(id); setPrefs(p => ({ ...p, selected: id })); }, []);
 
   useEffect(() => { try { localStorage.setItem(VOYAGE_PREFS_KEY, JSON.stringify(prefs)); } catch { /* storage unavailable */ } inputRef.current.thrustScale = prefs.thrustScale; }, [prefs]);
@@ -59,6 +66,8 @@ const SolarSystemVoyage = () => {
   const syncInput = useCallback(() => { const i = inputRef.current; for (const k of ["x", "y", "z"] as const) i[k] = Math.max(-1, Math.min(1, keyHeld.current[k] + touchHeld.current[k])); i.brake = keyHeld.current.brake + touchHeld.current.brake > 0; }, []);
   const clearKeys = useCallback(() => { held.current.clear(); keyHeld.current = { x: 0, y: 0, z: 0, brake: 0 }; touchHeld.current = { x: 0, y: 0, z: 0, brake: 0 }; cameraCmdRef.current = { rotateX: 0, rotateY: 0, zoom: 0 }; syncInput(); }, [syncInput]);
   useEffect(() => { if (hidden) clearKeys(); }, [hidden, clearKeys]);
+  useEffect(() => { if (!darkMatterEnabled || hidden) setScanStartedAt(null); }, [darkMatterEnabled, hidden]);
+  useEffect(() => { if (scanStartedAt === null) return; const timer = window.setTimeout(() => setScanStartedAt(null), SCAN_DURATION_MS); return () => window.clearTimeout(timer); }, [scanStartedAt]);
   const doLaunch = useCallback(() => { const ok = launchProbe(worldRef.current, QUALITY_BUDGETS[quality].maxObjects); setNotice(ok ? `Probe launched (${worldRef.current.ship.probes} left)` : worldRef.current.ship.probes <= 0 ? "No probes remaining" : "Probe launch unavailable in this state"); }, [quality]);
   const doDock = useCallback(() => { inputRef.current.dock = true; }, []);
   const toggleAssist = useCallback(() => setAssist(a => { inputRef.current.orbitAssist = !a; return !a; }), []);
@@ -133,7 +142,7 @@ const SolarSystemVoyage = () => {
           gl={{ antialias: quality !== "low", alpha: false, powerPreference: quality === "low" ? "low-power" : "high-performance", logarithmicDepthBuffer: true }}
           onCreated={({ gl }) => { gl.setClearColor(0x000000, 1); gl.domElement.setAttribute("aria-label", "3D solar system view: drag to orbit, scroll or pinch to zoom"); gl.domElement.addEventListener("webglcontextlost", e => { e.preventDefault(); lossCount.current++; setContextLost(true); }); gl.domElement.addEventListener("webglcontextrestored", () => restore()); }}>
           <Suspense fallback={null}>
-            <VoyageScene worldRef={worldRef} inputRef={inputRef} cameraCmdRef={cameraCmdRef} timeScale={effectiveScale} quality={quality} labels={prefs.labels} guides={prefs.guides} showVelocity={prefs.velocity} reducedMotion={reduced} selected={selected} follow={prefs.follow} resetCamera={resetCamera} onSelect={setSelected} onTelemetry={setTelemetry} onEvents={onEvents} onFirstFrame={() => setFirstFrame(true)} onFps={onFps} />
+            <VoyageScene worldRef={worldRef} inputRef={inputRef} cameraCmdRef={cameraCmdRef} timeScale={effectiveScale} quality={quality} labels={prefs.labels} guides={prefs.guides} showVelocity={prefs.velocity} reducedMotion={reduced} selected={selected} follow={prefs.follow} resetCamera={resetCamera} darkMatterEnabled={darkMatterEnabled} scanStartedAt={scanStartedAt} outerEnvelope={outerEnvelope} paused={paused} onSelect={setSelected} onTelemetry={setTelemetry} onEvents={onEvents} onFirstFrame={() => setFirstFrame(true)} onFps={onFps} />
           </Suspense>
         </Canvas> : <ProceduralStarFallback calm={reduced} />}
       </VoyageErrorBoundary>
@@ -204,6 +213,7 @@ const SolarSystemVoyage = () => {
       </div>
       <p className="mt-2 text-[10px] text-muted-foreground">Cruise drive is a disclosed fictional high-performance engine ({CRUISE_THRUST_N / 1000} kN, Isp {CRUISE_ISP_S.toLocaleString()} s) so planet-to-planet trips take minutes at 100×. Gravity, inertia, fuel and collisions stay fully simulated; no teleporting.</p>
       <p className="mt-2 text-[10px] text-muted-foreground">Keys: +/− throttle ±10% · X or 0 engine cut · T cruise drive · W/S prograde/retrograde · A/D lateral · R/F radial · Space brake · O orbit assist · L probe · K dock · P pause · 1/2/3 speed · C camera · G guides · N labels</p>
+      <DarkMatterPanel enabled={darkMatterEnabled} onEnabledChange={setDarkMatterEnabled} onScan={runSensorScan} readShipPosition={readShipPosition} outerEnvelope={outerEnvelope} />
     </aside>}
 
     {/* Bottom control deck: flight (left) and camera (right). Never overlaps the details panel. */}

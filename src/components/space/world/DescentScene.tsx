@@ -4,7 +4,6 @@ import * as THREE from "three";
 import Starfield from "../scene/Starfield";
 import Galaxy from "../scene/Galaxy";
 import DeepSky from "../scene/DeepSky";
-import CosmicAnomalies from "../CosmicAnomalies";
 import { CLOUD_TEXTURE_URLS, SPACE_TEXTURE_URLS, useLazyTexture } from "../realTextures";
 import { MAX_ALTITUDE, MIN_ALTITUDE, PLANET_RADIUS } from "./altitude";
 import { LodProvider, useLod } from "./lodManager";
@@ -339,10 +338,8 @@ const Contents = ({ full, dpr, animate }: { full: boolean; dpr: number; animate:
       <Lighting />
       {resident("deep") && weights.street < 0.5 && (
         <>
-          <Galaxy full={full} boost={0.75} animate={animate} />
           <DeepSky full={full} />
           <Starfield full={full} dpr={dpr} boost={1} animate={animate} />
-          <CosmicAnomalies scale={5} animate={animate} full={full} local={false} />
         </>
       )}
       <Globe animate={animate} />

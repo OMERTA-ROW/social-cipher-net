@@ -9,7 +9,7 @@ import { MINING_SHIP_SCALE, missionAt, shipTelemetry } from "./shipTelemetry";
 import Starfield from "./Starfield";
 import DeepSky from "./DeepSky";
 import Sun from "./Sun";
-import CosmicAnomalies, { SolarFlares } from "../CosmicAnomalies";
+import { SolarFlares } from "../CosmicAnomalies";
 import { SPACE_TEXTURE_URLS, useLazyTexture } from "../realTextures";
 
 /**
@@ -479,7 +479,6 @@ const MiningWorld = ({ animate, full }: { animate: boolean; full: boolean }) => 
       <SceneEnvironment />
       <DeepSky full={full} />
       <Starfield full={full} dpr={full ? 1.5 : 1} boost={0.7} animate={animate} />
-      <CosmicAnomalies scale={2.5} animate={animate} full={full} local={false} />
       <AlienSky animate={animate} full={full} />
       <hemisphereLight args={["#6e7f9c", "#3a2b1e", 1.15]} />
       <directionalLight position={[900, 420, -600]} intensity={2.6} color="#ffdcb4" castShadow={false} />
