@@ -18,7 +18,35 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <!-- Static fallback so crawlers and non-JS readers see the site; React replaces it on mount. -->
+    <div id="root">
+      <main style="max-width:720px;margin:0 auto;padding:48px 24px;font-family:system-ui,sans-serif;color:#e5e7eb;background:#05060a">
+        <h1>Cyber Link - Connect in the Digital Age</h1>
+        <p>A futuristic social media platform where connections glow and communities thrive.</p>
+        <h2>Features</h2>
+        <ul>
+          <li>Social feed, stories, posts and direct messages</li>
+          <li>Crypto wallet, token purchases, exchange and trading</li>
+          <li>Live streaming with Cyber Streamer and Theater</li>
+          <li>Creator tools: Studio, monetization, subscriptions and affiliate links</li>
+          <li>Seller storefronts and a shop marketplace</li>
+          <li>Cyber Arena gaming, Cyber World and the Solar System Voyage 3D mission</li>
+        </ul>
+        <nav aria-label="Sections">
+          <a href="/auth">Sign in</a> ·
+          <a href="/signup">Sign up</a> ·
+          <a href="/shop">Shop</a> ·
+          <a href="/cyber-arena">Cyber Arena</a> ·
+          <a href="/cyber-world">Cyber World</a> ·
+          <a href="/voyage">Solar System Voyage</a> ·
+          <a href="/advertise">Advertise</a> ·
+          <a href="/community-guidelines">Community Guidelines</a> ·
+          <a href="/privacy">Privacy</a> ·
+          <a href="/terms">Terms</a> ·
+          <a href="/contact">Contact</a>
+        </nav>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
