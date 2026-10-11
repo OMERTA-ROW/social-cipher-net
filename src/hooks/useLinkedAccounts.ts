@@ -17,6 +17,7 @@ export interface LinkedAccount {
   last_synced_at: string | null;
   expires_at: string | null;
   connected_at: string;
+  scopes?: string[] | null;
 }
 
 /**
@@ -43,7 +44,7 @@ export const useLinkedAccounts = () => {
     const { data } = await supabase
       .from("user_connections")
       .select(
-        "id, service_id, account_key, account_label, is_active_account, method, status, health, account_name, account_handle, provider_account_id, last_error, last_synced_at, expires_at, connected_at",
+        "id, service_id, account_key, account_label, is_active_account, method, status, health, account_name, account_handle, provider_account_id, scopes, last_error, last_synced_at, expires_at, connected_at",
       )
       .eq("user_id", user.id)
       .order("service_id", { ascending: true })
