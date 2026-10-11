@@ -223,6 +223,7 @@ const Connectors = () => {
             feeds and stream out to all of them from inside Cyber Link.
           </p>
           <div className="flex items-center gap-2 mt-3">
+            <Badge asChild variant="secondary"><a href="/connectors/social">Social Media Accounts →</a></Badge>
             <Badge variant="outline">{connectedCount} connected</Badge>
             <Badge variant="outline">{offered.length} available</Badge>
             {finishing && (

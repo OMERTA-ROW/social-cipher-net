@@ -22,6 +22,7 @@ import CyberGamers from "./pages/CyberGamers";
 import CyberStreamer from "./pages/CyberStreamer";
 import Connectors from "./pages/Connectors";
 import Integrations from "./pages/Integrations";
+import SocialHub, { SocialCallbackRedirect } from "./pages/SocialHub";
 import Theater from "./pages/Theater";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
@@ -99,6 +100,12 @@ const AppContent = () => {
         <Route path="/cyber-arena/*" element={<ArenaGate><NotFound /></ArenaGate>} />
         <Route path="/cyber-streamer" element={<ShellRoute><CyberStreamer /></ShellRoute>} />
         <Route path="/connectors" element={<PrivateRoute><ShellRoute><Connectors /></ShellRoute></PrivateRoute>} />
+        <Route path="/connectors/social" element={<PrivateRoute><ShellRoute><SocialHub /></ShellRoute></PrivateRoute>} />
+        <Route path="/connectors/social/:provider/callback" element={<SocialCallbackRedirect />} />
+        <Route path="/connectors/social/:provider" element={<PrivateRoute><ShellRoute><SocialHub /></ShellRoute></PrivateRoute>} />
+        {["accounts","content","analytics","inbox","webhooks","activity","permissions"].map((t) => (
+          <Route key={t} path={`/social/${t}`} element={<PrivateRoute><ShellRoute><SocialHub /></ShellRoute></PrivateRoute>} />
+        ))}
         <Route path="/integrations" element={<PrivateRoute><ShellRoute><Integrations /></ShellRoute></PrivateRoute>} />
         <Route path="/theater" element={<ShellRoute><Theater /></ShellRoute>} />
         <Route path="/shop" element={<Shop />} />
