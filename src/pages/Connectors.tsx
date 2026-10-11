@@ -1,6 +1,6 @@
 import { isVerifiedConnection, takeIntegrationResult } from "@/lib/integrationStatus";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -223,7 +223,7 @@ const Connectors = () => {
             feeds and stream out to all of them from inside Cyber Link.
           </p>
           <div className="flex items-center gap-2 mt-3">
-            <Badge asChild variant="secondary"><a href="/connectors/social">Social Media Accounts →</a></Badge>
+            <Link to="/connectors/social" className="text-xs text-primary underline">Social Media Accounts →</Link>
             <Badge variant="outline">{connectedCount} connected</Badge>
             <Badge variant="outline">{offered.length} available</Badge>
             {finishing && (
