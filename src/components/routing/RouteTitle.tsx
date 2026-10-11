@@ -6,7 +6,7 @@ const TITLES: Record<string, string> = {
   "/": "Home", "/login": "Sign in", "/auth": "Sign in", "/signup": "Create account", "/forgot-password": "Reset password",
   "/reset-password": "Choose a new password", "/auth/callback": "Confirming sign-in", "/voyage": "Solar System Voyage",
   "/privacy": "Privacy Policy", "/terms": "Terms of Service", "/contact": "Contact", "/dashboard": "Dashboard",
-  "/profile": "Profile", "/settings": "Settings", "/integrations": "Integrations", "/connectors": "Connectors",
+  "/profile": "Profile", "/settings": "Settings", "/integrations": "Integrations", "/connectors": "Connectors", "/connectors/social": "Social Media Accounts",
   "/backgrounds": "Backgrounds", "/security": "Security", "/community-guidelines": "Community Guidelines",
 };
 
